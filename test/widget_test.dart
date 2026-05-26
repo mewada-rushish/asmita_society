@@ -1,30 +1,22 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:asmita_society/main.dart';
+import 'package:asmita_society/features/auth/data/repositories/auth_repository.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('App smoke test', (WidgetTester tester) async {
+    // Create a dummy repository for the test
+    final authRepository = AuthRepository();
+
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const AsmitaApp());
+    // Use the new required arguments
+    await tester.pumpWidget(AsmitaApp(
+      hasSeenOnboarding: false,
+      authRepository: authRepository,
+    ));
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Since your app now shows the OnboardingScreen (not a counter),
+    // we verify the OnboardingScreen is present instead of a counter.
+    expect(find.text('Skip'), findsOneWidget); 
+    expect(find.text('0'), findsNothing); 
   });
 }
