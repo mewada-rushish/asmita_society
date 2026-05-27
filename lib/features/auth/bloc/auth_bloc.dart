@@ -1,44 +1,69 @@
-import 'dart:math';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/repositories/auth_repository.dart';
+import '../../../core/security/secure_storage_service.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
+/// Manages the state of the authentication flow (OTP dispatch and verification).
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
+  // Removed private underscores to satisfy Dart's initializing formal linting rules
   final AuthRepository authRepository;
-  String? _generatedOtp;
+  final SecureStorageService secureStorage;
 
-  AuthBloc({required this.authRepository}) : super(AuthInitial()) {
-    on<SendOtpRequested>(_onSendOtpRequested);
-    on<VerifyOtpRequested>(_onVerifyOtpRequested);
+  AuthBloc({
+    required this.authRepository,
+    required this.secureStorage,
+  }) : super(AuthInitial()) {
+    on<AuthInitiateRequested>(_onInitiateRequested);
+    on<AuthVerifyRequested>(_onVerifyRequested);
+    on<AuthLogoutRequested>(_onLogoutRequested);
   }
 
-  Future<void> _onSendOtpRequested(SendOtpRequested event, Emitter<AuthState> emit) async {
+  Future<void> _onInitiateRequested(
+    AuthInitiateRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(AuthLoading());
     try {
-      _generatedOtp = (100000 + Random().nextInt(900000)).toString();
-      await authRepository.sendOtp(event.phoneNumber, _generatedOtp!);
-      emit(AuthOtpSent(phoneNumber: event.phoneNumber));
-    } catch (e) {
-      emit(const AuthError('Failed to send OTP. Please try again.'));
-    }
-  }
-
-  Future<void> _onVerifyOtpRequested(VerifyOtpRequested event, Emitter<AuthState> emit) async {
-    emit(AuthLoading());
-    try {
-      if (event.otp == _generatedOtp || event.otp == '123456') {
-        final response = await authRepository.verifyOtp(event.phoneNumber, event.otp);
-        emit(AuthSuccess(
-          isExistingUser: response.isExistingUser, 
-          token: response.token, 
-          role: response.role,
-        ));
+      final success = await authRepository.initiateLogin(event.mobile);
+      if (success) {
+        emit(AuthOtpSent(mobile: event.mobile));
       } else {
-        emit(const AuthError('Invalid OTP entered.'));
+        emit(AuthError(message: 'Failed to dispatch OTP payload.'));
       }
     } catch (e) {
-      emit(const AuthError('An error occurred during verification.'));
+      emit(AuthError(message: e.toString().replaceAll('Exception: ', '')));
     }
+  }
+
+  Future<void> _onVerifyRequested(
+    AuthVerifyRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final response = await authRepository.verifyOtp(event.mobile, event.otp);
+      
+      if (response.token.isNotEmpty && response.data != null) {
+        // High-assurance keystore write
+        await secureStorage.saveToken(response.token);
+        await secureStorage.saveUserRole(response.role);
+
+        emit(AuthAuthenticated(user: response.data!));
+      } else {
+        emit(AuthError(message: 'Invalid session payload received.'));
+      }
+    } catch (e) {
+      emit(AuthError(message: e.toString().replaceAll('Exception: ', '')));
+    }
+  }
+
+  Future<void> _onLogoutRequested(
+    AuthLogoutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    await secureStorage.clearSession();
+    emit(AuthInitial());
   }
 }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../core/constants/design_system.dart';
+import '../../../core/security/secure_storage_service.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/presentation/login_screen.dart';
 import '../../auth/data/repositories/auth_repository.dart';
@@ -36,16 +38,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     },
   ];
 
+  /// Persists onboarding completion flag and transitions to the authenticated routing tree
   Future<void> _completeOnboarding() async {
     await _secureStorage.write(key: 'has_seen_onboarding', value: 'true');
     if (!mounted) return;
     
+    // Initialize dependency singletons for the authentication flow
     final authRepository = AuthRepository();
+    final secureStorageService = SecureStorageService();
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (context) => BlocProvider(
-          create: (context) => AuthBloc(authRepository: authRepository),
+          create: (context) => AuthBloc(
+            authRepository: authRepository,
+            secureStorage: secureStorageService,
+          ),
           child: const LoginScreen(),
         ),
       ),
