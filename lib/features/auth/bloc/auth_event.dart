@@ -1,12 +1,14 @@
 abstract class AuthEvent {}
 
-class SendOtpRequested extends AuthEvent {
-  final String phoneNumber;
-  SendOtpRequested(this.phoneNumber);
+class AuthInitiateRequested extends AuthEvent {
+  final String mobile;
+  AuthInitiateRequested({required this.mobile});
 }
 
-class VerifyOtpRequested extends AuthEvent {
-  final String phoneNumber;
+class AuthVerifyRequested extends AuthEvent {
+  final String mobile;
   final String otp;
-  VerifyOtpRequested({required this.phoneNumber, required this.otp});
+  AuthVerifyRequested({required this.mobile, required this.otp});
 }
+
+class AuthLogoutRequested extends AuthEvent {}

@@ -1,21 +1,22 @@
-abstract class AuthState { const AuthState(); }
+import '../data/models/auth_response.dart';
+
+abstract class AuthState {}
 
 class AuthInitial extends AuthState {}
+
 class AuthLoading extends AuthState {}
 
 class AuthOtpSent extends AuthState {
-  final String phoneNumber;
-  AuthOtpSent({required this.phoneNumber});
+  final String mobile;
+  AuthOtpSent({required this.mobile});
 }
 
-class AuthSuccess extends AuthState {
-  final bool isExistingUser;
-  final String token;
-  final String role;
-  const AuthSuccess({required this.isExistingUser, required this.token, required this.role});
+class AuthAuthenticated extends AuthState {
+  final UserModel user;
+  AuthAuthenticated({required this.user});
 }
 
 class AuthError extends AuthState {
   final String message;
-  const AuthError(this.message);
+  AuthError({required this.message});
 }
