@@ -3,8 +3,9 @@ import '../data/repositories/auth_repository.dart';
 import '../../../core/security/secure_storage_service.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
+import '../data/models/auth_response.dart';
 
-/// Manages the state of the authentication flow (OTP dispatch, verification, and registration).
+/// Manages authentication state: OTP lifecycle, registration, and session persistence.
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository authRepository;
   final SecureStorageService secureStorage;
@@ -15,7 +16,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }) : super(AuthInitial()) {
     on<AuthInitiateRequested>(_onInitiateRequested);
     on<AuthVerifyRequested>(_onVerifyRequested);
-    on<AuthRegisterRequested>(_onRegisterRequested); // Added Registration Listener
+    on<AuthRegisterRequested>(_onRegisterRequested);
     on<AuthLogoutRequested>(_onLogoutRequested);
   }
 
@@ -29,10 +30,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       if (success) {
         emit(AuthOtpSent(mobile: event.mobile));
       } else {
-        emit(AuthError(message: 'Failed to dispatch OTP payload.'));
+        emit(const AuthError(message: 'Failed to initiate OTP.'));
       }
     } catch (e) {
-      emit(AuthError(message: e.toString().replaceAll('Exception: ', '')));
+      emit(AuthError(message: _formatException(e)));
     }
   }
 
@@ -43,22 +44,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       final response = await authRepository.verifyOtp(event.mobile, event.otp);
-      
-      if (response.token.isNotEmpty && response.data != null) {
-        await secureStorage.saveToken(response.token);
-        await secureStorage.saveUserRole(response.role);
-
-        emit(AuthAuthenticated(user: response.data!));
-      } else {
-        emit(AuthError(message: 'Invalid session payload received.'));
-      }
+      await _emitAuthenticated(response, emit);
     } catch (e) {
-      final errorString = e.toString();
-      // Catch our custom flag from the repository allowing us to gracefully redirect to registration
-      if (errorString.contains('REGISTRATION_REQUIRED')) {
+      final errorMsg = e.toString();
+      if (errorMsg.contains('REGISTRATION_REQUIRED')) {
         emit(AuthRegistrationRequired(mobile: event.mobile));
       } else {
-        emit(AuthError(message: errorString.replaceAll('Exception: ', '')));
+        emit(AuthError(message: _formatException(e)));
       }
     }
   }
@@ -80,18 +72,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         flat: event.flat,
         role: event.role,
       );
-      
-      // Successfully registered and logged in simultaneously 
-      if (response.token.isNotEmpty && response.data != null) {
-        await secureStorage.saveToken(response.token);
-        await secureStorage.saveUserRole(response.role);
-
-        emit(AuthAuthenticated(user: response.data!));
-      } else {
-        emit(AuthError(message: 'Registration successful but failed to capture session payload.'));
-      }
+      await _emitAuthenticated(response, emit);
     } catch (e) {
-      emit(AuthError(message: e.toString().replaceAll('Exception: ', '')));
+      emit(AuthError(message: _formatException(e)));
     }
   }
 
@@ -103,4 +86,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     await secureStorage.clearSession();
     emit(AuthInitial());
   }
+
+  /// DRY Helper: Persists session and emits authenticated state.
+  Future<void> _emitAuthenticated(AuthResponse response, Emitter<AuthState> emit) async {
+    if (response.token.isNotEmpty && response.data != null) {
+      await secureStorage.saveToken(response.token);
+      await secureStorage.saveUserRole(response.role);
+      emit(AuthAuthenticated(user: response.data!));
+    } else {
+      emit(const AuthError(message: 'Invalid session payload.'));
+    }
+  }
+
+  /// Sanitizes exception messages to remove 'Exception:' prefix.
+  String _formatException(Object e) => e.toString().replaceFirst('Exception: ', '');
 }
