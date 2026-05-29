@@ -1,13 +1,12 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+/// Provides hardware-backed secure storage for sensitive credentials.
 class SecureStorageService {
   final FlutterSecureStorage _storage;
 
   SecureStorageService()
       : _storage = const FlutterSecureStorage(
-          // Enforces AES-256 encryption on Android
           aOptions: AndroidOptions(encryptedSharedPreferences: true),
-          // Locks data on iOS until the device has been unlocked at least once after a reboot
           iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
         );
 
@@ -34,12 +33,12 @@ class SecureStorageService {
     await _storage.deleteAll();
   }
 
-  /// Reads a generic string value from the secure keystore
+  /// Reads a generic string value from the secure keystore.
   Future<String?> read({required String key}) async {
     return await _storage.read(key: key);
   }
 
-  /// Writes a generic string value to the secure keystore
+  /// Writes a generic string value to the secure keystore.
   Future<void> write({required String key, required String value}) async {
     await _storage.write(key: key, value: value);
   }

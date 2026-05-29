@@ -2,13 +2,14 @@ import 'package:dio/dio.dart';
 import '../../../../core/config/env_config.dart';
 import '../models/auth_response.dart';
 
+/// Repository responsible for authentication, OTP verification, and user onboarding.
+/// Communicates with the backend API via a secure Dio instance.
 class AuthRepository {
   final Dio _dio;
 
-  // Dependency injection friendly, falls back to a default Dio instance if none provided
   AuthRepository({Dio? dio}) : _dio = dio ?? Dio();
 
-  /// Step 1: Request OTP Dispatch
+  /// Initiates an OTP login request.
   Future<bool> initiateLogin(String mobile) async {
     try {
       final response = await _dio.post(
@@ -16,43 +17,45 @@ class AuthRepository {
         data: {'mobile': mobile},
       );
 
-      if (response.statusCode == 200 && response.data['status'] == 'success') {
-        return true;
-      }
-      return false;
+      return response.statusCode == 200 && response.data['status'] == 'success';
     } on DioException catch (e) {
-      final errorMessage = e.response?.data['message'] ?? 'Failed to initiate login. Please try again.';
-      throw Exception(errorMessage);
+      throw _parseError(e, 'Failed to initiate login.');
     }
   }
 
-  /// Step 2: Validate OTP and Retrieve Session Token (or Registration Flag)
+  /// Verifies the OTP.
+  /// Intercepts 401 errors to check for 'REGISTRATION_REQUIRED' business signals.
   Future<AuthResponse> verifyOtp(String mobile, String otp) async {
     try {
       final response = await _dio.post(
         EnvConfig.loginVerify,
-        data: {
-          'mobile': mobile,
-          'otp': otp,
-        },
+        data: {'mobile': mobile, 'otp': otp},
       );
 
-      if (response.statusCode == 200) {
-        // ASSUMPTION: Update these keys based on how your backend flags a missing user
-        if (response.data['status'] == 'registration_required' || response.data['is_new_user'] == true) {
-          throw Exception('REGISTRATION_REQUIRED'); 
-        } else if (response.data['status'] == 'success') {
-          return AuthResponse.fromJson(response.data);
-        }
+      final data = response.data;
+      if (data['status'] == 'registration_required' || data['is_new_user'] == true) {
+        throw Exception('REGISTRATION_REQUIRED');
       }
+
+      if (data['status'] == 'success') {
+        return AuthResponse.fromJson(data);
+      }
+
       throw Exception('Invalid verification response');
     } on DioException catch (e) {
-      final errorMessage = e.response?.data['message'] ?? 'Invalid OTP or session expired.';
-      throw Exception(errorMessage);
+      // Logic to handle 401 as a registration signal rather than a network failure
+      if (e.response?.statusCode == 401) {
+        final data = e.response?.data;
+        if (data != null && (data['status'] == 'registration_required' || data['is_new_user'] == true)) {
+          throw Exception('REGISTRATION_REQUIRED');
+        }
+      }
+      
+      throw _parseError(e, 'Invalid OTP or session expired.');
     }
   }
 
-  /// Step 3: Complete Onboarding and Register New User in Database
+  /// Completes the onboarding process for new users.
   Future<AuthResponse> registerUser({
     required String mobile,
     required String fullName,
@@ -65,11 +68,8 @@ class AuthRepository {
     required String role,
   }) async {
     try {
-      // Assuming your EnvConfig has EnvConfig.register, otherwise fallback to explicit path
-      final endpoint = '/auth/register'; 
-      
       final response = await _dio.post(
-        endpoint,
+        EnvConfig.register,
         data: {
           'mobile_number': mobile,
           'full_name': fullName,
@@ -83,14 +83,15 @@ class AuthRepository {
         },
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        // Assuming registration returns the same session structure as login (Token + User Object)
-        return AuthResponse.fromJson(response.data);
-      }
-      throw Exception(response.data['message'] ?? 'Registration failed.');
+      return AuthResponse.fromJson(response.data);
     } on DioException catch (e) {
-      final errorMessage = e.response?.data['message'] ?? 'Failed to complete registration. Please try again.';
-      throw Exception(errorMessage);
+      throw _parseError(e, 'Registration request failed.');
     }
+  }
+
+  /// Centralized error parser to handle Dio exceptions consistently.
+  Exception _parseError(DioException e, String defaultMessage) {
+    final message = e.response?.data?['message'] ?? e.message;
+    return Exception(message ?? defaultMessage);
   }
 }

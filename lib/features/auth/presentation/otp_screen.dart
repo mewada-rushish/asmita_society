@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/design_system.dart';
-import '../../../core/widgets/asmita_toast.dart'; // Added Toast Import
+import '../../../core/widgets/asmita_toast.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import 'registration_screen.dart';
 
 class OtpScreen extends StatefulWidget {
   final String phoneNumber;
   const OtpScreen({super.key, required this.phoneNumber});
+
   @override
   State<OtpScreen> createState() => _OtpScreenState();
 }
@@ -78,7 +80,6 @@ class _OtpScreenState extends State<OtpScreen> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            // Added Success Toast
             AsmitaToast.show(
               context,
               message: 'Identity verified successfully.',
@@ -93,15 +94,20 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
               (route) => false,
             );
+          } else if (state is AuthRegistrationRequired) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => RegistrationScreen(verifiedMobile: state.mobile),
+              ),
+            );
           } else if (state is AuthError) {
-            // Replaced SnackBar with Error Toast
             AsmitaToast.show(
               context,
               message: state.message,
               type: AsmitaToastType.error,
             );
           } else if (state is AuthOtpSent) {
-            // Optional: Confirm resend actions
             AsmitaToast.show(
               context,
               message: 'A new code has been sent.',

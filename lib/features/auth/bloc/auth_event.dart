@@ -1,17 +1,29 @@
-abstract class AuthEvent {}
+import 'package:equatable/equatable.dart';
+
+abstract class AuthEvent extends Equatable {
+  const AuthEvent();
+
+  @override
+  List<Object?> get props => [];
+}
 
 class AuthInitiateRequested extends AuthEvent {
   final String mobile;
-  AuthInitiateRequested({required this.mobile});
+  const AuthInitiateRequested({required this.mobile});
+
+  @override
+  List<Object?> get props => [mobile];
 }
 
 class AuthVerifyRequested extends AuthEvent {
   final String mobile;
   final String otp;
-  AuthVerifyRequested({required this.mobile, required this.otp});
+  const AuthVerifyRequested({required this.mobile, required this.otp});
+
+  @override
+  List<Object?> get props => [mobile, otp];
 }
 
-// --- NEW: Dispatched from the Registration Screen ---
 class AuthRegisterRequested extends AuthEvent {
   final String mobile;
   final String fullName;
@@ -23,7 +35,7 @@ class AuthRegisterRequested extends AuthEvent {
   final String flat;
   final String role;
 
-  AuthRegisterRequested({
+  const AuthRegisterRequested({
     required this.mobile,
     required this.fullName,
     required this.email,
@@ -34,6 +46,9 @@ class AuthRegisterRequested extends AuthEvent {
     required this.flat,
     required this.role,
   });
+
+  @override
+  List<Object?> get props => [mobile, fullName, email, gender, society, tower, floor, flat, role];
 }
 
 class AuthLogoutRequested extends AuthEvent {}
