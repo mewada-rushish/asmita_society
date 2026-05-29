@@ -13,6 +13,7 @@ void main() {
     await tester.pumpWidget(AsmitaApp(
       authRepository: authRepository,
       secureStorage: secureStorageService,
+      showOnboarding: true,
     ));
 
     // 3. Verify the initial routing view
