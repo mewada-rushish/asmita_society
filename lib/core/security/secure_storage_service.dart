@@ -33,4 +33,14 @@ class SecureStorageService {
   Future<void> clearSession() async {
     await _storage.deleteAll();
   }
+
+  /// Reads a generic string value from the secure keystore
+  Future<String?> read({required String key}) async {
+    return await _storage.read(key: key);
+  }
+
+  /// Writes a generic string value to the secure keystore
+  Future<void> write({required String key, required String value}) async {
+    await _storage.write(key: key, value: value);
+  }
 }

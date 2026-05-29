@@ -16,6 +16,12 @@ class AuthAuthenticated extends AuthState {
   AuthAuthenticated({required this.user});
 }
 
+// --- NEW: Triggers the router to open Registration Screen ---
+class AuthRegistrationRequired extends AuthState {
+  final String mobile;
+  AuthRegistrationRequired({required this.mobile});
+}
+
 class AuthError extends AuthState {
   final String message;
   AuthError({required this.message});
