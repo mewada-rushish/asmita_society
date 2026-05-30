@@ -7,6 +7,9 @@ abstract class AuthEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+/// Dispatched when the app starts to check for an existing session token.
+class AuthCheckRequested extends AuthEvent {}
+
 class AuthInitiateRequested extends AuthEvent {
   final String mobile;
   const AuthInitiateRequested({required this.mobile});
