@@ -12,6 +12,10 @@ class AuthInitial extends AuthState {}
 
 class AuthLoading extends AuthState {}
 
+class AuthUnauthenticated extends AuthState {}
+
+class AuthNeedsOnboarding extends AuthState {}
+
 class AuthOtpSent extends AuthState {
   final String mobile;
   const AuthOtpSent({required this.mobile});
