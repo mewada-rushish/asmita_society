@@ -4,8 +4,8 @@ import '../../../core/security/secure_storage_service.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 import '../data/models/auth_response.dart';
+import '../data/models/user_model.dart';
 
-/// Manages authentication state: OTP lifecycle, registration, and session persistence.
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository authRepository;
   final SecureStorageService secureStorage;
@@ -14,10 +14,43 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.authRepository,
     required this.secureStorage,
   }) : super(AuthInitial()) {
+    on<AuthCheckRequested>(_onAuthCheckRequested);
     on<AuthInitiateRequested>(_onInitiateRequested);
     on<AuthVerifyRequested>(_onVerifyRequested);
     on<AuthRegisterRequested>(_onRegisterRequested);
     on<AuthLogoutRequested>(_onLogoutRequested);
+  }
+
+  Future<void> _onAuthCheckRequested(
+    AuthCheckRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final token = await secureStorage.getToken();
+      
+      if (token != null && token.isNotEmpty) {
+        final cachedRole = await secureStorage.getUserRole() ?? 'resident';
+        
+        final sessionUser = UserModel(
+          userId: 0, 
+          fullName: 'AsmitA User', 
+          userType: cachedRole, 
+          accountType: 'app',
+        );
+        
+        emit(AuthAuthenticated(user: sessionUser));
+      } else {
+        final hasOnboarded = await secureStorage.read(key: 'has_seen_onboarding') == 'true';
+        if (hasOnboarded) {
+          emit(AuthUnauthenticated());
+        } else {
+          emit(AuthNeedsOnboarding());
+        }
+      }
+    } catch (e) {
+      emit(AuthUnauthenticated());
+    }
   }
 
   Future<void> _onInitiateRequested(
@@ -84,10 +117,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     await secureStorage.clearSession();
-    emit(AuthInitial());
+    emit(AuthUnauthenticated());
   }
 
-  /// DRY Helper: Persists session and emits authenticated state.
   Future<void> _emitAuthenticated(AuthResponse response, Emitter<AuthState> emit) async {
     if (response.token.isNotEmpty && response.data != null) {
       await secureStorage.saveToken(response.token);
@@ -98,6 +130,5 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  /// Sanitizes exception messages to remove 'Exception:' prefix.
   String _formatException(Object e) => e.toString().replaceFirst('Exception: ', '');
 }
