@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/widgets/asmita_bottom_nav_bar.dart'; 
+import '../../menu/presentation/screens/menu_screen.dart'; 
 import 'views/owner_dashboard_view.dart';
 import 'views/tenant_dashboard_view.dart';
-import '../../menu/presentation/screens/menu_screen.dart';
 
-/// The root application shell containing the persistent global navigation bar 
-/// and role-based view resolution.
 class MainDashboardScreen extends StatefulWidget {
   final String userRole;
 
@@ -30,7 +28,6 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
     ];
   }
 
-  /// Resolves the primary dashboard view based on the authenticated user's role.
   Widget _resolveRoleBasedHomeView(String role) {
     switch (role.toLowerCase()) {
       case 'owner':
@@ -60,7 +57,8 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8FB),
+      // FIXED: Set to pure white to eliminate color mismatch/bleed behind bottom nav bar lines
+      backgroundColor: Colors.white,
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
