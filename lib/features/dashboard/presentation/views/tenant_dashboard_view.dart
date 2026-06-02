@@ -11,7 +11,6 @@ class TenantDashboardView extends StatefulWidget {
 }
 
 class _TenantDashboardViewState extends State<TenantDashboardView> {
-  // Starts perfectly offset to hide the top Quick Actions
   final ScrollController _scrollController = ScrollController(initialScrollOffset: 426.0);
 
   @override
@@ -44,40 +43,72 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                       await Future.delayed(const Duration(milliseconds: 1500));
                     },
                   ),
-                  
-                  // HIDDEN TOP SECTION (Revealed by pulling down)
                   SliverToBoxAdapter(
                     child: Column(
                       children: [
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
                         _buildRentSummaryCard(context),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 16),
                         _buildQuickActionsMatrix(context),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
                         _buildAdPlaceholder(context, typeLabel: 'Slim Bar Ad', height: 54, margin: const EdgeInsets.symmetric(horizontal: 16)),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
-                  
-                  // DEFAULT VISIBLE SECTION (Scrolls continuously upward)
-                  SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSectionHeader(context, icon: Icons.notifications_active_rounded, title: '2 Entry Updates'),
-                        const SizedBox(height: 12),
-                        _buildGateSyncModule(context),
-                        const SizedBox(height: 24),
-                        _buildAdPlaceholder(context, typeLabel: 'Card Ad', height: 80, margin: const EdgeInsets.symmetric(horizontal: 16)),
-                        const SizedBox(height: 24),
-                        _buildCommunityPostsHeader(context),
-                        const SizedBox(height: 12),
-                        _buildCommunityPostsModule(context),
-                        const SizedBox(height: 24),
-                        _buildServicesFooter(context),
-                        const SizedBox(height: 40),
-                      ],
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    fillOverscroll: true,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 16,
+                            offset: const Offset(0, -6),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
+                          Center(
+                            child: Container(
+                              width: 38,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: AsmitaPalette.borderGrey,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Text(
+                              'You have no new updates',
+                              style: textTheme.bodyLarge?.copyWith(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildGateSyncModule(context),
+                          const SizedBox(height: 24),
+                          _buildAdPlaceholder(context, typeLabel: 'Card Ad', height: 80, margin: const EdgeInsets.symmetric(horizontal: 16)),
+                          const SizedBox(height: 24),
+                          _buildCommunityPostsHeader(context),
+                          const SizedBox(height: 12),
+                          _buildCommunityPostsModule(context),
+                          const SizedBox(height: 24),
+                          _buildServicesFooter(context),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -88,8 +119,6 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
       ),
     );
   }
-
-  // --- INTERNAL UTILITY COMPONENT CORES ---
 
   Widget _buildFixedHeader(BuildContext context) {
     final topPadding = MediaQuery.viewPaddingOf(context).top;
@@ -184,20 +213,6 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, {required IconData icon, required String title}) {
-    final textTheme = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Icon(icon, color: AsmitaPalette.deepNavy, size: 20),
-          const SizedBox(width: 8),
-          Text(title, style: textTheme.titleLarge?.copyWith(fontSize: 15, fontWeight: FontWeight.w700)),
-        ],
-      ),
-    );
-  }
-
   Widget _buildCommunityPostsHeader(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Padding(
@@ -282,7 +297,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                   ],
                 ),
               ],
-            ),
+                ),
             const SizedBox(height: 16),
             Row(
               children: [
