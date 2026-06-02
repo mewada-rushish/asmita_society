@@ -35,7 +35,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                 controller: _scrollController,
                 physics: const DashboardScrollPhysics(
                   junctionOffset: 440.0,
-                  parent: const AlwaysScrollableScrollPhysics(),
+                  parent: AlwaysScrollableScrollPhysics(),
                 ),
                 slivers: [
                   AsmitaAnimatedRefresh(
