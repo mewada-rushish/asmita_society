@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/constants/design_system.dart';
-import '../../../auth/bloc/auth_bloc.dart';
-import '../../../auth/bloc/auth_event.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
 
 class MenuScreen extends StatelessWidget {
   final String userRole;
@@ -11,158 +8,156 @@ class MenuScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Profile Header Section
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(24.0),
-          decoration: const BoxDecoration(
-            color: AsmitaPalette.deepNavy,
+    final textTheme = Theme.of(context).textTheme;
+
+    return Scaffold(
+      backgroundColor: AsmitaPalette.systemBG,
+      appBar: AppBar(
+        backgroundColor: AsmitaPalette.systemBG,
+        elevation: 0,
+        automaticallyImplyLeading: false, // Root tab, no back button
+        title: Text(
+          'Menu',
+          style: textTheme.titleLarge?.copyWith(fontSize: 18, fontWeight: FontWeight.w700),
+        ),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildProfileCard(context),
+            const SizedBox(height: 24),
+            _buildMenuSection(
+              context,
+              title: 'My Household',
+              items: [
+                _buildMenuItem(context, Icons.people_outline_rounded, 'Family Members'),
+                _buildMenuItem(context, Icons.directions_car_filled_outlined, 'Vehicles'),
+                _buildMenuItem(context, Icons.pets_rounded, 'Pets'),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildMenuSection(
+              context,
+              title: 'Society Info',
+              items: [
+                _buildMenuItem(context, Icons.contact_page_outlined, 'Committee Members'),
+                _buildMenuItem(context, Icons.gavel_rounded, 'Rules & Regulations'),
+                _buildMenuItem(context, Icons.description_outlined, 'Important Documents'),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildMenuSection(
+              context,
+              title: 'Application',
+              items: [
+                _buildMenuItem(context, Icons.settings_outlined, 'Settings'),
+                _buildMenuItem(context, Icons.help_outline_rounded, 'Help & Support'),
+                _buildMenuItem(context, Icons.logout_rounded, 'Logout', isDestructive: true),
+              ],
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileCard(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-          child: SafeArea(
-            top: true,
-            bottom: false,
-            left: false,
-            right: false,
-            child: Row(
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: AsmitaPalette.deepNavy,
+            child: Text(
+              'RM', 
+              style: textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 18)
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 32,
-                  backgroundColor: Colors.white.withValues(alpha: 0.2),
-                  child: const Icon(Icons.person, color: Colors.white, size: 36),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Rushish Mewada',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AsmitaPalette.actionRed,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          userRole.toUpperCase(),
-                          style: const TextStyle(
-                            fontFamily: 'Poppins',
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                Text('Rushish Mewada', style: textTheme.titleLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 4),
+                Text('Flat A-402 • ${userRole.toUpperCase()}', style: textTheme.bodyMedium?.copyWith(fontSize: 11, fontWeight: FontWeight.w700, color: AsmitaPalette.actionRed)),
               ],
             ),
           ),
-        ),
+          const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AsmitaPalette.textLight),
+        ],
+      ),
+    );
+  }
 
-        // Menu Options List
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            physics: const BouncingScrollPhysics(),
-            children: [
-              _buildMenuItem(Icons.person_outline_rounded, 'My Profile'),
-              _buildMenuItem(Icons.account_balance_wallet_outlined, 'Financial & BBPS'),
-              _buildMenuItem(Icons.family_restroom_outlined, 'Household Members'),
-              _buildMenuItem(Icons.directions_car_outlined, 'My Vehicles'),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16.0),
-                child: Divider(
-                  height: 1,
-                  thickness: 1,
-                  indent: 24,
-                  endIndent: 24,
-                  color: Color(0xFFEEEEEE),
-                ),
-              ),
-              _buildMenuItem(Icons.support_agent_rounded, 'Helpdesk & Support'),
-              _buildMenuItem(Icons.settings_outlined, 'Settings'),
-            ],
+  Widget _buildMenuSection(BuildContext context, {required String title, required List<Widget> items}) {
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 8, bottom: 8),
+          child: Text(title, style: textTheme.titleLarge?.copyWith(fontSize: 13, color: AsmitaPalette.textLight, fontWeight: FontWeight.w700)),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
           ),
-        ),
-
-        // Logout Button
-        SafeArea(
-          top: false,
-          bottom: true,
-          left: false,
-          right: false,
-          child: Padding(
-            padding: const EdgeInsets.only(
-              left: 24,
-              right: 24,
-              top: 16,
-              bottom: 24,
-            ),
-            child: InkWell(
-              onTap: () {
-                context.read<AuthBloc>().add(AuthLogoutRequested());
-              },
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF0F1),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFFFD9DA)),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.logout_rounded, color: AsmitaPalette.actionRed, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'Logout',
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        color: AsmitaPalette.actionRed,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          child: Column(
+            children: items,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildMenuItem(IconData icon, String title) {
-    return ListTile(
-      leading: Icon(icon, color: AsmitaPalette.deepNavy, size: 24),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontFamily: 'Poppins',
-          color: Colors.black87,
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
+  Widget _buildMenuItem(BuildContext context, IconData icon, String title, {bool isDestructive = false}) {
+    final textTheme = Theme.of(context).textTheme;
+    final color = isDestructive ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy;
+    
+    return InkWell(
+      onTap: () {},
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 22),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: textTheme.bodyLarge?.copyWith(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDestructive ? AsmitaPalette.actionRed : AsmitaPalette.textDark,
+                ),
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: isDestructive ? AsmitaPalette.actionRed.withValues(alpha: 0.5) : AsmitaPalette.textLight),
+          ],
         ),
       ),
-      trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.black26, size: 14),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-      onTap: () {},
     );
   }
 }

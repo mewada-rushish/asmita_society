@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/widgets/asmita_bottom_nav_bar.dart'; 
-import '../../menu/presentation/screens/menu_screen.dart'; 
+import '../../community/presentation/screens/community_screen.dart';
+import '../../visitor_management/presentation/screens/visitor_history_screen.dart';
+import '../../services/presentation/screens/services_screen.dart';
+import '../../menu/presentation/screens/menu_screen.dart';
 import 'views/owner_dashboard_view.dart';
 import 'views/tenant_dashboard_view.dart';
 
@@ -20,11 +23,13 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    // The order here MUST exactly match the 5 icons in AsmitaBottomNavBar
     _screens = [
-      _resolveRoleBasedHomeView(widget.userRole),
-      _buildPlaceholderView('Community & Notice Board'),
-      _buildPlaceholderView('Visitor Gate Management'),
-      MenuScreen(userRole: widget.userRole),
+      _resolveRoleBasedHomeView(widget.userRole), // 0: Home
+      const ServicesScreen(),                     // 1: Services
+      const CommunityScreen(),                    // 2: Community
+      const VisitorHistoryScreen(),               // 3: History
+      MenuScreen(userRole: widget.userRole),      // 4: Menu
     ];
   }
 
@@ -35,29 +40,13 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       case 'tenant':
         return const TenantDashboardView();
       default:
-        return _buildPlaceholderView('Generic Home Hub\nRole: $role');
+        return Center(child: Text('Role: $role'));
     }
-  }
-
-  Widget _buildPlaceholderView(String moduleName) {
-    return Center(
-      child: Text(
-        moduleName,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontFamily: 'Poppins',
-          fontSize: 16,
-          color: Colors.black54,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // FIXED: Set to pure white to eliminate color mismatch/bleed behind bottom nav bar lines
       backgroundColor: Colors.white,
       body: IndexedStack(
         index: _currentIndex,
