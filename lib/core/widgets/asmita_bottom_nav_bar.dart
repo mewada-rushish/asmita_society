@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../constants/design_system.dart'; // Adjust import path as needed
+import 'package:flutter_svg/flutter_svg.dart';
+import '../constants/design_system.dart';
 
 class AsmitaBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -11,18 +12,8 @@ class AsmitaBottomNavBar extends StatelessWidget {
     required this.onTap,
   });
 
-  // The globally defined icons for the 4 core modules
-  final List<IconData> _icons = const [
-    Icons.home_work_outlined,
-    Icons.domain_outlined,
-    Icons.people_alt_outlined,
-    Icons.more_horiz_rounded,
-  ];
-
   @override
   Widget build(BuildContext context) {
-    // Read raw system insets unaffected by Scaffold padding injection
-    // This ensures the bar sits perfectly above the system navigation buttons (pill/triangle)
     final bottomPadding = MediaQuery.viewPaddingOf(context).bottom;
     const double barHeight = 64.0;
 
@@ -45,7 +36,7 @@ class AsmitaBottomNavBar extends StatelessWidget {
           padding: EdgeInsets.only(bottom: bottomPadding),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(_icons.length, (index) {
+            children: List.generate(5, (index) {
               final isSelected = currentIndex == index;
               return _buildNavigationItem(index, isSelected);
             }),
@@ -61,30 +52,26 @@ class AsmitaBottomNavBar extends StatelessWidget {
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
       child: SizedBox(
-        width: 64,
-        // Force the item to take the full height of the row so bottom: 0 is exactly at the edge
+        width: 56,
         height: double.infinity,
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // The Tab Icon
-            Icon(
-              _icons[index],
-              color: isSelected 
-                  ? Colors.white 
-                  : Colors.white.withValues(alpha: 0.4),
-              size: 26,
+            // We use Opacity to handle the active/inactive state.
+            // This prevents the ColorFilter from destroying your layered SVG strokes.
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: isSelected ? 1.0 : 0.4,
+              child: _buildCustomScaledIcon(index),
             ),
-            
-            // The precise bottom-anchored semi-circle indicator
             Positioned(
               bottom: 0,
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 200),
                 opacity: isSelected ? 1.0 : 0.0,
                 child: Container(
-                  width: 22, 
-                  height: 11, // Exactly half the width to create a perfect semi-circle
+                  width: 22,
+                  height: 11,
                   decoration: const BoxDecoration(
                     color: AsmitaPalette.actionRed,
                     borderRadius: BorderRadius.vertical(top: Radius.circular(11)),
@@ -96,5 +83,21 @@ class AsmitaBottomNavBar extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildCustomScaledIcon(int index) {
+    switch (index) {
+      case 0:
+        return SvgPicture.asset('assets/icons/home.svg', width: 24, height: 24);
+      case 1:
+        return SvgPicture.asset('assets/icons/services.svg', width: 32, height: 32);
+      case 2:
+        return SvgPicture.asset('assets/icons/community.svg', width: 32, height: 32);
+      case 3:
+        return SvgPicture.asset('assets/icons/history.svg', width: 32, height: 32);
+      case 4:
+      default:
+        return const Icon(Icons.more_horiz_rounded, size: 32, color: Colors.white);
+    }
   }
 }
