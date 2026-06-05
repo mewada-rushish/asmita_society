@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/widgets/asmita_bottom_nav_bar.dart'; 
+import '../../menu/presentation/screens/menu_screen.dart'; 
 import '../../community/presentation/screens/community_screen.dart';
 import '../../visitor_management/presentation/screens/visitor_history_screen.dart';
 import '../../services/presentation/screens/services_screen.dart';
-import '../../menu/presentation/screens/menu_screen.dart';
 import 'views/owner_dashboard_view.dart';
 import 'views/tenant_dashboard_view.dart';
 
@@ -23,13 +23,12 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    // The order here MUST exactly match the 5 icons in AsmitaBottomNavBar
     _screens = [
-      _resolveRoleBasedHomeView(widget.userRole), // 0: Home
-      const ServicesScreen(),                     // 1: Services
-      const CommunityScreen(),                    // 2: Community
-      const VisitorHistoryScreen(),               // 3: History
-      MenuScreen(userRole: widget.userRole),      // 4: Menu
+      _resolveRoleBasedHomeView(widget.userRole), // Index 0: Home View
+      const ServicesScreen(),                     // Index 1: Services Grid
+      const CommunityScreen(),                    // Index 2: Society Chat
+      const VisitorHistoryScreen(),               // Index 3: Gate Records
+      MenuScreen(userRole: widget.userRole),      // Index 4: Settings Profile
     ];
   }
 
@@ -40,7 +39,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       case 'tenant':
         return const TenantDashboardView();
       default:
-        return Center(child: Text('Role: $role'));
+        return Center(child: Text('Role Architecture: $role'));
     }
   }
 

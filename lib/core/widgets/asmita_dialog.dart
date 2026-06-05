@@ -6,6 +6,7 @@ class AsmitaDialog extends StatelessWidget {
   final Widget content;
   final List<Widget>? actions;
   final EdgeInsetsGeometry? contentPadding;
+  final bool showCloseButton;
 
   const AsmitaDialog({
     super.key,
@@ -13,6 +14,7 @@ class AsmitaDialog extends StatelessWidget {
     required this.content,
     this.actions,
     this.contentPadding,
+    this.showCloseButton = true,
   });
 
   static Future<T?> show<T>({
@@ -22,16 +24,18 @@ class AsmitaDialog extends StatelessWidget {
     List<Widget>? actions,
     bool barrierDismissible = true,
     EdgeInsetsGeometry? contentPadding,
+    bool showCloseButton = true,
   }) {
     return showDialog<T>(
       context: context,
       barrierDismissible: barrierDismissible,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
+      barrierColor: AsmitaPalette.deepNavy.withValues(alpha: 0.4),
       builder: (context) => AsmitaDialog(
         title: title,
         content: content,
         actions: actions,
         contentPadding: contentPadding,
+        showCloseButton: showCloseButton,
       ),
     );
   }
@@ -42,44 +46,76 @@ class AsmitaDialog extends StatelessWidget {
 
     return Dialog(
       backgroundColor: Colors.white,
-      elevation: 10,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (title != null) ...[
-              Text(
-                title!,
-                style: textTheme.titleLarge?.copyWith(
-                  color: AsmitaPalette.deepNavy,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
+      elevation: 24,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Fixed Premium Highlighted Header Banner
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              color: AsmitaPalette.deepNavy.withValues(alpha: 0.03), // Safely moved inside the decoration block
+              border: const Border(
+                bottom: BorderSide(color: AsmitaPalette.borderGrey, width: 1.5),
               ),
-              const SizedBox(height: 16),
-            ],
-            Padding(
-              padding: contentPadding ?? EdgeInsets.zero,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: title != null
+                      ? Text(
+                          title!,
+                          style: textTheme.titleLarge?.copyWith(
+                            color: AsmitaPalette.deepNavy,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            fontFamily: 'Montserrat',
+                            letterSpacing: 0.3,
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                if (showCloseButton)
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AsmitaPalette.borderGrey),
+                      ),
+                      child: const Icon(Icons.close_rounded, size: 16, color: AsmitaPalette.deepNavy),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: contentPadding ?? const EdgeInsets.all(20),
               child: content,
             ),
-            if (actions != null && actions!.isNotEmpty) ...[
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: actions!.map((action) {
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 12),
-                    child: action,
-                  );
-                }).toList(),
+          ),
+          if (actions != null && actions!.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: AsmitaPalette.borderGrey, width: 1)),
               ),
-            ],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: actions!.map((action) => Padding(padding: const EdgeInsets.only(left: 10), child: action)).toList(),
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
