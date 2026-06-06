@@ -42,8 +42,6 @@ class AsmitaDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
     return Dialog(
       backgroundColor: Colors.white,
       elevation: 24,
@@ -54,11 +52,11 @@ class AsmitaDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Fixed Premium Highlighted Header Banner
+          // Premium Header Strip
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
-              color: AsmitaPalette.deepNavy.withValues(alpha: 0.03), // Safely moved inside the decoration block
+              color: AsmitaPalette.systemBG,
               border: const Border(
                 bottom: BorderSide(color: AsmitaPalette.borderGrey, width: 1.5),
               ),
@@ -70,7 +68,7 @@ class AsmitaDialog extends StatelessWidget {
                   child: title != null
                       ? Text(
                           title!,
-                          style: textTheme.titleLarge?.copyWith(
+                          style: const TextStyle(
                             color: AsmitaPalette.deepNavy,
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
@@ -97,6 +95,7 @@ class AsmitaDialog extends StatelessWidget {
               ],
             ),
           ),
+          // Flexible content viewport area
           Flexible(
             child: SingleChildScrollView(
               padding: contentPadding ?? const EdgeInsets.all(20),
