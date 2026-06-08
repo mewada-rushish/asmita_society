@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 
 class AsmitaPreApproveWizard extends StatefulWidget {
@@ -18,11 +19,14 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
   bool _leaveAtGate = false;
   bool _showAdvancedOptions = true; 
 
-  String _selectedDuration = '1 Hour';
+  int _selectedDurationHours = 1;
   String _selectedCompany = 'Amazon';
+  
+  // ignore: prefer_final_fields
   String _frequentValidity = '6 months';
-
-  final TextEditingController _vehicleController = TextEditingController();
+  
+  DateTime _selectedDate = DateTime.now();
+  TimeOfDay _selectedTime = TimeOfDay.now();
 
   @override
   void initState() {
@@ -36,7 +40,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
   @override
   void dispose() {
     _tabController.dispose();
-    _vehicleController.dispose();
     super.dispose();
   }
 
@@ -45,14 +48,63 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
     if (_currentStep > 0) setState(() => _currentStep--);
   }
 
+  int _getMaxAllowedHours() {
+    switch (_selectedCategory) {
+      case 'Guest': return 24;
+      case 'Visiting Help': return 12; 
+      case 'Cab':
+      case 'Delivery':
+      default: return 4; 
+    }
+  }
+
+  Color _getBrandColor(String brand) {
+    switch (brand.toLowerCase()) {
+      case 'amazon': return const Color(0xFFFF9900);
+      case 'flipkart': return const Color(0xFF2874F0);
+      case 'zomato': return const Color(0xFFCB202D);
+      case 'swiggy': return const Color(0xFFFC8019);
+      case 'uber': return Colors.black;
+      case 'ola': return const Color(0xFF37B44E);
+      case 'rapido': return const Color(0xFFF9D100);
+      case 'blinkit': return const Color(0xFFF8CB46);
+      case 'zepto': return const Color(0xFF38153A);
+      default: return AsmitaPalette.deepNavy;
+    }
+  }
+
+  // Native Date Formatter to avoid 'intl' package dependency
+  String _formatDate(DateTime date) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[date.month - 1]} ${date.day.toString().padLeft(2, '0')}, ${date.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Pure structural height expansion without cross-fade layout flashes
     return AnimatedSize(
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeInOutCubic,
       alignment: Alignment.topCenter,
-      child: _buildCurrentStep(),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          scrollbarTheme: ScrollbarThemeData(
+            thumbColor: WidgetStateProperty.all(Colors.grey.withValues(alpha: 0.2)),
+            thickness: WidgetStateProperty.all(3.0),
+            radius: const Radius.circular(10),
+          ),
+        ),
+        child: Scrollbar(
+          thumbVisibility: true,
+          child: SingleChildScrollView(
+            // Removed invalid shrinkWrap parameter here
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 4.0), 
+              child: _buildCurrentStep(),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -99,7 +151,10 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
             final cat = categories[index];
             return InkWell(
               onTap: () {
-                setState(() => _selectedCategory = cat['label'] as String);
+                setState(() {
+                  _selectedCategory = cat['label'] as String;
+                  _selectedDurationHours = 1; 
+                });
                 _nextStep();
               },
               child: Column(
@@ -127,7 +182,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
           },
         ),
         const SizedBox(height: 24),
-        // Safe Pickup Mode Banner
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -166,14 +220,13 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
   }
 
   // =========================================================================
-  // STEP 1: Form Router (Matches image_104662.png)
+  // STEP 1: Form Router 
   // =========================================================================
   Widget _buildCategoryWorkflowRouter() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Polished Architectural Header Row
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -181,28 +234,29 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
               onTap: _prevStep,
               borderRadius: BorderRadius.circular(20),
               child: const Padding(
-                padding: EdgeInsets.all(4.0),
-                child: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AsmitaPalette.deepNavy),
+                padding: EdgeInsets.only(right: 8.0, top: 4.0, bottom: 4.0),
+                child: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: AsmitaPalette.deepNavy),
               ),
             ),
-            const SizedBox(width: 8),
-            Text(
-              '$_selectedCategory Invitation',
-              style: const TextStyle(fontFamily: 'Montserrat', fontSize: 15, fontWeight: FontWeight.w700, color: AsmitaPalette.deepNavy),
+            Expanded(
+              child: Text(
+                '$_selectedCategory Invitation',
+                style: const TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy),
+              ),
             ),
           ],
         ),
         const SizedBox(height: 16),
-        // Premium Inline Tab Controller Frame
         Container(
           decoration: const BoxDecoration(
             border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0), width: 1.0)),
           ),
           child: TabBar(
             controller: _tabController,
+            indicatorSize: TabBarIndicatorSize.label, 
             indicator: const UnderlineTabIndicator(
               borderSide: BorderSide(color: AsmitaPalette.actionRed, width: 3.0),
-              insets: EdgeInsets.symmetric(horizontal: 40),
+              insets: EdgeInsets.symmetric(horizontal: 16), 
             ),
             labelColor: AsmitaPalette.deepNavy,
             unselectedLabelColor: const Color(0xFF9E9E9E),
@@ -226,36 +280,41 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildPremiumDropdown(
+        _buildBottomSheetTrigger(
           label: 'Select Days of Week',
           value: 'All days of Week',
-          options: ['All days of Week', 'Weekdays', 'Weekends'],
-          onChanged: (v) {},
+          onTap: () {}, 
         ),
         const SizedBox(height: 16),
-        _buildPremiumDropdown(
+        _buildBottomSheetTrigger(
           label: 'Select Validity',
           value: _frequentValidity,
-          options: ['1 week', '1 month', '6 months'],
-          onChanged: (v) => setState(() => _frequentValidity = v!),
+          onTap: () {}, 
         ),
         const SizedBox(height: 16),
         const Text('Select time slot', style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textDark)),
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(child: _buildTimeDropdown('00:00 am')),
+            Expanded(
+              child: _buildBottomSheetTrigger(
+                value: _selectedTime.format(context),
+                onTap: _showTimePickerSheet,
+                isPill: true,
+              ),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: _buildTimeDropdown('11:59 pm')),
+            Expanded(
+              child: _buildBottomSheetTrigger(
+                value: '11:59 PM',
+                onTap: _showTimePickerSheet,
+                isPill: true,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 16),
-        _buildPremiumDropdown(
-          label: 'Company Name',
-          value: _selectedCompany,
-          options: ['Amazon', 'Flipkart', 'Zomato', 'Swiggy', 'Other'],
-          onChanged: (v) => setState(() => _selectedCompany = v!),
-        ),
+        _buildCompanyGrid(),
         const SizedBox(height: 24),
         _buildPrimaryButton(label: 'Authorize Entry', onPressed: _nextStep),
       ],
@@ -267,7 +326,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Surprise Delivery Configuration Card
         InkWell(
           onTap: () => setState(() => _surpriseDelivery = !_surpriseDelivery),
           borderRadius: BorderRadius.circular(12),
@@ -308,21 +366,12 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text('Allow entry once in next:', style: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w500, color: AsmitaPalette.textDark)),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: AsmitaPalette.borderGrey, width: 1.2), 
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _selectedDuration,
-                  isDense: true,
-                  icon: const Icon(Icons.arrow_drop_down_rounded, color: AsmitaPalette.deepNavy, size: 20),
-                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w700, color: AsmitaPalette.deepNavy),
-                  items: ['1 Hour', '2 Hours', '4 Hours'].map((i) => DropdownMenuItem(value: i, child: Text(i))).toList(),
-                  onChanged: (v) => setState(() => _selectedDuration = v!),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 16.0),
+                child: _buildBottomSheetTrigger(
+                  value: '$_selectedDurationHours Hour${_selectedDurationHours > 1 ? 's' : ''}',
+                  onTap: _showDurationPickerSheet,
                 ),
               ),
             ),
@@ -343,7 +392,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
           ),
         ),
         
-        // Polished Expandable Parameter Layer
         AnimatedSize(
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeInOut,
@@ -367,11 +415,27 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
                 ],
               ),
               const SizedBox(height: 16),
-              _buildPremiumDropdown(
-                value: _selectedCompany,
-                options: ['Amazon', 'Swiggy', 'Zomato', 'Flipkart'],
-                onChanged: (v) => setState(() => _selectedCompany = v!),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildBottomSheetTrigger(
+                      label: 'Arrival Date',
+                      value: _formatDate(_selectedDate),
+                      onTap: _showDatePickerSheet,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildBottomSheetTrigger(
+                      label: 'Arrival Time',
+                      value: _selectedTime.format(context),
+                      onTap: _showTimePickerSheet,
+                    ),
+                  ),
+                ],
               ),
+              const SizedBox(height: 16),
+              _buildCompanyGrid(),
             ],
           ) : const SizedBox.shrink(),
         ),
@@ -405,36 +469,137 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
   }
 
   // =========================================================================
-  // REUSABLE PREMIUM UI COMPONENTS
+  // BOTTOM SHEETS & INTERACTIVE MODULES
   // =========================================================================
-  
-  Widget _buildPremiumDropdown({String? label, required String value, required List<String> options, required ValueChanged<String?> onChanged}) {
+
+  void _showDurationPickerSheet() {
+    final allowedHours = [1, 2, 4, 6, 12, 18, 24];
+    final maxLimit = _getMaxAllowedHours();
+    final validOptions = allowedHours.where((h) => h <= maxLimit).toList();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('Select Validity Duration', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
+            const SizedBox(height: 8),
+            Text('Max duration capped at $maxLimit hours for $_selectedCategory.', style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textLight)),
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: validOptions.map((hours) {
+                final isSelected = _selectedDurationHours == hours;
+                return ChoiceChip(
+                  label: Text('$hours Hour${hours > 1 ? 's' : ''}'),
+                  selected: isSelected,
+                  onSelected: (_) {
+                    setState(() => _selectedDurationHours = hours);
+                    Navigator.pop(ctx);
+                  },
+                  selectedColor: AsmitaPalette.actionRed,
+                  backgroundColor: AsmitaPalette.systemBG,
+                  labelStyle: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w600, color: isSelected ? Colors.white : AsmitaPalette.deepNavy),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: BorderSide(color: isSelected ? Colors.transparent : AsmitaPalette.borderGrey)),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDatePickerSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CalendarDatePicker(
+              initialDate: _selectedDate,
+              firstDate: DateTime.now(),
+              lastDate: DateTime.now().add(const Duration(days: 365)),
+              onDateChanged: (date) {
+                setState(() => _selectedDate = date);
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showTimePickerSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('Select Arrival Time', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 180,
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.time,
+                initialDateTime: DateTime(2026, 1, 1, _selectedTime.hour, _selectedTime.minute),
+                onDateTimeChanged: (time) {
+                  setState(() => _selectedTime = TimeOfDay.fromDateTime(time));
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildPrimaryButton(label: 'Done', onPressed: () => Navigator.pop(ctx)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomSheetTrigger({String? label, required String value, required VoidCallback onTap, bool isPill = false}) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        label != null 
-          ? Padding(
-              padding: const EdgeInsets.only(bottom: 6.0),
-              child: Text(label, style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textDark)),
-            )
-          : const SizedBox.shrink(),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), 
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: AsmitaPalette.borderGrey, width: 1.2), 
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: value,
-              isExpanded: true,
-              isDense: true,
-              icon: const Icon(Icons.arrow_drop_down_rounded, color: AsmitaPalette.deepNavy, size: 24),
-              style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy),
-              items: options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
-              onChanged: onChanged,
+        if (label != null) Padding(
+          padding: const EdgeInsets.only(bottom: 6.0),
+          child: Text(label, style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textDark)),
+        ),
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(isPill ? 24 : 12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), 
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: AsmitaPalette.borderGrey, width: 1.2), 
+              borderRadius: BorderRadius.circular(isPill ? 24 : 12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy)),
+                ),
+                const Icon(Icons.arrow_drop_down_rounded, color: AsmitaPalette.deepNavy, size: 24),
+              ],
             ),
           ),
         ),
@@ -442,25 +607,64 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
     );
   }
 
-  Widget _buildTimeDropdown(String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AsmitaPalette.borderGrey, width: 1.2),
-        borderRadius: BorderRadius.circular(24), 
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          isDense: true,
-          icon: const Icon(Icons.arrow_drop_down_rounded, color: AsmitaPalette.deepNavy, size: 24),
-          style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy),
-          items: [value].map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
-          onChanged: (v) {},
+  // =========================================================================
+  // REUSABLE PREMIUM UI COMPONENTS
+  // =========================================================================
+  
+  Widget _buildCompanyGrid() {
+    final companies = ['Amazon', 'Flipkart', 'Zomato', 'Swiggy', 'Uber', 'Ola', 'Rapido', 'Blinkit', 'Zepto', 'Other'];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Select Company Network', style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textDark)),
+        const SizedBox(height: 12),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 0.80,
+          ),
+          itemCount: companies.length,
+          itemBuilder: (ctx, i) {
+            final c = companies[i];
+            final isSel = _selectedCompany == c;
+            final brandColor = _getBrandColor(c);
+
+            return InkWell(
+              onTap: () => setState(() => _selectedCompany = c),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isSel ? brandColor.withValues(alpha: 0.05) : Colors.white,
+                  border: Border.all(color: isSel ? brandColor : AsmitaPalette.borderGrey, width: isSel ? 1.5 : 1.0),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: isSel ? brandColor : AsmitaPalette.systemBG,
+                      child: Text(c[0], style: TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.w800, fontSize: 16, color: isSel ? Colors.white : AsmitaPalette.deepNavy)),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      c,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontFamily: 'Poppins', fontSize: 10, fontWeight: isSel ? FontWeight.w700 : FontWeight.w500, color: isSel ? brandColor : AsmitaPalette.textDark),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
-      ),
+      ],
     );
   }
 
