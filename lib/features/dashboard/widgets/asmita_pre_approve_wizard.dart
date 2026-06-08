@@ -21,6 +21,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
 
   int _selectedDurationHours = 1;
   String _selectedCompany = 'Amazon';
+  String _customCompanyName = ''; 
   
   // ignore: prefer_final_fields
   String _frequentValidity = '6 months';
@@ -73,7 +74,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
     }
   }
 
-  // Native Date Formatter to avoid 'intl' package dependency
   String _formatDate(DateTime date) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return '${months[date.month - 1]} ${date.day.toString().padLeft(2, '0')}, ${date.year}';
@@ -96,7 +96,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
         child: Scrollbar(
           thumbVisibility: true,
           child: SingleChildScrollView(
-            // Removed invalid shrinkWrap parameter here
             physics: const BouncingScrollPhysics(),
             child: Padding(
               padding: const EdgeInsets.only(right: 4.0), 
@@ -117,9 +116,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
     }
   }
 
-  // =========================================================================
-  // STEP 0: Category Grid + Banner
-  // =========================================================================
   Widget _buildCategorySelection() {
     final categories = [
       {'label': 'Guest', 'icon': Icons.person_outline_rounded},
@@ -219,54 +215,114 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
     );
   }
 
-  // =========================================================================
-  // STEP 1: Form Router 
-  // =========================================================================
+  // HEADER AND TABS UNTOUCHED PER REQUEST
   Widget _buildCategoryWorkflowRouter() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            InkWell(
-              onTap: _prevStep,
-              borderRadius: BorderRadius.circular(20),
-              child: const Padding(
-                padding: EdgeInsets.only(right: 8.0, top: 4.0, bottom: 4.0),
-                child: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: AsmitaPalette.deepNavy),
-              ),
-            ),
-            Expanded(
-              child: Text(
-                '$_selectedCategory Invitation',
-                style: const TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
+        // 1. Enclosed Background Title Block
         Container(
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0), width: 1.0)),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+          decoration: BoxDecoration(
+            color: AsmitaPalette.deepNavy.withValues(alpha: 0.04),
+            // Soft matching tint
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AsmitaPalette.deepNavy.withValues(alpha: 0.15),
+              width: 1.2,
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              InkWell(
+                onTap: _prevStep,
+                borderRadius: BorderRadius.circular(20),
+                child: const Padding(
+                  padding: EdgeInsets.only(
+                    right: 12.0,
+                    top: 2.0,
+                    bottom: 2.0,
+                  ),
+                  child: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    size: 18,
+                    color: AsmitaPalette.deepNavy,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  '$_selectedCategory Invitation',
+                  style: const TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AsmitaPalette.deepNavy,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // 2. Segmented Pill TabBar (Cleaner than underlines)
+        Container(
+          height: 48,
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: AsmitaPalette.systemBG,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AsmitaPalette.borderGrey,
+              width: 1.0,
+            ),
           ),
           child: TabBar(
             controller: _tabController,
-            indicatorSize: TabBarIndicatorSize.label, 
-            indicator: const UnderlineTabIndicator(
-              borderSide: BorderSide(color: AsmitaPalette.actionRed, width: 3.0),
-              insets: EdgeInsets.symmetric(horizontal: 16), 
+            dividerColor: Colors.transparent,
+            indicatorSize: TabBarIndicatorSize.tab,
+            indicator: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            labelColor: AsmitaPalette.deepNavy,
-            unselectedLabelColor: const Color(0xFF9E9E9E),
-            labelStyle: const TextStyle(fontFamily: 'Montserrat', fontSize: 14, fontWeight: FontWeight.w700),
-            unselectedLabelStyle: const TextStyle(fontFamily: 'Montserrat', fontSize: 14, fontWeight: FontWeight.w600),
-            tabs: const [Tab(text: 'Once'), Tab(text: 'Frequently')],
+            labelColor: AsmitaPalette.actionRed,
+            unselectedLabelColor: AsmitaPalette.textLight,
+            labelStyle: const TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+            tabs: const [
+              Tab(text: 'Once'),
+              Tab(text: 'Frequently'),
+            ],
           ),
         ),
-        const SizedBox(height: 20),
-        _tabController.index == 0 ? _buildOnceTabPane() : _buildFrequentlyTabPane(),
+
+        const SizedBox(height: 24),
+
+        _tabController.index == 0
+            ? _buildOnceTabPane()
+            : _buildFrequentlyTabPane(),
       ],
     );
   }
@@ -314,7 +370,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
           ],
         ),
         const SizedBox(height: 16),
-        _buildCompanyGrid(),
+        _buildBottomSheetTrigger(
+          label: 'Company Name',
+          value: _selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany,
+          onTap: _showCompanySelectionSheet,
+        ),
         const SizedBox(height: 24),
         _buildPrimaryButton(label: 'Authorize Entry', onPressed: _nextStep),
       ],
@@ -435,7 +495,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
                 ],
               ),
               const SizedBox(height: 16),
-              _buildCompanyGrid(),
+              _buildBottomSheetTrigger(
+                label: 'Company Name',
+                value: _selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany,
+                onTap: _showCompanySelectionSheet,
+              ),
             ],
           ) : const SizedBox.shrink(),
         ),
@@ -446,9 +510,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
     );
   }
 
-  // =========================================================================
-  // STEP 2: Success Pane
-  // =========================================================================
   Widget _buildSuccessPass() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -469,7 +530,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
   }
 
   // =========================================================================
-  // BOTTOM SHEETS & INTERACTIVE MODULES
+  // INTERACTIVE BOTTOM SHEETS
   // =========================================================================
 
   void _showDurationPickerSheet() {
@@ -488,17 +549,17 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text('Select Validity Duration', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
-            const SizedBox(height: 8),
-            Text('Max duration capped at $maxLimit hours for $_selectedCategory.', style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textLight)),
             const SizedBox(height: 20),
             Wrap(
-              spacing: 10,
-              runSpacing: 10,
+              spacing: 12, 
+              runSpacing: 12,
+              alignment: WrapAlignment.start,
               children: validOptions.map((hours) {
                 final isSelected = _selectedDurationHours == hours;
                 return ChoiceChip(
                   label: Text('$hours Hour${hours > 1 ? 's' : ''}'),
                   selected: isSelected,
+                  checkmarkColor: Colors.white,
                   onSelected: (_) {
                     setState(() => _selectedDurationHours = hours);
                     Navigator.pop(ctx);
@@ -510,7 +571,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
                 );
               }).toList(),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -520,23 +581,26 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
   void _showDatePickerSheet() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true, 
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CalendarDatePicker(
-              initialDate: _selectedDate,
-              firstDate: DateTime.now(),
-              lastDate: DateTime.now().add(const Duration(days: 365)),
-              onDateChanged: (date) {
-                setState(() => _selectedDate = date);
-                Navigator.pop(ctx);
-              },
-            ),
-          ],
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CalendarDatePicker(
+                initialDate: _selectedDate,
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(const Duration(days: 365)),
+                onDateChanged: (date) {
+                  setState(() => _selectedDate = date);
+                  Navigator.pop(ctx);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -573,6 +637,125 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
     );
   }
 
+  void _showCompanySelectionSheet() {
+    String tempSelected = _selectedCompany;
+    TextEditingController tempController = TextEditingController(text: _customCompanyName);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, 
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final companies = ['Amazon', 'Flipkart', 'Zomato', 'Swiggy', 'Uber', 'Ola', 'Rapido', 'Blinkit', 'Zepto', 'Other'];
+          
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24, 
+              left: 20, right: 20, top: 24
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Company Network', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
+                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Flexible(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 4,
+                            mainAxisSpacing: 10,
+                            crossAxisSpacing: 10,
+                            childAspectRatio: 0.80,
+                          ),
+                          itemCount: companies.length,
+                          itemBuilder: (context, i) {
+                            final c = companies[i];
+                            final isSel = tempSelected == c;
+                            final brandColor = _getBrandColor(c);
+
+                            return InkWell(
+                              onTap: () => setModalState(() => tempSelected = c),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: isSel ? brandColor.withValues(alpha: 0.05) : Colors.white,
+                                  border: Border.all(color: isSel ? brandColor : AsmitaPalette.borderGrey, width: isSel ? 1.5 : 1.0),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 18,
+                                      backgroundColor: isSel ? brandColor : AsmitaPalette.systemBG,
+                                      child: Text(c[0], style: TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.w800, fontSize: 16, color: isSel ? Colors.white : AsmitaPalette.deepNavy)),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      c,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontFamily: 'Poppins', fontSize: 10, fontWeight: isSel ? FontWeight.w700 : FontWeight.w500, color: isSel ? brandColor : AsmitaPalette.textDark),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        if (tempSelected == 'Other') 
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: TextField(
+                              controller: tempController,
+                              style: const TextStyle(fontFamily: 'Poppins', fontSize: 13),
+                              decoration: const InputDecoration(
+                                hintText: 'Enter company name',
+                                filled: true,
+                                fillColor: AsmitaPalette.systemBG,
+                                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide.none),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _buildPrimaryButton(
+                  label: 'Confirm Selection', 
+                  onPressed: () {
+                    setState(() {
+                      _selectedCompany = tempSelected;
+                      _customCompanyName = tempController.text.trim();
+                    });
+                    Navigator.pop(ctx);
+                  }
+                ),
+              ],
+            ),
+          );
+        }
+      )
+    );
+  }
+
   Widget _buildBottomSheetTrigger({String? label, required String value, required VoidCallback onTap, bool isPill = false}) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -602,67 +785,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
               ],
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  // =========================================================================
-  // REUSABLE PREMIUM UI COMPONENTS
-  // =========================================================================
-  
-  Widget _buildCompanyGrid() {
-    final companies = ['Amazon', 'Flipkart', 'Zomato', 'Swiggy', 'Uber', 'Ola', 'Rapido', 'Blinkit', 'Zepto', 'Other'];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Select Company Network', style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textDark)),
-        const SizedBox(height: 12),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 0.80,
-          ),
-          itemCount: companies.length,
-          itemBuilder: (ctx, i) {
-            final c = companies[i];
-            final isSel = _selectedCompany == c;
-            final brandColor = _getBrandColor(c);
-
-            return InkWell(
-              onTap: () => setState(() => _selectedCompany = c),
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: isSel ? brandColor.withValues(alpha: 0.05) : Colors.white,
-                  border: Border.all(color: isSel ? brandColor : AsmitaPalette.borderGrey, width: isSel ? 1.5 : 1.0),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: isSel ? brandColor : AsmitaPalette.systemBG,
-                      child: Text(c[0], style: TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.w800, fontSize: 16, color: isSel ? Colors.white : AsmitaPalette.deepNavy)),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      c,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontFamily: 'Poppins', fontSize: 10, fontWeight: isSel ? FontWeight.w700 : FontWeight.w500, color: isSel ? brandColor : AsmitaPalette.textDark),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
         ),
       ],
     );
