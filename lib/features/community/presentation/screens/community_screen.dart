@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_primary_header.dart'; // Fixed absolute import
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -30,40 +31,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
     return Scaffold(
       backgroundColor: AsmitaPalette.systemBG,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        shadowColor: Colors.black.withValues(alpha: 0.05),
-        automaticallyImplyLeading: false, // Prevents default back button
-        titleSpacing: 16, // Aligns title cleanly to the left edge
-        title: Row(
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: AsmitaPalette.systemBG,
-              child: const Icon(Icons.domain_rounded, color: AsmitaPalette.actionRed, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Siddhi CHS 34 Hub', style: textTheme.titleLarge?.copyWith(fontSize: 15, fontWeight: FontWeight.w700)),
-                Text('244 Members', style: textTheme.bodyMedium?.copyWith(fontSize: 11, fontWeight: FontWeight.w500)),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(icon: const Icon(Icons.search_rounded, color: AsmitaPalette.deepNavy), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.more_vert_rounded, color: AsmitaPalette.deepNavy), onPressed: () {}),
-        ],
-      ),
       body: Column(
         children: [
+          // Unified Global Header
+          const AsmitaPrimaryHeader(
+            title: 'Siddhi CHS 34 Hub',
+            subtitle: '244 Members',
+          ),
+          
           Expanded(
             child: GestureDetector(
               onTap: () {
