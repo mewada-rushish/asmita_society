@@ -6,6 +6,7 @@ class AsmitaDialog extends StatelessWidget {
   final Widget content;
   final List<Widget>? actions;
   final EdgeInsetsGeometry? contentPadding;
+  final bool showCloseIcon;
 
   const AsmitaDialog({
     super.key,
@@ -13,6 +14,7 @@ class AsmitaDialog extends StatelessWidget {
     required this.content,
     this.actions,
     this.contentPadding,
+    this.showCloseIcon = true,
   });
 
   static Future<T?> show<T>({
@@ -22,6 +24,7 @@ class AsmitaDialog extends StatelessWidget {
     List<Widget>? actions,
     bool barrierDismissible = true,
     EdgeInsetsGeometry? contentPadding,
+    bool showCloseIcon = true,
   }) {
     return showDialog<T>(
       context: context,
@@ -32,6 +35,7 @@ class AsmitaDialog extends StatelessWidget {
         content: content,
         actions: actions,
         contentPadding: contentPadding,
+        showCloseIcon: showCloseIcon,
       ),
     );
   }
@@ -51,14 +55,29 @@ class AsmitaDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (title != null) ...[
-              Text(
-                title!,
-                style: textTheme.titleLarge?.copyWith(
-                  color: AsmitaPalette.deepNavy,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
+            if (title != null || showCloseIcon) ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (title != null)
+                    Expanded(
+                      child: Text(
+                        title!,
+                        style: textTheme.titleLarge?.copyWith(
+                          color: AsmitaPalette.deepNavy,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    )
+                  else
+                    const Spacer(),
+                  if (showCloseIcon)
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: const Icon(Icons.close_rounded, color: AsmitaPalette.deepNavy, size: 24),
+                    ),
+                ],
               ),
               const SizedBox(height: 16),
             ],

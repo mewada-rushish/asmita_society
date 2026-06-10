@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
-import 'facility_booking/club_house.dart';
-import 'facility_booking/gym_booking.dart';
+import 'facility_showcase_template.dart';
+import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 
 class FacilityBookings extends StatelessWidget {
   const FacilityBookings({super.key});
@@ -34,9 +34,16 @@ class FacilityBookings extends StatelessWidget {
               title: 'Clubhouse',
               availability: 'Available',
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ClubhouseShowcase()),
+                AsmitaDialog.show(
+                  context: context,
+                  title: 'Clubhouse',
+                  content: FacilityShowcaseTemplate(
+                    imagePath: 'assets/images/clubhouse.avif',
+                    title: 'Elite Clubhouse & Gym',
+                    description: 'Experience premium amenities including a state-of-the-art gym, swimming pool, and indoor games area. Open daily from 6:00 AM to 10:00 PM.',
+                    buttonText: 'Book a Slot',
+                    onButtonPressed: () {},
+                  ),
                 );
               },
             ),
@@ -45,14 +52,50 @@ class FacilityBookings extends StatelessWidget {
               title: 'Community Gym', 
               availability: 'Slots Full',
                 onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const GymBookingShowcase()),
+                AsmitaDialog.show(
+                  context: context,
+                  title: 'Community Gym',
+                  content: FacilityShowcaseTemplate(
+                    imagePath: 'assets/images/clubhouse.avif',
+                    title: 'Community Gym',
+                    description: 'Stay fit and healthy at our fully-equipped community gym. Features modern cardio machines, free weights, and dedicated yoga spaces. Open daily from 5:00 AM to 11:00 PM.',
+                    buttonText: 'Book a Slot',
+                    onButtonPressed: () {},
+                  ),
                 );
               },
               ),
-            const _ServiceCard(icon: Icons.pool_rounded, title: 'Swimming Pool', availability: 'Maintenance'),
-            const _ServiceCard(icon: Icons.celebration_rounded, title: 'Party Hall', availability: 'Available'),
+             _ServiceCard(icon: Icons.pool_rounded, title: 'Swimming Pool', availability: 'Maintenance',onTap: () => {
+              AsmitaDialog.show(
+                  context: context,
+                  title: 'Swimming Pool',
+                  content: FacilityShowcaseTemplate(
+                    imagePath: 'assets/images/clubhouse.avif',
+                    title: 'Swimming Pool',
+                    description: 'The swimming pool is currently under maintenance. We apologize for the inconvenience and will notify you once it is available for booking again.',
+                    buttonText: 'Notify Me',
+                    onButtonPressed: () {},
+                  ),
+                )
+             },),
+             _ServiceCard(
+               icon: Icons.celebration_rounded, 
+               title: 'Party Hall', 
+               availability: 'Available',
+               onTap: () {
+                 AsmitaDialog.show(
+                   context: context,
+                   title: 'Party Hall',
+                   content: FacilityShowcaseTemplate(
+                     imagePath: 'assets/images/clubhouse.avif',
+                     title: 'Grand Party Hall',
+                     description: 'Host your special events and celebrations in our spacious Party Hall. Equipped with elegant lighting, seating arrangements, and catering space. Available for booking up to 10:00 PM.',
+                     buttonText: 'Book a Slot',
+                     onButtonPressed: () {},
+                   ),
+                 );
+               },
+             ),
           ],
         ),
       ],
