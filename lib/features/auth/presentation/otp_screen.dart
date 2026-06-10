@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/design_system.dart';
 import '../../../core/widgets/asmita_toast.dart';
+import '../../dashboard/presentation/main_dashboard_screen.dart'; // Added dashboard routing import
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -88,9 +89,7 @@ class _OtpScreenState extends State<OtpScreen> {
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
-                builder: (_) => Scaffold(
-                  body: Center(child: Text('Dashboard for ${state.user.userType}')),
-                ),
+                builder: (_) => MainDashboardScreen(userRole: state.user.userType), // Fixed placeholder navigation to match architecture roles
               ),
               (route) => false,
             );
