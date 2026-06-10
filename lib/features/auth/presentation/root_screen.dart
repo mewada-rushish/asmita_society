@@ -21,12 +21,19 @@ class _RootScreenState extends State<RootScreen> {
   @override
   void initState() {
     super.initState();
+    // Dispatch event to check auth state on start
     context.read<AuthBloc>().add(AuthCheckRequested());
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AuthBloc, AuthState>(
+      // Prevents unmounting screens during transitional steps like loading or OTP dispatch
+      buildWhen: (previous, current) =>
+          current is AuthAuthenticated ||
+          current is AuthNeedsOnboarding ||
+          current is AuthUnauthenticated ||
+          current is AuthError,
       listener: (context, state) {
         if (state is AuthAuthenticated || 
             state is AuthUnauthenticated || 

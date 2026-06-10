@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
+import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
+import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/core/utils/dashboard_scroll_physics.dart';
+import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
 
 class OwnerDashboardView extends StatefulWidget {
   const OwnerDashboardView({super.key});
@@ -19,6 +22,16 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
     super.dispose();
   }
 
+  void _showPreApproveModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const AsmitaDialog(
+        title: 'Pre-Approve Entry',
+        content: AsmitaPreApproveWizard(), // Plugs in our dynamic wizard safely
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -27,7 +40,11 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          _buildFixedHeader(context),
+          const AsmitaPrimaryHeader(
+            title: 'Siddhi CHS 34',
+            subtitle: 'Premium Mode',
+            userInitials: 'RM',
+          ),
           Expanded(
             child: Container(
               color: AsmitaPalette.systemBG,
@@ -120,52 +137,6 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
     );
   }
 
-  Widget _buildFixedHeader(BuildContext context) {
-    final topPadding = MediaQuery.viewPaddingOf(context).top;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      color: AsmitaPalette.systemBG,
-      padding: EdgeInsets.only(top: topPadding > 0 ? topPadding + 8 : 24, bottom: 12, left: 16, right: 16),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-            child: const Center(child: Icon(Icons.blur_on_rounded, color: AsmitaPalette.actionRed, size: 20)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Siddhi CHS 34', style: textTheme.titleLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w700)),
-                    const SizedBox(width: 2),
-                    Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.deepNavy.withValues(alpha: 0.8), size: 18),
-                  ],
-                ),
-                Text('Premium Mode', style: textTheme.bodyMedium?.copyWith(fontSize: 11, fontWeight: FontWeight.w500)),
-              ],
-            ),
-          ),
-          IconButton(icon: const Icon(Icons.search_rounded, color: AsmitaPalette.deepNavy, size: 24), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.chat_bubble_outline_rounded, color: AsmitaPalette.deepNavy, size: 22), onPressed: () {}),
-          const SizedBox(width: 4),
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: AsmitaPalette.deepNavy,
-            child: Text('RM', style: textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildCommunityPostsHeader(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Padding(
@@ -215,7 +186,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildGridItem(context, Icons.person_add_alt_1_rounded, 'Pre-Approve', badgeLabel: 'Safe mode'),
+              _buildGridItem(context, Icons.person_add_alt_1_rounded, 'Pre-Approve', badgeLabel: 'Safe mode', onTap: () => _showPreApproveModal(context)),
               _buildGridItem(context, Icons.local_police_outlined, 'Security'),
               _buildGridItem(context, Icons.quiz_outlined, 'Ask Society'),
               _buildGridItem(context, Icons.dynamic_feed_rounded, 'Posts', notificationCount: 9),
@@ -351,36 +322,42 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
     );
   }
 
-  Widget _buildGridItem(BuildContext context, IconData icon, String label, {String? badgeLabel, int? notificationCount, Color iconColor = AsmitaPalette.deepNavy, bool isUtilityButton = false}) {
+  Widget _buildGridItem(BuildContext context, IconData icon, String label, {String? badgeLabel, int? notificationCount, Color iconColor = AsmitaPalette.deepNavy, bool isUtilityButton = false, VoidCallback? onTap}) {
     final textTheme = Theme.of(context).textTheme;
     return SizedBox(
       width: 78,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: isUtilityButton ? Border.all(color: AsmitaPalette.borderGrey, width: 1.5) : null,
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: isUtilityButton ? Border.all(color: AsmitaPalette.borderGrey, width: 1.5) : null,
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+                  ),
+                  child: Icon(icon, color: isUtilityButton ? AsmitaPalette.actionRed : iconColor, size: 24),
                 ),
-                child: Icon(icon, color: isUtilityButton ? AsmitaPalette.actionRed : iconColor, size: 24),
-              ),
-              if (badgeLabel != null)
-                Positioned(top: -6, left: -4, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: const Color(0xFF5E35B1), borderRadius: BorderRadius.circular(6)), child: Text(badgeLabel.toUpperCase(), style: textTheme.bodyMedium?.copyWith(color: Colors.white, fontSize: 7, fontWeight: FontWeight.w800, letterSpacing: 0.3)))),
-              if (notificationCount != null)
-                Positioned(top: -4, right: -4, child: Container(padding: const EdgeInsets.all(4), decoration: const BoxDecoration(color: AsmitaPalette.actionRed, shape: BoxShape.circle), constraints: const BoxConstraints(minWidth: 18, minHeight: 18), child: Text('$notificationCount', style: textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold), textAlign: TextAlign.center))),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(label, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: textTheme.bodyLarge?.copyWith(fontSize: 11, fontWeight: FontWeight.w600, height: 1.2)),
-        ],
+                if (badgeLabel != null)
+                  Positioned(top: -6, left: -4, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: const Color(0xFF5E35B1), borderRadius: BorderRadius.circular(6)), child: Text(badgeLabel.toUpperCase(), style: textTheme.bodyMedium?.copyWith(color: Colors.white, fontSize: 7, fontWeight: FontWeight.w800, letterSpacing: 0.3)))),
+                if (notificationCount != null)
+                  Positioned(top: -4, right: -4, child: Container(padding: const EdgeInsets.all(4), decoration: const BoxDecoration(color: AsmitaPalette.actionRed, shape: BoxShape.circle), constraints: const BoxConstraints(minWidth: 18, minHeight: 18), child: Text('$notificationCount', style: textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold), textAlign: TextAlign.center))),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(label, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: textTheme.bodyLarge?.copyWith(fontSize: 11, fontWeight: FontWeight.w600, height: 1.2)),
+          ],
+        ),
       ),
     );
   }
