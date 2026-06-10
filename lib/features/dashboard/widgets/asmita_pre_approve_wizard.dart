@@ -15,6 +15,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
   
   // Custom Flow States
   late TabController _tabController;
+  final ScrollController _scrollController = ScrollController(); // Added to resolve framework assertion crash
   bool _surpriseDelivery = true; 
   bool _leaveAtGate = false;
   bool _showAdvancedOptions = true; 
@@ -22,6 +23,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
   int _selectedDurationHours = 1;
   String _selectedCompany = 'Amazon';
   String _customCompanyName = ''; 
+  String _selectedDaysOfWeek = 'All days of Week'; // State bound variable
+  List<bool> _customDaysSelected = [true, true, true, true, true, true, true]; // Tracks alarm-style selected days [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
   
   // ignore: prefer_final_fields
   String _frequentValidity = '6 months';
@@ -41,6 +44,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
   @override
   void dispose() {
     _tabController.dispose();
+    _scrollController.dispose(); // Safely disposing scroll controller
     super.dispose();
   }
 
@@ -74,6 +78,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
     }
   }
 
+  // Native Date Formatter
   String _formatDate(DateTime date) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return '${months[date.month - 1]} ${date.day.toString().padLeft(2, '0')}, ${date.year}';
@@ -94,8 +99,10 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
           ),
         ),
         child: Scrollbar(
+          controller: _scrollController, // Wired explicit ScrollController
           thumbVisibility: true,
           child: SingleChildScrollView(
+            controller: _scrollController, // Wired explicit ScrollController
             physics: const BouncingScrollPhysics(),
             child: Padding(
               padding: const EdgeInsets.only(right: 4.0), 
@@ -116,6 +123,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
     }
   }
 
+  // =========================================================================
+  // STEP 0: Category Grid + Banner
+  // =========================================================================
   Widget _buildCategorySelection() {
     final categories = [
       {'label': 'Guest', 'icon': Icons.person_outline_rounded},
@@ -215,7 +225,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
     );
   }
 
-  // HEADER AND TABS UNTOUCHED PER REQUEST
+  // =========================================================================
+  // STEP 1: Form Router (Header and tabs untouched per request)
+  // =========================================================================
   Widget _buildCategoryWorkflowRouter() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -223,18 +235,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
       children: [
         // 1. Enclosed Background Title Block
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: AsmitaPalette.deepNavy.withValues(alpha: 0.04),
-            // Soft matching tint
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AsmitaPalette.deepNavy.withValues(alpha: 0.15),
-              width: 1.2,
-            ),
+            border: Border.all(color: AsmitaPalette.deepNavy.withValues(alpha: 0.15), width: 1.2),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -243,46 +248,29 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
                 onTap: _prevStep,
                 borderRadius: BorderRadius.circular(20),
                 child: const Padding(
-                  padding: EdgeInsets.only(
-                    right: 12.0,
-                    top: 2.0,
-                    bottom: 2.0,
-                  ),
-                  child: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: 18,
-                    color: AsmitaPalette.deepNavy,
-                  ),
+                  padding: EdgeInsets.only(right: 12.0, top: 2.0, bottom: 2.0),
+                  child: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AsmitaPalette.deepNavy),
                 ),
               ),
               Expanded(
                 child: Text(
                   '$_selectedCategory Invitation',
-                  style: const TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AsmitaPalette.deepNavy,
-                  ),
+                  style: const TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy),
                 ),
               ),
             ],
           ),
         ),
-
         const SizedBox(height: 20),
 
-        // 2. Segmented Pill TabBar (Cleaner than underlines)
+        // 2. Segmented Pill TabBar
         Container(
           height: 48,
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             color: AsmitaPalette.systemBG,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AsmitaPalette.borderGrey,
-              width: 1.0,
-            ),
+            border: Border.all(color: AsmitaPalette.borderGrey, width: 1.0),
           ),
           child: TabBar(
             controller: _tabController,
@@ -292,37 +280,18 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
               boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2)),
               ],
             ),
             labelColor: AsmitaPalette.actionRed,
             unselectedLabelColor: AsmitaPalette.textLight,
-            labelStyle: const TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-            ),
-            unselectedLabelStyle: const TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-            tabs: const [
-              Tab(text: 'Once'),
-              Tab(text: 'Frequently'),
-            ],
+            labelStyle: const TextStyle(fontFamily: 'Montserrat', fontSize: 14, fontWeight: FontWeight.w800),
+            unselectedLabelStyle: const TextStyle(fontFamily: 'Montserrat', fontSize: 14, fontWeight: FontWeight.w600),
+            tabs: const [Tab(text: 'Once'), Tab(text: 'Frequently')],
           ),
         ),
-
         const SizedBox(height: 24),
-
-        _tabController.index == 0
-            ? _buildOnceTabPane()
-            : _buildFrequentlyTabPane(),
+        _tabController.index == 0 ? _buildOnceTabPane() : _buildFrequentlyTabPane(),
       ],
     );
   }
@@ -338,14 +307,14 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
       children: [
         _buildBottomSheetTrigger(
           label: 'Select Days of Week',
-          value: 'All days of Week',
-          onTap: () {}, 
+          value: _selectedDaysOfWeek,
+          onTap: _showDaysOfWeekPickerSheet, 
         ),
         const SizedBox(height: 16),
         _buildBottomSheetTrigger(
           label: 'Select Validity',
           value: _frequentValidity,
-          onTap: () {}, 
+          onTap: _showValidityPickerSheet, 
         ),
         const SizedBox(height: 16),
         const Text('Select time slot', style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textDark)),
@@ -510,6 +479,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
     );
   }
 
+  // =========================================================================
+  // STEP 2: Success Pane
+  // =========================================================================
   Widget _buildSuccessPass() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -530,8 +502,193 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
   }
 
   // =========================================================================
-  // INTERACTIVE BOTTOM SHEETS
+  // FUNCTIONAL INTERACTIVE BOTTOM SHEETS 
   // =========================================================================
+
+  void _showDaysOfWeekPickerSheet() {
+    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    List<bool> tempSelected = List.from(_customDaysSelected);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Select Days of Week', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: AsmitaPalette.deepNavy, size: 20),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  // Quick Presets Row
+                  Row(
+                    children: [
+                      ActionChip(
+                        label: const Text('All', style: TextStyle(fontFamily: 'Poppins', fontSize: 11, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy)),
+                        backgroundColor: AsmitaPalette.systemBG,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide.none), // Fixed syntax typo here
+                        onPressed: () {
+                          setModalState(() {
+                            tempSelected = [true, true, true, true, true, true, true];
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      ActionChip(
+                        label: const Text('Weekdays', style: TextStyle(fontFamily: 'Poppins', fontSize: 11, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy)),
+                        backgroundColor: AsmitaPalette.systemBG,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide.none), // Fixed syntax typo here
+                        onPressed: () {
+                          setModalState(() {
+                            tempSelected = [true, true, true, true, true, false, false];
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      ActionChip(
+                        label: const Text('Weekends', style: TextStyle(fontFamily: 'Poppins', fontSize: 11, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy)),
+                        backgroundColor: AsmitaPalette.systemBG,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide.none), // Fixed syntax typo here
+                        onPressed: () {
+                          setModalState(() {
+                            tempSelected = [false, false, false, false, false, true, true];
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  // Alarm-Style Circular Selectors Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(7, (index) {
+                      final dayLetter = days[index][0];
+                      final isSelected = tempSelected[index];
+                      return GestureDetector(
+                        onTap: () {
+                          setModalState(() {
+                            tempSelected[index] = !tempSelected[index];
+                          });
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.systemBG,
+                            border: Border.all(
+                              color: isSelected ? Colors.transparent : AsmitaPalette.borderGrey,
+                              width: 1,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            dayLetter,
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 32),
+                  _buildPrimaryButton(
+                    label: 'Confirm Days', 
+                    onPressed: () {
+                      setState(() {
+                        _customDaysSelected = List.from(tempSelected);
+                        final selectedCount = tempSelected.where((val) => val).length;
+                        if (selectedCount == 7) {
+                          _selectedDaysOfWeek = 'All days of Week';
+                        } else if (selectedCount == 5 && tempSelected[0] && tempSelected[1] && tempSelected[2] && tempSelected[3] && tempSelected[4] && !tempSelected[5] && !tempSelected[6]) {
+                          _selectedDaysOfWeek = 'Weekdays';
+                        } else if (selectedCount == 2 && !tempSelected[0] && !tempSelected[1] && !tempSelected[2] && !tempSelected[3] && !tempSelected[4] && tempSelected[5] && tempSelected[6]) {
+                          _selectedDaysOfWeek = 'Weekends';
+                        } else if (selectedCount == 0) {
+                          _selectedDaysOfWeek = 'None selected';
+                        } else {
+                          final selectedNames = <String>[];
+                          for (int i = 0; i < 7; i++) {
+                            if (tempSelected[i]) {
+                              selectedNames.add(days[i]);
+                            }
+                          }
+                          _selectedDaysOfWeek = selectedNames.join(', ');
+                        }
+                      });
+                      Navigator.pop(ctx);
+                    }
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+      )
+    );
+  }
+
+  void _showValidityPickerSheet() {
+    final options = ['1 week', '1 month', '6 months'];
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('Select Validity', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
+              const SizedBox(height: 20),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: options.map((opt) {
+                  final isSelected = _frequentValidity == opt;
+                  return ChoiceChip(
+                    label: Text(opt),
+                    selected: isSelected,
+                    checkmarkColor: Colors.white,
+                    onSelected: (_) {
+                      setState(() => _frequentValidity = opt);
+                      Navigator.pop(ctx);
+                    },
+                    selectedColor: AsmitaPalette.actionRed,
+                    backgroundColor: AsmitaPalette.systemBG,
+                    labelStyle: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w600, color: isSelected ? Colors.white : AsmitaPalette.deepNavy),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: BorderSide(color: isSelected ? Colors.transparent : AsmitaPalette.borderGrey)),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   void _showDurationPickerSheet() {
     final allowedHours = [1, 2, 4, 6, 12, 18, 24];
@@ -542,37 +699,39 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text('Select Validity Duration', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
-            const SizedBox(height: 20),
-            Wrap(
-              spacing: 12, 
-              runSpacing: 12,
-              alignment: WrapAlignment.start,
-              children: validOptions.map((hours) {
-                final isSelected = _selectedDurationHours == hours;
-                return ChoiceChip(
-                  label: Text('$hours Hour${hours > 1 ? 's' : ''}'),
-                  selected: isSelected,
-                  checkmarkColor: Colors.white,
-                  onSelected: (_) {
-                    setState(() => _selectedDurationHours = hours);
-                    Navigator.pop(ctx);
-                  },
-                  selectedColor: AsmitaPalette.actionRed,
-                  backgroundColor: AsmitaPalette.systemBG,
-                  labelStyle: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w600, color: isSelected ? Colors.white : AsmitaPalette.deepNavy),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: BorderSide(color: isSelected ? Colors.transparent : AsmitaPalette.borderGrey)),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 24),
-          ],
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('Select Validity Duration', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
+              const SizedBox(height: 20),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: validOptions.map((hours) {
+                  final isSelected = _selectedDurationHours == hours;
+                  return ChoiceChip(
+                    label: Text('$hours Hour${hours > 1 ? 's' : ''}'),
+                    selected: isSelected,
+                    checkmarkColor: Colors.white,
+                    onSelected: (_) {
+                      setState(() => _selectedDurationHours = hours);
+                      Navigator.pop(ctx);
+                    },
+                    selectedColor: AsmitaPalette.actionRed,
+                    backgroundColor: AsmitaPalette.systemBG,
+                    labelStyle: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w600, color: isSelected ? Colors.white : AsmitaPalette.deepNavy),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: BorderSide(color: isSelected ? Colors.transparent : AsmitaPalette.borderGrey)),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
@@ -611,27 +770,30 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text('Select Arrival Time', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 180,
-              child: CupertinoDatePicker(
-                mode: CupertinoDatePickerMode.time,
-                initialDateTime: DateTime(2026, 1, 1, _selectedTime.hour, _selectedTime.minute),
-                onDateTimeChanged: (time) {
-                  setState(() => _selectedTime = TimeOfDay.fromDateTime(time));
-                },
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('Select Arrival Time', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 180,
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.time,
+                  initialDateTime: DateTime(2026, 1, 1, _selectedTime.hour, _selectedTime.minute),
+                  onDateTimeChanged: (time) {
+                    setState(() => _selectedTime = TimeOfDay.fromDateTime(time));
+                  },
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            _buildPrimaryButton(label: 'Done', onPressed: () => Navigator.pop(ctx)),
-          ],
+              const SizedBox(height: 16),
+              _buildPrimaryButton(label: 'Done', onPressed: () => Navigator.pop(ctx)),
+            ],
+          ),
         ),
       ),
     );
@@ -652,7 +814,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
           
           return Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24, 
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + MediaQuery.of(ctx).padding.bottom + 24, 
               left: 20, right: 20, top: 24
             ),
             child: Column(
