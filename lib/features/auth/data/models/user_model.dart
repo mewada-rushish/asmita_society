@@ -23,15 +23,19 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      userId: json['user_id'] ?? 0,
-      fullName: json['full_name'] ?? '',
-      userType: json['user_type'] ?? 'resident',
-      accountType: json['account_type'] ?? 'app',
-      societyId: json['society_id'],
-      emailId: json['email_id'],
-      mobileNumber: json['mobile_number'],
-      gender: json['gender'],
-      profilePictureUrl: json['profile_picture_url'],
+      userId: json['user_id'] is int
+          ? json['user_id'] as int
+          : int.tryParse(json['user_id']?.toString() ?? '') ?? 0,
+      fullName: json['full_name']?.toString() ?? '',
+      userType: json['user_type']?.toString() ?? 'resident',
+      accountType: json['account_type']?.toString() ?? 'app',
+      societyId: json['society_id'] is int
+          ? json['society_id'] as int
+          : int.tryParse(json['society_id']?.toString() ?? ''),
+      emailId: json['email_id']?.toString(),
+      mobileNumber: json['mobile_number']?.toString(),
+      gender: json['gender']?.toString(),
+      profilePictureUrl: json['profile_picture_url']?.toString(),
     );
   }
 

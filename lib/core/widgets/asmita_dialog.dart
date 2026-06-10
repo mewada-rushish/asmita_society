@@ -6,7 +6,6 @@ class AsmitaDialog extends StatelessWidget {
   final Widget content;
   final List<Widget>? actions;
   final EdgeInsetsGeometry? contentPadding;
-  final bool showCloseIcon;
 
   const AsmitaDialog({
     super.key,
@@ -14,7 +13,6 @@ class AsmitaDialog extends StatelessWidget {
     required this.content,
     this.actions,
     this.contentPadding,
-    this.showCloseIcon = true,
   });
 
   static Future<T?> show<T>({
@@ -24,26 +22,22 @@ class AsmitaDialog extends StatelessWidget {
     List<Widget>? actions,
     bool barrierDismissible = true,
     EdgeInsetsGeometry? contentPadding,
-    bool showCloseIcon = true,
   }) {
     return showDialog<T>(
       context: context,
       barrierDismissible: barrierDismissible,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
+      barrierColor: AsmitaPalette.deepNavy.withValues(alpha: 0.4),
       builder: (context) => AsmitaDialog(
         title: title,
         content: content,
         actions: actions,
         contentPadding: contentPadding,
-        showCloseIcon: showCloseIcon,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
     return Dialog(
       backgroundColor: Colors.white,
       elevation: 10,
@@ -55,29 +49,14 @@ class AsmitaDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (title != null || showCloseIcon) ...[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (title != null)
-                    Expanded(
-                      child: Text(
-                        title!,
-                        style: textTheme.titleLarge?.copyWith(
-                          color: AsmitaPalette.deepNavy,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    )
-                  else
-                    const Spacer(),
-                  if (showCloseIcon)
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: const Icon(Icons.close_rounded, color: AsmitaPalette.deepNavy, size: 24),
-                    ),
-                ],
+            if (title != null) ...[
+              Text(
+                title!,
+                style: textTheme.titleLarge?.copyWith(
+                  color: AsmitaPalette.deepNavy,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 16),
             ],
@@ -85,20 +64,20 @@ class AsmitaDialog extends StatelessWidget {
               padding: contentPadding ?? EdgeInsets.zero,
               child: content,
             ),
-            if (actions != null && actions!.isNotEmpty) ...[
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: actions!.map((action) {
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 12),
-                    child: action,
-                  );
-                }).toList(),
+          ),
+          if (actions != null && actions!.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: AsmitaPalette.borderGrey, width: 1)),
               ),
-            ],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: actions!.map((action) => Padding(padding: const EdgeInsets.only(left: 10), child: action)).toList(),
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
