@@ -16,9 +16,13 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
   // Custom Flow States
   late TabController _tabController;
   final ScrollController _scrollController = ScrollController(); // Added to resolve framework assertion crash
-  bool _surpriseDelivery = true; 
+  
+  bool _surpriseDelivery = false; // Changed to false by default
+  bool _secureCabMode = false; // Changed to false by default
+  final TextEditingController _cabNoController = TextEditingController(); 
+  
   bool _leaveAtGate = false;
-  bool _showAdvancedOptions = true; 
+  bool _showAdvancedOptions = false; // Changed to false by default for cleaner UI
 
   int _selectedDurationHours = 1;
   String _selectedCompany = 'Amazon';
@@ -44,7 +48,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
   @override
   void dispose() {
     _tabController.dispose();
-    _scrollController.dispose(); // Safely disposing scroll controller
+    _scrollController.dispose(); 
+    _cabNoController.dispose(); 
     super.dispose();
   }
 
@@ -99,10 +104,10 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
           ),
         ),
         child: Scrollbar(
-          controller: _scrollController, // Wired explicit ScrollController
+          controller: _scrollController, 
           thumbVisibility: true,
           child: SingleChildScrollView(
-            controller: _scrollController, // Wired explicit ScrollController
+            controller: _scrollController, 
             physics: const BouncingScrollPhysics(),
             child: Padding(
               padding: const EdgeInsets.only(right: 4.0), 
@@ -155,7 +160,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
           itemCount: categories.length,
           itemBuilder: (context, index) {
             final cat = categories[index];
-            return InkWell(
+            return GestureDetector(
               onTap: () {
                 setState(() {
                   _selectedCategory = cat['label'] as String;
@@ -163,6 +168,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
                 });
                 _nextStep();
               },
+              behavior: HitTestBehavior.opaque,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -226,7 +232,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
   }
 
   // =========================================================================
-  // STEP 1: Form Router (Header and tabs untouched per request)
+  // STEP 1: Form Router
   // =========================================================================
   Widget _buildCategoryWorkflowRouter() {
     return Column(
@@ -244,9 +250,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              InkWell(
+              GestureDetector(
                 onTap: _prevStep,
-                borderRadius: BorderRadius.circular(20),
+                behavior: HitTestBehavior.opaque,
                 child: const Padding(
                   padding: EdgeInsets.only(right: 12.0, top: 2.0, bottom: 2.0),
                   child: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AsmitaPalette.deepNavy),
@@ -297,7 +303,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
   }
 
   Widget _buildOnceTabPane() {
-    return _buildDeliveryOnceLayout(); 
+    return _buildOnceLayout(); 
   }
 
   Widget _buildFrequentlyTabPane() {
@@ -350,46 +356,108 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
     );
   }
 
-  Widget _buildDeliveryOnceLayout() {
+  Widget _buildOnceLayout() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        InkWell(
-          onTap: () => setState(() => _surpriseDelivery = !_surpriseDelivery),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF6F5FD), 
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.transparent),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  _surpriseDelivery ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
-                  color: const Color(0xFF4A3498), 
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Surprise Delivery', style: TextStyle(fontFamily: 'Montserrat', fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF2C1F5C))),
-                      SizedBox(height: 4),
-                      Text('Prevents active entry alerts to other flat members.', style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: Color(0xFF6B5DA8), height: 1.3)),
-                    ],
+        // DYNAMIC FEATURE BLOCK: Surprise Delivery
+        if (_selectedCategory == 'Delivery') ...[
+          GestureDetector(
+            onTap: () => setState(() => _surpriseDelivery = !_surpriseDelivery),
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF6F5FD), 
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.transparent),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    _surpriseDelivery ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
+                    color: const Color(0xFF4A3498), 
+                    size: 20,
                   ),
-                ),
-                const Icon(Icons.card_giftcard_rounded, color: Color(0xFFB39DDB), size: 36), 
-              ],
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Surprise Delivery', style: TextStyle(fontFamily: 'Montserrat', fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF2C1F5C))),
+                        SizedBox(height: 4),
+                        Text('Prevents active entry alerts to other flat members.', style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: Color(0xFF6B5DA8), height: 1.3)),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.card_giftcard_rounded, color: Color(0xFFB39DDB), size: 36), 
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 20),
+          const SizedBox(height: 20),
+        ],
+
+        // DYNAMIC FEATURE BLOCK: Secure Cab Identity
+        if (_selectedCategory == 'Cab') ...[
+          GestureDetector(
+            onTap: () => setState(() => _secureCabMode = !_secureCabMode),
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF6F5FD), 
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.transparent),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    _secureCabMode ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
+                    color: const Color(0xFF4A3498), 
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Safe Pickup Mode', style: TextStyle(fontFamily: 'Montserrat', fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF2C1F5C))),
+                        SizedBox(height: 4),
+                        Text('Guard directs cab to nearest parking. Driver won\'t know flat details.', style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: Color(0xFF6B5DA8), height: 1.3)),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.shield_rounded, color: Color(0xFFB39DDB), size: 36), 
+                ],
+              ),
+            ),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            child: _secureCabMode 
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 12.0),
+                  child: TextField(
+                    controller: _cabNoController,
+                    textCapitalization: TextCapitalization.characters,
+                    style: const TextStyle(fontFamily: 'Poppins', fontSize: 13),
+                    decoration: const InputDecoration(
+                      hintText: 'Enter Cab No. (e.g., MH 02 AB 1234)',
+                      filled: true,
+                      fillColor: AsmitaPalette.systemBG,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide.none),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 20),
+        ],
 
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -406,18 +474,28 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
             ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12), // Adjusted bottom margin slightly to give breathing room to the accordion
 
         GestureDetector(
           onTap: () => setState(() => _showAdvancedOptions = !_showAdvancedOptions),
-          child: Row(
-            children: [
-              Icon(_showAdvancedOptions ? Icons.arrow_drop_down_rounded : Icons.arrow_right_rounded, color: AsmitaPalette.actionRed, size: 20),
-              Text(
-                _showAdvancedOptions ? 'Hide Parameters' : 'Advanced Options',
-                style: const TextStyle(fontFamily: 'Montserrat', fontSize: 12, fontWeight: FontWeight.w700, color: AsmitaPalette.actionRed),
-              ),
-            ],
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Advanced Options',
+                  style: TextStyle(fontFamily: 'Montserrat', fontSize: 13, fontWeight: FontWeight.w700, color: AsmitaPalette.actionRed),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  _showAdvancedOptions ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded, 
+                  color: AsmitaPalette.actionRed, 
+                  size: 22,
+                ),
+              ],
+            ),
           ),
         ),
         
@@ -428,20 +506,24 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  InkWell(
-                    onTap: () => setState(() => _leaveAtGate = !_leaveAtGate),
-                    child: Icon(
-                      _leaveAtGate ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
-                      color: _leaveAtGate ? AsmitaPalette.actionRed : Colors.grey.shade600,
-                      size: 22,
-                    ),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () => setState(() => _leaveAtGate = !_leaveAtGate),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _leaveAtGate ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
+                        color: _leaveAtGate ? AsmitaPalette.actionRed : Colors.grey.shade600,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 12),
+                      const Text('Leave at Gate option auto-auth', style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.textLight)),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  const Text('Leave at Gate option auto-auth', style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.textLight)),
-                ],
+                ),
               ),
               const SizedBox(height: 16),
               Row(
@@ -540,7 +622,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
                       ActionChip(
                         label: const Text('All', style: TextStyle(fontFamily: 'Poppins', fontSize: 11, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy)),
                         backgroundColor: AsmitaPalette.systemBG,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide.none), // Fixed syntax typo here
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide.none), 
                         onPressed: () {
                           setModalState(() {
                             tempSelected = [true, true, true, true, true, true, true];
@@ -551,7 +633,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
                       ActionChip(
                         label: const Text('Weekdays', style: TextStyle(fontFamily: 'Poppins', fontSize: 11, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy)),
                         backgroundColor: AsmitaPalette.systemBG,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide.none), // Fixed syntax typo here
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide.none), 
                         onPressed: () {
                           setModalState(() {
                             tempSelected = [true, true, true, true, true, false, false];
@@ -562,7 +644,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
                       ActionChip(
                         label: const Text('Weekends', style: TextStyle(fontFamily: 'Poppins', fontSize: 11, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy)),
                         backgroundColor: AsmitaPalette.systemBG,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide.none), // Fixed syntax typo here
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide.none), 
                         onPressed: () {
                           setModalState(() {
                             tempSelected = [false, false, false, false, false, true, true];
@@ -850,9 +932,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
                             final isSel = tempSelected == c;
                             final brandColor = _getBrandColor(c);
 
-                            return InkWell(
+                            return GestureDetector(
                               onTap: () => setModalState(() => tempSelected = c),
-                              borderRadius: BorderRadius.circular(12),
+                              behavior: HitTestBehavior.opaque,
                               child: Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
@@ -927,9 +1009,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
           padding: const EdgeInsets.only(bottom: 6.0),
           child: Text(label, style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textDark)),
         ),
-        InkWell(
+        GestureDetector(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(isPill ? 24 : 12),
+          behavior: HitTestBehavior.opaque,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), 
             decoration: BoxDecoration(
