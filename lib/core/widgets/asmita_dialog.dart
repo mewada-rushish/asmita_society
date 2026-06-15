@@ -38,6 +38,8 @@ class AsmitaDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Dialog(
       backgroundColor: Colors.white,
       elevation: 10,
@@ -64,7 +66,6 @@ class AsmitaDialog extends StatelessWidget {
               padding: contentPadding ?? EdgeInsets.zero,
               child: content,
             ),
-          ),
           if (actions != null && actions!.isNotEmpty) ...[
             Container(
               padding: const EdgeInsets.all(16),
@@ -79,6 +80,7 @@ class AsmitaDialog extends StatelessWidget {
           ],
         ],
       ),
+        ),
     );
   }
 }
