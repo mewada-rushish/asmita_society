@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
-import 'facility_showcase_template.dart';
+import 'asmita_facility_booking_wizard.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 
 class FacilityBookings extends StatelessWidget {
@@ -30,20 +30,13 @@ class FacilityBookings extends StatelessWidget {
           childAspectRatio: 1.4,
           children: [
             _ServiceCard(
-              icon: Icons.sports_tennis_rounded,
-              title: 'Clubhouse',
+              icon: Icons.celebration_rounded,
+              title: 'Banquet Hall',
               availability: 'Available',
               onTap: () {
                 AsmitaDialog.show(
                   context: context,
-                  title: 'Clubhouse',
-                  content: FacilityShowcaseTemplate(
-                    imagePath: 'assets/images/clubhouse.avif',
-                    title: 'Elite Clubhouse & Gym',
-                    description: 'Experience premium amenities including a state-of-the-art gym, swimming pool, and indoor games area. Open daily from 6:00 AM to 10:00 PM.',
-                    buttonText: 'Book a Slot',
-                    onButtonPressed: () {},
-                  ),
+                  content: const AsmitaFacilityBookingWizard(initialFacility: 'Banquet Hall'),
                 );
               },
             ),
@@ -54,51 +47,130 @@ class FacilityBookings extends StatelessWidget {
                 onTap: () {
                 AsmitaDialog.show(
                   context: context,
-                  title: 'Community Gym',
-                  content: FacilityShowcaseTemplate(
-                    imagePath: 'assets/images/clubhouse.avif',
-                    title: 'Community Gym',
-                    description: 'Stay fit and healthy at our fully-equipped community gym. Features modern cardio machines, free weights, and dedicated yoga spaces. Open daily from 5:00 AM to 11:00 PM.',
-                    buttonText: 'Book a Slot',
-                    onButtonPressed: () {},
-                  ),
+                  content: const AsmitaFacilityBookingWizard(initialFacility: 'Community Gym'),
                 );
               },
               ),
              _ServiceCard(icon: Icons.pool_rounded, title: 'Swimming Pool', availability: 'Maintenance',onTap: () => {
               AsmitaDialog.show(
                   context: context,
-                  title: 'Swimming Pool',
-                  content: FacilityShowcaseTemplate(
-                    imagePath: 'assets/images/clubhouse.avif',
-                    title: 'Swimming Pool',
-                    description: 'The swimming pool is currently under maintenance. We apologize for the inconvenience and will notify you once it is available for booking again.',
-                    buttonText: 'Notify Me',
-                    onButtonPressed: () {},
-                  ),
+                  content: const AsmitaFacilityBookingWizard(initialFacility: 'Swimming Pool'),
                 )
              },),
              _ServiceCard(
-               icon: Icons.celebration_rounded, 
-               title: 'Party Hall', 
+               icon: Icons.self_improvement_rounded,
+               title: 'Yoga Studio', 
                availability: 'Available',
                onTap: () {
                  AsmitaDialog.show(
                    context: context,
-                   title: 'Party Hall',
-                   content: FacilityShowcaseTemplate(
-                     imagePath: 'assets/images/clubhouse.avif',
-                     title: 'Grand Party Hall',
-                     description: 'Host your special events and celebrations in our spacious Party Hall. Equipped with elegant lighting, seating arrangements, and catering space. Available for booking up to 10:00 PM.',
-                     buttonText: 'Book a Slot',
-                     onButtonPressed: () {},
-                   ),
+                  content: const AsmitaFacilityBookingWizard(initialFacility: 'Yoga Studio'),
                  );
                },
              ),
           ],
         ),
+        const SizedBox(height: 16),
+        Center(
+          child: InkWell(
+            onTap: () => _showAllFacilitiesSheet(context),
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'View All Facilities',
+                    style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.actionRed, fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                  const Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.actionRed, size: 18),
+                ],
+              ),
+            ),
+          ),
+        ),
       ],
+    );
+  }
+
+  void _showAllFacilitiesSheet(BuildContext context) {
+    final allFacilities = [
+      // {'title': 'Clubhouse', 'icon': Icons.sports_tennis_rounded, 'availability': 'Available'},
+      {'title': 'Banquet Hall', 'icon': Icons.celebration_rounded, 'availability': 'Available'},
+      {'title': 'Community Gym', 'icon': Icons.fitness_center_rounded, 'availability': 'Slots Full'},
+      {'title': 'Swimming Pool', 'icon': Icons.pool_rounded, 'availability': 'Maintenance'},
+      {'title': 'Yoga Studio', 'icon': Icons.self_improvement_rounded, 'availability': 'Available'},
+      // {'title': 'Tennis Court', 'icon': Icons.sports_tennis_rounded, 'availability': 'Slots Full'},
+      // {'title': 'Badminton Court', 'icon': Icons.sports_tennis_rounded, 'availability': 'Available'},
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => SafeArea(
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (_, scrollController) => Padding(
+            padding: const EdgeInsets.only(top: 24, left: 24, right: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'All Facilities',
+                      style: TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close_rounded, color: AsmitaPalette.deepNavy),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: GridView.builder(
+                    controller: scrollController,
+                    physics: const BouncingScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 1.4,
+                    ),
+                    itemCount: allFacilities.length,
+                    itemBuilder: (context, index) {
+                      final fac = allFacilities[index];
+                      return _ServiceCard(
+                        icon: fac['icon'] as IconData,
+                        title: fac['title'] as String,
+                        availability: fac['availability'] as String,
+                        onTap: () {
+                          if (fac['availability'] == 'Available') {
+                            Navigator.pop(ctx);
+                            AsmitaDialog.show(context: context, content: AsmitaFacilityBookingWizard(initialFacility: fac['title'] as String));
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${fac['title']} is currently ${fac['availability']}.'), behavior: SnackBarBehavior.floating));
+                          }
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
