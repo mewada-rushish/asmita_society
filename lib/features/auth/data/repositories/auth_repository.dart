@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../../../core/config/env_config.dart';
 import '../models/auth_response.dart';
@@ -17,7 +18,8 @@ class AuthRepository {
         data: {'mobile': mobile},
       );
 
-      return response.statusCode == 200 && response.data['status'] == 'success';
+      final data = _ensureMap(response.data);
+      return response.statusCode == 200 && data['status'] == 'success';
     } on DioException catch (e) {
       throw _parseError(e, 'Failed to initiate login.');
     }
@@ -32,7 +34,7 @@ class AuthRepository {
         data: {'mobile': mobile, 'otp': otp},
       );
 
-      final data = response.data;
+      final data = _ensureMap(response.data);
       if (data['status'] == 'registration_required' || data['is_new_user'] == true) {
         throw Exception('REGISTRATION_REQUIRED');
       }
@@ -45,8 +47,8 @@ class AuthRepository {
     } on DioException catch (e) {
       // Logic to handle 401 as a registration signal rather than a network failure
       if (e.response?.statusCode == 401) {
-        final data = e.response?.data;
-        if (data != null && (data['status'] == 'registration_required' || data['is_new_user'] == true)) {
+        final data = _ensureMap(e.response?.data);
+        if (data.isNotEmpty && (data['status'] == 'registration_required' || data['is_new_user'] == true)) {
           throw Exception('REGISTRATION_REQUIRED');
         }
       }
@@ -83,15 +85,32 @@ class AuthRepository {
         },
       );
 
-      return AuthResponse.fromJson(response.data);
+      final data = _ensureMap(response.data);
+      return AuthResponse.fromJson(data);
     } on DioException catch (e) {
       throw _parseError(e, 'Registration request failed.');
     }
   }
 
+  /// Safely converts response data into a Map, even if it arrived as a String or List.
+  Map<String, dynamic> _ensureMap(dynamic data) {
+    if (data == null) return {};
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    if (data is String && data.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(data);
+        if (decoded is Map<String, dynamic>) return decoded;
+        if (decoded is Map) return Map<String, dynamic>.from(decoded);
+      } catch (_) {}
+    }
+    return {};
+  }
+
   /// Centralized error parser to handle Dio exceptions consistently.
   Exception _parseError(DioException e, String defaultMessage) {
-    final message = e.response?.data?['message'] ?? e.message;
+    final data = _ensureMap(e.response?.data);
+    final message = data['message'] ?? e.message;
     return Exception(message ?? defaultMessage);
   }
 }
