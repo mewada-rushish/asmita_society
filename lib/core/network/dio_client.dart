@@ -7,7 +7,7 @@ class AsmitaDioClient {
   final SecureStorageService secureStorage;
 
   AsmitaDioClient(this.secureStorage) : dio = Dio() {
-    dio.options.baseUrl = 'https://societyapi.asmitagroup.com';
+    dio.options.baseUrl = 'https://admin.myasmita.com';
     dio.options.connectTimeout = const Duration(seconds: 15);
     dio.options.receiveTimeout = const Duration(seconds: 15);
     
@@ -19,9 +19,9 @@ class AsmitaDioClient {
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final publicPaths = [
-          '/api/auth/login/initiate', 
-          '/api/auth/login/verify', 
-          '/api/auth/register'
+          '/api/auth/otp/initiate', 
+          '/api/auth/otp/verify', 
+          '/api/auth/otp/register'
         ];
         final isPublic = publicPaths.any((path) => options.path.contains(path));
 

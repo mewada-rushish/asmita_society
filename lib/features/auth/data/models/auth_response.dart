@@ -17,8 +17,11 @@ class AuthResponse {
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     return AuthResponse(
       status: json['status'] ?? 'error',
-      token: json['token'] ?? '',
-      data: json['data'] != null ? UserModel.fromJson(json['data']) : null,
+      token: json['token'] ?? json['access_token'] ?? '',
+      // Check for 'data' key or fallback to 'user' key commonly used in APIs
+      data: json['data'] != null 
+          ? UserModel.fromJson(json['data']) 
+          : (json['user'] != null ? UserModel.fromJson(json['user']) : null),
     );
   }
 }
