@@ -10,6 +10,22 @@ class FacilityBookings extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
+    void onFacilityTap(String title, String availability) {
+      if (availability == 'Available') {
+        AsmitaDialog.show(
+          context: context,
+          content: AsmitaFacilityBookingWizard(initialFacility: title),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$title is currently $availability.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -33,40 +49,25 @@ class FacilityBookings extends StatelessWidget {
               icon: Icons.celebration_rounded,
               title: 'Banquet Hall',
               availability: 'Available',
-              onTap: () {
-                AsmitaDialog.show(
-                  context: context,
-                  content: const AsmitaFacilityBookingWizard(initialFacility: 'Banquet Hall'),
-                );
-              },
+              onTap: () => onFacilityTap('Banquet Hall', 'Available'),
             ),
             _ServiceCard(
               icon: Icons.fitness_center_rounded, 
               title: 'Community Gym', 
               availability: 'Slots Full',
-                onTap: () {
-                AsmitaDialog.show(
-                  context: context,
-                  content: const AsmitaFacilityBookingWizard(initialFacility: 'Community Gym'),
-                );
-              },
-              ),
-             _ServiceCard(icon: Icons.pool_rounded, title: 'Swimming Pool', availability: 'Maintenance',onTap: () => {
-              AsmitaDialog.show(
-                  context: context,
-                  content: const AsmitaFacilityBookingWizard(initialFacility: 'Swimming Pool'),
-                )
-             },),
+              onTap: () => onFacilityTap('Community Gym', 'Slots Full'),
+            ),
+            _ServiceCard(
+              icon: Icons.pool_rounded, 
+              title: 'Swimming Pool', 
+              availability: 'Maintenance',
+              onTap: () => onFacilityTap('Swimming Pool', 'Maintenance'),
+            ),
              _ServiceCard(
                icon: Icons.self_improvement_rounded,
                title: 'Yoga Studio', 
                availability: 'Available',
-               onTap: () {
-                 AsmitaDialog.show(
-                   context: context,
-                  content: const AsmitaFacilityBookingWizard(initialFacility: 'Yoga Studio'),
-                 );
-               },
+               onTap: () => onFacilityTap('Yoga Studio', 'Available'),
              ),
           ],
         ),

@@ -5,6 +5,7 @@ import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/core/utils/dashboard_scroll_physics.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
+import 'package:asmita_society/features/dashboard/widgets/asmita_security_wizard.dart';
 
 class OwnerDashboardView extends StatefulWidget {
   const OwnerDashboardView({super.key});
@@ -28,6 +29,16 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
       builder: (context) => const AsmitaDialog(
         title: 'Pre-Approve Entry',
         content: AsmitaPreApproveWizard(), // Plugs in our dynamic wizard safely
+      ),
+    );
+  }
+
+  void _showSecurityModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const AsmitaDialog(
+        title: 'Security Assistance',
+        content: AsmitaSecurityWizard(),
       ),
     );
   }
@@ -187,7 +198,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildGridItem(context, Icons.person_add_alt_1_rounded, 'Pre-Approve', badgeLabel: 'Safe mode', onTap: () => _showPreApproveModal(context)),
-              _buildGridItem(context, Icons.local_police_outlined, 'Security'),
+              _buildGridItem(context, Icons.local_police_outlined, 'Security', onTap: () => _showSecurityModal(context)),
               _buildGridItem(context, Icons.quiz_outlined, 'Ask Society'),
               _buildGridItem(context, Icons.dynamic_feed_rounded, 'Posts', notificationCount: 9),
             ],
