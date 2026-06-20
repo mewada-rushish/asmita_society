@@ -18,24 +18,27 @@ class MainDashboardScreen extends StatefulWidget {
 
 class _MainDashboardScreenState extends State<MainDashboardScreen> {
   int _currentIndex = 0;
-  late final List<Widget> _screens;
 
-  @override
-  void initState() {
-    super.initState();
-    _screens = [
-      _resolveRoleBasedHomeView(widget.userRole), // Index 0: Home View
-      const ServicesScreen(),                     // Index 1: Services Grid
-      const CommunityScreen(),                    // Index 2: Society Chat
-      const VisitorHistoryScreen(),               // Index 3: Gate Records
-      MenuScreen(userRole: widget.userRole),      // Index 4: Settings Profile
-    ];
-  }
+  // By using a getter, the callback is dynamically bound to setState
+  List<Widget> get _screens => [
+    _resolveRoleBasedHomeView(widget.userRole), // Index 0: Home View
+    const ServicesScreen(),                     // Index 1: Services Grid
+    const CommunityScreen(),                    // Index 2: Society Chat (Target!)
+    const VisitorHistoryScreen(),               // Index 3: Gate Records
+    MenuScreen(userRole: widget.userRole),      // Index 4: Settings Profile
+  ];
 
   Widget _resolveRoleBasedHomeView(String role) {
     switch (role.toLowerCase()) {
       case 'owner':
-        return const OwnerDashboardView();
+        return OwnerDashboardView(
+          // 4. This catches the tap from Ask Society and switches tabs!
+          onNavigateToCommunity: () {
+            setState(() {
+              _currentIndex = 2; 
+            });
+          },
+        );
       case 'tenant':
         return const TenantDashboardView();
       default:
