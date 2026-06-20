@@ -6,9 +6,17 @@ import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/core/utils/dashboard_scroll_physics.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_security_wizard.dart';
+import 'package:asmita_society/features/services/presentation/screens/daily_help_screen.dart';
+import 'package:asmita_society/features/dashboard/widgets/asmita_raise_alert_wizard.dart';
 
 class OwnerDashboardView extends StatefulWidget {
-  const OwnerDashboardView({super.key});
+  // 1. We define a callback to talk to the parent screen
+  final VoidCallback? onNavigateToCommunity; 
+
+  const OwnerDashboardView({
+    super.key, 
+    this.onNavigateToCommunity, // 2. Add it to the constructor
+  });
 
   @override
   State<OwnerDashboardView> createState() => _OwnerDashboardViewState();
@@ -28,7 +36,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
       context: context,
       builder: (context) => const AsmitaDialog(
         title: 'Pre-Approve Entry',
-        content: AsmitaPreApproveWizard(), // Plugs in our dynamic wizard safely
+        content: AsmitaPreApproveWizard(),
       ),
     );
   }
@@ -42,6 +50,16 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
       ),
     );
   }
+
+  void _showRaiseAlertModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const AsmitaDialog(
+        title: 'Emergency Broadcast',
+        content: AsmitaRaiseAlertWizard(),
+      ),
+    );
+  } 
 
   @override
   Widget build(BuildContext context) {
@@ -199,7 +217,14 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
             children: [
               _buildGridItem(context, Icons.person_add_alt_1_rounded, 'Pre-Approve', badgeLabel: 'Safe mode', onTap: () => _showPreApproveModal(context)),
               _buildGridItem(context, Icons.local_police_outlined, 'Security', onTap: () => _showSecurityModal(context)),
-              _buildGridItem(context, Icons.quiz_outlined, 'Ask Society'),
+              
+              _buildGridItem(
+                context, 
+                Icons.quiz_outlined, 
+                'Ask Society', 
+                onTap: widget.onNavigateToCommunity, 
+              ),
+
               _buildGridItem(context, Icons.dynamic_feed_rounded, 'Posts', notificationCount: 9),
             ],
           ),
@@ -209,8 +234,26 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildGridItem(context, Icons.credit_card_rounded, 'Pay Bills'),
-              _buildGridItem(context, Icons.face_retouching_natural_rounded, 'Find Daily Help'),
-              _buildGridItem(context, Icons.gpp_bad_outlined, 'Raise Alert', iconColor: AsmitaPalette.actionRed),
+              _buildGridItem(
+                context, 
+                Icons.face_retouching_natural_rounded, 
+                'Find Daily Help',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DailyHelpScreen(),
+                    ),
+                  );
+                },
+              ),
+              _buildGridItem(
+                context, 
+                Icons.gpp_bad_outlined, 
+                'Raise Alert', 
+                iconColor: AsmitaPalette.actionRed,
+                onTap: () => _showRaiseAlertModal(context),
+              ),
               _buildGridItem(context, Icons.add_rounded, 'View More', isUtilityButton: true),
             ],
           ),
@@ -218,7 +261,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
       ),
     );
   }
-
+  
   Widget _buildGateSyncModule(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Padding(

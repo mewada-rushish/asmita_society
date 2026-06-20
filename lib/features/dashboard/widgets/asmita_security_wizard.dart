@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AsmitaSecurityWizard extends StatefulWidget {
   const AsmitaSecurityWizard({super.key});
@@ -9,8 +10,9 @@ class AsmitaSecurityWizard extends StatefulWidget {
 }
 
 class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
-  int _currentStep = 0;
+  int _currentStep = 0; // 0: Main Selection, 1: Emergency Sub-Selection, 2: Details Form, 3: Confirmation
   String _selectedAction = 'Raise Alert';
+  String _selectedEmergencyType = '';
   bool _allowKidExit = false;
 
   final TextEditingController _vehicleController = TextEditingController();
@@ -19,11 +21,12 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
   @override
   void dispose() {
     _vehicleController.dispose();
+    _noteController.dispose();
     super.dispose();
   }
 
   void _nextStep() {
-    if (_currentStep < 2) {
+    if (_currentStep < 3) {
       setState(() => _currentStep++);
     } else {
       Navigator.pop(context);
@@ -32,7 +35,16 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
 
   void _prevStep() {
     if (_currentStep > 0) {
-      setState(() => _currentStep--);
+      setState(() {
+        // Safe navigation back tracking structure
+        if (_currentStep == 3 && _selectedAction == 'Raise Alert') {
+          _currentStep = 1;
+        } else if (_currentStep == 2) {
+          _currentStep = 0;
+        } else {
+          _currentStep = 0;
+        }
+      });
     }
   }
 
@@ -64,7 +76,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
           ),
           const SizedBox(width: 8),
           Text(
-            'Security Assistant',
+            _currentStep == 1 ? 'Emergency Broadcast' : 'Security Assistant',
             style: const TextStyle(
               fontFamily: 'Montserrat',
               fontSize: 16,
@@ -82,8 +94,10 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
       case 0:
         return _buildActionSelection();
       case 1:
-        return _buildDetailsForm();
+        return _buildEmergencySubSelection();
       case 2:
+        return _buildDetailsForm();
+      case 3:
         return _buildConfirmationBanner();
       default:
         return _buildActionSelection();
@@ -92,15 +106,15 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
 
   Widget _buildActionSelection() {
     final actions = [
-      'Raise Alert',
-      'Call Security',
-      'Search Vehicle',
-      'Allow Kid Exit',
+      {'label': 'Raise Alert', 'icon': Icons.warning_amber_rounded},
+      {'label': 'Call Security', 'icon': Icons.local_police_rounded},
+      {'label': 'Search Vehicle', 'icon': Icons.directions_car_rounded},
+      {'label': 'Allow Kid Exit', 'icon': Icons.child_care_rounded},
     ];
 
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
           'Choose a security request',
@@ -111,81 +125,187 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
             color: AsmitaPalette.deepNavy,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         const Text(
-          'Select one of the actions below and provide a few details to notify security.',
+          'Tap an icon to select the action, then continue to provide details.',
           style: TextStyle(
             fontFamily: 'Poppins',
             fontSize: 13,
             color: AsmitaPalette.textLight,
-            height: 1.5,
+            height: 1.4,
           ),
         ),
-        const SizedBox(height: 20),
-        ...actions.map((action) => _buildOptionCard(action)),
         const SizedBox(height: 24),
-        _buildPrimaryButton(label: 'Continue', onPressed: _nextStep),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: actions.map((item) {
+            final label = item['label'] as String;
+            final icon = item['icon'] as IconData;
+            final selected = _selectedAction == label;
+
+            return SizedBox(
+              width: 76,
+              child: InkWell(
+                onTap: () {
+                  setState(() => _selectedAction = label);
+                  if (label == 'Call Security') {
+                    _promptCallSecurity();
+                  } else if (label == 'Raise Alert') {
+                    setState(() => _currentStep = 1); 
+                  } else {
+                    setState(() => _currentStep = 2); 
+                  }
+                },
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 58,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: selected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Icon(
+                          icon,
+                          color: selected ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy,
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AsmitaPalette.textDark,
+                        height: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 12),
       ],
     );
   }
 
-  Widget _buildOptionCard(String action) {
-    final selected = _selectedAction == action;
-    final icons = {
-      'Raise Alert': Icons.warning_amber_rounded,
-      'Call Security': Icons.local_police_rounded,
-      'Search Vehicle': Icons.directions_car_rounded,
-      'Allow Kid Exit': Icons.child_care_rounded,
-    };
+  Widget _buildEmergencySubSelection() {
+    final emergencies = [
+      {'label': 'Fire Outbreak', 'icon': Icons.local_fire_department_rounded},
+      {'label': 'Stuck in Lift', 'icon': Icons.elevator_rounded},
+      {'label': 'Animal Threat', 'icon': Icons.pets_rounded},
+      {'label': 'Visitor Threat', 'icon': Icons.gpp_bad_rounded},
+    ];
 
-    return GestureDetector(
-      onTap: () => setState(() => _selectedAction = action),
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: selected ? AsmitaPalette.systemBG : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
-            width: selected ? 1.6 : 1.2,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Select Critical Emergency',
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AsmitaPalette.textLight,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: selected ? AsmitaPalette.actionRed.withValues(alpha: 0.12) : AsmitaPalette.systemBG,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icons[action], color: selected ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy, size: 24),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                action,
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: selected ? AsmitaPalette.deepNavy : AsmitaPalette.textDark,
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: emergencies.map((item) {
+            final label = item['label'] as String;
+            final icon = item['icon'] as IconData;
+            final selected = _selectedEmergencyType == label;
+
+            return SizedBox(
+              width: 76,
+              child: InkWell(
+                onTap: () {
+                  setState(() {
+                    _selectedAction = 'Raise Alert'; // Crucial explicitly locked parameter state flag
+                    _selectedEmergencyType = label;
+                    _currentStep = 3; // Routes straight into the custom check success banner block!
+                  });
+                },
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 58,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: selected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Icon(
+                          icon,
+                          color: AsmitaPalette.actionRed,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AsmitaPalette.textDark,
+                        height: 1.2,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            if (selected) const Icon(Icons.check_circle_rounded, color: AsmitaPalette.actionRed, size: 20),
-          ],
+            );
+          }).toList(),
         ),
-      ),
+        const SizedBox(height: 12),
+      ],
     );
   }
 
@@ -242,13 +362,12 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
           ),
           const SizedBox(height: 8),
         ],
-        if (_selectedAction == 'Raise Alert' || _selectedAction == 'Call Security')
-          _buildTextField(
-            label: 'Add a quick note',
-            hint: 'e.g. suspicious visitor near gate',
-            controller: _noteController,
-            onChanged: (_) {},
-          ),
+        _buildTextField(
+          label: 'Add a quick note',
+          hint: 'e.g. please open gate for parcel delivery',
+          controller: _noteController,
+          onChanged: (_) {},
+        ),
         const SizedBox(height: 24),
         _buildPrimaryButton(label: 'Send to Security', onPressed: _nextStep),
       ],
@@ -282,6 +401,10 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
     );
   }
 
+  String _getHeadlineLabel() {
+    return _selectedAction == 'Raise Alert' ? _selectedEmergencyType : _selectedAction;
+  }
+
   String _getActionDescription() {
     switch (_selectedAction) {
       case 'Call Security':
@@ -291,7 +414,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
       case 'Allow Kid Exit':
         return 'Authorize the child to leave with an escort and inform the guard.';
       default:
-        return 'Send a quick alert to security for any urgent concern or suspicious activity.';
+        return 'Send a priority $_selectedEmergencyType alert straight to security for instant assistance.';
     }
   }
 
@@ -312,7 +435,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
         ),
         const SizedBox(height: 10),
         Text(
-          '$_selectedAction request has been shared with security.',
+          '${_getHeadlineLabel()} request has been shared with security.',
           textAlign: TextAlign.center,
           style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.textLight, height: 1.5),
         ),
@@ -334,6 +457,42 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
           elevation: 0,
         ),
         child: Text(label, style: const TextStyle(fontFamily: 'Montserrat', color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
+      ),
+    );
+  }
+
+  Future<void> _callSecurityNumber() async {
+    final Uri telUri = Uri(scheme: 'tel', path: '+911234567890');
+    try {
+      final bool launched = await launchUrl(telUri);
+      if (!launched) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to place call')));
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to place call')));
+    }
+  }
+
+  void _promptCallSecurity() {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.removeCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text('Call guard at +911234567890?'),
+        duration: const Duration(seconds: 6),
+        action: SnackBarAction(
+          label: 'Call',
+          textColor: Colors.white,
+          onPressed: () {
+            _callSecurityNumber();
+            setState(() {
+              _selectedAction = 'Call Security';
+              _currentStep = 3; 
+            });
+          },
+        ),
       ),
     );
   }
