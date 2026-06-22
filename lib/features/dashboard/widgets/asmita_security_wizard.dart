@@ -486,6 +486,8 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
           label: 'Call',
           textColor: Colors.white,
           onPressed: () {
+            messenger.hideCurrentSnackBar();
+            
             _callSecurityNumber();
             setState(() {
               _selectedAction = 'Call Security';

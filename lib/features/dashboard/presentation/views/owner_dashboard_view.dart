@@ -8,6 +8,7 @@ import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wiz
 import 'package:asmita_society/features/dashboard/widgets/asmita_security_wizard.dart';
 import 'package:asmita_society/features/services/presentation/screens/daily_help_screen.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_raise_alert_wizard.dart';
+import 'package:asmita_society/features/dashboard/presentation/screens/view_more_screen.dart';
 
 class OwnerDashboardView extends StatefulWidget {
   // 1. We define a callback to talk to the parent screen
@@ -254,7 +255,15 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                 iconColor: AsmitaPalette.actionRed,
                 onTap: () => _showRaiseAlertModal(context),
               ),
-              _buildGridItem(context, Icons.add_rounded, 'View More', isUtilityButton: true),
+              _buildGridItem(context, Icons.add_rounded, 'View More', isUtilityButton: true ,
+              onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ViewMoreScreen(),
+                ),
+              );
+            },),
             ],
           ),
         ],
