@@ -19,23 +19,30 @@ class MainDashboardScreen extends StatefulWidget {
 class _MainDashboardScreenState extends State<MainDashboardScreen> {
   int _currentIndex = 0;
 
-  // By using a getter, the callback is dynamically bound to setState
-  List<Widget> get _screens => [
-    _resolveRoleBasedHomeView(widget.userRole), // Index 0: Home View
-    const ServicesScreen(),                     // Index 1: Services Grid
-    const CommunityScreen(),                    // Index 2: Society Chat (Target!)
-    const VisitorHistoryScreen(),               // Index 3: Gate Records
-    MenuScreen(userRole: widget.userRole),      // Index 4: Settings Profile
-  ];
+  // FIXED: Changed from a static getter to an active builder method. 
+  // This guarantees that when setState updates _currentIndex, the layout shifts immediately.
+  List<Widget> _buildScreens() {
+    return [
+      _resolveRoleBasedHomeView(widget.userRole), // Index 0: Home View
+      const ServicesScreen(),                     // Index 1: Services Grid
+      const CommunityScreen(),                    // Index 2: Society Chat
+      const VisitorHistoryScreen(),               // Index 3: Gate Records
+      MenuScreen(userRole: widget.userRole),      // Index 4: Settings Profile
+    ];
+  }
 
   Widget _resolveRoleBasedHomeView(String role) {
     switch (role.toLowerCase()) {
       case 'owner':
         return OwnerDashboardView(
-          // 4. This catches the tap from Ask Society and switches tabs!
           onNavigateToCommunity: () {
             setState(() {
               _currentIndex = 2; 
+            });
+          },
+          onNavigateToHistory: () {
+            setState(() {
+              _currentIndex = 3; // Natively activates the History tab layout block
             });
           },
         );
@@ -52,7 +59,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       backgroundColor: Colors.white,
       body: IndexedStack(
         index: _currentIndex,
-        children: _screens,
+        children: _buildScreens(), // Dynamic structural rendering update
       ),
       bottomNavigationBar: AsmitaBottomNavBar(
         currentIndex: _currentIndex,

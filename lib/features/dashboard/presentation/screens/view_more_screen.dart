@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
+// Import your global bottom navigation bar widget
+import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart'; 
 import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_security_wizard.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_raise_alert_wizard.dart';
 import 'package:asmita_society/features/services/presentation/screens/daily_help_screen.dart';
 
 class ViewMoreScreen extends StatelessWidget {
-  const ViewMoreScreen({super.key});
+  final Function(int)? onNavigationItemSelected;
+
+  const ViewMoreScreen({
+    super.key,
+    this.onNavigationItemSelected,
+  });
 
   void _showPreApproveModal(BuildContext context) {
     showDialog(
@@ -41,8 +48,6 @@ class ViewMoreScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
@@ -67,7 +72,7 @@ class ViewMoreScreen extends StatelessWidget {
                     children: [
                       Text(
                         'All Services',
-                        style: textTheme.titleLarge?.copyWith(
+                        style: const TextStyle(
                           fontSize: 18, 
                           fontWeight: FontWeight.w700, 
                           color: AsmitaPalette.deepNavy,
@@ -76,7 +81,7 @@ class ViewMoreScreen extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         'Siddhi CHS 34 Directory',
-                        style: textTheme.bodyMedium?.copyWith(
+                        style: const TextStyle(
                           fontSize: 12, 
                           color: AsmitaPalette.textLight, 
                           fontWeight: FontWeight.w500,
@@ -157,6 +162,17 @@ class ViewMoreScreen extends StatelessWidget {
           ),
         ],
       ),
+      
+      // UPDATED: Now leveraging your reusable global navigation component
+      bottomNavigationBar: AsmitaBottomNavBar(
+        currentIndex: 3, // hardcoded to index 3 so Services highlights as active
+        onTap: (index) {
+          if (index != 3) {
+            Navigator.pop(context); // Safely clears route memory history stack
+            onNavigationItemSelected?.call(index); // Syncs back into your main dashboard shell container
+          }
+        },
+      ),
     );
   }
 
@@ -233,7 +249,7 @@ class ViewMoreScreen extends StatelessWidget {
           Container(
             width: 52,
             height: 52,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AsmitaPalette.systemBG,
               shape: BoxShape.circle,
             ),

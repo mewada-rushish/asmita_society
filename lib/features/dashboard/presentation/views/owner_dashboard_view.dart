@@ -9,14 +9,16 @@ import 'package:asmita_society/features/dashboard/widgets/asmita_security_wizard
 import 'package:asmita_society/features/services/presentation/screens/daily_help_screen.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_raise_alert_wizard.dart';
 import 'package:asmita_society/features/dashboard/presentation/screens/view_more_screen.dart';
+import 'package:asmita_society/features/visitor_management/presentation/screens/visitor_history_screen.dart';
 
 class OwnerDashboardView extends StatefulWidget {
-  // 1. We define a callback to talk to the parent screen
   final VoidCallback? onNavigateToCommunity; 
+  final VoidCallback? onNavigateToHistory; 
 
   const OwnerDashboardView({
     super.key, 
-    this.onNavigateToCommunity, // 2. Add it to the constructor
+    this.onNavigateToCommunity, 
+    this.onNavigateToHistory,
   });
 
   @override
@@ -112,7 +114,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
+                            color: Colors.black.withOpacity(0.04),
                             blurRadius: 16,
                             offset: const Offset(0, -6),
                           ),
@@ -218,14 +220,12 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
             children: [
               _buildGridItem(context, Icons.person_add_alt_1_rounded, 'Pre-Approve', badgeLabel: 'Safe mode', onTap: () => _showPreApproveModal(context)),
               _buildGridItem(context, Icons.local_police_outlined, 'Security', onTap: () => _showSecurityModal(context)),
-              
               _buildGridItem(
                 context, 
                 Icons.quiz_outlined, 
                 'Ask Society', 
                 onTap: widget.onNavigateToCommunity, 
               ),
-
               _buildGridItem(context, Icons.dynamic_feed_rounded, 'Posts', notificationCount: 9),
             ],
           ),
@@ -255,15 +255,20 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                 iconColor: AsmitaPalette.actionRed,
                 onTap: () => _showRaiseAlertModal(context),
               ),
-              _buildGridItem(context, Icons.add_rounded, 'View More', isUtilityButton: true ,
-              onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ViewMoreScreen(),
-                ),
-              );
-            },),
+              _buildGridItem(
+                context, 
+                Icons.add_rounded, 
+                'View More', 
+                isUtilityButton: true,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ViewMoreScreen(),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         ],
@@ -288,11 +293,20 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text("Today's Entry Updates", style: textTheme.titleLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700)),
-                Row(
-                  children: [
-                    Text('View All', style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.actionRed, fontSize: 13, fontWeight: FontWeight.w600)),
-                    const Icon(Icons.chevron_right_rounded, color: AsmitaPalette.actionRed, size: 16),
-                  ],
+                InkWell(
+                  onTap: () {
+                    if (widget.onNavigateToHistory != null) {
+                      widget.onNavigateToHistory!();
+                    }
+                  },
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  child: Row(
+                    children: [
+                      Text('View All', style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.actionRed, fontSize: 13, fontWeight: FontWeight.w600)),
+                      const Icon(Icons.chevron_right_rounded, color: AsmitaPalette.actionRed, size: 16),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -328,7 +342,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: AsmitaPalette.actionRed.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: AsmitaPalette.actionRed.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
               child: const Icon(Icons.assignment_outlined, color: AsmitaPalette.actionRed, size: 22),
             ),
             const SizedBox(width: 12),
@@ -407,7 +421,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: isUtilityButton ? Border.all(color: AsmitaPalette.borderGrey, width: 1.5) : null,
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
                   ),
                   child: Icon(icon, color: isUtilityButton ? AsmitaPalette.actionRed : iconColor, size: 24),
                 ),
@@ -472,3 +486,4 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
     );
   }
 }
+
