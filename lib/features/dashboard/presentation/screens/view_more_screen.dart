@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
-// Import your global bottom navigation bar widget
-import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart'; 
+// import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart'; 
 import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_security_wizard.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_raise_alert_wizard.dart';
@@ -163,16 +162,16 @@ class ViewMoreScreen extends StatelessWidget {
         ],
       ),
       
-      // UPDATED: Now leveraging your reusable global navigation component
-      bottomNavigationBar: AsmitaBottomNavBar(
-        currentIndex: 3, // hardcoded to index 3 so Services highlights as active
-        onTap: (index) {
-          if (index != 3) {
-            Navigator.pop(context); // Safely clears route memory history stack
-            onNavigationItemSelected?.call(index); // Syncs back into your main dashboard shell container
-          }
-        },
-      ),
+      // // UPDATED: Now leveraging your reusable global navigation component
+      // bottomNavigationBar: AsmitaBottomNavBar(
+      //   currentIndex: 3, // hardcoded to index 3 so Services highlights as active
+      //   onTap: (index) {
+      //     if (index != 3) {
+      //       Navigator.pop(context); // Safely clears route memory history stack
+      //       onNavigationItemSelected?.call(index); // Syncs back into your main dashboard shell container
+      //     }
+      //   },
+      // ),
     );
   }
 

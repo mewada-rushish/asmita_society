@@ -8,17 +8,19 @@ import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wiz
 import 'package:asmita_society/features/dashboard/widgets/asmita_security_wizard.dart';
 import 'package:asmita_society/features/services/presentation/screens/daily_help_screen.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_raise_alert_wizard.dart';
-import 'package:asmita_society/features/dashboard/presentation/screens/view_more_screen.dart';
-import 'package:asmita_society/features/visitor_management/presentation/screens/visitor_history_screen.dart';
 
 class OwnerDashboardView extends StatefulWidget {
   final VoidCallback? onNavigateToCommunity; 
   final VoidCallback? onNavigateToHistory; 
+  final VoidCallback? onNavigateToViewMore; 
+  final VoidCallback? onNavigateToServices;
 
   const OwnerDashboardView({
     super.key, 
     this.onNavigateToCommunity, 
     this.onNavigateToHistory,
+    this.onNavigateToViewMore, 
+    this.onNavigateToServices,
   });
 
   @override
@@ -260,14 +262,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                 Icons.add_rounded, 
                 'View More', 
                 isUtilityButton: true,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ViewMoreScreen(),
-                    ),
-                  );
-                },
+                onTap: widget.onNavigateToViewMore,
               ),
             ],
           ),
@@ -371,11 +366,21 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text("Services", style: textTheme.titleLarge?.copyWith(fontSize: 15, fontWeight: FontWeight.w700)),
-          Row(
-            children: [
-              Text('See All', style: textTheme.bodyMedium?.copyWith(fontSize: 13, fontWeight: FontWeight.w600)),
-              Icon(Icons.chevron_right_rounded, color: Colors.grey.shade600, size: 16),
-            ],
+          InkWell(
+            onTap: () {
+              // FIXED: Triggers active tab index shift to Services page index instead of route pushes
+              if (widget.onNavigateToServices != null) {
+                widget.onNavigateToServices!();
+              }
+            },
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            child: Row(
+              children: [
+                Text('See All', style: textTheme.bodyMedium?.copyWith(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+                Icon(Icons.chevron_right_rounded, color: Colors.grey.shade600, size: 16),
+              ],
+            ),
           ),
         ],
       ),
