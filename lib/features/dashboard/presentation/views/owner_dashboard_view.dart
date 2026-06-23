@@ -6,7 +6,6 @@ import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/core/utils/dashboard_scroll_physics.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_security_wizard.dart';
-import 'package:asmita_society/features/services/presentation/screens/daily_help_screen.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_raise_alert_wizard.dart';
 
 class OwnerDashboardView extends StatefulWidget {
@@ -14,6 +13,8 @@ class OwnerDashboardView extends StatefulWidget {
   final VoidCallback? onNavigateToHistory; 
   final VoidCallback? onNavigateToViewMore; 
   final VoidCallback? onNavigateToServices;
+  final VoidCallback? onNavigateToDailyHelp;
+  final VoidCallback? onNavigateToSearch;
 
   const OwnerDashboardView({
     super.key, 
@@ -21,6 +22,8 @@ class OwnerDashboardView extends StatefulWidget {
     this.onNavigateToHistory,
     this.onNavigateToViewMore, 
     this.onNavigateToServices,
+    this.onNavigateToDailyHelp,
+    this.onNavigateToSearch,
   });
 
   @override
@@ -74,10 +77,13 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          const AsmitaPrimaryHeader(
+          // FIXED: Removed 'const' so widget callback layers can bind dynamically
+          AsmitaPrimaryHeader(
             title: 'Siddhi CHS 34',
             subtitle: 'Premium Mode',
             userInitials: 'RM',
+            onSearchPressed: widget.onNavigateToSearch,
+            onChatPressed: widget.onNavigateToCommunity,
           ),
           Expanded(
             child: Container(
@@ -228,7 +234,13 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                 'Ask Society', 
                 onTap: widget.onNavigateToCommunity, 
               ),
-              _buildGridItem(context, Icons.dynamic_feed_rounded, 'Posts', notificationCount: 9),
+              _buildGridItem(
+                context, 
+                Icons.dynamic_feed_rounded, 
+                'Posts', 
+                notificationCount: 9,
+                onTap: widget.onNavigateToCommunity, // Linked to community/posts tab
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -236,19 +248,12 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildGridItem(context, Icons.credit_card_rounded, 'Pay Bills'),
+              _buildGridItem(context, Icons.credit_card_rounded, 'Pay Bills', onTap: widget.onNavigateToServices), // Linked to services/bills tab
               _buildGridItem(
                 context, 
                 Icons.face_retouching_natural_rounded, 
                 'Find Daily Help',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const DailyHelpScreen(),
-                    ),
-                  );
-                },
+                onTap: widget.onNavigateToDailyHelp,
               ),
               _buildGridItem(
                 context, 
@@ -368,7 +373,6 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
           Text("Services", style: textTheme.titleLarge?.copyWith(fontSize: 15, fontWeight: FontWeight.w700)),
           InkWell(
             onTap: () {
-              // FIXED: Triggers active tab index shift to Services page index instead of route pushes
               if (widget.onNavigateToServices != null) {
                 widget.onNavigateToServices!();
               }
@@ -491,4 +495,3 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
     );
   }
 }
-

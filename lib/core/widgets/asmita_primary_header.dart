@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/features/dashboard/presentation/screens/search_screen.dart';
 
 class AsmitaPrimaryHeader extends StatelessWidget {
   final String title;
   final String subtitle;
   final String userInitials;
+  final VoidCallback? onSearchPressed;
+  final VoidCallback? onChatPressed;
 
   const AsmitaPrimaryHeader({
     super.key,
     this.title = 'Siddhi CHS 34',
     this.subtitle = 'Premium Mode',
     this.userInitials = 'RM',
+    this.onSearchPressed,
+    this.onChatPressed,
   });
 
   @override
@@ -59,8 +64,11 @@ class AsmitaPrimaryHeader extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(icon: const Icon(Icons.search_rounded, color: AsmitaPalette.deepNavy, size: 24), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.chat_bubble_outline_rounded, color: AsmitaPalette.deepNavy, size: 22), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.search_rounded, color: AsmitaPalette.deepNavy, size: 24),
+            onPressed: onSearchPressed ?? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AsmitaSearchScreen())),
+          ),
+          IconButton(icon: const Icon(Icons.chat_bubble_outline_rounded, color: AsmitaPalette.deepNavy, size: 22), onPressed: onChatPressed),
           const SizedBox(width: 4),
           CircleAvatar(
             radius: 16,
