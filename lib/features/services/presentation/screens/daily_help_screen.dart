@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
+import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/asmita_primary_header.dart';
 
 class DailyHelpScreen extends StatefulWidget {
-  const DailyHelpScreen({super.key});
+  final VoidCallback? onNavigateToSearch;
+  final VoidCallback? onNavigateToCommunity;
+
+  const DailyHelpScreen({
+    super.key,
+    this.onNavigateToSearch,
+    this.onNavigateToCommunity,
+  });
 
   @override
   State<DailyHelpScreen> createState() => _DailyHelpScreenState();
@@ -288,84 +296,13 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
-        children: [
-          // Premium Unified Header Block
-          Container(
-            padding: const EdgeInsets.only(top: 54, left: 20, right: 20, bottom: 20),
-            color: Colors.white,
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AsmitaPalette.deepNavy, size: 20),
-                  onPressed: () => Navigator.pop(context),
-                  constraints: const BoxConstraints(),
-                  padding: EdgeInsets.zero,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AsmitaPalette.systemBG,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AsmitaPalette.borderGrey),
-                        ),
-                        child: const Icon(Icons.supervised_user_circle_rounded, color: AsmitaPalette.actionRed, size: 24),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    'Siddhi CHS 34 Helpers',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: textTheme.titleLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w700, color: AsmitaPalette.deepNavy),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                const Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.textLight, size: 18),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Verified Local Directory',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: textTheme.bodyMedium?.copyWith(fontSize: 12, color: AsmitaPalette.textLight, fontWeight: FontWeight.w500),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Row(
-                  children: [
-                    Icon(Icons.search_rounded, color: Colors.grey.shade700, size: 22),
-                    const SizedBox(width: 16),
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: const BoxDecoration(color: AsmitaPalette.deepNavy, shape: BoxShape.circle),
-                      child: Center(
-                        child: Text('RM', style: textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+        children: [          
+          AsmitaPrimaryHeader(
+            title: 'Daily Help',
+            subtitle: 'Verified Local Directory',
+            userInitials: 'RM',
+            onSearchPressed: widget.onNavigateToSearch,
+            onChatPressed: widget.onNavigateToCommunity,
           ),
           
           // Directory Content Area

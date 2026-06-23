@@ -1,232 +1,226 @@
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
-import 'asmita_facility_booking_wizard.dart';
-import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 
 class FacilityBookings extends StatelessWidget {
   const FacilityBookings({super.key});
+
+  static const List<Map<String, dynamic>> _facilities = [
+    {'name': 'Banquet Hall', 'capacity': '100 Guests', 'icon': Icons.celebration_rounded},
+    {'name': 'Swimming Pool', 'capacity': 'Hourly Slots', 'icon': Icons.pool_rounded},
+    {'name': 'Clubhouse Gym', 'capacity': 'Hourly Slots', 'icon': Icons.fitness_center_rounded},
+  ];
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    void onFacilityTap(String title, String availability) {
-      if (availability == 'Available') {
-        AsmitaDialog.show(
-          context: context,
-          content: AsmitaFacilityBookingWizard(initialFacility: title),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$title is currently $availability.'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Facility Bookings',
+          'Book an Amenity',
           style: textTheme.titleLarge?.copyWith(
             fontSize: 15,
             fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 12),
-        GridView.count(
+        ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.4,
-          children: [
-            _ServiceCard(
-              icon: Icons.celebration_rounded,
-              title: 'Banquet Hall',
-              availability: 'Available',
-              onTap: () => onFacilityTap('Banquet Hall', 'Available'),
-            ),
-            _ServiceCard(
-              icon: Icons.fitness_center_rounded, 
-              title: 'Community Gym', 
-              availability: 'Slots Full',
-              onTap: () => onFacilityTap('Community Gym', 'Slots Full'),
-            ),
-            _ServiceCard(
-              icon: Icons.pool_rounded, 
-              title: 'Swimming Pool', 
-              availability: 'Maintenance',
-              onTap: () => onFacilityTap('Swimming Pool', 'Maintenance'),
-            ),
-             _ServiceCard(
-               icon: Icons.self_improvement_rounded,
-               title: 'Yoga Studio', 
-               availability: 'Available',
-               onTap: () => onFacilityTap('Yoga Studio', 'Available'),
-             ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: InkWell(
-            onTap: () => _showAllFacilitiesSheet(context),
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'View All Facilities',
-                    style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.actionRed, fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                  const Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.actionRed, size: 18),
-                ],
-              ),
-            ),
-          ),
+          itemCount: _facilities.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final facility = _facilities[index];
+            return _FacilityRow(
+              name: facility['name'],
+              capacity: facility['capacity'],
+              icon: facility['icon'],
+            );
+          },
         ),
       ],
     );
   }
+}
 
-  void _showAllFacilitiesSheet(BuildContext context) {
-    final allFacilities = [
-      // {'title': 'Clubhouse', 'icon': Icons.sports_tennis_rounded, 'availability': 'Available'},
-      {'title': 'Banquet Hall', 'icon': Icons.celebration_rounded, 'availability': 'Available'},
-      {'title': 'Community Gym', 'icon': Icons.fitness_center_rounded, 'availability': 'Slots Full'},
-      {'title': 'Swimming Pool', 'icon': Icons.pool_rounded, 'availability': 'Maintenance'},
-      {'title': 'Yoga Studio', 'icon': Icons.self_improvement_rounded, 'availability': 'Available'},
-      // {'title': 'Tennis Court', 'icon': Icons.sports_tennis_rounded, 'availability': 'Slots Full'},
-      // {'title': 'Badminton Court', 'icon': Icons.sports_tennis_rounded, 'availability': 'Available'},
-    ];
+class _FacilityRow extends StatelessWidget {
+  final String name;
+  final String capacity;
+  final IconData icon;
 
+  const _FacilityRow({required this.name, required this.capacity, required this.icon});
+
+  void _showBookingSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => SafeArea(
-        child: DraggableScrollableSheet(
-          initialChildSize: 0.6,
-          minChildSize: 0.4,
-          maxChildSize: 0.9,
-          expand: false,
-          builder: (_, scrollController) => Padding(
-            padding: const EdgeInsets.only(top: 24, left: 24, right: 24),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => _SimpleBookingSheet(facilityName: name),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: const BoxDecoration(
+              color: AsmitaPalette.systemBG,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: AsmitaPalette.deepNavy, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'All Facilities',
-                      style: TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      icon: const Icon(Icons.close_rounded, color: AsmitaPalette.deepNavy),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: GridView.builder(
-                    controller: scrollController,
-                    physics: const BouncingScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 1.4,
-                    ),
-                    itemCount: allFacilities.length,
-                    itemBuilder: (context, index) {
-                      final fac = allFacilities[index];
-                      return _ServiceCard(
-                        icon: fac['icon'] as IconData,
-                        title: fac['title'] as String,
-                        availability: fac['availability'] as String,
-                        onTap: () {
-                          if (fac['availability'] == 'Available') {
-                            Navigator.pop(ctx);
-                            AsmitaDialog.show(context: context, content: AsmitaFacilityBookingWizard(initialFacility: fac['title'] as String));
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${fac['title']} is currently ${fac['availability']}.'), behavior: SnackBarBehavior.floating));
-                          }
-                        },
-                      );
-                    },
-                  ),
-                ),
+                Text(name, style: textTheme.titleLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 2),
+                Text(capacity, style: textTheme.bodyMedium?.copyWith(fontSize: 12, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
-        ),
+          ElevatedButton(
+            onPressed: () => _showBookingSheet(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AsmitaPalette.actionRed.withOpacity(0.08),
+              foregroundColor: AsmitaPalette.actionRed,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text('Book', style: textTheme.bodyLarge?.copyWith(fontSize: 12, fontWeight: FontWeight.w700)),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _ServiceCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String availability;
-  final VoidCallback? onTap;
+class _SimpleBookingSheet extends StatefulWidget {
+  final String facilityName;
+  const _SimpleBookingSheet({required this.facilityName});
 
-  const _ServiceCard({
-    required this.icon,
-    required this.title,
-    required this.availability,
-    this.onTap,
-  });
+  @override
+  State<_SimpleBookingSheet> createState() => _SimpleBookingSheetState();
+}
+
+class _SimpleBookingSheetState extends State<_SimpleBookingSheet> {
+  DateTime? _selectedDate;
+  String? _selectedTimeSlot;
+
+  final List<String> _timeSlots = ['09:00 AM - 11:00 AM', '01:00 PM - 03:00 PM', '05:00 PM - 07:00 PM'];
+
+  void _submitBooking() {
+    if (_selectedDate == null || _selectedTimeSlot == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a date and time slot.'), backgroundColor: AsmitaPalette.actionRed),
+      );
+      return;
+    }
+    Navigator.pop(context); // Close sheet
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Booking successful!'), backgroundColor: Colors.green),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final isAvailable = availability == 'Available';
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom;
 
+    return Padding(
+      padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: bottomPadding > 0 ? bottomPadding : 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Book ${widget.facilityName}', style: textTheme.titleLarge?.copyWith(fontSize: 18, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 24),
+          // Date Picker
+          _buildPicker(
+            context,
+            icon: Icons.calendar_today_rounded,
+            label: _selectedDate == null ? 'Select Date' : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
+            onTap: () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(const Duration(days: 30)),
+              );
+              if (date != null) setState(() => _selectedDate = date);
+            },
+          ),
+          const SizedBox(height: 16),
+          // Time Slot Picker
+          _buildPicker(
+            context,
+            icon: Icons.access_time_rounded,
+            label: _selectedTimeSlot ?? 'Select Time Slot',
+            onTap: () => _showTimeSlotPicker(context),
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton(
+            onPressed: _submitBooking,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AsmitaPalette.deepNavy,
+              minimumSize: const Size(double.infinity, 54),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            child: Text('Confirm Booking', style: textTheme.bodyLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPicker(BuildContext context, {required IconData icon, required String label, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        decoration: BoxDecoration(color: AsmitaPalette.systemBG, borderRadius: BorderRadius.circular(12)),
+        child: Row(
           children: [
-            Icon(icon, color: AsmitaPalette.deepNavy, size: 24),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: textTheme.titleLarge?.copyWith(fontSize: 13, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  availability,
-                  style: textTheme.bodyMedium?.copyWith(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: isAvailable ? AsmitaPalette.actionRed : AsmitaPalette.textLight,
-                  ),
-                ),
-              ],
-            ),
+            Icon(icon, color: AsmitaPalette.textLight, size: 20),
+            const SizedBox(width: 12),
+            Expanded(child: Text(label, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 14))),
+            const Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.textLight),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showTimeSlotPicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: _timeSlots.map((slot) => ListTile(
+            title: Text(slot),
+            onTap: () {
+              setState(() => _selectedTimeSlot = slot);
+              Navigator.pop(ctx);
+            },
+          )).toList(),
         ),
       ),
     );

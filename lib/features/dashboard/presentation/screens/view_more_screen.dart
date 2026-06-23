@@ -9,10 +9,12 @@ import 'package:asmita_society/features/services/presentation/screens/daily_help
 
 class ViewMoreScreen extends StatelessWidget {
   final Function(int)? onNavigationItemSelected;
-
+  final VoidCallback? onBack; // ADDED THIS CONFIGURATION PARAMETER FIELD
+  
   const ViewMoreScreen({
     super.key,
     this.onNavigationItemSelected,
+    this.onBack, // WIRED IN CONSTRUCTOR
   });
 
   void _showPreApproveModal(BuildContext context) {
@@ -45,6 +47,7 @@ class ViewMoreScreen extends StatelessWidget {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,7 +62,13 @@ class ViewMoreScreen extends StatelessWidget {
               children: [
                 IconButton(
                   icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AsmitaPalette.deepNavy, size: 20),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    if (onBack != null) {
+                      onBack!(); // FIXED: Dynamically shifts views backward instead of destroying route states
+                    } else {
+                      Navigator.pop(context); // Fallback safeguard behavior handler
+                    }
+                  },
                   constraints: const BoxConstraints(),
                   padding: EdgeInsets.zero,
                 ),
