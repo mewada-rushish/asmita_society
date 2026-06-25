@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_text_field.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class AsmitaSecurityWizard extends StatefulWidget {
@@ -54,34 +55,38 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (_currentStep > 0)
+        if (_currentStep > 0) ...[
           _buildHeader(),
+          const SizedBox(height: 20),
+        ],
         _buildCurrentStep(),
       ],
     );
   }
 
   Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AsmitaPalette.deepNavy.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AsmitaPalette.deepNavy.withOpacity(0.15), width: 1.2),
+      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           GestureDetector(
             onTap: _prevStep,
             behavior: HitTestBehavior.opaque,
             child: const Padding(
-              padding: EdgeInsets.all(4.0),
+              padding: EdgeInsets.only(right: 12.0, top: 2.0, bottom: 2.0),
               child: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AsmitaPalette.deepNavy),
             ),
           ),
-          const SizedBox(width: 8),
-          Text(
-            _currentStep == 1 ? 'Emergency Broadcast' : 'Security Assistant',
-            style: const TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: AsmitaPalette.deepNavy,
+          Expanded(
+            child: Text(
+              _currentStep == 1 ? 'Emergency Broadcast' : 'Security Assistant',
+              style: const TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy),
             ),
           ),
         ],
@@ -116,16 +121,6 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Choose a security request',
-          style: TextStyle(
-            fontFamily: 'Montserrat',
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: AsmitaPalette.deepNavy,
-          ),
-        ),
-        const SizedBox(height: 8),
         const Text(
           'Tap an icon to select the action, then continue to provide details.',
           style: TextStyle(
@@ -225,16 +220,6 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Select Critical Emergency',
-          style: TextStyle(
-            fontFamily: 'Montserrat',
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AsmitaPalette.textLight,
-          ),
-        ),
-        const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -314,16 +299,6 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          'Provide details',
-          style: TextStyle(
-            fontFamily: 'Montserrat',
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: AsmitaPalette.deepNavy,
-          ),
-        ),
-        const SizedBox(height: 8),
         Text(
           _getActionDescription(),
           style: const TextStyle(
@@ -335,11 +310,11 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
         ),
         const SizedBox(height: 20),
         if (_selectedAction == 'Search Vehicle') ...[
-          _buildTextField(
-            label: 'Vehicle number',
+          AsmitaTextField(
+            label: 'Vehicle Number',
             hint: 'e.g. MH 02 AB 1234',
             controller: _vehicleController,
-            onChanged: (_) {},
+            icon: Icons.directions_car_rounded,
           ),
           const SizedBox(height: 16),
         ],
@@ -362,41 +337,14 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
           ),
           const SizedBox(height: 8),
         ],
-        _buildTextField(
-          label: 'Add a quick note',
-          hint: 'e.g. please open gate for parcel delivery',
+        AsmitaTextField(
+          label: 'Add a Quick Note (Optional)',
+          hint: 'e.g., Please open the gate for parcel delivery',
           controller: _noteController,
-          onChanged: (_) {},
+          icon: Icons.edit_note_rounded,
         ),
         const SizedBox(height: 24),
         _buildPrimaryButton(label: 'Send to Security', onPressed: _nextStep),
-      ],
-    );
-  }
-
-  Widget _buildTextField({
-    required String label,
-    required String hint,
-    required TextEditingController controller,
-    required ValueChanged<String> onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(label, style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textDark)),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          textCapitalization: TextCapitalization.characters,
-          style: const TextStyle(fontFamily: 'Poppins', fontSize: 13),
-          onChanged: onChanged,
-          decoration: InputDecoration(
-            hintText: hint,
-            filled: true,
-            fillColor: AsmitaPalette.systemBG,
-            border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide.none),
-          ),
-        ),
       ],
     );
   }

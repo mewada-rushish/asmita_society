@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
+import '../../../../core/widgets/asmita_bottom_sheet.dart'; 
+import '../../../../core/widgets/asmita_text_field.dart';
 
 class DailyHelpScreen extends StatefulWidget {
   final VoidCallback? onNavigateToSearch;
@@ -71,224 +73,152 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
     }
   }
 
-  void _showCategoryPicker(BuildContext context, StateSetter setModalState) {
-    showModalBottomSheet(
+  void _showCategoryPicker(BuildContext context, StateSetter setModalState, TextTheme textTheme) {
+    showAsmitaBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        final textTheme = Theme.of(context).textTheme;
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 16),
-              Center(
-                child: Container(
-                  width: 38,
-                  height: 4,
+      title: 'Select Category',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: ListView.builder(
+              shrinkWrap: true,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: _dropdownCategories.length,
+              itemBuilder: (context, index) {
+                final category = _dropdownCategories[index];
+                final isSelected = _selectedModalCategory == category;
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 4),
                   decoration: BoxDecoration(
-                    color: AsmitaPalette.borderGrey,
-                    borderRadius: BorderRadius.circular(2),
+                    color: isSelected ? AsmitaPalette.deepNavy.withOpacity(0.1) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Select Category',
-                style: textTheme.titleLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              const Divider(color: AsmitaPalette.borderGrey),
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: _dropdownCategories.length,
-                  itemBuilder: (context, index) {
-                    final category = _dropdownCategories[index];
-                    final isSelected = _selectedModalCategory == category;
-                    
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 4),
-                      decoration: BoxDecoration(
-                        color: isSelected ? AsmitaPalette.deepNavy : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
+                  child: ListTile(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    leading: Icon(
+                      _getCategoryIcon(category),
+                      color: AsmitaPalette.deepNavy,
+                      size: 20,
+                    ),
+                    title: Text(
+                      category,
+                      style: textTheme.bodyLarge?.copyWith(
+                        fontSize: 14,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                        color: AsmitaPalette.textDark,
                       ),
-                      child: ListTile(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        leading: Icon(
-                          _getCategoryIcon(category), 
-                          color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                    ),
+                    trailing: isSelected
+                        ? const Icon(Icons.check_circle_rounded, color: AsmitaPalette.actionRed, size: 20)
+                        : null,
+                    onTap: () {
+                      setModalState(() {
+                        _selectedModalCategory = category;
+                      });
+                      Navigator.pop(context);
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddProviderModal(BuildContext context, TextTheme textTheme, double systemBottomPadding) {
+    _selectedModalCategory = null;
+
+    showAsmitaBottomSheet(
+      context: context,
+      title: 'Add Local Help',
+      isScrollControlled: true,
+      child: StatefulBuilder(
+        builder: (BuildContext context, StateSetter setModalState) {
+          return SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Help us build the society directory. The management will verify this entry.', style: textTheme.bodyMedium?.copyWith(fontSize: 13, height: 1.4)),
+                const SizedBox(height: 24),
+                AsmitaTextField(label: 'Full Name', hint: 'e.g., Raju Plumber', icon: Icons.person_outline_rounded),
+                const SizedBox(height: 16),
+                AsmitaTextField(label: 'Phone Number', hint: '10-digit mobile number', icon: Icons.phone_outlined, keyboardType: TextInputType.phone),
+                const SizedBox(height: 16),
+
+                Text('Category', style: textTheme.bodyMedium?.copyWith(fontSize: 12, fontWeight: FontWeight.w600, color: AsmitaPalette.textDark)),
+                const SizedBox(height: 8),
+
+                GestureDetector(
+                  onTap: () => _showCategoryPicker(context, setModalState, textTheme),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: AsmitaPalette.systemBG,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AsmitaPalette.borderGrey, width: 1.2),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _selectedModalCategory == null ? Icons.category_outlined : _getCategoryIcon(_selectedModalCategory!),
+                          color: AsmitaPalette.textLight,
                           size: 20,
                         ),
-                        title: Text(
-                          category,
-                          style: textTheme.bodyLarge?.copyWith(
-                            fontSize: 14,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                            color: isSelected ? Colors.white : AsmitaPalette.textDark,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _selectedModalCategory ?? 'Select category',
+                            style: textTheme.bodyLarge?.copyWith(
+                              fontSize: 14,
+                              color: _selectedModalCategory == null
+                                  ? AsmitaPalette.textLight.withOpacity(0.6)
+                                  : AsmitaPalette.textDark,
+                            ),
                           ),
                         ),
-                        trailing: null, 
-                        onTap: () {
-                          setModalState(() {
-                            _selectedModalCategory = category;
-                          });
-                          Navigator.pop(context);
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showAddProviderModal(BuildContext context) {
-    _selectedModalCategory = null; 
-    
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        final textTheme = Theme.of(context).textTheme;
-        final systemBottomPadding = MediaQuery.of(context).padding.bottom;
-
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-                left: 24,
-                right: 24,
-                top: 24,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Add Local Help', style: textTheme.titleLarge?.copyWith(fontSize: 18, fontWeight: FontWeight.w700)),
-                        IconButton(
-                          icon: const Icon(Icons.close_rounded, color: AsmitaPalette.textLight),
-                          onPressed: () => Navigator.pop(context),
-                        ),
+                        const Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.textLight),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text('Help us build the society directory. The management will verify this entry.', style: textTheme.bodyMedium?.copyWith(fontSize: 13, height: 1.4)),
-                    const SizedBox(height: 24),
-                    _buildInputField(context, 'Full Name', 'e.g., Raju Plumber', Icons.person_outline_rounded),
-                    const SizedBox(height: 16),
-                    _buildInputField(context, 'Phone Number', '10-digit mobile number', Icons.phone_outlined),
-                    const SizedBox(height: 16),
-                    
-                    Text('Category', style: textTheme.bodyMedium?.copyWith(fontSize: 12, fontWeight: FontWeight.w600, color: AsmitaPalette.textDark)),
-                    const SizedBox(height: 8),
-                    
-                    GestureDetector(
-                      onTap: () => _showCategoryPicker(context, setModalState),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: AsmitaPalette.systemBG,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              _selectedModalCategory == null ? Icons.category_outlined : _getCategoryIcon(_selectedModalCategory!), 
-                              color: AsmitaPalette.textLight, 
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                _selectedModalCategory ?? 'Select category',
-                                style: textTheme.bodyLarge?.copyWith(
-                                  fontSize: 14,
-                                  color: _selectedModalCategory == null 
-                                      ? AsmitaPalette.textLight.withOpacity(0.6) 
-                                      : AsmitaPalette.textDark,
-                                ),
-                              ),
-                            ),
-                            const Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.textLight),
-                          ],
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 32),
-                    Padding(
-                      padding: EdgeInsets.only(bottom: systemBottomPadding > 0 ? systemBottomPadding : 16.0),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Thank you! Provider added for verification.', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AsmitaPalette.deepNavy,
-                          minimumSize: const Size(double.infinity, 54),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          elevation: 0,
-                        ),
-                        child: Text('Submit for Verification', style: textTheme.bodyLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            );
-          }
-        );
-      },
-    );
-  }
 
-  Widget _buildInputField(BuildContext context, String label, String hint, IconData icon) {
-    final textTheme = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: textTheme.bodyMedium?.copyWith(fontSize: 12, fontWeight: FontWeight.w600, color: AsmitaPalette.textDark)),
-        const SizedBox(height: 8),
-        TextField(
-          style: textTheme.bodyLarge?.copyWith(fontSize: 14),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: AsmitaPalette.textLight.withOpacity(0.6), fontSize: 14),
-            prefixIcon: Icon(icon, color: AsmitaPalette.textLight, size: 20),
-            filled: true,
-            fillColor: AsmitaPalette.systemBG,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AsmitaPalette.deepNavy, width: 1.5)),
-          ),
-        ),
-      ],
+                const SizedBox(height: 32),
+                Padding(
+                  padding: EdgeInsets.only(bottom: systemBottomPadding > 0 ? systemBottomPadding : 16.0),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Thank you! Provider added for verification.', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AsmitaPalette.deepNavy,
+                      minimumSize: const Size(double.infinity, 54),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
+                    ),
+                    child: Text('Submit for Verification', style: textTheme.bodyLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    
+    final systemBottomPadding = MediaQuery.of(context).padding.bottom;
+
     final filteredDirectory = _selectedCategoryIndex == 0 
         ? _directory 
         : _directory.where((item) => item['role'].toLowerCase() == _categories[_selectedCategoryIndex].toLowerCase()).toList();
@@ -363,7 +293,7 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                       children: [
                         Text("Available Staff", style: textTheme.titleLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700, color: AsmitaPalette.textDark)),
                         OutlinedButton.icon(
-                          onPressed: () => _showAddProviderModal(context),
+                          onPressed: () => _showAddProviderModal(context, textTheme, systemBottomPadding),
                           icon: const Icon(Icons.add_rounded, size: 14, color: AsmitaPalette.actionRed),
                           label: Text("Contribute", style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.actionRed, fontSize: 11, fontWeight: FontWeight.w700)),
                           style: OutlinedButton.styleFrom(
