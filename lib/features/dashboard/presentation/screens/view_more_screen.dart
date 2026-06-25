@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 // import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart'; 
 import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
@@ -7,14 +8,23 @@ import 'package:asmita_society/features/dashboard/widgets/asmita_security_wizard
 import 'package:asmita_society/features/dashboard/widgets/asmita_raise_alert_wizard.dart';
 import 'package:asmita_society/features/services/presentation/screens/daily_help_screen.dart';
 
+/// A utility function to show the ViewMore content in a bottom sheet.
+void showViewMoreSheet(BuildContext context, {Function(int)? onNavigationItemSelected}) {
+  showAsmitaBottomSheet(
+    context: context,
+    title: 'Quick Actions',
+    child: ViewMoreScreen(
+      onNavigationItemSelected: onNavigationItemSelected,
+    ),
+  );
+}
+
 class ViewMoreScreen extends StatelessWidget {
   final Function(int)? onNavigationItemSelected;
-  final VoidCallback? onBack; // ADDED THIS CONFIGURATION PARAMETER FIELD
   
   const ViewMoreScreen({
     super.key,
     this.onNavigationItemSelected,
-    this.onBack, // WIRED IN CONSTRUCTOR
   });
 
   void _showPreApproveModal(BuildContext context) {
@@ -50,64 +60,12 @@ class ViewMoreScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          // Premium Unified Top Header Block
-          Container(
-            padding: const EdgeInsets.only(top: 54, left: 20, right: 20, bottom: 20),
-            color: Colors.white,
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AsmitaPalette.deepNavy, size: 20),
-                  onPressed: () {
-                    if (onBack != null) {
-                      onBack!(); // FIXED: Dynamically shifts views backward instead of destroying route states
-                    } else {
-                      Navigator.pop(context); // Fallback safeguard behavior handler
-                    }
-                  },
-                  constraints: const BoxConstraints(),
-                  padding: EdgeInsets.zero,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'All Services',
-                        style: const TextStyle(
-                          fontSize: 18, 
-                          fontWeight: FontWeight.w700, 
-                          color: AsmitaPalette.deepNavy,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Siddhi CHS 34 Directory',
-                        style: const TextStyle(
-                          fontSize: 12, 
-                          color: AsmitaPalette.textLight, 
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Main Content Grid Area
-          Expanded(
-            child: Container(
-              color: AsmitaPalette.systemBG,
-              child: ListView(
-                padding: const EdgeInsets.all(20),
+    return Container(
+      color: AsmitaPalette.systemBG,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Column(
                 children: [
                   _buildServiceSection(
                     context,
@@ -149,10 +107,11 @@ class ViewMoreScreen extends StatelessWidget {
                         'label': 'Daily Help', 
                         'icon': Icons.face_retouching_natural_rounded, 
                         'color': AsmitaPalette.deepNavy,
-                        'onTap': () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const DailyHelpScreen()),
-                            ),
+                        'onTap': () {
+                          Navigator.pop(context); // Close the bottom sheet
+                          // Navigate to the Daily Help screen (index 5)
+                          onNavigationItemSelected?.call(5);
+                        },
                       },
                       {'label': 'Deliveries', 'icon': Icons.local_shipping_rounded, 'color': AsmitaPalette.deepNavy},
                       {'label': 'Amenities', 'icon': Icons.sports_tennis_rounded, 'color': AsmitaPalette.deepNavy},
@@ -166,11 +125,8 @@ class ViewMoreScreen extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-          ),
-        ],
+        ),
       ),
-      
       // // UPDATED: Now leveraging your reusable global navigation component
       // bottomNavigationBar: AsmitaBottomNavBar(
       //   currentIndex: 3, // hardcoded to index 3 so Services highlights as active

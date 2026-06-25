@@ -252,7 +252,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
               _buildGridItem(
                 context, 
                 Icons.face_retouching_natural_rounded, 
-                'Find Daily Help',
+                'Daily Help',
                 onTap: widget.onNavigateToDailyHelp,
               ),
               _buildGridItem(

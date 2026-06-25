@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
+import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 
 class VisitorHistoryScreen extends StatelessWidget {
   const VisitorHistoryScreen({super.key});
@@ -116,40 +117,15 @@ class VisitorHistoryScreen extends StatelessWidget {
   void _showVisitorDetailsModal(BuildContext context, Map<String, dynamic> visitor) {
     final textTheme = Theme.of(context).textTheme;
 
-    showModalBottomSheet(
+    showAsmitaBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => SafeArea(
-        top: false, // Ensures protection against bottom system/software navigation overlays
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: 24, 
-            right: 24, 
-            top: 12, 
-            bottom: MediaQuery.of(ctx).padding.bottom + 24
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Bottom Sheet Drag Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
+      title: visitor['name'] as String,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
               
-              // Visitor Avatar with High-Assurance Enclosed Border
+          // Visitor Avatar with High-Assurance Enclosed Border
               Center(
                 child: Container(
                   padding: const EdgeInsets.all(4),
@@ -220,7 +196,7 @@ class VisitorHistoryScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
+                  onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AsmitaPalette.actionRed,
                     elevation: 0,
@@ -238,10 +214,7 @@ class VisitorHistoryScreen extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
+          ));
   }
 
   Widget _buildDetailRow(

@@ -4,7 +4,7 @@ import '../../menu/presentation/screens/menu_screen.dart';
 import '../../community/presentation/screens/community_screen.dart';
 import '../../visitor_management/presentation/screens/visitor_history_screen.dart';
 import '../../services/presentation/screens/services_screen.dart';
-import 'screens/view_more_screen.dart'; 
+import 'screens/view_more_screen.dart';
 import 'views/owner_dashboard_view.dart';
 import 'views/tenant_dashboard_view.dart';
 import 'package:asmita_society/features/services/presentation/screens/daily_help_screen.dart';
@@ -26,7 +26,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   void _navigateToSearch() {
     setState(() {
       _previousIndex = _currentIndex;
-      _currentIndex = 7; // Index of Search Screen
+      _currentIndex = 6; // Index of Search Screen
     });
   }
 
@@ -44,19 +44,11 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       ),
       const VisitorHistoryScreen(),               // Index 3: Gate Records (History)
       MenuScreen(userRole: widget.userRole),      // Index 4: Profile Settings
-      ViewMoreScreen(
-        // FIXED: Gracefully rewires the back navigation pipeline to jump back to Home
-        onBack: () {
-          setState(() {
-            _currentIndex = 0; // Natively slides user view focus safely back onto the main dashboard canvas!
-          });
-        },
-      ),                                          // Index 5: Deep Service Directory
-      DailyHelpScreen( // Index 6: FOR DAILY HELP
+      DailyHelpScreen( // Index 5: Daily Help
         onNavigateToSearch: _navigateToSearch,
         onNavigateToCommunity: () => setState(() => _currentIndex = 2),
       ),
-      AsmitaSearchScreen(
+      AsmitaSearchScreen( // Index 6: Search
         onBack: () => setState(() => _currentIndex = _previousIndex), // Steps back to the previous view
         onQuickRedirect: (targetIndex) {
           setState(() {
@@ -83,8 +75,8 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
             });
           },
           onNavigateToViewMore: () {
-            setState(() {
-              _currentIndex = 5; // Deep Directory
+            showViewMoreSheet(context, onNavigationItemSelected: (index) {
+              setState(() => _currentIndex = index);
             });
           },
           onNavigateToServices: () {
@@ -92,7 +84,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
               _currentIndex = 1; // FIXED: Natively switches view canvas to Services (Index 1)
             });
           },
-          onNavigateToDailyHelp: () => setState(() => _currentIndex = 6),
+          onNavigateToDailyHelp: () => setState(() => _currentIndex = 5),
           onNavigateToSearch: _navigateToSearch,
         );
       case 'tenant':
