@@ -556,7 +556,7 @@ class _HandymanBookingSheetState extends State<_HandymanBookingSheet> {
                         Switch(
                           value: _isUrgent,
                           onChanged: (val) => setState(() => _isUrgent = val),
-                          activeColor: Colors.white,
+                          activeThumbColor: Colors.white,
                           activeTrackColor: AsmitaPalette.actionRed,
                           inactiveThumbColor: Colors.white,
                           inactiveTrackColor: AsmitaPalette.borderGrey,
