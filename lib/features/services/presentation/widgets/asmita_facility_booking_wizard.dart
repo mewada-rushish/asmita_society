@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 
 enum FieldType { text, number, dropdown, checkbox, checkboxGroup, repeater }
 
@@ -939,15 +940,14 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
   // =========================================================================
   void _showDatePickerSheet() {
     bool isSheetClosing = false;
-    showModalBottomSheet(
+    showAsmitaBottomSheet(
       context: context,
-      isScrollControlled: true, 
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          child: CalendarDatePicker(
+      title: 'Select Date',
+      isScrollControlled: true,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CalendarDatePicker(
             initialDate: _bookingDate ?? DateTime.now().add(const Duration(days: 1)),
             firstDate: DateTime.now(),
             lastDate: DateTime.now().add(const Duration(days: 365)),
@@ -955,11 +955,11 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
               if (!isSheetClosing) {
                 isSheetClosing = true;
                 setState(() => _bookingDate = date);
-                Navigator.pop(ctx);
+                Navigator.pop(context);
               }
             },
           ),
-        ),
+        ],
       ),
     );
   }
@@ -971,49 +971,46 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
     required ValueChanged<String> onSelected,
   }) {
     bool isSheetClosing = false;
-    showModalBottomSheet(
+    showAsmitaBottomSheet(
       context: context,
+      title: title,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => SafeArea(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.7,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                  child: Text(title, style: const TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.7,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                child: Text(title, style: const TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
+              ),
+              // const Divider(),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (context, index) {
+                    final option = options[index];
+                    return ListTile(
+                      title: Text(option, style: TextStyle(fontFamily: 'Poppins', fontSize: 14, color: selectedValue == option ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy, fontWeight: selectedValue == option ? FontWeight.w600 : FontWeight.normal)),
+                      trailing: selectedValue == option ? const Icon(Icons.check, color: AsmitaPalette.actionRed) : null,
+                      onTap: () {
+                        if (!isSheetClosing) {
+                          isSheetClosing = true;
+                          onSelected(option);
+                          Navigator.pop(context);
+                        }
+                      },
+                    );
+                  },
                 ),
-                // const Divider(),
-                Flexible(
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: options.length,
-                    itemBuilder: (context, index) {
-                      final option = options[index];
-                      return ListTile(
-                        title: Text(option, style: TextStyle(fontFamily: 'Poppins', fontSize: 14, color: selectedValue == option ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy, fontWeight: selectedValue == option ? FontWeight.w600 : FontWeight.normal)),
-                        trailing: selectedValue == option ? const Icon(Icons.check, color: AsmitaPalette.actionRed) : null,
-                        onTap: () {
-                          if (!isSheetClosing) {
-                            isSheetClosing = true;
-                            onSelected(option);
-                            Navigator.pop(ctx);
-                          }
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
