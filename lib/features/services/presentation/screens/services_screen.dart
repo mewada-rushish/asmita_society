@@ -1,44 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import '../widgets/facility_bookings.dart';
 import '../widgets/verified_local_handymen.dart';
 
 class ServicesScreen extends StatelessWidget {
-  const ServicesScreen({super.key});
+  final VoidCallback? onNavigateToSearch;
+  final VoidCallback? onNavigateToCommunity;
+
+  const ServicesScreen({
+    super.key,
+    this.onNavigateToSearch,
+    this.onNavigateToCommunity,
+  });
 
   @override
   Widget build(BuildContext context) {
-    
-    final textTheme = Theme.of(context).textTheme;
-
     return Scaffold(
       backgroundColor: AsmitaPalette.systemBG,
-      appBar: AppBar(
-        backgroundColor: AsmitaPalette.systemBG,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AsmitaPalette.deepNavy),
-          onPressed: () => Navigator.maybePop(context),
-        ),
-        title: Text(
-          'Society Services',
-          style: textTheme.titleLarge?.copyWith(fontSize: 18, fontWeight: FontWeight.w700),
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 12),
-            const FacilityBookings(),
-            const SizedBox(height: 24),
-            const SizedBox(height: 12),
-            const VerifiedLocalHandymen(),
-          ],
-        ),
+      body: Column(
+        children: [
+          AsmitaPrimaryHeader(
+            title: 'Society Services',
+            subtitle: 'Amenities, payments & more',
+            userInitials: 'RM',
+            onSearchPressed: onNavigateToSearch,
+            onChatPressed: onNavigateToCommunity,
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const FacilityBookings(),
+                  const SizedBox(height: 24),
+                  const VerifiedLocalHandymen(),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
+ 

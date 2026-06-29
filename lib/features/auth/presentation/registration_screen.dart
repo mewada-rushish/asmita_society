@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/design_system.dart';
 import '../../../core/widgets/asmita_toast.dart';
+import '../../../core/widgets/asmita_bottom_sheet.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -89,123 +90,117 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     required String? currentValue,
     required ValueChanged<String> onSelected,
   }) {
-    showModalBottomSheet(
+    showAsmitaBottomSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        List<String> filteredItems = List.from(items);
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.viewInsetsOf(context).bottom,
+      title: 'Select $title',
+      child: StatefulBuilder(
+        builder: (context, setModalState) {
+          List<String> filteredItems = List.from(items);
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.viewInsetsOf(context).bottom,
+            ),
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * 0.65,
               ),
-              child: Container(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.sizeOf(context).height * 0.65,
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Select $title',
-                      style: const TextStyle(
-                        fontFamily: 'Montserrat',
-                        color: AsmitaPalette.deepNavy,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Select $title',
+                    style: const TextStyle(
+                      fontFamily: 'Montserrat',
+                      color: AsmitaPalette.deepNavy,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'Search...',
+                      prefixIcon: const Icon(Icons.search_rounded, color: AsmitaPalette.deepNavy),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade200),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade200),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AsmitaPalette.deepNavy),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
-                      decoration: InputDecoration(
-                        hintText: 'Search...',
-                        prefixIcon: const Icon(Icons.search_rounded, color: AsmitaPalette.deepNavy),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade200),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade200),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AsmitaPalette.deepNavy),
-                        ),
-                      ),
-                      onChanged: (value) {
-                        setModalState(() {
-                          filteredItems = items
-                              .where((item) => item.toLowerCase().contains(value.toLowerCase()))
-                              .toList();
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: filteredItems.isEmpty
-                          ? const Center(
-                              child: Text(
-                                'No matching results found',
-                                style: TextStyle(fontFamily: 'Poppins', color: Colors.black38),
-                              ),
-                            )
-                          : ListView.builder(
-                              shrinkWrap: true,
-                              physics: const BouncingScrollPhysics(),
-                              itemCount: filteredItems.length,
-                              itemBuilder: (context, index) {
-                                final item = filteredItems[index];
-                                final isSelected = item == currentValue;
-                                return ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                                  title: Text(
-                                    item,
-                                    style: TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 15,
-                                      color: isSelected ? const Color(0xFFE21F26) : Colors.black87,
-                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                    ),
-                                  ),
-                                  trailing: isSelected
-                                      ? const Icon(Icons.check_circle_rounded, color: Color(0xFFE21F26))
-                                      : null,
-                                  onTap: () {
-                                    onSelected(item);
-                                    Navigator.pop(context);
-                                  },
-                                );
-                              },
+                    onChanged: (value) {
+                      setModalState(() {
+                        filteredItems = items
+                            .where((item) => item.toLowerCase().contains(value.toLowerCase()))
+                            .toList();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: filteredItems.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'No matching results found',
+                              style: TextStyle(fontFamily: 'Poppins', color: Colors.black38),
                             ),
-                    ),
-                  ],
-                ),
+                          )
+                        : ListView.builder(
+                            shrinkWrap: true,
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: filteredItems.length,
+                            itemBuilder: (context, index) {
+                              final item = filteredItems[index];
+                              final isSelected = item == currentValue;
+                              return ListTile(
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                                title: Text(
+                                  item,
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 15,
+                                    color: isSelected ? const Color(0xFFE21F26) : Colors.black87,
+                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                  ),
+                                ),
+                                trailing: isSelected
+                                    ? const Icon(Icons.check_circle_rounded, color: Color(0xFFE21F26))
+                                    : null,
+                                onTap: () {
+                                  onSelected(item);
+                                  Navigator.pop(context);
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                ],
               ),
-            );
-          },
-        );
-      },
+            ),
+          );
+        },
+      ),
     );
   }
 

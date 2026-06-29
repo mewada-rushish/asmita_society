@@ -3,7 +3,14 @@ import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart'; // Fixed absolute import
 
 class CommunityScreen extends StatefulWidget {
-  const CommunityScreen({super.key});
+  final VoidCallback? onNavigateToSearch;
+  final VoidCallback? onNavigateToCommunity;
+
+  const CommunityScreen({
+    super.key,
+    this.onNavigateToSearch,
+    this.onNavigateToCommunity,
+  });
 
   @override
   State<CommunityScreen> createState() => _CommunityScreenState();
@@ -36,9 +43,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
       body: Column(
         children: [
           // Unified Global Header
-          const AsmitaPrimaryHeader(
+          AsmitaPrimaryHeader(
             title: 'Siddhi CHS 34 Hub',
             subtitle: '244 Members',
+            onSearchPressed: widget.onNavigateToSearch,
+            onChatPressed: widget.onNavigateToCommunity,
           ),
           
           Expanded(

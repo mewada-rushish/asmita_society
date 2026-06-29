@@ -9,7 +9,7 @@ class EnvConfig {
 
   static const String _devBaseUrlAndroid = 'http://10.0.2.2:3001';
   static const String _devBaseUrliOS = 'http://localhost:3001';
-  static const String _prodBaseUrl = 'https://societyapi.asmitagroup.com';
+  static const String _prodBaseUrl = 'https://admin.myasmita.com';
 
   /// Resolves the base URL based on the current environment and platform.
   static String get baseUrl {
@@ -26,11 +26,16 @@ class EnvConfig {
   }
 
   /// Endpoint for initiating OTP dispatch.
-  static String get loginInitiate => '$baseUrl/api/auth/login/initiate';
+  static String get loginInitiate => '$baseUrl/api/auth/otp/initiate';
+
 
   /// Endpoint for verifying OTP.
-  static String get loginVerify => '$baseUrl/api/auth/login/verify';
+  static String get loginVerify => '$baseUrl/api/auth/otp/verify';
+
 
   /// Endpoint for registering a new user.
-  static String get register => '$baseUrl/api/auth/register';
+  static String get register => '$baseUrl/api/auth/otp/register';
+  
+
+
 }
