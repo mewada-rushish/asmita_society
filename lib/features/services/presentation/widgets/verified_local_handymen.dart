@@ -136,7 +136,7 @@ class _HandymanRow extends StatelessWidget {
             },
             icon: const Icon(Icons.call_rounded, color: AsmitaPalette.actionRed, size: 18),
             style: IconButton.styleFrom(
-              backgroundColor: AsmitaPalette.actionRed.withOpacity(0.08),
+              backgroundColor: AsmitaPalette.actionRed.withValues(alpha: 0.08),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.all(10),
             ),

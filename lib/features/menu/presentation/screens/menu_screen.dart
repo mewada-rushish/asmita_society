@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
+import 'package:asmita_society/features/auth/bloc/auth_event.dart';
 
 class MenuScreen extends StatelessWidget {
   final String userRole;
@@ -136,7 +139,11 @@ class MenuScreen extends StatelessWidget {
     final color = isDestructive ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy;
     
     return InkWell(
-      onTap: () {},
+      onTap: () {
+        if (isDestructive && title == 'Logout') {
+          context.read<AuthBloc>().add(AuthLogoutRequested());
+        }
+      },
       borderRadius: BorderRadius.circular(16),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

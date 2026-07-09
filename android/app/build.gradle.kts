@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.asmita.app.asmita_society"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
