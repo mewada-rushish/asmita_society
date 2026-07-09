@@ -6,6 +6,7 @@ import '../../../core/widgets/asmita_bottom_sheet.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../../dashboard/presentation/main_dashboard_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
   final String verifiedMobile;
@@ -222,7 +223,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
-                builder: (_) => Scaffold(body: Center(child: Text('Dashboard for ${state.user.userType}'))),
+                builder: (_) => MainDashboardScreen(userRole: state.user.userType),
               ),
               (route) => false,
             );

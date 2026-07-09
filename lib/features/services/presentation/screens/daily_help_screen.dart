@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart'; 
@@ -92,7 +93,7 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                 return Container(
                   margin: const EdgeInsets.only(bottom: 4),
                   decoration: BoxDecoration(
-                    color: isSelected ? AsmitaPalette.deepNavy.withOpacity(0.1) : Colors.transparent,
+                    color: isSelected ? AsmitaPalette.deepNavy.withValues(alpha: 0.1) : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ListTile(
@@ -176,7 +177,7 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                             style: textTheme.bodyLarge?.copyWith(
                               fontSize: 14,
                               color: _selectedModalCategory == null
-                                  ? AsmitaPalette.textLight.withOpacity(0.6)
+                                  ? AsmitaPalette.textLight.withValues(alpha: 0.6)
                                   : AsmitaPalette.textDark,
                             ),
                           ),
@@ -339,7 +340,7 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AsmitaPalette.borderGrey, width: 1.2),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.015), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.015), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Row(
@@ -388,10 +389,15 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
             ),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () async {
+              final Uri url = Uri.parse('tel:+919876543210');
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url);
+              }
+            },
             icon: const Icon(Icons.call_rounded, color: AsmitaPalette.actionRed, size: 18),
             style: IconButton.styleFrom(
-              backgroundColor: AsmitaPalette.actionRed.withOpacity(0.08),
+              backgroundColor: AsmitaPalette.actionRed.withValues(alpha: 0.08),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.all(10),
             ),

@@ -3,10 +3,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/constants/design_system.dart';
-import '../../../core/security/secure_storage_service.dart';
 import '../../auth/bloc/auth_bloc.dart';
-import '../../auth/presentation/login_screen.dart';
-import '../../auth/data/repositories/auth_repository.dart';
+import '../../auth/bloc/auth_event.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -43,21 +41,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await _secureStorage.write(key: 'has_seen_onboarding', value: 'true');
     if (!mounted) return;
     
-    // Initialize dependency singletons for the authentication flow
-    final authRepository = AuthRepository();
-    final secureStorageService = SecureStorageService();
-
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => BlocProvider(
-          create: (context) => AuthBloc(
-            authRepository: authRepository,
-            secureStorage: secureStorageService,
-          ),
-          child: const LoginScreen(),
-        ),
-      ),
-    );
+    context.read<AuthBloc>().add(AuthCheckRequested());
   }
 
   void _nextPage() {

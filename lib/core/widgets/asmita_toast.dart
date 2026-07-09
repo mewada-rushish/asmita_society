@@ -49,6 +49,7 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
   late Animation<Offset> _offsetAnimation;
   late Animation<double> _fadeAnimation;
   Timer? _dismissTimer;
+  bool _isDismissing = false;
 
   @override
   void initState() {
@@ -80,7 +81,8 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
   }
 
   void _reverseAndDismiss() async {
-    if (mounted) {
+    if (mounted && !_isDismissing) {
+      _isDismissing = true;
       // Cancel timer if manually dismissed via tap
       _dismissTimer?.cancel();
       await _controller.reverse();

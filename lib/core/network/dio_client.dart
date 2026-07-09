@@ -1,13 +1,14 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import '../security/secure_storage_service.dart';
+import '../config/env_config.dart';
 
 class AsmitaDioClient {
   final Dio dio;
   final SecureStorageService secureStorage;
 
   AsmitaDioClient(this.secureStorage) : dio = Dio() {
-    dio.options.baseUrl = 'https://admin.myasmita.com';
+    dio.options.baseUrl = EnvConfig.baseUrl;
     dio.options.connectTimeout = const Duration(seconds: 15);
     dio.options.receiveTimeout = const Duration(seconds: 15);
     
