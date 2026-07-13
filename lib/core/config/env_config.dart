@@ -5,10 +5,10 @@ enum AppEnvironment { development, production }
 
 /// Central configuration for API environment endpoints and base URLs.
 class EnvConfig {
-  static const AppEnvironment currentEnvironment = AppEnvironment.development;
+  static const AppEnvironment currentEnvironment = AppEnvironment.production;
 
-  static const String _devBaseUrlAndroid = 'http://10.0.2.2:3001';
-  static const String _devBaseUrliOS = 'http://localhost:3001';
+  static const String _devBaseUrlAndroid = 'http://10.0.2.2:5000';
+  static const String _devBaseUrliOS = 'http://localhost:5000';
   static const String _prodBaseUrl = 'https://admin.myasmita.com';
 
   /// Resolves the base URL based on the current environment and platform.
@@ -35,6 +35,9 @@ class EnvConfig {
 
   /// Endpoint for registering a new user.
   static String get register => '$baseUrl/app-api/auth/otp/register';
+  
+  /// Endpoint for logging out.
+  static String get logout => '$baseUrl/app-api/auth/logout';
   
 
 

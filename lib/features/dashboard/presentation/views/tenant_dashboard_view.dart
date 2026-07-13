@@ -5,16 +5,33 @@ import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/core/utils/dashboard_scroll_physics.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
+import 'package:asmita_society/features/dashboard/widgets/asmita_security_wizard.dart';
+import 'package:asmita_society/features/dashboard/widgets/asmita_raise_alert_wizard.dart';
 
 class TenantDashboardView extends StatefulWidget {
-  const TenantDashboardView({super.key});
+  final VoidCallback? onNavigateToCommunity; 
+  final VoidCallback? onNavigateToHistory; 
+  final VoidCallback? onNavigateToViewMore; 
+  final VoidCallback? onNavigateToServices;
+  final VoidCallback? onNavigateToDailyHelp;
+  final VoidCallback? onNavigateToSearch;
+
+  const TenantDashboardView({
+    super.key, 
+    this.onNavigateToCommunity, 
+    this.onNavigateToHistory,
+    this.onNavigateToViewMore, 
+    this.onNavigateToServices,
+    this.onNavigateToDailyHelp,
+    this.onNavigateToSearch,
+  });
 
   @override
   State<TenantDashboardView> createState() => _TenantDashboardViewState();
 }
 
 class _TenantDashboardViewState extends State<TenantDashboardView> {
-  final ScrollController _scrollController = ScrollController(initialScrollOffset: 426.0);
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void dispose() {
@@ -32,6 +49,26 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
     );
   }
 
+  void _showSecurityModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const AsmitaDialog(
+        title: 'Security Assistance',
+        content: AsmitaSecurityWizard(),
+      ),
+    );
+  }
+
+  void _showRaiseAlertModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const AsmitaDialog(
+        title: 'Emergency Broadcast',
+        content: AsmitaRaiseAlertWizard(),
+      ),
+    );
+  } 
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -40,10 +77,12 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          const AsmitaPrimaryHeader(
+          AsmitaPrimaryHeader(
             title: 'Hello, Kavana',
             subtitle: 'Flat B-105 • Tenant',
             userInitials: 'KM',
+            onSearchPressed: widget.onNavigateToSearch,
+            onChatPressed: widget.onNavigateToCommunity,
           ),
           Expanded(
             child: Container(
@@ -225,6 +264,21 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                   Text('Customise', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12, fontWeight: FontWeight.w600)),
                 ],
               ),
+              InkWell(
+                onTap: () {
+                  if (widget.onNavigateToViewMore != null) {
+                    widget.onNavigateToViewMore!();
+                  }
+                },
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                child: Row(
+                  children: [
+                    Text('View All', style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.actionRed, fontSize: 13, fontWeight: FontWeight.w600)),
+                    const Icon(Icons.chevron_right_rounded, color: AsmitaPalette.actionRed, size: 16),
+                  ],
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -232,10 +286,14 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _buildGridItem(context, Icons.support_agent_rounded, 'Raise Ticket', onTap: () => _showRaiseAlertModal(context)),
+              _buildGridItem(context, Icons.handshake_rounded, 'Leases', onTap: () {
+                // TODO: Implement Leases Modal or Navigation
+              }),
+              _buildGridItem(context, Icons.phone_in_talk_rounded, 'Contact Owner', onTap: () {
+                // TODO: Implement Contact Owner
+              }),
               _buildGridItem(context, Icons.person_add_alt_1_rounded, 'Pre-Approve', badgeLabel: 'Safe mode', onTap: () => _showPreApproveModal(context)),
-              _buildGridItem(context, Icons.support_agent_rounded, 'Raise Ticket'),
-              _buildGridItem(context, Icons.handshake_rounded, 'Leases'),
-              _buildGridItem(context, Icons.phone_in_talk_rounded, 'Contact Owner'),
             ],
           ),
         ],
@@ -329,11 +387,20 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text("Services", style: textTheme.titleLarge?.copyWith(fontSize: 15, fontWeight: FontWeight.w700)),
-          Row(
-            children: [
-              Text('See All', style: textTheme.bodyMedium?.copyWith(fontSize: 13, fontWeight: FontWeight.w600)),
-              Icon(Icons.chevron_right_rounded, color: Colors.grey.shade600, size: 16),
-            ],
+          InkWell(
+            onTap: () {
+              if (widget.onNavigateToServices != null) {
+                widget.onNavigateToServices!();
+              }
+            },
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            child: Row(
+              children: [
+                Text('See All', style: textTheme.bodyMedium?.copyWith(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+                Icon(Icons.chevron_right_rounded, color: Colors.grey.shade600, size: 16),
+              ],
+            ),
           ),
         ],
       ),

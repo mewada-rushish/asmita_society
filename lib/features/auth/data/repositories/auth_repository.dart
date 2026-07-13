@@ -92,6 +92,21 @@ class AuthRepository {
     }
   }
 
+  /// Inform the backend that the session is terminating
+  Future<void> logout(int? userId, String? userType) async {
+    try {
+      await _dio.post(
+        EnvConfig.logout,
+        data: {
+          'user_id': userId,
+          'user_type': userType,
+        },
+      );
+    } catch (_) {
+      // Ignore network errors during logout, we will clear session locally anyway
+    }
+  }
+
   /// Safely converts response data into a Map, even if it arrived as a String or List.
   Map<String, dynamic> _ensureMap(dynamic data) {
     if (data == null) return {};

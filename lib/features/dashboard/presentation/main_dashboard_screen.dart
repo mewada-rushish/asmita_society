@@ -88,7 +88,26 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
           onNavigateToSearch: _navigateToSearch,
         );
       case 'tenant':
-        return const TenantDashboardView();
+        return TenantDashboardView(
+          onNavigateToCommunity: () {
+            setState(() {
+              _currentIndex = 2; // Society Chat
+            });
+          },
+          onNavigateToHistory: () {
+            setState(() {
+              _currentIndex = 3; // Gate Records
+            });
+          },
+          onNavigateToViewMore: () {
+            setState(() {
+              _currentIndex = 4; // View More/Menu
+            });
+          },
+          onNavigateToServices: () => setState(() => _currentIndex = 1),
+          onNavigateToDailyHelp: () => setState(() => _currentIndex = 5),
+          onNavigateToSearch: _navigateToSearch,
+        );
       default:
         return Center(child: Text('Role Architecture: $role'));
     }
