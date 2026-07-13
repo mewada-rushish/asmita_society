@@ -31,10 +31,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       
       if (token != null && token.isNotEmpty) {
         final cachedRole = await secureStorage.getUserRole() ?? 'resident';
+        final cachedUserId = await secureStorage.getUserId() ?? 0;
+        final cachedUserName = await secureStorage.getUserName() ?? 'AsmitA User';
         
         final sessionUser = UserModel(
-          userId: 0, 
-          fullName: 'AsmitA User', 
+          userId: cachedUserId, 
+          fullName: cachedUserName, 
           userType: cachedRole, 
           accountType: 'app',
         );
@@ -124,6 +126,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     if (response.token.isNotEmpty && response.data != null) {
       await secureStorage.saveToken(response.token);
       await secureStorage.saveUserRole(response.role);
+      await secureStorage.saveUserId(response.data!.userId);
+      await secureStorage.saveUserName(response.data!.fullName);
       emit(AuthAuthenticated(user: response.data!));
     } else {
       emit(const AuthError(message: 'Invalid session payload.'));

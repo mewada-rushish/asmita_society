@@ -10,7 +10,17 @@ abstract class CommunityEvent extends Equatable {
 class LoadCommunityMessages extends CommunityEvent {
   final int? currentUserId;
   final String? currentUserName;
-  const LoadCommunityMessages({this.currentUserId, this.currentUserName});
+  final bool isRefresh;
+  const LoadCommunityMessages({this.currentUserId, this.currentUserName, this.isRefresh = false});
+  
+  @override
+  List<Object?> get props => [currentUserId, currentUserName, isRefresh];
+}
+
+class LoadMoreMessages extends CommunityEvent {
+  final int? currentUserId;
+  final String? currentUserName;
+  const LoadMoreMessages({this.currentUserId, this.currentUserName});
   
   @override
   List<Object?> get props => [currentUserId, currentUserName];
@@ -18,11 +28,13 @@ class LoadCommunityMessages extends CommunityEvent {
 
 class SendTextMessage extends CommunityEvent {
   final String text;
+  final String? replyToMessageId;
+  final String? replyToContent;
 
-  const SendTextMessage(this.text);
+  const SendTextMessage(this.text, {this.replyToMessageId, this.replyToContent});
 
   @override
-  List<Object?> get props => [text];
+  List<Object?> get props => [text, replyToMessageId, replyToContent];
 }
 
 class SendAudioMessage extends CommunityEvent {

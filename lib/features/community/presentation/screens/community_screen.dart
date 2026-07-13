@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,6 +19,7 @@ import 'package:asmita_society/core/network/dio_client.dart';
 import 'package:asmita_society/core/security/secure_storage_service.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
+import '../../data/models/chat_message_model.dart';
 
 class CommunityScreen extends StatefulWidget {
   final VoidCallback? onNavigateToSearch;
@@ -37,6 +39,8 @@ class CommunityScreen extends StatefulWidget {
 
 class _CommunityScreenState extends State<CommunityScreen> {
   final TextEditingController _chatController = TextEditingController();
+  final FocusNode _chatFocusNode = FocusNode();
+  final GlobalKey _chatInputKey = GlobalKey();
   final ScrollController _scrollController = ScrollController();
   bool _isTyping = false;
   bool _showAttachments = false; 
@@ -56,23 +60,85 @@ class _CommunityScreenState extends State<CommunityScreen> {
   String? _playingAudioId;
   int _playProgress = 0;
   Timer? _playbackTimer;
+  Timer? _pollingTimer; // Timer for live chat updates
 
   double _dragOffset = 0.0;
+  ChatMessageModel? _replyingToMessage;
+  bool _isFirstLoad = true;
+  
+  late final CommunityBloc _communityBloc;
 
   @override
   void initState() {
     super.initState();
     _audioRecorder = AudioRecorder();
+    _scrollController.addListener(_onScroll);
+    
+    _communityBloc = CommunityBloc(repository: CommunityScreen._repository);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = context.read<AuthBloc>().state;
+      int? userId;
+      String? userName;
+      if (authState is AuthAuthenticated) {
+        userId = authState.user.userId;
+        userName = authState.user.fullName;
+      }
+      _communityBloc.add(LoadCommunityMessages(currentUserId: userId, currentUserName: userName));
+    });
+    
+    // Start polling for live chat updates
+    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      final currentAuthState = context.read<AuthBloc>().state;
+      int? currentId;
+      String? currentName;
+      if (currentAuthState is AuthAuthenticated) {
+        currentId = currentAuthState.user.userId;
+        currentName = currentAuthState.user.fullName;
+      }
+      
+      bool isAtBottom = true;
+      if (_scrollController.hasClients) {
+        isAtBottom = (_scrollController.position.maxScrollExtent - _scrollController.position.pixels <= 150);
+      }
+      
+      if (isAtBottom) {
+        _communityBloc.add(LoadCommunityMessages(
+          currentUserId: currentId,
+          currentUserName: currentName,
+          isRefresh: true,
+        ));
+      }
+    });
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients) {
+      if (_scrollController.position.pixels <= _scrollController.position.minScrollExtent + 100) {
+        final state = _communityBloc.state;
+        if (state is CommunityLoaded && !state.hasReachedMax && !state.isLoadingMore) {
+          _communityBloc.add(LoadMoreMessages(
+             currentUserId: context.read<AuthBloc>().state is AuthAuthenticated ? (context.read<AuthBloc>().state as AuthAuthenticated).user.userId : null,
+          ));
+        }
+      }
+    }
   }
 
   @override
   void dispose() {
     _chatController.dispose();
+    _chatFocusNode.dispose();
     _scrollController.dispose();
     _recordTimer?.cancel();
     _waveTimer?.cancel();
     _playbackTimer?.cancel();
+    _pollingTimer?.cancel(); // Cancel polling timer
     _audioRecorder.dispose();
+    _communityBloc.close();
     super.dispose();
   }
 
@@ -416,20 +482,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<CommunityBloc>(
-      create: (context) {
-        final authState = context.read<AuthBloc>().state;
-        int? userId;
-        String? userName;
-        if (authState is AuthAuthenticated) {
-          userId = authState.user.userId;
-          userName = authState.user.fullName;
-        }
-        return CommunityBloc(repository: CommunityScreen._repository)..add(LoadCommunityMessages(currentUserId: userId, currentUserName: userName));
-      },
+    return BlocProvider<CommunityBloc>.value(
+      value: _communityBloc,
       child: Builder(
         builder: (context) {
-          final bloc = context.read<CommunityBloc>();
+          final bloc = _communityBloc;
 
           return Scaffold(
             backgroundColor: AsmitaPalette.systemBG,
@@ -455,7 +512,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         BlocConsumer<CommunityBloc, CommunityState>(
                           listener: (context, state) {
                             if (state is CommunityLoaded) {
-                              _scrollToBottom();
+                              if (_isFirstLoad) {
+                                _scrollToBottom();
+                                _isFirstLoad = false;
+                              } else {
+                                if (_scrollController.hasClients) {
+                                  final isAtBottom = (_scrollController.position.maxScrollExtent - _scrollController.position.pixels <= 150);
+                                  if (isAtBottom) {
+                                    _scrollToBottom();
+                                  }
+                                }
+                              }
                             }
                           },
                           builder: (context, state) {
@@ -487,14 +554,22 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                 itemBuilder: (context, index) {
                                   final msg = messages[index];
                                   final showDateBadge = index == 0 || 
-                                      !messages[index - 1].time.startsWith(msg.time.split(',')[0]);
+                                      !messages[index - 1].time.startsWith(msg.time.split('|')[0]);
+                                      
+                                  String? replySenderName;
+                                  if (msg.replyToMessageId != null) {
+                                    try {
+                                      final repliedMsg = messages.firstWhere((m) => m.id == msg.replyToMessageId);
+                                      replySenderName = repliedMsg.isMe ? 'You' : repliedMsg.sender;
+                                    } catch (_) {}
+                                  }
 
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
                                       if (showDateBadge) ...[
                                         const SizedBox(height: 8),
-                                        _buildDateBadge(context, msg.time.split(',')[0]),
+                                        _buildDateBadge(context, msg.time.split('|')[0]),
                                         const SizedBox(height: 16),
                                       ],
                                       _buildMessageBubble(
@@ -502,11 +577,19 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                         messageId: msg.id,
                                         sender: msg.sender,
                                         isMe: msg.isMe,
-                                        time: msg.time.contains(',') ? msg.time.split(',')[1].trim() : msg.time,
+                                        time: msg.time.contains('|') ? msg.time.split('|')[1].trim() : msg.time,
                                         type: msg.type,
                                         content: msg.content,
+                                        replyToMessageId: msg.replyToMessageId,
+                                        replyToContent: msg.replyToContent,
+                                        replyToSenderName: replySenderName,
                                         pollOptions: msg.pollOptions,
                                         isManagement: msg.isManagement,
+                                        onSwipeReply: () {
+                                          setState(() {
+                                            _replyingToMessage = msg;
+                                          });
+                                        },
                                       ),
                                       const SizedBox(height: 12),
                                     ],
@@ -618,14 +701,18 @@ class _CommunityScreenState extends State<CommunityScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        if (!_isTyping)
-          IconButton(
+        Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: IconButton(
             icon: Icon(_showAttachments ? Icons.cancel_rounded : Icons.attach_file_rounded, color: _showAttachments ? AsmitaPalette.actionRed : AsmitaPalette.textLight, size: 26),
             onPressed: _toggleAttachments,
           ),
+        ),
         Expanded(
           child: TextField(
+            key: _chatInputKey,
             controller: _chatController,
+            focusNode: _chatFocusNode,
             minLines: 1,
             maxLines: 4,
             onTap: () {
@@ -641,18 +728,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
               hintText: 'Message...',
               hintStyle: TextStyle(color: AsmitaPalette.textLight, fontSize: 14),
               border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              contentPadding: EdgeInsets.only(left: 4, right: 8, top: 12, bottom: 12),
             ),
           ),
         ),
-        if (!_isTyping)
-          IconButton(
-            icon: const Icon(Icons.camera_alt_outlined, color: AsmitaPalette.textLight, size: 22),
-            onPressed: () {
-              if (_showAttachments) setState(() => _showAttachments = false);
-              _pickImageFromCamera(bloc);
-            },
-          ),
+        IconButton(
+          icon: const Icon(Icons.camera_alt_outlined, color: AsmitaPalette.textLight, size: 22),
+          onPressed: () {
+            if (_showAttachments) setState(() => _showAttachments = false);
+            _pickImageFromCamera(bloc);
+          },
+        ),
       ],
     );
   }
@@ -757,9 +843,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
       },
       onTap: _isTyping ? () {
         if (_showAttachments) setState(() => _showAttachments = false);
-        bloc.add(SendTextMessage(_chatController.text.trim()));
+        bloc.add(SendTextMessage(
+          _chatController.text.trim(),
+          replyToMessageId: _replyingToMessage?.id,
+          replyToContent: _replyingToMessage?.content,
+        ));
         _chatController.clear();
-        setState(() => _isTyping = false);
+        setState(() {
+          _isTyping = false;
+          _replyingToMessage = null;
+        });
       } : () {
         AsmitaToast.show(
           context,
@@ -789,36 +882,100 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 
   Widget _buildChatInputArea(BuildContext context, CommunityBloc bloc) {
-    return Container(
-      padding: EdgeInsets.only(
-        left: 8,
-        right: 8,
-        top: 8,
-        bottom: MediaQuery.viewPaddingOf(context).bottom > 0 ? MediaQuery.viewPaddingOf(context).bottom : 12,
-      ),
-      color: Colors.transparent,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Expanded(
-            child: Container(
-              constraints: const BoxConstraints(maxHeight: 120),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AsmitaPalette.borderGrey),
-              ),
-              child: _isPreviewingAudio
-                  ? _buildPreviewUI(bloc)
-                  : _isRecording
-                      ? _buildRecordingUI()
-                      : _buildTextFieldUI(bloc),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (_replyingToMessage != null)
+          Container(
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AsmitaPalette.borderGrey.withValues(alpha: 0.5)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ]
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 4,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AsmitaPalette.deepNavy,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Replying to ${_replyingToMessage!.sender}',
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AsmitaPalette.deepNavy, fontFamily: 'Poppins'),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _replyingToMessage!.content,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: AsmitaPalette.textDark, fontSize: 13, fontFamily: 'Poppins'),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 22, color: AsmitaPalette.textLight),
+                  onPressed: () {
+                    setState(() {
+                      _replyingToMessage = null;
+                    });
+                  },
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                )
+              ],
             ),
           ),
-          const SizedBox(width: 8),
-          _buildMicButton(bloc),
-        ],
-      ),
+        Container(
+          padding: EdgeInsets.only(
+            left: 8,
+            right: 8,
+            top: 4,
+            bottom: MediaQuery.viewPaddingOf(context).bottom > 0 ? MediaQuery.viewPaddingOf(context).bottom : 12,
+          ),
+          color: Colors.transparent,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Container(
+                  constraints: const BoxConstraints(maxHeight: 120),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: AsmitaPalette.borderGrey),
+                  ),
+                  child: _isPreviewingAudio
+                      ? _buildPreviewUI(bloc)
+                      : _isRecording
+                          ? _buildRecordingUI()
+                          : _buildTextFieldUI(bloc),
+                ),
+              ),
+              const SizedBox(width: 8),
+              _buildMicButton(bloc),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -841,18 +998,27 @@ class _CommunityScreenState extends State<CommunityScreen> {
     required String time,
     required String type,
     required String content,
+    String? replyToMessageId,
+    String? replyToContent,
+    String? replyToSenderName,
     Map<String, int>? pollOptions,
     bool isManagement = false,
+    VoidCallback? onSwipeReply,
   }) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.75),
-        child: Column(
-          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
+    return SwipeToReply(
+      isMe: isMe,
+      onSwipeReply: () {
+        if (onSwipeReply != null) onSwipeReply();
+      },
+      child: Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.75),
+          child: Column(
+            crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            children: [
             if (!isMe)
               Padding(
                 padding: const EdgeInsets.only(left: 4, bottom: 4),
@@ -872,23 +1038,62 @@ class _CommunityScreenState extends State<CommunityScreen> {
               ),
             Container(
               decoration: BoxDecoration(
-                color: isMe ? AsmitaPalette.deepNavy : Colors.white,
+                color: isMe ? const Color(0xFFE6EEFA) : Colors.white,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
                   bottomLeft: Radius.circular(isMe ? 16 : 4),
                   bottomRight: Radius.circular(isMe ? 4 : 16),
                 ),
-                border: isMe ? null : Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+                border: Border.all(
+                  color: isMe ? AsmitaPalette.deepNavy.withValues(alpha: 0.15) : AsmitaPalette.borderGrey, 
+                  width: 1.5,
+                ),
                 boxShadow: [
-                  if (!isMe) BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2)),
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2)),
                 ],
               ),
               padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (type == 'text') Text(content, style: textTheme.bodyLarge?.copyWith(fontSize: 13, height: 1.4, color: isMe ? Colors.white : AsmitaPalette.textDark)),
+              child: IntrinsicWidth(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                  if (replyToContent != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            width: 0.5,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              replyToSenderName ?? 'Message',
+                              style: textTheme.bodySmall?.copyWith(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: AsmitaPalette.deepNavy,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              replyToContent,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textDark),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (type == 'text') Text(content, style: textTheme.bodyLarge?.copyWith(fontSize: 13, height: 1.4, color: AsmitaPalette.textDark)),
                   if (type == 'image') _buildImagePreview(context, content),
                   if (type == 'audio') _buildAudioPlayer(context, messageId, isMe, content),
                   if (type == 'poll' && pollOptions != null) _buildPollWidget(context, content, pollOptions, isMe),
@@ -897,17 +1102,19 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Text(time, style: textTheme.bodyMedium?.copyWith(fontSize: 9, fontWeight: FontWeight.w600, color: isMe ? Colors.white70 : AsmitaPalette.textLight)),
+                      Text(time, style: textTheme.bodyMedium?.copyWith(fontSize: 9, fontWeight: FontWeight.w600, color: AsmitaPalette.textLight)),
                       if (isMe) ...[
                         const SizedBox(width: 4),
-                        const Icon(Icons.done_all_rounded, color: Colors.white70, size: 12),
+                        const Icon(Icons.done_all_rounded, color: AsmitaPalette.deepNavy, size: 12),
                       ]
                     ],
                   ),
                 ],
               ),
+              ),
             ),
           ],
+        ),
         ),
       ),
     );
@@ -1236,6 +1443,113 @@ class _CreatePollSheetWidgetState extends State<_CreatePollSheetWidget> {
                 ),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class SwipeToReply extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onSwipeReply;
+  final bool isMe;
+
+  const SwipeToReply({Key? key, required this.child, required this.onSwipeReply, required this.isMe}) : super(key: key);
+
+  @override
+  State<SwipeToReply> createState() => _SwipeToReplyState();
+}
+
+class _SwipeToReplyState extends State<SwipeToReply> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  double _dragExtent = 0.0;
+  final double _maxDragDistance = 70.0; // Hard cap on how far you can slide
+  final double _triggerDistance = 40.0; // Distance required to trigger the reply
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 250));
+    _controller.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onHorizontalDragUpdate(DragUpdateDetails details) {
+    setState(() {
+      _dragExtent += details.primaryDelta ?? 0;
+      if (widget.isMe) {
+        if (_dragExtent > 0) _dragExtent = 0; // Only allow sliding left
+        if (_dragExtent < -_maxDragDistance) {
+          _dragExtent = -_maxDragDistance + ((_dragExtent + _maxDragDistance) * 0.1);
+        }
+      } else {
+        if (_dragExtent < 0) _dragExtent = 0; // Only allow sliding right
+        if (_dragExtent > _maxDragDistance) {
+          _dragExtent = _maxDragDistance + ((_dragExtent - _maxDragDistance) * 0.1);
+        }
+      }
+    });
+  }
+
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    if (widget.isMe) {
+      if (_dragExtent <= -_triggerDistance) {
+        widget.onSwipeReply();
+      }
+    } else {
+      if (_dragExtent >= _triggerDistance) {
+        widget.onSwipeReply();
+      }
+    }
+    
+    _animation = Tween<double>(begin: _dragExtent, end: 0.0).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    ));
+    
+    _controller.forward(from: 0).then((_) {
+      _dragExtent = 0.0;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final offset = _controller.isAnimating ? _animation.value : _dragExtent;
+    final absOffset = offset.abs();
+    
+    return GestureDetector(
+      onHorizontalDragUpdate: _onHorizontalDragUpdate,
+      onHorizontalDragEnd: _onHorizontalDragEnd,
+      child: Stack(
+        alignment: widget.isMe ? Alignment.centerRight : Alignment.centerLeft,
+        children: [
+          if (absOffset > 5)
+            Positioned(
+              left: widget.isMe ? null : (absOffset / _maxDragDistance).clamp(0.0, 1.0) * 16, 
+              right: widget.isMe ? (absOffset / _maxDragDistance).clamp(0.0, 1.0) * 16 : null,
+              child: Transform.scale(
+                scale: (absOffset / _maxDragDistance).clamp(0.0, 1.0),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.reply_rounded, color: AsmitaPalette.deepNavy, size: 20),
+                ),
+              ),
+            ),
+          Transform.translate(
+            offset: Offset(offset, 0),
+            child: widget.child,
           ),
         ],
       ),
