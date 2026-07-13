@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:asmita_society/core/security/encryption_service.dart';
 import '../data/repositories/community_repository.dart';
 import '../data/models/chat_message_model.dart';
 import 'community_event.dart';
@@ -10,9 +9,12 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
   final CommunityRepository repository;
   int? _currentUserId;
   String? _currentUserName;
+  int _currentPage = 1;
+  bool _isFetching = false;
 
   CommunityBloc({required this.repository}) : super(CommunityInitial()) {
     on<LoadCommunityMessages>(_onLoadMessages);
+    on<LoadMoreMessages>(_onLoadMoreMessages);
     on<SendTextMessage>(_onSendTextMessage);
     on<SendAudioMessage>(_onSendAudioMessage);
     on<SendPollMessage>(_onSendPollMessage);
@@ -25,14 +27,52 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
   }
 
   Future<void> _onLoadMessages(LoadCommunityMessages event, Emitter<CommunityState> emit) async {
-    emit(CommunityLoading());
+    if (!event.isRefresh) {
+      emit(CommunityLoading());
+    }
     try {
       _currentUserId = event.currentUserId ?? _currentUserId;
       _currentUserName = event.currentUserName ?? _currentUserName;
-      final messages = await repository.getMessages(currentUserId: _currentUserId, currentUserName: _currentUserName);
-      emit(CommunityLoaded(messages));
+      _currentPage = 1;
+      _isFetching = true;
+      final messages = await repository.getMessages(currentUserId: _currentUserId, currentUserName: _currentUserName, page: _currentPage);
+      emit(CommunityLoaded(messages, hasReachedMax: messages.length < 50));
     } catch (e) {
       emit(const CommunityError('Failed to load community messages.'));
+    } finally {
+      _isFetching = false;
+    }
+  }
+
+  Future<void> _onLoadMoreMessages(LoadMoreMessages event, Emitter<CommunityState> emit) async {
+    if (state is! CommunityLoaded || _isFetching) return;
+    final currentState = state as CommunityLoaded;
+    if (currentState.hasReachedMax) return;
+
+    try {
+      _isFetching = true;
+      emit(currentState.copyWith(isLoadingMore: true));
+      _currentPage++;
+      final moreMessages = await repository.getMessages(
+        currentUserId: _currentUserId,
+        currentUserName: _currentUserName,
+        page: _currentPage,
+      );
+
+      if (moreMessages.isEmpty) {
+        emit(currentState.copyWith(hasReachedMax: true, isLoadingMore: false));
+      } else {
+        // Prepend older messages
+        emit(CommunityLoaded(
+          [...moreMessages, ...currentState.messages],
+          hasReachedMax: moreMessages.length < 50,
+          isLoadingMore: false,
+        ));
+      }
+    } catch (e) {
+      emit(currentState.copyWith(isLoadingMore: false));
+    } finally {
+      _isFetching = false;
     }
   }
 
@@ -41,21 +81,21 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     final currentState = state as CommunityLoaded;
 
     try {
-      String encryptor(String plain) => EncryptionService.encrypt(plain, repository.groupKey);
-
-      final encryptedMsg = ChatMessageModel.createEncrypted(
+      final encryptedMsg = ChatMessageModel.createMessage(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         sender: 'You',
         isMe: true,
-        time: 'Today, ${_getCurrentFormattedTime()}',
+        time: 'Today|${_getCurrentFormattedTime()}',
         type: 'text',
         content: event.text,
-        encryptor: encryptor,
+        replyToMessageId: event.replyToMessageId,
+        replyToContent: event.replyToContent,
       );
 
       await repository.sendMessage(encryptedMsg, senderId: _currentUserId);
-      final messages = await repository.getMessages(currentUserId: _currentUserId, currentUserName: _currentUserName);
-      emit(CommunityLoaded(messages));
+      _currentPage = 1;
+      final messages = await repository.getMessages(currentUserId: _currentUserId, currentUserName: _currentUserName, page: _currentPage);
+      emit(CommunityLoaded(messages, hasReachedMax: messages.length < 50));
     } catch (e) {
       emit(currentState);
     }
@@ -66,16 +106,13 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     final currentState = state as CommunityLoaded;
 
     try {
-      String encryptor(String plain) => EncryptionService.encrypt(plain, repository.groupKey);
-
-      final encryptedMsg = ChatMessageModel.createEncrypted(
+      final encryptedMsg = ChatMessageModel.createMessage(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         sender: 'You',
         isMe: true,
-        time: 'Today, ${_getCurrentFormattedTime()}',
+        time: 'Today|${_getCurrentFormattedTime()}',
         type: 'audio',
         content: event.duration,
-        encryptor: encryptor,
       );
 
       await repository.sendMessage(encryptedMsg, senderId: _currentUserId);
@@ -91,18 +128,15 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     final currentState = state as CommunityLoaded;
 
     try {
-      String encryptor(String plain) => EncryptionService.encrypt(plain, repository.groupKey);
-
-      final encryptedMsg = ChatMessageModel.createEncrypted(
+      final encryptedMsg = ChatMessageModel.createMessage(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         sender: 'You',
         isMe: true,
-        time: 'Today, ${_getCurrentFormattedTime()}',
+        time: 'Today|${_getCurrentFormattedTime()}',
         type: 'poll',
         content: event.question,
         pollOptions: event.options,
         allowMultipleAnswers: event.allowMultipleAnswers,
-        encryptor: encryptor,
       );
 
       await repository.sendMessage(encryptedMsg, senderId: _currentUserId);
@@ -118,16 +152,13 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     final currentState = state as CommunityLoaded;
 
     try {
-      String encryptor(String plain) => EncryptionService.encrypt(plain, repository.groupKey);
-
-      final encryptedMsg = ChatMessageModel.createEncrypted(
+      final encryptedMsg = ChatMessageModel.createMessage(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         sender: 'You',
         isMe: true,
-        time: 'Today, ${_getCurrentFormattedTime()}',
+        time: 'Today|${_getCurrentFormattedTime()}',
         type: 'image',
         content: event.imagePath,
-        encryptor: encryptor,
       );
 
       await repository.sendMessage(encryptedMsg, senderId: _currentUserId);

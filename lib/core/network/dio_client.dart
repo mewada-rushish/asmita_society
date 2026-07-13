@@ -20,9 +20,9 @@ class AsmitaDioClient {
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final publicPaths = [
-          '/api/auth/otp/initiate', 
-          '/api/auth/otp/verify', 
-          '/api/auth/otp/register'
+          '/app-api/auth/otp/initiate', 
+          '/app-api/auth/otp/verify', 
+          '/app-api/auth/otp/register'
         ];
         final isPublic = publicPaths.any((path) => options.path.contains(path));
 

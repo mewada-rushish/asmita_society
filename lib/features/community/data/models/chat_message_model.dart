@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 
 /// Represents a message model for community chat.
-/// Holds the E2E encrypted ciphertext payload for database sync,
-/// and helper methods for encrypting/decrypting the content payload.
+/// Content is stored in plaintext on the client side, and encrypted
+/// on the backend API before database storage.
 class ChatMessageModel {
   final String id;
   final String sender;
@@ -12,11 +12,9 @@ class ChatMessageModel {
   final String type; // 'text', 'audio', 'poll'
   final bool isManagement;
   
-  // Encrypted base64 payload containing E2E encrypted content JSON
-  final String encryptedContent;
-  
-  // Decrypted fields (local only, not sent in plain text over network/DB)
   final String content;
+  final String? replyToMessageId;
+  final String? replyToContent;
   final Map<String, int>? pollOptions;
   final bool allowMultipleAnswers;
 
@@ -27,31 +25,33 @@ class ChatMessageModel {
     required this.time,
     required this.type,
     this.isManagement = false,
-    required this.encryptedContent,
     this.content = '',
+    this.replyToMessageId,
+    this.replyToContent,
     this.pollOptions,
     this.allowMultipleAnswers = false,
   });
 
-  /// Factory constructor to decrypt and unpack a ChatMessageModel from its encrypted state.
-  factory ChatMessageModel.decryptPayload({
+  /// Factory constructor to parse a new message payload.
+  factory ChatMessageModel.parsePayload({
     required String id,
     required String sender,
     required bool isMe,
     required String time,
     required String type,
     bool isManagement = false,
-    required String encryptedContent,
-    required String Function(String) decryptor,
+    required String contentPayload,
+    String? replyToMessageId,
   }) {
-    String decryptedContent = '';
+    String parsedContent = '';
+    String? parsedReplyToContent;
     Map<String, int>? pollOpts;
     bool allowMulti = false;
 
     try {
-      final decryptedJsonString = decryptor(encryptedContent);
-      final decoded = json.decode(decryptedJsonString) as Map<String, dynamic>;
-      decryptedContent = decoded['content'] as String? ?? '';
+      final decoded = json.decode(contentPayload) as Map<String, dynamic>;
+      parsedContent = decoded['content'] as String? ?? '';
+      parsedReplyToContent = decoded['replyToContent'] as String?;
       if (decoded['pollOptions'] != null) {
         pollOpts = (decoded['pollOptions'] as Map<String, dynamic>).map(
           (k, v) => MapEntry(k, v as int),
@@ -59,7 +59,8 @@ class ChatMessageModel {
       }
       allowMulti = decoded['allowMultipleAnswers'] as bool? ?? false;
     } catch (e) {
-      decryptedContent = '[Decryption Failed: $e]\nRaw Payload: $encryptedContent';
+      // Fallback if contentPayload is just a plain string instead of JSON
+      parsedContent = contentPayload;
     }
 
     return ChatMessageModel(
@@ -69,15 +70,16 @@ class ChatMessageModel {
       time: time,
       type: type,
       isManagement: isManagement,
-      encryptedContent: encryptedContent,
-      content: decryptedContent,
+      content: parsedContent,
+      replyToMessageId: replyToMessageId,
+      replyToContent: parsedReplyToContent,
       pollOptions: pollOpts,
       allowMultipleAnswers: allowMulti,
     );
   }
 
-  /// Encrypts and packs plain content into a ChatMessageModel.
-  static ChatMessageModel createEncrypted({
+  /// Packs plain content into a JSON string payload for sending.
+  static ChatMessageModel createMessage({
     required String id,
     required String sender,
     required bool isMe,
@@ -85,20 +87,11 @@ class ChatMessageModel {
     required String type,
     bool isManagement = false,
     required String content,
+    String? replyToMessageId,
+    String? replyToContent,
     Map<String, int>? pollOptions,
     bool allowMultipleAnswers = false,
-    required String Function(String) encryptor,
   }) {
-    final payloadMap = <String, dynamic>{
-      'content': content,
-    };
-    if (pollOptions != null) {
-      payloadMap['pollOptions'] = pollOptions;
-      payloadMap['allowMultipleAnswers'] = allowMultipleAnswers;
-    }
-    final payloadJson = json.encode(payloadMap);
-    final encryptedContent = encryptor(payloadJson);
-
     return ChatMessageModel(
       id: id,
       sender: sender,
@@ -106,55 +99,69 @@ class ChatMessageModel {
       time: time,
       type: type,
       isManagement: isManagement,
-      encryptedContent: encryptedContent,
       content: content,
+      replyToMessageId: replyToMessageId,
+      replyToContent: replyToContent,
       pollOptions: pollOptions,
+      allowMultipleAnswers: allowMultipleAnswers,
     );
   }
 
-  /// Parses an API JSON response and decrypts the content payload.
-  factory ChatMessageModel.fromJson(Map<String, dynamic> json, String Function(String) decryptor, {bool isMe = false, bool isManagement = false}) {
+  /// Parses an API JSON response
+  factory ChatMessageModel.fromJson(Map<String, dynamic> jsonResponse, {bool isMe = false, bool isManagement = false}) {
     String timeStr = '';
-    if (json['created_at'] != null) {
+    if (jsonResponse['created_at'] != null) {
       try {
-        final dateTime = DateTime.parse(json['created_at'].toString()).toLocal();
+        final dateTime = DateTime.parse(jsonResponse['created_at'].toString()).toLocal();
         final now = DateTime.now();
         final formatter = DateFormat('hh:mm a');
         final timeFormatted = formatter.format(dateTime);
         if (dateTime.year == now.year && dateTime.month == now.month && dateTime.day == now.day) {
-          timeStr = 'Today, $timeFormatted';
+          timeStr = 'Today|$timeFormatted';
         } else if (dateTime.year == now.year && dateTime.month == now.month && dateTime.day == now.day - 1) {
-          timeStr = 'Yesterday, $timeFormatted';
+          timeStr = 'Yesterday|$timeFormatted';
         } else {
-          timeStr = DateFormat('dd MMM, hh:mm a').format(dateTime);
+          timeStr = '${DateFormat('dd, MMM, yyyy').format(dateTime)}|$timeFormatted';
         }
       } catch (e) {
-        timeStr = json['created_at'].toString();
+        timeStr = jsonResponse['created_at'].toString();
       }
     }
 
-    return ChatMessageModel.decryptPayload(
-      id: json['id'].toString(),
-      sender: json['sender_name'] as String? ?? 'Unknown',
+    return ChatMessageModel.parsePayload(
+      id: jsonResponse['id'].toString(),
+      sender: jsonResponse['sender_name'] as String? ?? 'Unknown',
       isMe: isMe,
       time: timeStr,
-      type: json['message_type'] as String? ?? 'text',
+      type: jsonResponse['message_type'] as String? ?? 'text',
       isManagement: isManagement,
-      encryptedContent: (json['encrypted_content']?.toString().isNotEmpty == true) 
-          ? json['encrypted_content'].toString() 
-          : 'MISSING_FIELD: ${json.toString()}',
-      decryptor: decryptor,
+      contentPayload: jsonResponse['content']?.toString() ?? '',
+      replyToMessageId: jsonResponse['reply_to_message_id']?.toString(),
     );
   }
 
   /// Converts the message into the JSON structure expected by POST /api/community/messages
-  Map<String, dynamic> toApiJson(int societyId, int keyVersion, {int? senderId}) {
+  Map<String, dynamic> toApiJson(int societyId, {int? senderId}) {
+    final payloadMap = <String, dynamic>{
+      'content': content,
+    };
+    if (replyToContent != null) {
+      payloadMap['replyToContent'] = replyToContent;
+    }
+    if (pollOptions != null) {
+      payloadMap['pollOptions'] = pollOptions;
+      payloadMap['allowMultipleAnswers'] = allowMultipleAnswers;
+    }
+    final contentPayload = json.encode(payloadMap);
+
     final payload = <String, dynamic>{
       "society_id": societyId,
       "message_type": type,
-      "encrypted_content": encryptedContent,
-      "key_version": keyVersion,
+      "content": contentPayload,
     };
+    if (replyToMessageId != null) {
+      payload['reply_to_message_id'] = int.tryParse(replyToMessageId!);
+    }
     if (senderId != null && senderId != 0) {
       payload["sender_id"] = senderId;
     }

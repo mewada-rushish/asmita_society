@@ -12,6 +12,8 @@ class SecureStorageService {
 
   static const String _tokenKey = 'auth_jwt_token';
   static const String _roleKey = 'user_role';
+  static const String _userIdKey = 'user_id';
+  static const String _userNameKey = 'user_name';
 
   Future<void> saveToken(String token) async {
     await _storage.write(key: _tokenKey, value: token);
@@ -29,8 +31,28 @@ class SecureStorageService {
     return await _storage.read(key: _roleKey);
   }
 
+  Future<void> saveUserId(int id) async {
+    await _storage.write(key: _userIdKey, value: id.toString());
+  }
+
+  Future<int?> getUserId() async {
+    final val = await _storage.read(key: _userIdKey);
+    return val != null ? int.tryParse(val) : null;
+  }
+
+  Future<void> saveUserName(String name) async {
+    await _storage.write(key: _userNameKey, value: name);
+  }
+
+  Future<String?> getUserName() async {
+    return await _storage.read(key: _userNameKey);
+  }
+
   Future<void> clearSession() async {
-    await _storage.deleteAll();
+    await _storage.delete(key: _tokenKey);
+    await _storage.delete(key: _roleKey);
+    await _storage.delete(key: _userIdKey);
+    await _storage.delete(key: _userNameKey);
   }
 
   /// Reads a generic string value from the secure keystore.
