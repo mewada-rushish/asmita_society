@@ -118,6 +118,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
+    
+    // Attempt to inform the backend
+    final userId = await secureStorage.getUserId();
+    final role = await secureStorage.getUserRole();
+    await authRepository.logout(userId, role);
+    
     await secureStorage.clearSession();
     emit(AuthUnauthenticated());
   }

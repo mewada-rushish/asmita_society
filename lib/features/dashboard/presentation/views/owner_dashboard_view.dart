@@ -31,7 +31,7 @@ class OwnerDashboardView extends StatefulWidget {
 }
 
 class _OwnerDashboardViewState extends State<OwnerDashboardView> {
-  final ScrollController _scrollController = ScrollController(initialScrollOffset: 440.0);
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void dispose() {
