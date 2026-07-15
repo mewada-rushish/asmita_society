@@ -5,8 +5,8 @@ import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/core/utils/dashboard_scroll_physics.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
-import 'package:asmita_society/features/dashboard/widgets/asmita_security_wizard.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_raise_alert_wizard.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 
 class TenantDashboardView extends StatefulWidget {
   final VoidCallback? onNavigateToCommunity; 
@@ -45,16 +45,6 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
       builder: (context) => const AsmitaDialog(
         title: 'Pre-Approve Entry',
         content: AsmitaPreApproveWizard(), // Plugs in our dynamic wizard safely
-      ),
-    );
-  }
-
-  void _showSecurityModal(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => const AsmitaDialog(
-        title: 'Security Assistance',
-        content: AsmitaSecurityWizard(),
       ),
     );
   }
@@ -248,6 +238,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
   }
 
   Widget _buildQuickActionsMatrix(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -288,10 +279,10 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
             children: [
               _buildGridItem(context, Icons.support_agent_rounded, 'Raise Ticket', onTap: () => _showRaiseAlertModal(context)),
               _buildGridItem(context, Icons.handshake_rounded, 'Leases', onTap: () {
-                // TODO: Implement Leases Modal or Navigation
+                AsmitaToast.show(context, message: 'Leases feature coming soon.', type: AsmitaToastType.info);
               }),
               _buildGridItem(context, Icons.phone_in_talk_rounded, 'Contact Owner', onTap: () {
-                // TODO: Implement Contact Owner
+                AsmitaToast.show(context, message: 'Contact Owner feature coming soon.', type: AsmitaToastType.info);
               }),
               _buildGridItem(context, Icons.person_add_alt_1_rounded, 'Pre-Approve', badgeLabel: 'Safe mode', onTap: () => _showPreApproveModal(context)),
             ],

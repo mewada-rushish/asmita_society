@@ -4,6 +4,7 @@ import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart'; 
 import '../../../../core/widgets/asmita_text_field.dart';
+import '../../../../core/widgets/asmita_toast.dart';
 
 class DailyHelpScreen extends StatefulWidget {
   final VoidCallback? onNavigateToSearch;
@@ -194,8 +195,10 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Thank you! Provider added for verification.', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green),
+                      AsmitaToast.show(
+                        context,
+                        message: 'Thank you! Provider added for verification.',
+                        type: AsmitaToastType.success,
                       );
                     },
                     style: ElevatedButton.styleFrom(

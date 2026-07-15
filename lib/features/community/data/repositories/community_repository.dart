@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import '../models/chat_message_model.dart';
 
 import 'package:dio/dio.dart';
@@ -46,7 +46,7 @@ class ApiCommunityRepository implements CommunityRepository {
       return [];
     } catch (e) {
       // If API fails, return empty list or throw
-      print('Error fetching messages: $e');
+      debugPrint('Error fetching messages: $e');
       return [];
     }
   }
@@ -57,7 +57,7 @@ class ApiCommunityRepository implements CommunityRepository {
       final payload = message.toApiJson(101, senderId: senderId);
       await dio.post('/app-api/community/messages', data: payload);
     } catch (e) {
-      print('Error sending message: $e');
+      debugPrint('Error sending message: $e');
       rethrow;
     }
   }

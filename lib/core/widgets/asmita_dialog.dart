@@ -96,7 +96,7 @@ class AsmitaDialog extends StatelessWidget {
               radius: const Radius.circular(8.0),
               thumbColor: AsmitaPalette.deepNavy.withValues(alpha: 0.15),
               child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+                physics: const ClampingScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 20, 14, 20),
                 child: Padding(
                   padding: contentPadding ?? EdgeInsets.zero,

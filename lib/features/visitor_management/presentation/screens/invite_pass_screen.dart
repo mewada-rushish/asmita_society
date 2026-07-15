@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:intl/intl.dart';
+import '../../data/models/invite_model.dart';
 
 class InvitePassScreen extends StatelessWidget {
-  const InvitePassScreen({super.key});
+  final PreApprovedInvite invite;
+
+  const InvitePassScreen({super.key, required this.invite});
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +43,7 @@ class InvitePassScreen extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'GUEST PASS',
+                    '${invite.inviteSubType.toUpperCase()} PASS',
                     style: textTheme.labelLarge?.copyWith(
                       color: AsmitaPalette.actionRed,
                       letterSpacing: 2,
@@ -47,7 +52,7 @@ class InvitePassScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Rahul Sharma',
+                    invite.companyName ?? 'Visitor',
                     style: textTheme.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 24),
@@ -59,18 +64,26 @@ class InvitePassScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: AsmitaPalette.borderGrey),
                     ),
-                    child: const Center(
-                      child: Icon(Icons.qr_code_2_rounded, size: 140, color: AsmitaPalette.deepNavy),
+                    child: Center(
+                          child: (invite.qrCode ?? '').isNotEmpty 
+                            ? QrImageView(
+                                data: invite.qrCode ?? '',
+                                version: QrVersions.auto,
+                                size: 180.0,
+                                eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: AsmitaPalette.deepNavy),
+                                dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: AsmitaPalette.deepNavy),
+                              )
+                            : const Icon(Icons.qr_code_2_rounded, size: 140, color: AsmitaPalette.deepNavy),
                     ),
                   ),
                   const SizedBox(height: 24),
                   Divider(color: AsmitaPalette.borderGrey, thickness: 1.5),
                   const SizedBox(height: 16),
-                  _buildPassDetailRow(context, 'Valid On', '02 Jun 2026'),
+                  _buildPassDetailRow(context, 'Valid Until', _formatDate(invite.validTo?.toIso8601String())),
                   const SizedBox(height: 12),
-                  _buildPassDetailRow(context, 'Unit', 'Flat A-402'),
+                  _buildPassDetailRow(context, 'Unit', 'Flat ${invite.unitId}'),
                   const SizedBox(height: 12),
-                  _buildPassDetailRow(context, 'Code', 'ASM-9821'),
+                  _buildPassDetailRow(context, 'Pass Type', invite.inviteType),
                 ],
               ),
             ),
@@ -104,5 +117,12 @@ class InvitePassScreen extends StatelessWidget {
         Text(value, style: textTheme.bodyLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w600)),
       ],
     );
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null) return '--/--/----';
+    final date = DateTime.tryParse(dateStr);
+    if (date == null) return dateStr;
+    return DateFormat('MMM dd, yyyy').format(date);
   }
 }

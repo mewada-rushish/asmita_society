@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_text_field.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 
 class AsmitaSecurityWizard extends StatefulWidget {
   const AsmitaSecurityWizard({super.key});
@@ -415,37 +416,30 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
       final bool launched = await launchUrl(telUri);
       if (!launched) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to place call')));
+        AsmitaToast.show(context, message: 'Unable to place call', type: AsmitaToastType.error);
       }
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to place call')));
+      AsmitaToast.show(context, message: 'Unable to place call', type: AsmitaToastType.error);
     }
   }
 
   void _promptCallSecurity() {
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.removeCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        content: const Text('Call guard at +911234567890?'),
-        duration: const Duration(seconds: 6),
-        action: SnackBarAction(
-          label: 'Call',
-          textColor: Colors.white,
-          onPressed: () {
-            messenger.hideCurrentSnackBar();
-            
-            _callSecurityNumber();
-            if (mounted) {
-              setState(() {
-                _selectedAction = 'Call Security';
-                _currentStep = 3; 
-              });
-            }
-          },
-        ),
-      ),
+    AsmitaToast.show(
+      context,
+      message: 'Call guard at +911234567890?',
+      type: AsmitaToastType.info,
+      duration: const Duration(seconds: 6),
+      actionLabel: 'Call',
+      onAction: () {
+        _callSecurityNumber();
+        if (mounted) {
+          setState(() {
+            _selectedAction = 'Call Security';
+            _currentStep = 3; 
+          });
+        }
+      },
     );
   }
 }

@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import '../../auth/bloc/auth_bloc.dart';
+import '../../auth/bloc/auth_state.dart';
+import '../../auth/data/models/user_model.dart';
+import '../../visitor_management/bloc/visitor_bloc.dart';
+import '../../visitor_management/bloc/visitor_event.dart';
+import '../../visitor_management/bloc/visitor_state.dart';
+import '../../visitor_management/presentation/screens/invite_pass_screen.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 
 class AsmitaPreApproveWizard extends StatefulWidget {
   const AsmitaPreApproveWizard({super.key});
@@ -15,26 +24,38 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
   
   // Custom Flow States
   late TabController _tabController;
-  final ScrollController _scrollController = ScrollController(); // Added to resolve framework assertion crash
+  final ScrollController _scrollController = ScrollController(); 
   
-  bool _surpriseDelivery = false; // Changed to false by default
-  bool _secureCabMode = false; // Changed to false by default
+  FlatMapping? _selectedFlatMapping;
+
+  bool _surpriseDelivery = false; 
+  bool _secureCabMode = false; 
   final TextEditingController _cabNoController = TextEditingController(); 
   
   bool _leaveAtGate = false;
-  bool _showAdvancedOptions = false; // Changed to false by default for cleaner UI
+  bool _showAdvancedOptions = false; 
 
   int _selectedDurationHours = 1;
   String _selectedCompany = 'Amazon';
   String _customCompanyName = ''; 
-  String _selectedDaysOfWeek = 'All days of Week'; // State bound variable
-  List<bool> _customDaysSelected = [true, true, true, true, true, true, true]; // Tracks alarm-style selected days [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
+  String _selectedDaysOfWeek = 'All days of Week'; 
+  List<bool> _customDaysSelected = [true, true, true, true, true, true, true]; 
   
-  // ignore: prefer_final_fields
   String _frequentValidity = '6 months';
   
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_selectedFlatMapping == null) {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AuthAuthenticated && authState.user.flatMappings.isNotEmpty) {
+        _selectedFlatMapping = authState.user.flatMappings.first;
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -56,6 +77,55 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
   void _nextStep() => setState(() => _currentStep++);
   void _prevStep() {
     if (_currentStep > 0) setState(() => _currentStep--);
+  }
+
+  void _submitInvite() {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is! AuthAuthenticated) return;
+    
+    final user = authState.user;
+    FlatMapping? flat = _selectedFlatMapping;
+    
+    debugPrint('=== _submitInvite DEBUG ===');
+    debugPrint('Full UserModel JSON: ${user.toJson()}');
+    debugPrint('Initial flat selection: $flat');
+    debugPrint('User flat mappings count: ${user.flatMappings.length}');
+    if (user.flatMappings.isNotEmpty) {
+      debugPrint('First flat mapping: ${user.flatMappings.first.flatNumber}');
+    }
+    
+    if (flat == null && user.flatMappings.isNotEmpty) {
+      if (user.flatMappings.length == 1) {
+        flat = user.flatMappings.first;
+      }
+    }
+
+    if (flat == null) {
+      AsmitaToast.show(context, message: 'Please select a flat.', type: AsmitaToastType.error);
+      return;
+    }
+    
+    final bool isOnce = _tabController.index == 0;
+    
+    final payload = {
+      'society_id': user.societyId,
+      'tower_id': flat.towerId,
+      'unit_id': flat.flatId,
+      'resident_id': user.userId,
+      'invite_type': isOnce ? 'ONCE' : 'FREQUENT',
+      'invite_sub_type': _selectedCategory,
+      'title': '$_selectedCategory Invite',
+      'visitor_name': '', // Form doesn't have this field currently
+      'mobile_number': '', 
+      'company_name': _selectedCategory == 'Cab' ? 'Uber' : _selectedCompany,
+      'vehicle_number': _cabNoController.text.trim(),
+      'purpose': _selectedCategory,
+      'valid_from': isOnce ? DateTime.now().toIso8601String() : _selectedDate.toIso8601String(),
+      'valid_to': isOnce ? DateTime.now().add(Duration(hours: _selectedDurationHours)).toIso8601String() : _selectedDate.add(const Duration(days: 180)).toIso8601String(),
+      'is_private': _selectedCategory == 'Cab' ? _secureCabMode : _surpriseDelivery,
+    };
+    
+    context.read<VisitorBloc>().add(CreatePreApprovedInviteEvent(payload: payload));
   }
 
   int _getMaxAllowedHours() {
@@ -91,31 +161,58 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeInOutCubic,
-      alignment: Alignment.topCenter,
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          scrollbarTheme: ScrollbarThemeData(
-            thumbColor: WidgetStateProperty.all(Colors.grey.withValues(alpha: 0.2)),
-            thickness: WidgetStateProperty.all(3.0),
-            radius: const Radius.circular(10),
-          ),
-        ),
-        child: Scrollbar(
-          controller: _scrollController, 
-          thumbVisibility: true,
-          child: SingleChildScrollView(
-            controller: _scrollController, 
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.only(right: 4.0), 
-              child: _buildCurrentStep(),
+    return BlocConsumer<VisitorBloc, VisitorState>(
+      listener: (context, state) {
+        if (state is VisitorCreateSuccess) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => InvitePassScreen(invite: state.invite),
             ),
-          ),
-        ),
-      ),
+          );
+        } else if (state is VisitorError) {
+          AsmitaToast.show(context, message: state.message, type: AsmitaToastType.error);
+        }
+      },
+      builder: (context, state) {
+        return Stack(
+          children: [
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOutCubic,
+              alignment: Alignment.topCenter,
+              child: Theme(
+                data: Theme.of(context).copyWith(
+                  scrollbarTheme: ScrollbarThemeData(
+                    thumbColor: WidgetStateProperty.all(Colors.grey.withValues(alpha: 0.2)),
+                    thickness: WidgetStateProperty.all(3.0),
+                    radius: const Radius.circular(10),
+                  ),
+                ),
+                child: Scrollbar(
+                  controller: _scrollController, 
+                  thumbVisibility: true,
+                  child: SingleChildScrollView(
+                    controller: _scrollController, 
+                    physics: const ClampingScrollPhysics(),
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 4.0), 
+                      child: _buildCurrentStep(),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (state is VisitorLoading)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -139,10 +236,44 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
       {'label': 'Visiting Help', 'icon': Icons.build_outlined},
     ];
 
+    final authState = context.watch<AuthBloc>().state;
+    UserModel? user;
+    if (authState is AuthAuthenticated) {
+      user = authState.user;
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (user != null && user.flatMappings.length > 1) ...[
+          const Text('Select Flat', style: TextStyle(fontFamily: 'Montserrat', fontSize: 13, fontWeight: FontWeight.w600, color: AsmitaPalette.textDark)),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: AsmitaPalette.borderGrey),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<FlatMapping>(
+                value: _selectedFlatMapping,
+                isExpanded: true,
+                icon: const Icon(Icons.arrow_drop_down_rounded, color: AsmitaPalette.deepNavy),
+                items: user.flatMappings.map((flat) {
+                  return DropdownMenuItem(
+                    value: flat,
+                    child: Text('${flat.towerName} - ${flat.flatNumber}', style: const TextStyle(fontFamily: 'Poppins', fontSize: 14)),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) setState(() => _selectedFlatMapping = val);
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
         const Text(
           'Allow Future Entries',
           style: TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy),
@@ -351,7 +482,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
           onTap: _showCompanySelectionSheet,
         ),
         const SizedBox(height: 24),
-        _buildPrimaryButton(label: 'Authorize Entry', onPressed: _nextStep),
+        _buildPrimaryButton(label: 'Authorize Entry', onPressed: _submitInvite),
       ],
     );
   }
@@ -556,7 +687,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
         ),
 
         const SizedBox(height: 24),
-        _buildPrimaryButton(label: 'Authorize Entry', onPressed: _nextStep),
+        _buildPrimaryButton(label: 'Authorize Entry', onPressed: _submitInvite),
       ],
     );
   }
@@ -913,7 +1044,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
                 const SizedBox(height: 16),
                 Flexible(
                   child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
+                    physics: const ClampingScrollPhysics(),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [

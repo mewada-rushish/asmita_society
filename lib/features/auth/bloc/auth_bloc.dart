@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/repositories/auth_repository.dart';
 import '../../../core/security/secure_storage_service.dart';
@@ -30,16 +31,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final token = await secureStorage.getToken();
       
       if (token != null && token.isNotEmpty) {
-        final cachedRole = await secureStorage.getUserRole() ?? 'resident';
-        final cachedUserId = await secureStorage.getUserId() ?? 0;
-        final cachedUserName = await secureStorage.getUserName() ?? 'AsmitA User';
-        
-        final sessionUser = UserModel(
-          userId: cachedUserId, 
-          fullName: cachedUserName, 
-          userType: cachedRole, 
-          accountType: 'app',
-        );
+        final profileJsonStr = await secureStorage.read(key: 'user_profile');
+        UserModel sessionUser;
+        if (profileJsonStr != null) {
+          final profileJson = jsonDecode(profileJsonStr);
+          sessionUser = UserModel.fromJson(profileJson);
+        } else {
+          final cachedRole = await secureStorage.getUserRole() ?? 'resident';
+          final cachedUserId = await secureStorage.getUserId() ?? 0;
+          final cachedUserName = await secureStorage.getUserName() ?? 'AsmitA User';
+          
+          sessionUser = UserModel(
+            userId: cachedUserId, 
+            fullName: cachedUserName, 
+            userType: cachedRole, 
+            accountType: 'app',
+          );
+        }
         
         emit(AuthAuthenticated(user: sessionUser));
       } else {
@@ -134,6 +142,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await secureStorage.saveUserRole(response.role);
       await secureStorage.saveUserId(response.data!.userId);
       await secureStorage.saveUserName(response.data!.fullName);
+      await secureStorage.write(key: 'user_profile', value: jsonEncode(response.data!.toJson()));
       emit(AuthAuthenticated(user: response.data!));
     } else {
       emit(const AuthError(message: 'Invalid session payload.'));

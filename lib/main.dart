@@ -12,6 +12,10 @@ import 'core/network/dio_client.dart';
 import 'features/auth/data/repositories/auth_repository.dart';
 import 'features/auth/bloc/auth_bloc.dart';
 import 'features/auth/presentation/root_screen.dart';
+import 'features/visitor_management/data/repositories/visitor_repository.dart';
+import 'features/visitor_management/bloc/visitor_bloc.dart';
+import 'package:safe_device/safe_device.dart';
+import 'features/auth/presentation/unsafe_device_screen.dart';
 
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -30,21 +34,36 @@ Future<void> main() async {
   final secureStorage = SecureStorageService();
   final dioClient = AsmitaDioClient(secureStorage);
   final authRepo = AuthRepository(dio: dioClient.dio);
+  final visitorRepo = VisitorRepository(dio: dioClient.dio);
+
+  bool isDeviceSafe = true;
+  try {
+    bool isJailBroken = await SafeDevice.isJailBroken;
+    isDeviceSafe = !isJailBroken;
+  } catch (e) {
+    isDeviceSafe = false;
+  }
 
   runApp(AsmitaApp(
     secureStorage: secureStorage,
     authRepository: authRepo,
+    visitorRepository: visitorRepo,
+    isDeviceSafe: isDeviceSafe,
   ));
 }
 
 class AsmitaApp extends StatelessWidget {
   final SecureStorageService secureStorage;
   final AuthRepository authRepository;
+  final VisitorRepository visitorRepository;
+  final bool isDeviceSafe;
 
   const AsmitaApp({
     super.key,
     required this.secureStorage,
     required this.authRepository,
+    required this.visitorRepository,
+    required this.isDeviceSafe,
   });
 
   @override
@@ -57,12 +76,17 @@ class AsmitaApp extends StatelessWidget {
             secureStorage: secureStorage,
           ),
         ),
+        BlocProvider<VisitorBloc>(
+          create: (context) => VisitorBloc(
+            visitorRepository: visitorRepository,
+          ),
+        ),
       ],
       child: MaterialApp(
         title: 'AsmitA',
         debugShowCheckedModeBanner: false,
         theme: AsmitaTheme.lightTheme,
-        home: const RootScreen(),
+        home: isDeviceSafe ? const RootScreen() : const UnsafeDeviceScreen(),
       ),
     );
   }
