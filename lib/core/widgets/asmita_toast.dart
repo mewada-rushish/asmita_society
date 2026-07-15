@@ -10,8 +10,10 @@ class AsmitaToast {
     required String message,
     required AsmitaToastType type,
     Duration duration = const Duration(seconds: 3),
+    String? actionLabel,
+    VoidCallback? onAction,
   }) {
-    final overlayState = Overlay.of(context);
+    final overlayState = Overlay.of(context, rootOverlay: true);
     late OverlayEntry overlayEntry;
 
     overlayEntry = OverlayEntry(
@@ -19,6 +21,8 @@ class AsmitaToast {
         message: message,
         type: type,
         duration: duration,
+        actionLabel: actionLabel,
+        onAction: onAction,
         onDismiss: () => overlayEntry.remove(),
       ),
     );
@@ -32,12 +36,16 @@ class _ToastWidget extends StatefulWidget {
   final AsmitaToastType type;
   final Duration duration;
   final VoidCallback onDismiss;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   const _ToastWidget({
     required this.message,
     required this.type,
     required this.duration,
     required this.onDismiss,
+    this.actionLabel,
+    this.onAction,
   });
 
   @override
@@ -61,7 +69,7 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
 
     // react-hot-toast style snappy spring animation
     _offsetAnimation = Tween<Offset>(
-      begin: const Offset(0, -1.0),
+      begin: const Offset(0, 1.0),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _controller,
@@ -120,14 +128,14 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
   @override
   Widget build(BuildContext context) {
     final attrs = _getTypeAttributes();
-    final topPadding = MediaQuery.paddingOf(context).top;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
 
     return SafeArea(
       top: false,
       child: Align(
-        alignment: Alignment.topCenter, // Centers the floating pill
+        alignment: Alignment.bottomCenter, // Centers the floating pill
         child: Padding(
-          padding: EdgeInsets.only(top: topPadding + 16.0),
+          padding: EdgeInsets.only(bottom: bottomPadding + 32.0),
           child: SlideTransition(
             position: _offsetAnimation,
             child: FadeTransition(
@@ -185,6 +193,29 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
                             ),
                           ),
                         ),
+                        if (widget.actionLabel != null && widget.onAction != null) ...[
+                          const SizedBox(width: 12),
+                          TextButton(
+                            onPressed: () {
+                              widget.onAction!();
+                              _reverseAndDismiss();
+                            },
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(
+                              widget.actionLabel!,
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: attrs['color'] as Color,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

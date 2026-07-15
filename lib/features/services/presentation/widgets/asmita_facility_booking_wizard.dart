@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 
 enum FieldType { text, number, dropdown, checkbox, checkboxGroup, repeater }
@@ -133,12 +134,12 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
   void _submitForm() {
     if (!_validateCurrentTab()) return;
     if (!_termsAccepted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please accept the Terms & Conditions.'), behavior: SnackBarBehavior.floating));
+      AsmitaToast.show(context, message: 'Please accept the Terms & Conditions.', type: AsmitaToastType.error);
       return;
     }
     
     if (_bookingDate == null || _selectedTimeSlot == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select an available date and time slot.'), behavior: SnackBarBehavior.floating));
+      AsmitaToast.show(context, message: 'Please select an available date and time slot.', type: AsmitaToastType.error);
       return;
     }
 
@@ -266,8 +267,10 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
                   });
                   _nextStep();
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${facility['label']} is currently unavailable.'), behavior: SnackBarBehavior.floating),
+                  AsmitaToast.show(
+                    context,
+                    message: '${facility['label']} is currently unavailable.',
+                    type: AsmitaToastType.error,
                   );
                 }
               },

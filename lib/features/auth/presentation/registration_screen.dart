@@ -6,6 +6,8 @@ import '../../../core/widgets/asmita_bottom_sheet.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../data/repositories/property_repository.dart';
+import '../data/models/property_models.dart';
 import '../../dashboard/presentation/main_dashboard_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -24,12 +26,83 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   
-  String? _selectedSociety;
-  String? _selectedTower;
-  String? _selectedFloor;
-  String? _selectedFlat;
+  PropertyItem? _selectedSociety;
+  PropertyItem? _selectedTower;
+  PropertyItem? _selectedFloor;
+  PropertyItem? _selectedFlat;
   String? _selectedRole;
   String? _selectedGender;
+
+  final PropertyRepository _propertyRepo = PropertyRepository();
+  bool _isLoadingProperties = false;
+
+  List<PropertyItem> _societies = [];
+  List<PropertyItem> _towers = [];
+  List<PropertyItem> _floors = [];
+  List<PropertyItem> _flats = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSocieties();
+  }
+
+  Future<void> _fetchSocieties() async {
+    setState(() => _isLoadingProperties = true);
+    final data = await _propertyRepo.getSocieties();
+    setState(() {
+      _societies = data;
+      _isLoadingProperties = false;
+    });
+  }
+
+  Future<void> _onSocietySelected(PropertyItem society) async {
+    setState(() {
+      _selectedSociety = society;
+      _selectedTower = null;
+      _selectedFloor = null;
+      _selectedFlat = null;
+      _towers = [];
+      _floors = [];
+      _flats = [];
+      _isLoadingProperties = true;
+    });
+    final data = await _propertyRepo.getTowers(society.id);
+    setState(() {
+      _towers = data;
+      _isLoadingProperties = false;
+    });
+  }
+
+  Future<void> _onTowerSelected(PropertyItem tower) async {
+    setState(() {
+      _selectedTower = tower;
+      _selectedFloor = null;
+      _selectedFlat = null;
+      _floors = [];
+      _flats = [];
+      _isLoadingProperties = true;
+    });
+    final data = await _propertyRepo.getFloors(tower.id);
+    setState(() {
+      _floors = data;
+      _isLoadingProperties = false;
+    });
+  }
+
+  Future<void> _onFloorSelected(PropertyItem floor) async {
+    setState(() {
+      _selectedFloor = floor;
+      _selectedFlat = null;
+      _flats = [];
+      _isLoadingProperties = true;
+    });
+    final data = await _propertyRepo.getFlats(floor.id);
+    setState(() {
+      _flats = data;
+      _isLoadingProperties = false;
+    });
+  }
 
   @override
   void dispose() {
@@ -77,26 +150,26 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       fullName: _nameController.text.trim(),
       email: _emailController.text.trim(),
       gender: _selectedGender!,
-      society: _selectedSociety!,
-      tower: _selectedTower!,
-      floor: _selectedFloor!,
-      flat: _selectedFlat!,
+      society: _selectedSociety!.id.toString(),
+      tower: _selectedTower!.id.toString(),
+      floor: _selectedFloor!.id.toString(),
+      flat: _selectedFlat!.id.toString(),
       role: _selectedRole!.toLowerCase(),
     ));
   }
 
-  void _showSearchableBottomSheet({
+  void _showSearchableBottomSheet<T>({
     required String title,
-    required List<String> items,
-    required String? currentValue,
-    required ValueChanged<String> onSelected,
+    required List<T> items,
+    required T? currentValue,
+    required ValueChanged<T> onSelected,
   }) {
     showAsmitaBottomSheet(
       context: context,
       title: 'Select $title',
       child: StatefulBuilder(
         builder: (context, setModalState) {
-          List<String> filteredItems = List.from(items);
+          List<T> filteredItems = List.from(items);
           return Padding(
             padding: EdgeInsets.only(
               bottom: MediaQuery.viewInsetsOf(context).bottom,
@@ -153,7 +226,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     onChanged: (value) {
                       setModalState(() {
                         filteredItems = items
-                            .where((item) => item.toLowerCase().contains(value.toLowerCase()))
+                            .where((item) => item.toString().toLowerCase().contains(value.toLowerCase()))
                             .toList();
                       });
                     },
@@ -177,7 +250,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               return ListTile(
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                                 title: Text(
-                                  item,
+                                  item.toString(),
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 15,
@@ -361,39 +434,52 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           const SizedBox(height: 6),
           Text('Link your multi-step infrastructure setup profiles.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600, fontFamily: 'Poppins')),
           const SizedBox(height: 28),
-          _buildSearchableDropdownField(
+          if (_isLoadingProperties)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 20),
+              child: LinearProgressIndicator(color: Color(0xFFE21F26)),
+            ),
+          _buildSearchableDropdownField<PropertyItem>(
             label: 'Society Name',
             icon: Icons.domain_rounded,
             hint: 'Select Society',
-            items: ['Gaursons Green Mansion', 'AsmitA Club'],
+            items: _societies,
             value: _selectedSociety,
-            onChanged: (val) => setState(() => _selectedSociety = val),
+            onChanged: (val) {
+              if (val != null) _onSocietySelected(val);
+            },
           ),
-          _buildSearchableDropdownField(
+          _buildSearchableDropdownField<PropertyItem>(
             label: 'Tower Number',
             icon: Icons.business_rounded,
             hint: 'Select Tower',
-            items: ['Tower A', 'Tower B'],
+            items: _towers,
             value: _selectedTower,
-            onChanged: (val) => setState(() => _selectedTower = val),
+            onChanged: (val) {
+              if (val != null) _onTowerSelected(val);
+            },
           ),
-          _buildSearchableDropdownField(
+          _buildSearchableDropdownField<PropertyItem>(
             label: 'Floor',
             icon: Icons.stairs_rounded,
             hint: 'Select Floor',
-            items: ['1st Floor', '7th Floor'],
+            items: _floors,
             value: _selectedFloor,
-            onChanged: (val) => setState(() => _selectedFloor = val),
+            onChanged: (val) {
+              if (val != null) _onFloorSelected(val);
+            },
           ),
-          _buildSearchableDropdownField(
+          _buildSearchableDropdownField<PropertyItem>(
             label: 'Apartment Number',
             icon: Icons.meeting_room_rounded,
             hint: 'Select Apartment',
-            items: ['Apartment 101', 'Apartment 102'],
+            items: _flats,
             value: _selectedFlat,
-            onChanged: (val) => setState(() => _selectedFlat = val),
+            onChanged: (val) {
+              if (val != null) setState(() => _selectedFlat = val);
+            },
           ),
-          _buildSearchableDropdownField(
+          _buildSearchableDropdownField<String>(
             label: 'I am a...',
             icon: Icons.person_outline_rounded,
             hint: 'Select Role',
@@ -458,7 +544,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           const SizedBox(height: 32),
           _buildTextField('Full Name', Icons.person_outline_rounded, 'Enter full name', _nameController),
           _buildTextField('Email Address', Icons.email_outlined, 'name@example.com', _emailController, keyboardType: TextInputType.emailAddress),
-          _buildSearchableDropdownField(
+          _buildSearchableDropdownField<String>(
             label: 'Gender',
             icon: Icons.transgender_rounded,
             hint: 'Select Gender',
@@ -513,13 +599,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
-  Widget _buildSearchableDropdownField({
+  Widget _buildSearchableDropdownField<T>({
     required String label,
     required IconData icon,
     required String hint,
-    required List<String> items,
-    required String? value,
-    required ValueChanged<String?> onChanged,
+    required List<T> items,
+    required T? value,
+    required ValueChanged<T?> onChanged,
     bool enableSearch = true,
   }) {
     return Padding(
@@ -567,7 +653,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      value ?? hint,
+                      value?.toString() ?? hint,
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 15,

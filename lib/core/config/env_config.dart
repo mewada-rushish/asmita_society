@@ -39,6 +39,15 @@ class EnvConfig {
   /// Endpoint for logging out.
   static String get logout => '$baseUrl/app-api/auth/logout';
   
+  /// Endpoints for Visitor Management
+  static String get preApprovedInvites => '$baseUrl/app-api/pre-approved-invites';
+  static String get myPreApprovedInvites => '$baseUrl/app-api/pre-approved-invites/my';
+  static String get residentVisitorRequests => '$baseUrl/app-api/resident/visitor-requests';
+  static String get usersMe => '$baseUrl/app-api/users/me';
 
-
+  /// Endpoints for Properties
+  static String get societies => '$baseUrl/api/properties/societies';
+  static String get towers => '$baseUrl/api/properties/towers';
+  static String get floors => '$baseUrl/api/properties/floors';
+  static String get flats => '$baseUrl/api/properties/flats';
 }

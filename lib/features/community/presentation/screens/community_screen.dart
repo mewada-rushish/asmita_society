@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -342,39 +341,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
           type: AsmitaToastType.error,
         );
       }
-    }
-  }
-
-  Future<void> _stopAndSendRecording(CommunityBloc bloc) async {
-    _recordTimer?.cancel();
-    _waveTimer?.cancel();
-    try {
-      final path = await _audioRecorder.stop();
-      if (path != null && _recordDuration > 0) {
-        final durationString = '0:${_recordDuration.toString().padLeft(2, '0')}';
-        bloc.add(SendAudioMessage(durationString));
-        if (mounted) {
-          AsmitaToast.show(
-            context,
-            message: 'E2E Encrypted Audio recorded successfully!',
-            type: AsmitaToastType.success,
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        AsmitaToast.show(
-          context,
-          message: 'Failed to complete audio recording.',
-          type: AsmitaToastType.error,
-        );
-      }
-    } finally {
-      setState(() {
-        _isRecording = false;
-        _recordDuration = 0;
-        _recordingPath = null;
-      });
     }
   }
 
@@ -1388,7 +1354,7 @@ class _CreatePollSheetWidgetState extends State<_CreatePollSheetWidget> {
           SwitchListTile(
             title: const Text('Allow multiple answers', style: TextStyle(fontFamily: 'Poppins', fontSize: 13)),
             value: _allowMultipleAnswers,
-            activeColor: AsmitaPalette.deepNavy,
+            activeThumbColor: AsmitaPalette.deepNavy,
             contentPadding: EdgeInsets.zero,
             onChanged: (val) {
               setState(() => _allowMultipleAnswers = val);
@@ -1455,7 +1421,7 @@ class SwipeToReply extends StatefulWidget {
   final VoidCallback onSwipeReply;
   final bool isMe;
 
-  const SwipeToReply({Key? key, required this.child, required this.onSwipeReply, required this.isMe}) : super(key: key);
+  const SwipeToReply({super.key, required this.child, required this.onSwipeReply, required this.isMe});
 
   @override
   State<SwipeToReply> createState() => _SwipeToReplyState();
