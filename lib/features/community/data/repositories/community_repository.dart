@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 abstract class CommunityRepository {
   Future<List<ChatMessageModel>> getMessages({int? currentUserId, String? currentUserName, int page = 1});
   Future<void> sendMessage(ChatMessageModel message, {int? senderId});
+  Future<String?> uploadFile(String filePath);
 }
 
 class ApiCommunityRepository implements CommunityRepository {
@@ -20,7 +21,7 @@ class ApiCommunityRepository implements CommunityRepository {
       final response = await dio.get('/app-api/community/messages', queryParameters: {
         'society_id': 101,
         'page': page,
-        'limit': 50,
+        'limit': 20,
       });
       if (response.statusCode == 200 && response.data != null) {
         final List<dynamic> rawMessages = response.data['messages'] ?? [];
@@ -57,8 +58,34 @@ class ApiCommunityRepository implements CommunityRepository {
       final payload = message.toApiJson(101, senderId: senderId);
       await dio.post('/app-api/community/messages', data: payload);
     } catch (e) {
-      debugPrint('Error sending message: $e');
+      if (e is DioException) {
+        debugPrint('Error sending message: ${e.message} | Response: ${e.response?.data}');
+      } else {
+        debugPrint('Error sending message: $e');
+      }
       rethrow;
+    }
+  }
+
+  @override
+  Future<String?> uploadFile(String filePath) async {
+    try {
+      final fileName = filePath.split('/').last;
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(filePath, filename: fileName),
+      });
+      final response = await dio.post('/app-api/community/upload', data: formData);
+      if (response.statusCode == 200 && response.data != null) {
+        return response.data['url']?.toString();
+      }
+      return null;
+    } catch (e) {
+      if (e is DioException) {
+        debugPrint('Error uploading file: ${e.message} | Response: ${e.response?.data}');
+      } else {
+        debugPrint('Error uploading file: $e');
+      }
+      return null;
     }
   }
 }

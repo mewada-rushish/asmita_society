@@ -171,13 +171,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
       if (pickedFile != null) {
         bloc.add(SendImageMessage(pickedFile.path));
-        if (mounted) {
-          AsmitaToast.show(
-            context,
-            message: 'E2E Encrypted Image uploaded successfully!',
-            type: AsmitaToastType.success,
-          );
-        }
       }
     } catch (e) {
       if (mounted) {
@@ -217,14 +210,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     try {
       final result = await FilePicker.platform.pickFiles(type: FileType.audio);
       if (result != null && result.files.single.path != null) {
-        bloc.add(const SendAudioMessage('0:05'));
-        if (mounted) {
-          AsmitaToast.show(
-            context,
-            message: 'E2E Encrypted Audio File sent successfully!',
-            type: AsmitaToastType.success,
-          );
-        }
+        bloc.add(SendAudioMessage('0:05', result.files.single.path!));
       }
     } catch (e) {
       if (mounted) {
@@ -268,11 +254,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
               onPressed: () {
                 Navigator.pop(context);
                 bloc.add(SendImageMessage(imagePath));
-                AsmitaToast.show(
-                  context,
-                  message: 'E2E Encrypted Photo sent successfully!',
-                  type: AsmitaToastType.success,
-                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AsmitaPalette.deepNavy,
@@ -319,6 +300,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
         _recordTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
           setState(() {
             _recordDuration++;
+            if (_recordDuration >= 120) { // 2 minute limit
+              _stopAndPreviewRecording(_communityBloc);
+            }
           });
         });
         _waveTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
@@ -458,10 +442,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
             backgroundColor: AsmitaPalette.systemBG,
             body: Column(
               children: [
-                // Unified Global Header
                 AsmitaPrimaryHeader(
-                  title: 'Siddhi CHS 34 Hub',
-                  subtitle: '244 Members',
                   onSearchPressed: widget.onNavigateToSearch,
                   onChatPressed: widget.onNavigateToCommunity,
                 ),
@@ -756,8 +737,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
           const Spacer(),
           GestureDetector(
             onTap: () {
-              final durationString = '0:${_recordDuration.toString().padLeft(2, '0')}';
-              bloc.add(SendAudioMessage(durationString));
+              if (_recordingPath != null) {
+                final durationString = '0:${_recordDuration.toString().padLeft(2, '0')}';
+                bloc.add(SendAudioMessage(durationString, _recordingPath!));
+              }
               setState(() {
                 _isPreviewingAudio = false;
                 _recordDuration = 0;

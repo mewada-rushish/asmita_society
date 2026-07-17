@@ -112,8 +112,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
       'tower_id': flat.towerId,
       'unit_id': flat.flatId,
       'resident_id': user.userId,
-      'invite_type': isOnce ? 'ONCE' : 'FREQUENT',
-      'invite_sub_type': _selectedCategory,
+      'invite_type': _selectedCategory == 'Visiting Help' ? 'Guest' : _selectedCategory,
+      'invite_sub_type': isOnce ? 'ONCE' : 'FREQUENT',
       'title': '$_selectedCategory Invite',
       'visitor_name': '', // Form doesn't have this field currently
       'mobile_number': '', 
@@ -286,7 +286,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
             crossAxisCount: 4, 
             crossAxisSpacing: 8,
             mainAxisSpacing: 8,
-            childAspectRatio: 0.8,
+            childAspectRatio: 0.7,
           ),
           itemCount: categories.length,
           itemBuilder: (context, index) {
@@ -304,7 +304,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -317,6 +317,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard> with Si
                   Text(
                     cat['label'] as String,
                     textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontFamily: 'Poppins', fontSize: 11, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy),
                   ),
                 ],

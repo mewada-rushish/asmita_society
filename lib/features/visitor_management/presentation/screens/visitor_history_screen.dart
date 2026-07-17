@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../bloc/visitor_bloc.dart';
 import '../../bloc/visitor_event.dart';
 import '../../bloc/visitor_state.dart';
+import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 
 class VisitorHistoryScreen extends StatefulWidget {
   const VisitorHistoryScreen({super.key});
@@ -73,7 +74,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
     }
   }
 
-  void _showVisitorDetailsModal(BuildContext context, Map<String, dynamic> visitor) {
+  void _showVisitorDetailsModal(BuildContext context, Map<dynamic, dynamic> visitor) {
     final textTheme = Theme.of(context).textTheme;
 
     final name = visitor['visitor_name'] ?? visitor['title'] ?? 'Unknown';
@@ -291,7 +292,20 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
             ),
             
           Expanded(
-            child: BlocBuilder<VisitorBloc, VisitorState>(
+            child: BlocConsumer<VisitorBloc, VisitorState>(
+              listener: (context, state) {
+                if (state is VisitorCreateSuccess) {
+                  final authState = context.read<AuthBloc>().state;
+                  if (authState is AuthAuthenticated) {
+                    context.read<VisitorBloc>().add(LoadMyHistory(residentId: authState.user.userId));
+                  }
+                }
+              },
+              buildWhen: (previous, current) {
+                return current is VisitorLoading || 
+                       current is VisitorError || 
+                       current is VisitorHistoryLoaded;
+              },
               builder: (context, state) {
                 if (state is VisitorLoading) {
                   return const Center(child: CircularProgressIndicator());
@@ -313,109 +327,125 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                     );
                   }
                   
-                  return ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: history.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final item = history[index];
-                      final category = item['invite_sub_type'] ?? item['purpose'] ?? 'Guest';
-                      final company = item['company_name'] ?? item['purpose'] ?? 'Visitor';
-                      final gate = item['gate_number'] ?? 'Gate 1';
-                      final entryTimeStr = item['entry_time'] ?? item['created_at'];
-                      final isPreApproved = item['record_type'] == 'PRE_APPROVED';
-                      final brandColor = _getColorForBrand(company);
-                      final iconData = _getIconForCategory(category);
-                      
-                      return InkWell(
-                        onTap: () => _showVisitorDetailsModal(context, item),
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
-                          ),
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: const BoxDecoration(
-                                  color: AsmitaPalette.systemBG, 
-                                  shape: BoxShape.circle
+                  return CustomScrollView(
+                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                    slivers: [
+                      AsmitaAnimatedRefresh(
+                        onRefresh: () async {
+                          final authState = context.read<AuthBloc>().state;
+                          if (authState is AuthAuthenticated) {
+                            context.read<VisitorBloc>().add(LoadMyHistory(residentId: authState.user.userId, isRefresh: true));
+                            // Wait for the bloc to load before stopping the animation
+                            await Future.delayed(const Duration(milliseconds: 1000));
+                          }
+                        },
+                      ),
+                      SliverPadding(
+                        padding: const EdgeInsets.all(16),
+                        sliver: SliverList.separated(
+                          itemCount: history.length,
+                          separatorBuilder: (context, index) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final item = history[index];
+                            final category = item['invite_sub_type'] ?? item['purpose'] ?? 'Guest';
+                            final company = item['company_name'] ?? item['purpose'] ?? 'Visitor';
+                            final gate = item['gate_number'] ?? 'Gate 1';
+                            final entryTimeStr = item['entry_time'] ?? item['created_at'];
+                            final isPreApproved = item['record_type'] == 'PRE_APPROVED';
+                            final brandColor = _getColorForBrand(company);
+                            final iconData = _getIconForCategory(category);
+                            
+                            return InkWell(
+                              onTap: () => _showVisitorDetailsModal(context, item),
+                              borderRadius: BorderRadius.circular(16),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
                                 ),
-                                child: Icon(
-                                  iconData, 
-                                  color: brandColor, 
-                                  size: 22
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                padding: const EdgeInsets.all(16),
+                                child: Row(
                                   children: [
-                                    Text(
-                                      '$category • $company',
-                                      style: textTheme.titleLarge?.copyWith(
-                                        fontFamily: 'Montserrat',
-                                        fontSize: 14, 
-                                        fontWeight: FontWeight.w700,
-                                        color: AsmitaPalette.deepNavy,
+                                    Container(
+                                      width: 44,
+                                      height: 44,
+                                      decoration: const BoxDecoration(
+                                        color: AsmitaPalette.systemBG, 
+                                        shape: BoxShape.circle
+                                      ),
+                                      child: Icon(
+                                        iconData, 
+                                        color: brandColor, 
+                                        size: 22
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Entered via $gate',
-                                      style: textTheme.bodyMedium?.copyWith(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 12, 
-                                        fontWeight: FontWeight.w500,
-                                        color: AsmitaPalette.textLight,
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '$category • $company',
+                                            style: textTheme.titleLarge?.copyWith(
+                                              fontFamily: 'Montserrat',
+                                              fontSize: 14, 
+                                              fontWeight: FontWeight.w700,
+                                              color: AsmitaPalette.deepNavy,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Entered via $gate',
+                                            style: textTheme.bodyMedium?.copyWith(
+                                              fontFamily: 'Poppins',
+                                              fontSize: 12, 
+                                              fontWeight: FontWeight.w500,
+                                              color: AsmitaPalette.textLight,
+                                            ),
+                                          ),
+                                        ],
                                       ),
+                                    ),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          _formatTime(entryTimeStr),
+                                          style: textTheme.bodyLarge?.copyWith(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 13, 
+                                            fontWeight: FontWeight.w600,
+                                            color: AsmitaPalette.deepNavy,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: isPreApproved ? const Color(0xFFE3F2FD) : const Color(0xFFFCE4EC),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            isPreApproved ? 'PRE' : 'WALK-IN',
+                                            style: textTheme.bodyMedium?.copyWith(
+                                              fontFamily: 'Poppins',
+                                              fontSize: 9, 
+                                              color: isPreApproved ? const Color(0xFF1976D2) : const Color(0xFFC2185B), 
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    _formatTime(entryTimeStr),
-                                    style: textTheme.bodyLarge?.copyWith(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 13, 
-                                      fontWeight: FontWeight.w600,
-                                      color: AsmitaPalette.deepNavy,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: isPreApproved ? const Color(0xFFE3F2FD) : const Color(0xFFFCE4EC),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      isPreApproved ? 'PRE' : 'WALK-IN',
-                                      style: textTheme.bodyMedium?.copyWith(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 9, 
-                                        color: isPreApproved ? const Color(0xFF1976D2) : const Color(0xFFC2185B), 
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                            );
+                          },
                         ),
-                      );
-                    },
+                      ),
+                    ],
                   );
                 }
                 return const SizedBox();

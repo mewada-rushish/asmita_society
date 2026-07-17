@@ -58,6 +58,7 @@ class UserModel {
   final String? mobileNumber;
   final String? gender;
   final String? profilePictureUrl;
+  final String? societyName;
   final List<FlatMapping> flatMappings;
 
   UserModel({
@@ -70,6 +71,7 @@ class UserModel {
     this.mobileNumber,
     this.gender,
     this.profilePictureUrl,
+    this.societyName,
     this.flatMappings = const [],
   });
 
@@ -95,6 +97,7 @@ class UserModel {
       mobileNumber: json['mobile_number']?.toString(),
       gender: json['gender']?.toString(),
       profilePictureUrl: json['profile_picture_url']?.toString(),
+      societyName: json['society_name']?.toString(),
       flatMappings: mappings,
     );
   }
@@ -110,7 +113,36 @@ class UserModel {
       'mobile_number': mobileNumber,
       'gender': gender,
       'profile_picture_url': profilePictureUrl,
+      'society_name': societyName,
       'user_flat_mapping': flatMappings.map((m) => m.toJson()).toList(),
     };
+  }
+
+  UserModel copyWith({
+    int? userId,
+    String? fullName,
+    String? userType,
+    String? accountType,
+    int? societyId,
+    String? emailId,
+    String? mobileNumber,
+    String? gender,
+    String? profilePictureUrl,
+    String? societyName,
+    List<FlatMapping>? flatMappings,
+  }) {
+    return UserModel(
+      userId: userId ?? this.userId,
+      fullName: fullName ?? this.fullName,
+      userType: userType ?? this.userType,
+      accountType: accountType ?? this.accountType,
+      societyId: societyId ?? this.societyId,
+      emailId: emailId ?? this.emailId,
+      mobileNumber: mobileNumber ?? this.mobileNumber,
+      gender: gender ?? this.gender,
+      profilePictureUrl: profilePictureUrl ?? this.profilePictureUrl,
+      societyName: societyName ?? this.societyName,
+      flatMappings: flatMappings ?? this.flatMappings,
+    );
   }
 }

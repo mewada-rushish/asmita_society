@@ -79,9 +79,6 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
         children: [
           // FIXED: Removed 'const' so widget callback layers can bind dynamically
           AsmitaPrimaryHeader(
-            title: 'Siddhi CHS 34',
-            subtitle: 'Premium Mode',
-            userInitials: 'RM',
             onSearchPressed: widget.onNavigateToSearch,
             onChatPressed: widget.onNavigateToCommunity,
           ),

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_event.dart';
+import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 
 class MenuScreen extends StatelessWidget {
   final String userRole;
@@ -25,11 +26,21 @@ class MenuScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        slivers: [
+          AsmitaAnimatedRefresh(
+            onRefresh: () async {
+              // Simulating menu refresh logic if dynamic data was fetched here
+              await Future.delayed(const Duration(milliseconds: 800));
+            },
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.all(16.0),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
             _buildProfileCard(context),
             const SizedBox(height: 24),
             _buildMenuSection(
@@ -61,11 +72,14 @@ class MenuScreen extends StatelessWidget {
                 _buildMenuItem(context, Icons.logout_rounded, 'Logout', isDestructive: true),
               ],
             ),
-            const SizedBox(height: 40),
-          ],
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
-    );
+    ],
+  ),
+);
   }
 
   Widget _buildProfileCard(BuildContext context) {

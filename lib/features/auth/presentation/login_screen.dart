@@ -55,7 +55,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.paddingOf(context).top;
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       backgroundColor: AsmitaPalette.deepNavy,
@@ -86,12 +85,13 @@ class _LoginScreenState extends State<LoginScreen> {
             );
           }
         },
-        child: SingleChildScrollView(
+        child: CustomScrollView(
           physics: const ClampingScrollPhysics(),
-          child: SizedBox(
-            height: screenHeight,
-            child: Column(
-              children: [
+          slivers: [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Column(
+                children: [
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.only(top: topPadding + 30.0, bottom: 30.0),
@@ -197,6 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: TextField(
                                     controller: _phoneController,
                                     keyboardType: TextInputType.phone,
+                                    scrollPadding: const EdgeInsets.only(bottom: 120),
                                     inputFormatters: [
                                       FilteringTextInputFormatter.digitsOnly,
                                       LengthLimitingTextInputFormatter(10),
@@ -262,7 +263,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ],
             ),
-          ),
+            ),
+          ],
         ),
       ),
     );
