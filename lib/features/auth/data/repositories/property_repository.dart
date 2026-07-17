@@ -12,7 +12,7 @@ class PropertyRepository {
     try {
       final response = await _dio.get(EnvConfig.societies);
       final data = _ensureMap(response.data);
-      if (data['status'] == 'success') {
+      if (data['success'] == true) {
         final items = data['data'] as List;
         return items.map((e) => PropertyItem.fromJson(e, 'society_id', 'society_name')).toList();
       }
@@ -24,9 +24,9 @@ class PropertyRepository {
 
   Future<List<PropertyItem>> getTowers(int societyId) async {
     try {
-      final response = await _dio.get(EnvConfig.towers, queryParameters: {'societyId': societyId});
+      final response = await _dio.get(EnvConfig.towers, queryParameters: {'society_id': societyId});
       final data = _ensureMap(response.data);
-      if (data['status'] == 'success') {
+      if (data['success'] == true) {
         final items = data['data'] as List;
         return items.map((e) => PropertyItem.fromJson(e, 'tower_id', 'tower_name')).toList();
       }
@@ -38,9 +38,9 @@ class PropertyRepository {
 
   Future<List<PropertyItem>> getFloors(int towerId) async {
     try {
-      final response = await _dio.get(EnvConfig.floors, queryParameters: {'towerId': towerId});
+      final response = await _dio.get(EnvConfig.floors, queryParameters: {'tower_id': towerId});
       final data = _ensureMap(response.data);
-      if (data['status'] == 'success') {
+      if (data['success'] == true) {
         final items = data['data'] as List;
         return items.map((e) => PropertyItem.fromJson(e, 'floor_id', 'floor_number')).toList();
       }
@@ -52,9 +52,9 @@ class PropertyRepository {
 
   Future<List<PropertyItem>> getFlats(int floorId) async {
     try {
-      final response = await _dio.get(EnvConfig.flats, queryParameters: {'floorId': floorId});
+      final response = await _dio.get(EnvConfig.flats, queryParameters: {'floor_id': floorId});
       final data = _ensureMap(response.data);
-      if (data['status'] == 'success') {
+      if (data['success'] == true) {
         final items = data['data'] as List;
         return items.map((e) => PropertyItem.fromJson(e, 'flat_id', 'flat_number')).toList();
       }

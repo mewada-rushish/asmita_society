@@ -12,7 +12,9 @@ class VisitorBloc extends Bloc<VisitorEvent, VisitorState> {
   }
 
   Future<void> _onLoadMyHistory(LoadMyHistory event, Emitter<VisitorState> emit) async {
-    emit(VisitorLoading());
+    if (!event.isRefresh) {
+      emit(VisitorLoading());
+    }
     try {
       final history = await visitorRepository.getMyHistory(event.residentId);
       emit(VisitorHistoryLoaded(history: history));

@@ -13,7 +13,8 @@ class AsmitaAnimatedRefresh extends StatelessWidget {
   Widget build(BuildContext context) {
     return CupertinoSliverRefreshControl(
       onRefresh: onRefresh,
-      refreshTriggerPullDistance: 100.0,
+      refreshTriggerPullDistance: 30.0,
+      refreshIndicatorExtent: 30.0,
       builder: (context, refreshState, pulledExtent, refreshTriggerPullDistance, refreshIndicatorExtent) {
         // Calculate the pull percentage to drive the custom animations
         final double percentageComplete = (pulledExtent / refreshTriggerPullDistance).clamp(0.0, 1.0);

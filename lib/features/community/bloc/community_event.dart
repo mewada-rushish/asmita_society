@@ -39,11 +39,12 @@ class SendTextMessage extends CommunityEvent {
 
 class SendAudioMessage extends CommunityEvent {
   final String duration;
+  final String audioPath;
 
-  const SendAudioMessage(this.duration);
+  const SendAudioMessage(this.duration, this.audioPath);
 
   @override
-  List<Object?> get props => [duration];
+  List<Object?> get props => [duration, audioPath];
 }
 
 class SendPollMessage extends CommunityEvent {

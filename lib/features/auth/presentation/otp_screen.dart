@@ -74,7 +74,6 @@ class _OtpScreenState extends State<OtpScreen> {
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.paddingOf(context).top;
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       backgroundColor: AsmitaPalette.deepNavy,
@@ -114,12 +113,13 @@ class _OtpScreenState extends State<OtpScreen> {
             );
           }
         },
-        child: SingleChildScrollView(
+        child: CustomScrollView(
           physics: const ClampingScrollPhysics(),
-          child: SizedBox(
-            height: screenHeight,
-            child: Column(
-              children: [
+          slivers: [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Column(
+                children: [
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.only(top: topPadding + 16.0, bottom: 24.0),
@@ -201,6 +201,8 @@ class _OtpScreenState extends State<OtpScreen> {
                                     child: TextField(
                                       focusNode: _focusNode,
                                       keyboardType: TextInputType.number,
+                                      autofillHints: const [AutofillHints.oneTimeCode],
+                                      scrollPadding: const EdgeInsets.only(bottom: 120),
                                       maxLength: 6,
                                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                                       onChanged: (value) {
@@ -248,7 +250,8 @@ class _OtpScreenState extends State<OtpScreen> {
                 ),
               ],
             ),
-          ),
+            ),
+          ],
         ),
       ),
     );

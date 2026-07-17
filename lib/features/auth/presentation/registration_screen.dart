@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/design_system.dart';
 import '../../../core/widgets/asmita_toast.dart';
 import '../../../core/widgets/asmita_bottom_sheet.dart';
@@ -32,6 +34,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   PropertyItem? _selectedFlat;
   String? _selectedRole;
   String? _selectedGender;
+  
+  File? _profileImage;
+  final ImagePicker _picker = ImagePicker();
 
   final PropertyRepository _propertyRepo = PropertyRepository();
   bool _isLoadingProperties = false;
@@ -54,6 +59,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       _societies = data;
       _isLoadingProperties = false;
     });
+  }
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (image != null) {
+      setState(() {
+        _profileImage = File(image.path);
+      });
+    }
   }
 
   Future<void> _onSocietySelected(PropertyItem society) async {
@@ -155,6 +169,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       floor: _selectedFloor!.id.toString(),
       flat: _selectedFlat!.id.toString(),
       role: _selectedRole!.toLowerCase(),
+      profilePicture: _profileImage,
     ));
   }
 
@@ -163,6 +178,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     required List<T> items,
     required T? currentValue,
     required ValueChanged<T> onSelected,
+    bool enableSearch = true,
+    bool useGrid = false,
+    int gridCrossAxisCount = 4,
   }) {
     showAsmitaBottomSheet(
       context: context,
@@ -178,33 +196,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.sizeOf(context).height * 0.65,
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Select $title',
-                    style: const TextStyle(
-                      fontFamily: 'Montserrat',
-                      color: AsmitaPalette.deepNavy,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
+                  if (enableSearch)
+                    TextField(
                     style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
                     decoration: InputDecoration(
                       hintText: 'Search...',
@@ -240,34 +238,79 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               style: TextStyle(fontFamily: 'Poppins', color: Colors.black38),
                             ),
                           )
-                        : ListView.builder(
-                            shrinkWrap: true,
-                            physics: const BouncingScrollPhysics(),
-                            itemCount: filteredItems.length,
-                            itemBuilder: (context, index) {
-                              final item = filteredItems[index];
-                              final isSelected = item == currentValue;
-                              return ListTile(
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                                title: Text(
-                                  item.toString(),
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: 15,
-                                    color: isSelected ? const Color(0xFFE21F26) : Colors.black87,
-                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                  ),
+                        : useGrid
+                            ? GridView.builder(
+                                shrinkWrap: true,
+                                physics: const BouncingScrollPhysics(),
+                                itemCount: filteredItems.length,
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: gridCrossAxisCount,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 1.0,
                                 ),
-                                trailing: isSelected
-                                    ? const Icon(Icons.check_circle_rounded, color: Color(0xFFE21F26))
-                                    : null,
-                                onTap: () {
-                                  onSelected(item);
-                                  Navigator.pop(context);
+                                itemBuilder: (context, index) {
+                                  final item = filteredItems[index];
+                                  final isSelected = item == currentValue;
+                                  return GestureDetector(
+                                    onTap: () {
+                                      onSelected(item);
+                                      Navigator.pop(context);
+                                    },
+                                    child: Container(
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: isSelected ? const Color(0xFFE21F26).withValues(alpha: 0.1) : Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: isSelected ? const Color(0xFFE21F26) : Colors.grey.shade300,
+                                          width: isSelected ? 2 : 1,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        item.toString(),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 14,
+                                          color: isSelected ? const Color(0xFFE21F26) : Colors.black87,
+                                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  );
                                 },
-                              );
-                            },
-                          ),
+                              )
+                            : ListView.builder(
+                                shrinkWrap: true,
+                                physics: const BouncingScrollPhysics(),
+                                itemCount: filteredItems.length,
+                                itemBuilder: (context, index) {
+                                  final item = filteredItems[index];
+                                  final isSelected = item == currentValue;
+                                  return ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                                    title: Text(
+                                      item.toString(),
+                                      style: TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 15,
+                                        color: isSelected ? const Color(0xFFE21F26) : Colors.black87,
+                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                      ),
+                                    ),
+                                    trailing: isSelected
+                                        ? const Icon(Icons.check_circle_rounded, color: Color(0xFFE21F26))
+                                        : null,
+                                    onTap: () {
+                                      onSelected(item);
+                                      Navigator.pop(context);
+                                    },
+                                  );
+                                },
+                              ),
                   ),
                 ],
               ),
@@ -455,6 +498,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             hint: 'Select Tower',
             items: _towers,
             value: _selectedTower,
+            useGrid: true,
             onChanged: (val) {
               if (val != null) _onTowerSelected(val);
             },
@@ -465,6 +509,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             hint: 'Select Floor',
             items: _floors,
             value: _selectedFloor,
+            useGrid: true,
             onChanged: (val) {
               if (val != null) _onFloorSelected(val);
             },
@@ -475,12 +520,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             hint: 'Select Apartment',
             items: _flats,
             value: _selectedFlat,
+            useGrid: true,
             onChanged: (val) {
               if (val != null) setState(() => _selectedFlat = val);
             },
           ),
           _buildSearchableDropdownField<String>(
             label: 'I am a...',
+            modalTitle: 'Role',
             icon: Icons.person_outline_rounded,
             hint: 'Select Role',
             items: ['Owner', 'Tenant'],
@@ -506,25 +553,31 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           Text('Complete your onboarding identification record.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600, fontFamily: 'Poppins')),
           const SizedBox(height: 28),
           Center(
-            child: Stack(
-              children: [
-                Container(
-                  height: 96,
-                  width: 96,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      )
-                    ],
+            child: GestureDetector(
+              onTap: _pickImage,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    height: 96,
+                    width: 96,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        )
+                      ],
+                    ),
+                    clipBehavior: Clip.hardEdge,
+                    child: _profileImage != null
+                        ? Image.file(_profileImage!, fit: BoxFit.cover)
+                        : const Icon(Icons.person_rounded, size: 40, color: Color(0xFF27347B)),
                   ),
-                  child: const Icon(Icons.person_rounded, size: 40, color: Color(0xFF27347B)),
-                ),
-                Positioned(
+                  Positioned(
                   bottom: -2,
                   right: -2,
                   child: Container(
@@ -541,17 +594,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 32),
+        ),
+        const SizedBox(height: 32),
           _buildTextField('Full Name', Icons.person_outline_rounded, 'Enter full name', _nameController),
           _buildTextField('Email Address', Icons.email_outlined, 'name@example.com', _emailController, keyboardType: TextInputType.emailAddress),
           _buildSearchableDropdownField<String>(
             label: 'Gender',
-            icon: Icons.transgender_rounded,
+            icon: Icons.person_outline_rounded,
             hint: 'Select Gender',
             items: ['Male', 'Female', 'Other'],
             value: _selectedGender,
-            onChanged: (val) => setState(() => _selectedGender = val),
             enableSearch: false,
+            useGrid: true,
+            gridCrossAxisCount: 3,
+            onChanged: (val) => setState(() => _selectedGender = val),
           ),
           _buildBottomNavigation(bottomPadding),
         ],
@@ -606,7 +662,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     required List<T> items,
     required T? value,
     required ValueChanged<T?> onChanged,
+    String? modalTitle,
     bool enableSearch = true,
+    bool useGrid = false,
+    int gridCrossAxisCount = 4,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0),
@@ -617,21 +676,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           const SizedBox(height: 8),
           GestureDetector(
             onTap: () {
-              if (enableSearch) {
-                _showSearchableBottomSheet(
-                  title: label,
-                  items: items,
-                  currentValue: value,
-                  onSelected: onChanged,
-                );
-              } else {
-                _showSearchableBottomSheet(
-                  title: label,
-                  items: items,
-                  currentValue: value,
-                  onSelected: onChanged,
-                );
-              }
+              _showSearchableBottomSheet(
+                title: modalTitle ?? label,
+                items: items,
+                currentValue: value,
+                onSelected: onChanged,
+                enableSearch: enableSearch,
+                useGrid: useGrid,
+                gridCrossAxisCount: gridCrossAxisCount,
+              );
             },
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),

@@ -104,7 +104,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final response = await authRepository.registerUser(
+      var response = await authRepository.registerUser(
         mobile: event.mobile,
         fullName: event.fullName,
         email: event.email,
@@ -115,6 +115,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         flat: event.flat,
         role: event.role,
       );
+      
+      // Save token first so the upload request can use it
+      if (response.token.isNotEmpty) {
+        await secureStorage.saveToken(response.token);
+      }
+      
+      if (event.profilePicture != null) {
+        try {
+          final imageUrl = await authRepository.uploadProfilePicture(event.profilePicture!, token: response.token);
+          // Update the user model with the new image URL
+          if (response.data != null) {
+            response = AuthResponse(
+              status: response.status,
+              token: response.token,
+              data: response.data!.copyWith(profilePictureUrl: imageUrl),
+            );
+          }
+        } catch (e) {
+          // Non-fatal error, registration still succeeded
+        }
+      }
+      
       await _emitAuthenticated(response, emit);
     } catch (e) {
       emit(AuthError(message: _formatException(e)));

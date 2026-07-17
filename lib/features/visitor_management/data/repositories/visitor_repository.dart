@@ -23,7 +23,14 @@ class VisitorRepository {
         throw Exception(data['message'] ?? 'Failed to create invite');
       }
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? 'Network error';
+      String msg = 'Network error';
+      if (e.response?.data != null) {
+        if (e.response!.data is Map) {
+          msg = e.response!.data['message'] ?? msg;
+        } else {
+          msg = e.response!.data.toString();
+        }
+      }
       throw Exception(msg);
     } catch (e, stackTrace) {
       FirebaseCrashlytics.instance.recordError(e, stackTrace, reason: 'Create Invite Failure');

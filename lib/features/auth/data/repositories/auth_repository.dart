@@ -77,10 +77,10 @@ class AuthRepository {
           'full_name': fullName,
           'email_id': email,
           'gender': gender,
-          'society': society,
-          'tower': tower,
-          'floor': floor,
-          'flat': flat,
+          'society_id': society,
+          'tower_id': tower,
+          'floor_id': floor,
+          'flat_id': flat,
           'ownership_type': role,
         },
       );
@@ -89,6 +89,36 @@ class AuthRepository {
       return AuthResponse.fromJson(data);
     } on DioException catch (e) {
       throw _parseError(e, 'Registration request failed.');
+    }
+  }
+
+  /// Uploads a profile picture to the backend.
+  Future<String> uploadProfilePicture(dynamic file, {String? token}) async {
+    try {
+      final String filePath = file.path;
+      final formData = FormData.fromMap({
+        'profile_picture': await MultipartFile.fromFile(filePath),
+      });
+
+      // Assuming the token is injected via an interceptor
+      final options = token != null 
+          ? Options(headers: {'Authorization': 'Bearer $token'}) 
+          : null;
+
+      final response = await _dio.post(
+        '${EnvConfig.baseUrl}/app-api/users/upload-profile-picture',
+        data: formData,
+        options: options,
+      );
+
+      final data = _ensureMap(response.data);
+      if (data['success'] == true && data['profile_picture_url'] != null) {
+        return data['profile_picture_url'];
+      }
+      
+      throw Exception('Failed to get profile picture URL');
+    } on DioException catch (e) {
+      throw _parseError(e, 'Failed to upload profile picture.');
     }
   }
 

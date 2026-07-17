@@ -36,7 +36,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
       _currentPage = 1;
       _isFetching = true;
       final messages = await repository.getMessages(currentUserId: _currentUserId, currentUserName: _currentUserName, page: _currentPage);
-      emit(CommunityLoaded(messages, hasReachedMax: messages.length < 50));
+      emit(CommunityLoaded(messages, hasReachedMax: messages.length < 20));
     } catch (e) {
       emit(const CommunityError('Failed to load community messages.'));
     } finally {
@@ -65,7 +65,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
         // Prepend older messages
         emit(CommunityLoaded(
           [...moreMessages, ...currentState.messages],
-          hasReachedMax: moreMessages.length < 50,
+          hasReachedMax: moreMessages.length < 20,
           isLoadingMore: false,
         ));
       }
@@ -95,7 +95,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
       await repository.sendMessage(encryptedMsg, senderId: _currentUserId);
       _currentPage = 1;
       final messages = await repository.getMessages(currentUserId: _currentUserId, currentUserName: _currentUserName, page: _currentPage);
-      emit(CommunityLoaded(messages, hasReachedMax: messages.length < 50));
+      emit(CommunityLoaded(messages, hasReachedMax: messages.length < 20));
     } catch (e) {
       emit(currentState);
     }
@@ -106,13 +106,18 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     final currentState = state as CommunityLoaded;
 
     try {
+      final String? uploadedUrl = await repository.uploadFile(event.audioPath);
+      if (uploadedUrl == null) throw Exception('Upload failed');
+      
+      final content = '$uploadedUrl|${event.duration}';
+
       final encryptedMsg = ChatMessageModel.createMessage(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         sender: 'You',
         isMe: true,
         time: 'Today|${_getCurrentFormattedTime()}',
         type: 'audio',
-        content: event.duration,
+        content: content,
       );
 
       await repository.sendMessage(encryptedMsg, senderId: _currentUserId);
@@ -152,13 +157,16 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     final currentState = state as CommunityLoaded;
 
     try {
+      final String? uploadedUrl = await repository.uploadFile(event.imagePath);
+      if (uploadedUrl == null) throw Exception('Upload failed');
+
       final encryptedMsg = ChatMessageModel.createMessage(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         sender: 'You',
         isMe: true,
         time: 'Today|${_getCurrentFormattedTime()}',
         type: 'image',
-        content: event.imagePath,
+        content: uploadedUrl,
       );
 
       await repository.sendMessage(encryptedMsg, senderId: _currentUserId);
