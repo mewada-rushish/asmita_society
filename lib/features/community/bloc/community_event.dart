@@ -62,6 +62,19 @@ class SendPollMessage extends CommunityEvent {
   List<Object?> get props => [question, options, allowMultipleAnswers];
 }
 
+class VoteOnPollMessage extends CommunityEvent {
+  final String messageId;
+  final String option;
+
+  const VoteOnPollMessage({
+    required this.messageId,
+    required this.option,
+  });
+
+  @override
+  List<Object?> get props => [messageId, option];
+}
+
 class SendImageMessage extends CommunityEvent {
   final String imagePath;
 
@@ -69,4 +82,15 @@ class SendImageMessage extends CommunityEvent {
 
   @override
   List<Object?> get props => [imagePath];
+}
+
+class SendDocumentMessage extends CommunityEvent {
+  final String documentPath;
+  final String fileName;
+  final String fileSize;
+
+  const SendDocumentMessage(this.documentPath, this.fileName, this.fileSize);
+
+  @override
+  List<Object?> get props => [documentPath, fileName, fileSize];
 }
