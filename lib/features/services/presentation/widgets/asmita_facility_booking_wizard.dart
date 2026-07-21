@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:asmita_society/core/constants/design_system.dart';
@@ -41,11 +40,11 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
   // Tab 1 & 2 Workflow States
   String? _eventType;
   String? _customEventType;
-  List<String> _functionNames = [''];
+  final List<String> _functionNames = [''];
   int _internalQty = 0; // Represents Family Members (Event) or Society Members (Activity)
   int _outsideQty = 0;
-  List<String> _societyMemberNames = [''];
-  List<String> _outsideMemberNames = [''];
+  final List<String> _societyMemberNames = [''];
+  final List<String> _outsideMemberNames = [''];
 
   // Tab 3 Common States
   DateTime? _bookingDate;
@@ -397,7 +396,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
                 ],
               ),
             );
-          }).toList(),
+          }),
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
