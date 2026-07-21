@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_text_field.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:asmita_society/core/widgets/asmita_toast.dart';
 
 class AsmitaSecurityWizard extends StatefulWidget {
   const AsmitaSecurityWizard({super.key});
@@ -69,9 +68,9 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: AsmitaPalette.deepNavy.withValues(alpha: 0.04),
+        color: AsmitaPalette.deepNavy.withOpacity(0.04),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AsmitaPalette.deepNavy.withValues(alpha: 0.15), width: 1.2),
+        border: Border.all(color: AsmitaPalette.deepNavy.withOpacity(0.15), width: 1.2),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -170,7 +169,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
+                            color: Colors.black.withOpacity(0.03),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -256,7 +255,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
+                            color: Colors.black.withOpacity(0.03),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -416,30 +415,35 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
       final bool launched = await launchUrl(telUri);
       if (!launched) {
         if (!mounted) return;
-        AsmitaToast.show(context, message: 'Unable to place call', type: AsmitaToastType.error);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to place call')));
       }
     } catch (_) {
       if (!mounted) return;
-      AsmitaToast.show(context, message: 'Unable to place call', type: AsmitaToastType.error);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to place call')));
     }
   }
 
   void _promptCallSecurity() {
-    AsmitaToast.show(
-      context,
-      message: 'Call guard at +911234567890?',
-      type: AsmitaToastType.info,
-      duration: const Duration(seconds: 6),
-      actionLabel: 'Call',
-      onAction: () {
-        _callSecurityNumber();
-        if (mounted) {
-          setState(() {
-            _selectedAction = 'Call Security';
-            _currentStep = 3; 
-          });
-        }
-      },
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.removeCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text('Call guard at +911234567890?'),
+        duration: const Duration(seconds: 6),
+        action: SnackBarAction(
+          label: 'Call',
+          textColor: Colors.white,
+          onPressed: () {
+            messenger.hideCurrentSnackBar();
+            
+            _callSecurityNumber();
+            setState(() {
+              _selectedAction = 'Call Security';
+              _currentStep = 3; 
+            });
+          },
+        ),
+      ),
     );
   }
 }

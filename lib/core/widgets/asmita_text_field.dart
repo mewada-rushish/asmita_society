@@ -33,7 +33,7 @@ class AsmitaTextField extends StatelessWidget {
           style: textTheme.bodyLarge?.copyWith(fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: AsmitaPalette.textLight.withValues(alpha: 0.6), fontSize: 14),
+            hintStyle: TextStyle(color: AsmitaPalette.textLight.withOpacity(0.6), fontSize: 14),
             prefixIcon: Icon(icon, color: AsmitaPalette.textLight, size: 20),
             filled: true,
             fillColor: AsmitaPalette.systemBG,

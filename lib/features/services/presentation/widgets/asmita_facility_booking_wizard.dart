@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:asmita_society/core/constants/design_system.dart';
-import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 
 enum FieldType { text, number, dropdown, checkbox, checkboxGroup, repeater }
@@ -41,11 +41,11 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
   // Tab 1 & 2 Workflow States
   String? _eventType;
   String? _customEventType;
-  final List<String> _functionNames = [''];
+  List<String> _functionNames = [''];
   int _internalQty = 0; // Represents Family Members (Event) or Society Members (Activity)
   int _outsideQty = 0;
-  final List<String> _societyMemberNames = [''];
-  final List<String> _outsideMemberNames = [''];
+  List<String> _societyMemberNames = [''];
+  List<String> _outsideMemberNames = [''];
 
   // Tab 3 Common States
   DateTime? _bookingDate;
@@ -134,12 +134,12 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
   void _submitForm() {
     if (!_validateCurrentTab()) return;
     if (!_termsAccepted) {
-      AsmitaToast.show(context, message: 'Please accept the Terms & Conditions.', type: AsmitaToastType.error);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please accept the Terms & Conditions.'), behavior: SnackBarBehavior.floating));
       return;
     }
     
     if (_bookingDate == null || _selectedTimeSlot == null) {
-      AsmitaToast.show(context, message: 'Please select an available date and time slot.', type: AsmitaToastType.error);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select an available date and time slot.'), behavior: SnackBarBehavior.floating));
       return;
     }
 
@@ -267,10 +267,8 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
                   });
                   _nextStep();
                 } else {
-                  AsmitaToast.show(
-                    context,
-                    message: '${facility['label']} is currently unavailable.',
-                    type: AsmitaToastType.error,
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${facility['label']} is currently unavailable.'), behavior: SnackBarBehavior.floating),
                   );
                 }
               },
@@ -399,7 +397,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
                 ],
               ),
             );
-          }),
+          }).toList(),
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(

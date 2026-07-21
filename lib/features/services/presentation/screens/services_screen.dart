@@ -3,7 +3,6 @@ import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import '../widgets/facility_bookings.dart';
 import '../widgets/verified_local_handymen.dart';
-import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 
 class ServicesScreen extends StatelessWidget {
   final VoidCallback? onNavigateToSearch;
@@ -29,29 +28,16 @@ class ServicesScreen extends StatelessWidget {
             onChatPressed: onNavigateToCommunity,
           ),
           Expanded(
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-              slivers: [
-                AsmitaAnimatedRefresh(
-                  onRefresh: () async {
-                    // Simulate fetching services
-                    await Future.delayed(const Duration(milliseconds: 800));
-                  },
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.all(16.0),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const FacilityBookings(),
-                        const SizedBox(height: 24),
-                        const VerifiedLocalHandymen(),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const FacilityBookings(),
+                  const SizedBox(height: 24),
+                  const VerifiedLocalHandymen(),
+                ],
+              ),
             ),
           ),
         ],
