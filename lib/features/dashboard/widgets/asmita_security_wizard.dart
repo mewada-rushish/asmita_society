@@ -68,9 +68,9 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: AsmitaPalette.deepNavy.withOpacity(0.04),
+        color: AsmitaPalette.deepNavy.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AsmitaPalette.deepNavy.withOpacity(0.15), width: 1.2),
+        border: Border.all(color: AsmitaPalette.deepNavy.withValues(alpha: 0.15), width: 1.2),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -169,7 +169,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
+                            color: Colors.black.withValues(alpha: 0.03),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -255,7 +255,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
+                            color: Colors.black.withValues(alpha: 0.03),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
