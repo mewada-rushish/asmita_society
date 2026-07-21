@@ -3,7 +3,6 @@ import 'package:asmita_society/core/constants/design_system.dart';
 import 'asmita_facility_booking_wizard.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
-import 'package:asmita_society/core/widgets/asmita_toast.dart';
 
 class FacilityBookings extends StatelessWidget {
   const FacilityBookings({super.key});
@@ -20,10 +19,11 @@ class FacilityBookings extends StatelessWidget {
           content: AsmitaFacilityBookingWizard(initialFacility: title),
         );
       } else {
-        AsmitaToast.show(
-          context,
-          message: '$title is currently $availability.',
-          type: AsmitaToastType.error,
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$title is currently $availability.'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     }
@@ -133,11 +133,7 @@ class FacilityBookings extends StatelessWidget {
                 Navigator.pop(context); // Close the bottom sheet first
                 AsmitaDialog.show(context: context, title: 'Book a Facility', content: AsmitaFacilityBookingWizard(initialFacility: fac['title'] as String));
               } else {
-                AsmitaToast.show(
-                  context,
-                  message: '${fac['title']} is currently ${fac['availability']}.',
-                  type: AsmitaToastType.error,
-                );
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${fac['title']} is currently ${fac['availability']}.'), behavior: SnackBarBehavior.floating));
               }
             },
           );

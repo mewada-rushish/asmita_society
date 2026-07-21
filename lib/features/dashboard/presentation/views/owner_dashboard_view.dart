@@ -31,7 +31,7 @@ class OwnerDashboardView extends StatefulWidget {
 }
 
 class _OwnerDashboardViewState extends State<OwnerDashboardView> {
-  final ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController(initialScrollOffset: 440.0);
 
   @override
   void dispose() {
@@ -79,6 +79,9 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
         children: [
           // FIXED: Removed 'const' so widget callback layers can bind dynamically
           AsmitaPrimaryHeader(
+            title: 'Siddhi CHS 34',
+            subtitle: 'Premium Mode',
+            userInitials: 'RM',
             onSearchPressed: widget.onNavigateToSearch,
             onChatPressed: widget.onNavigateToCommunity,
           ),
@@ -119,7 +122,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
+                            color: Colors.black.withOpacity(0.04),
                             blurRadius: 16,
                             offset: const Offset(0, -6),
                           ),
@@ -339,7 +342,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: AsmitaPalette.actionRed.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: AsmitaPalette.actionRed.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
               child: const Icon(Icons.assignment_outlined, color: AsmitaPalette.actionRed, size: 22),
             ),
             const SizedBox(width: 12),
@@ -427,7 +430,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: isUtilityButton ? Border.all(color: AsmitaPalette.borderGrey, width: 1.5) : null,
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
                   ),
                   child: Icon(icon, color: isUtilityButton ? AsmitaPalette.actionRed : iconColor, size: 24),
                 ),
