@@ -9,8 +9,8 @@ class AsmitaDioClient {
 
   AsmitaDioClient(this.secureStorage) : dio = Dio() {
     dio.options.baseUrl = EnvConfig.baseUrl;
-    dio.options.connectTimeout = const Duration(seconds: 15);
-    dio.options.receiveTimeout = const Duration(seconds: 15);
+    dio.options.connectTimeout = const Duration(seconds: 30);
+    dio.options.receiveTimeout = const Duration(seconds: 30);
     
     dio.options.headers = {
       'Content-Type': 'application/json',
@@ -35,11 +35,15 @@ class AsmitaDioClient {
         return handler.next(options);
       },
       onError: (DioException e, handler) {
-        FirebaseCrashlytics.instance.recordError(
-          e,
-          e.stackTrace,
-          reason: 'Network request failure: ${e.requestOptions.path}',
-        );
+        if (e.type != DioExceptionType.connectionTimeout && 
+            e.type != DioExceptionType.receiveTimeout && 
+            e.type != DioExceptionType.sendTimeout) {
+          FirebaseCrashlytics.instance.recordError(
+            e,
+            e.stackTrace,
+            reason: 'Network request failure: ${e.requestOptions.path}',
+          );
+        }
         return handler.next(e);
       },
     ));

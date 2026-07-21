@@ -17,6 +17,10 @@ class ChatMessageModel {
   final String? replyToContent;
   final Map<String, int>? pollOptions;
   final bool allowMultipleAnswers;
+  
+  final bool isStarred;
+  final bool isPinned;
+  final Map<String, List<String>>? reactions;
 
   const ChatMessageModel({
     required this.id,
@@ -30,7 +34,44 @@ class ChatMessageModel {
     this.replyToContent,
     this.pollOptions,
     this.allowMultipleAnswers = false,
+    this.isStarred = false,
+    this.isPinned = false,
+    this.reactions,
   });
+
+  ChatMessageModel copyWith({
+    String? id,
+    String? sender,
+    bool? isMe,
+    String? time,
+    String? type,
+    bool? isManagement,
+    String? content,
+    String? replyToMessageId,
+    String? replyToContent,
+    Map<String, int>? pollOptions,
+    bool? allowMultipleAnswers,
+    bool? isStarred,
+    bool? isPinned,
+    Map<String, List<String>>? reactions,
+  }) {
+    return ChatMessageModel(
+      id: id ?? this.id,
+      sender: sender ?? this.sender,
+      isMe: isMe ?? this.isMe,
+      time: time ?? this.time,
+      type: type ?? this.type,
+      isManagement: isManagement ?? this.isManagement,
+      content: content ?? this.content,
+      replyToMessageId: replyToMessageId ?? this.replyToMessageId,
+      replyToContent: replyToContent ?? this.replyToContent,
+      pollOptions: pollOptions ?? this.pollOptions,
+      allowMultipleAnswers: allowMultipleAnswers ?? this.allowMultipleAnswers,
+      isStarred: isStarred ?? this.isStarred,
+      isPinned: isPinned ?? this.isPinned,
+      reactions: reactions ?? this.reactions,
+    );
+  }
 
   /// Factory constructor to parse a new message payload.
   factory ChatMessageModel.parsePayload({
@@ -75,6 +116,9 @@ class ChatMessageModel {
       replyToContent: parsedReplyToContent,
       pollOptions: pollOpts,
       allowMultipleAnswers: allowMulti,
+      isStarred: false,
+      isPinned: false,
+      reactions: null,
     );
   }
 
@@ -104,6 +148,9 @@ class ChatMessageModel {
       replyToContent: replyToContent,
       pollOptions: pollOptions,
       allowMultipleAnswers: allowMultipleAnswers,
+      isStarred: false,
+      isPinned: false,
+      reactions: null,
     );
   }
 

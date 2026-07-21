@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import 'firebase_options.dart';
 import 'core/constants/design_system.dart';
@@ -25,6 +27,9 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  await Hive.initFlutter();
+  await Hive.openBox('community_chat');
+
   FlutterError.onError = (details) => FirebaseCrashlytics.instance.recordFlutterFatalError(details);
   PlatformDispatcher.instance.onError = (error, stack) {
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
@@ -44,11 +49,13 @@ Future<void> main() async {
     isDeviceSafe = false;
   }
 
-  runApp(AsmitaApp(
-    secureStorage: secureStorage,
-    authRepository: authRepo,
-    visitorRepository: visitorRepo,
-    isDeviceSafe: isDeviceSafe,
+  runApp(ProviderScope(
+    child: AsmitaApp(
+      secureStorage: secureStorage,
+      authRepository: authRepo,
+      visitorRepository: visitorRepo,
+      isDeviceSafe: isDeviceSafe,
+    ),
   ));
 }
 
