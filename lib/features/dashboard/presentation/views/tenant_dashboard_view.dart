@@ -43,7 +43,6 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
     showDialog(
       context: context,
       builder: (context) => const AsmitaDialog(
-        title: 'Pre-Approve Entry',
         content: AsmitaPreApproveWizard(), // Plugs in our dynamic wizard safely
       ),
     );
@@ -53,7 +52,6 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
     showDialog(
       context: context,
       builder: (context) => const AsmitaDialog(
-        title: 'Emergency Broadcast',
         content: AsmitaRaiseAlertWizard(),
       ),
     );
@@ -68,8 +66,6 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
       body: Column(
         children: [
           AsmitaPrimaryHeader(
-            title: 'Hello, Kavana',
-            subtitle: 'Flat B-105 • Tenant',
             userInitials: 'KM',
             onSearchPressed: widget.onNavigateToSearch,
             onChatPressed: widget.onNavigateToCommunity,

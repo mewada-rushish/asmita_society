@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
+import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 
 class VisitorHistoryScreen extends StatelessWidget {
   const VisitorHistoryScreen({super.key});
@@ -286,7 +287,7 @@ class VisitorHistoryScreen extends StatelessWidget {
       body: Column(
         children: [
           // Aligned Unified Header Structure matches Dashboard Layouts seamlessly
-          const AsmitaPrimaryHeader(subtitle: 'Gate Records'),
+          const AsmitaPrimaryHeader(),
           
           // Inline contextual back arrow support dynamically rendered only if pushed as an explicit page route
           if (Navigator.canPop(context))
@@ -323,12 +324,21 @@ class VisitorHistoryScreen extends StatelessWidget {
             ),
             
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              physics: const BouncingScrollPhysics(),
-              itemCount: _mockHistory.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              slivers: [
+                AsmitaAnimatedRefresh(
+                  onRefresh: () async {
+                    // Simulate a network fetch or state refresh
+                    await Future.delayed(const Duration(seconds: 1));
+                  },
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: SliverList.separated(
+                    itemCount: _mockHistory.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
                 final item = _mockHistory[index];
                 return InkWell(
                   onTap: () => _showVisitorDetailsModal(context, item),
@@ -415,6 +425,9 @@ class VisitorHistoryScreen extends StatelessWidget {
           ),
         ],
       ),
+    ),
+  ],
+),
     );
   }
 }

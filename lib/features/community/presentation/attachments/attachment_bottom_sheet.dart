@@ -3,31 +3,35 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import '../providers/community_provider.dart';
 import 'create_poll_dialog.dart';
+import 'contact_picker_bottom_sheet.dart';
 
 class AttachmentBottomSheet extends ConsumerWidget {
   const AttachmentBottomSheet({super.key});
 
   Future<void> _pickImage(WidgetRef ref, ImageSource source) async {
+    final notifier = ref.read(communityProvider.notifier);
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source, imageQuality: 70);
     
     if (pickedFile != null) {
-      ref.read(communityProvider.notifier).sendImageMessage(pickedFile.path);
+      notifier.sendImageMessage(pickedFile.path);
     }
   }
 
   Future<void> _pickDocument(WidgetRef ref) async {
+    final notifier = ref.read(communityProvider.notifier);
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['pdf', 'doc', 'docx', 'txt'],
+      allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx', 'ppt', 'pptx', 'csv'],
     );
 
     if (result != null && result.files.single.path != null) {
       final file = result.files.single;
       final fileSize = '${(file.size / 1024 / 1024).toStringAsFixed(2)} MB';
-      ref.read(communityProvider.notifier).sendDocumentMessage(
+      notifier.sendDocumentMessage(
         file.path!,
         file.name,
         fileSize,
@@ -36,13 +40,14 @@ class AttachmentBottomSheet extends ConsumerWidget {
   }
 
   Future<void> _pickAudio(WidgetRef ref) async {
+    final notifier = ref.read(communityProvider.notifier);
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.audio,
     );
 
     if (result != null && result.files.single.path != null) {
       final file = result.files.single;
-      ref.read(communityProvider.notifier).sendAudioMessage(
+      notifier.sendAudioMessage(
         file.path!,
         '0:00', // Mock duration
       );
@@ -104,8 +109,11 @@ class AttachmentBottomSheet extends ConsumerWidget {
                 color: Colors.blue,
                 label: 'Contact',
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Contact sharing is coming soon')),
+                  Navigator.pop(context); // Close attachment menu
+                  showAsmitaBottomSheet(
+                    context: context,
+                    title: 'Select Contact',
+                    child: const ContactPickerBottomSheet(),
                   );
                 },
               ),
@@ -115,8 +123,10 @@ class AttachmentBottomSheet extends ConsumerWidget {
                 color: Colors.teal,
                 label: 'Poll',
                 onTap: () {
-                  showDialog(
+                  showModalBottomSheet(
                     context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
                     builder: (context) => const CreatePollDialog(),
                   );
                 },

@@ -134,7 +134,7 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
 
     showAsmitaBottomSheet(
       context: context,
-      title: 'Add Local Help',
+      title: 'Add Daily Help',
       isScrollControlled: true,
       child: StatefulBuilder(
         builder: (BuildContext context, StateSetter setModalState) {
@@ -228,8 +228,6 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
       body: Column(
         children: [          
           AsmitaPrimaryHeader(
-            title: 'Daily Help',
-            subtitle: 'Verified Local Directory',
             userInitials: 'RM',
             onSearchPressed: widget.onNavigateToSearch,
             onChatPressed: widget.onNavigateToCommunity,

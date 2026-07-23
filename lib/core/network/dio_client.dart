@@ -37,7 +37,9 @@ class AsmitaDioClient {
       onError: (DioException e, handler) {
         if (e.type != DioExceptionType.connectionTimeout && 
             e.type != DioExceptionType.receiveTimeout && 
-            e.type != DioExceptionType.sendTimeout) {
+            e.type != DioExceptionType.sendTimeout &&
+            e.type != DioExceptionType.connectionError &&
+            e.type != DioExceptionType.unknown) {
           FirebaseCrashlytics.instance.recordError(
             e,
             e.stackTrace,

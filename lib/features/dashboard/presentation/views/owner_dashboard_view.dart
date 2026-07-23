@@ -31,7 +31,7 @@ class OwnerDashboardView extends StatefulWidget {
 }
 
 class _OwnerDashboardViewState extends State<OwnerDashboardView> {
-  final ScrollController _scrollController = ScrollController(initialScrollOffset: 440.0);
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void dispose() {
@@ -43,7 +43,6 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
     showDialog(
       context: context,
       builder: (context) => const AsmitaDialog(
-        title: 'Pre-Approve Entry',
         content: AsmitaPreApproveWizard(),
       ),
     );
@@ -53,7 +52,6 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
     showDialog(
       context: context,
       builder: (context) => const AsmitaDialog(
-        title: 'Security Assistance',
         content: AsmitaSecurityWizard(),
       ),
     );
@@ -63,7 +61,6 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
     showDialog(
       context: context,
       builder: (context) => const AsmitaDialog(
-        title: 'Emergency Broadcast',
         content: AsmitaRaiseAlertWizard(),
       ),
     );
@@ -79,8 +76,6 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
         children: [
           // FIXED: Removed 'const' so widget callback layers can bind dynamically
           AsmitaPrimaryHeader(
-            title: 'Siddhi CHS 34',
-            subtitle: 'Premium Mode',
             userInitials: 'RM',
             onSearchPressed: widget.onNavigateToSearch,
             onChatPressed: widget.onNavigateToCommunity,

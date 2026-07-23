@@ -47,14 +47,34 @@ class AsmitaBottomSheet extends StatelessWidget {
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(24, 24, 24, bottomPadding > 0 ? bottomPadding : 24),
+      padding: EdgeInsets.fromLTRB(24, 12, 24, bottomPadding > 0 ? bottomPadding : 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(title, style: textTheme.titleLarge?.copyWith(fontSize: 18, fontWeight: FontWeight.w700, color: AsmitaPalette.deepNavy)),
+          Center(
+            child: Container(
+              width: 40,
+              height: 5,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
-          const Divider(color: AsmitaPalette.borderGrey, height: 1),
+          Center(
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: textTheme.titleLarge?.copyWith(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: AsmitaPalette.deepNavy,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ),
           const SizedBox(height: 20),
           Flexible(child: child),
         ],

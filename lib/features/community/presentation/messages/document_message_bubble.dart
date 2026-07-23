@@ -1,10 +1,12 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 
-class DocumentMessageBubble extends StatelessWidget {
+class DocumentMessageBubble extends StatefulWidget {
   final String content;
   final bool isMe;
 
@@ -15,23 +17,29 @@ class DocumentMessageBubble extends StatelessWidget {
   });
 
   @override
+  State<DocumentMessageBubble> createState() => _DocumentMessageBubbleState();
+}
+
+class _DocumentMessageBubbleState extends State<DocumentMessageBubble> {
+  bool _isDownloading = false;
+  @override
   Widget build(BuildContext context) {
     String url = '';
     String fileName = 'Document';
     String fileSize = 'Unknown Size';
     
-    if (content.contains('|')) {
-      final parts = content.split('|');
+    if (widget.content.contains('|')) {
+      final parts = widget.content.split('|');
       if (parts.isNotEmpty) url = parts[0];
       if (parts.length > 1) fileName = parts[1];
       if (parts.length > 2) fileSize = parts[2];
     } else {
-      url = content;
+      url = widget.content;
     }
 
     final ext = fileName.split('.').last.toLowerCase();
     IconData fileIcon = Icons.insert_drive_file_rounded;
-    Color iconColor = isMe ? AsmitaPalette.deepNavy : AsmitaPalette.textDark;
+    Color iconColor = widget.isMe ? AsmitaPalette.deepNavy : AsmitaPalette.textDark;
 
     if (['pdf'].contains(ext)) {
       fileIcon = Icons.picture_as_pdf_rounded;
@@ -52,14 +60,37 @@ class DocumentMessageBubble extends StatelessWidget {
 
     return GestureDetector(
       onTap: () async {
+        if (_isDownloading) return;
+        
         if (url.startsWith('http')) {
-          final uri = Uri.tryParse(url);
-          if (uri != null && await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-          } else {
-            if (context.mounted) {
-              AsmitaToast.show(context, message: 'Could not open document', type: AsmitaToastType.error);
+          setState(() => _isDownloading = true);
+          try {
+            final tempDir = await getTemporaryDirectory();
+            final filePath = '${tempDir.path}/$fileName';
+            final file = File(filePath);
+            
+            // If already downloaded, just open it
+            if (await file.exists()) {
+              final result = await OpenFilex.open(filePath);
+              if (result.type != ResultType.done && context.mounted) {
+                AsmitaToast.show(context, message: 'No compatible app found to open this file', type: AsmitaToastType.error);
+              }
+              setState(() => _isDownloading = false);
+              return;
             }
+            
+            // Download the file
+            await Dio().download(url, filePath);
+            final result = await OpenFilex.open(filePath);
+            if (result.type != ResultType.done && context.mounted) {
+              AsmitaToast.show(context, message: 'No compatible app found to open this file', type: AsmitaToastType.error);
+            }
+          } catch (e) {
+            if (context.mounted) {
+              AsmitaToast.show(context, message: 'Could not download or open document', type: AsmitaToastType.error);
+            }
+          } finally {
+            if (mounted) setState(() => _isDownloading = false);
           }
         } else {
           final result = await OpenFilex.open(url);
@@ -72,16 +103,22 @@ class DocumentMessageBubble extends StatelessWidget {
         width: MediaQuery.sizeOf(context).width * 0.65,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isMe ? Colors.white.withValues(alpha: 0.5) : AsmitaPalette.borderGrey.withValues(alpha: 0.3),
+          color: widget.isMe ? Colors.white.withValues(alpha: 0.5) : AsmitaPalette.borderGrey.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isMe ? AsmitaPalette.deepNavy.withValues(alpha: 0.2) : AsmitaPalette.borderGrey,
+            color: widget.isMe ? AsmitaPalette.deepNavy.withValues(alpha: 0.2) : AsmitaPalette.borderGrey,
             width: 1,
           ),
         ),
         child: Row(
           children: [
-            Icon(fileIcon, color: iconColor, size: 32),
+            _isDownloading
+                ? SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: CircularProgressIndicator(strokeWidth: 3, color: widget.isMe ? AsmitaPalette.deepNavy : AsmitaPalette.actionRed),
+                  )
+                : Icon(fileIcon, color: iconColor, size: 32),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -95,7 +132,7 @@ class DocumentMessageBubble extends StatelessWidget {
                       fontFamily: 'Montserrat',
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: isMe ? AsmitaPalette.deepNavy : AsmitaPalette.textDark,
+                      color: widget.isMe ? AsmitaPalette.deepNavy : AsmitaPalette.textDark,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -105,7 +142,7 @@ class DocumentMessageBubble extends StatelessWidget {
                       fontFamily: 'Montserrat',
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: isMe ? AsmitaPalette.deepNavy.withValues(alpha: 0.7) : AsmitaPalette.textLight,
+                      color: widget.isMe ? AsmitaPalette.deepNavy.withValues(alpha: 0.7) : AsmitaPalette.textLight,
                     ),
                   ),
                 ],

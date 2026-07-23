@@ -64,6 +64,25 @@ class PropertyRepository {
     }
   }
 
+  Future<void> linkFlat(int flatId, String role) async {
+    try {
+      final response = await _dio.post(
+        EnvConfig.linkFlat,
+        data: {'flat_id': flatId, 'role': role},
+      );
+      final data = _ensureMap(response.data);
+      if (data['success'] != true) {
+        throw Exception(data['message'] ?? 'Failed to link property');
+      }
+    } catch (e) {
+      if (e is DioException) {
+        final errorData = _ensureMap(e.response?.data);
+        throw Exception(errorData['message'] ?? 'Network error occurred');
+      }
+      throw Exception(e.toString());
+    }
+  }
+
   Map<String, dynamic> _ensureMap(dynamic data) {
     if (data == null) return {};
     if (data is Map<String, dynamic>) return data;
