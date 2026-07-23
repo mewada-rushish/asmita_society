@@ -55,4 +55,5 @@ class EnvConfig {
   static String get towers => '$baseUrl/app-api/properties/towers';
   static String get floors => '$baseUrl/app-api/properties/floors';
   static String get flats => '$baseUrl/app-api/properties/flats';
+  static String get linkFlat => '$baseUrl/app-api/properties/link-flat';
 }

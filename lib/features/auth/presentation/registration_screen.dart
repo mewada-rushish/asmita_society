@@ -181,6 +181,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     bool enableSearch = true,
     bool useGrid = false,
     int gridCrossAxisCount = 4,
+    double gridChildAspectRatio = 2.0,
   }) {
     showAsmitaBottomSheet(
       context: context,
@@ -230,7 +231,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     },
                   ),
                   const SizedBox(height: 12),
-                  Expanded(
+                  Flexible(
                     child: filteredItems.isEmpty
                         ? const Center(
                             child: Text(
@@ -247,7 +248,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                   crossAxisCount: gridCrossAxisCount,
                                   crossAxisSpacing: 12,
                                   mainAxisSpacing: 12,
-                                  childAspectRatio: 1.0,
+                                  childAspectRatio: gridChildAspectRatio,
                                 ),
                                 itemBuilder: (context, index) {
                                   final item = filteredItems[index];
@@ -283,10 +284,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                   );
                                 },
                               )
-                            : ListView.builder(
+                            : ListView.separated(
                                 shrinkWrap: true,
                                 physics: const BouncingScrollPhysics(),
                                 itemCount: filteredItems.length,
+                                separatorBuilder: (context, index) => const Divider(height: 1, color: Colors.black12),
                                 itemBuilder: (context, index) {
                                   final item = filteredItems[index];
                                   final isSelected = item == currentValue;
@@ -298,7 +300,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                         fontFamily: 'Poppins',
                                         fontSize: 15,
                                         color: isSelected ? const Color(0xFFE21F26) : Colors.black87,
-                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                                       ),
                                     ),
                                     trailing: isSelected
@@ -482,61 +484,207 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               padding: EdgeInsets.only(bottom: 20),
               child: LinearProgressIndicator(color: Color(0xFFE21F26)),
             ),
-          _buildSearchableDropdownField<PropertyItem>(
-            label: 'Society Name',
-            icon: Icons.domain_rounded,
-            hint: 'Select Society',
-            items: _societies,
-            value: _selectedSociety,
-            onChanged: (val) {
-              if (val != null) _onSocietySelected(val);
-            },
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              clipBehavior: Clip.antiAlias,
+              borderRadius: BorderRadius.circular(12),
+              child: Column(
+                children: [
+                  _buildIOSListTile(
+                    label: 'Society',
+                    value: _selectedSociety?.name,
+                    hint: 'Select Society',
+                    icon: Icons.domain_rounded,
+                    iconBackgroundColor: Colors.blue.shade500,
+                    onTap: () {
+                      _showSearchableBottomSheet(
+                        title: 'Society Name',
+                        items: _societies,
+                        currentValue: _selectedSociety,
+                        onSelected: (val) {
+                          _onSocietySelected(val);
+                        },
+                      );
+                    },
+                  ),
+                  _buildIOSListTile(
+                    label: 'Tower',
+                    value: _selectedTower?.name,
+                    hint: 'Select Tower',
+                    icon: Icons.business_rounded,
+                    iconBackgroundColor: Colors.indigo.shade400,
+                    isDisabled: _selectedSociety == null,
+                    isLoading: _towers.isEmpty && _isLoadingProperties,
+                    onTap: () {
+                      _showSearchableBottomSheet(
+                        title: 'Tower',
+                        items: _towers,
+                        currentValue: _selectedTower,
+                        useGrid: true,
+                        onSelected: (val) {
+                          _onTowerSelected(val);
+                        },
+                      );
+                    },
+                  ),
+                  _buildIOSListTile(
+                    label: 'Floor',
+                    value: _selectedFloor?.name,
+                    hint: 'Select Floor',
+                    icon: Icons.stairs_rounded,
+                    iconBackgroundColor: Colors.purple.shade400,
+                    isDisabled: _selectedTower == null,
+                    isLoading: _floors.isEmpty && _isLoadingProperties,
+                    onTap: () {
+                      _showSearchableBottomSheet(
+                        title: 'Floor',
+                        items: _floors,
+                        currentValue: _selectedFloor,
+                        useGrid: true,
+                        onSelected: (val) {
+                          _onFloorSelected(val);
+                        },
+                      );
+                    },
+                  ),
+                  _buildIOSListTile(
+                    label: 'Flat No.',
+                    value: _selectedFlat?.name,
+                    hint: 'Select Flat',
+                    icon: Icons.door_front_door_rounded,
+                    iconBackgroundColor: Colors.teal.shade500,
+                    isDisabled: _selectedFloor == null,
+                    isLoading: _flats.isEmpty && _isLoadingProperties,
+                    onTap: () {
+                      _showSearchableBottomSheet(
+                        title: 'Flat',
+                        items: _flats,
+                        currentValue: _selectedFlat,
+                        useGrid: true,
+                        onSelected: (val) {
+                          setState(() => _selectedFlat = val);
+                        },
+                      );
+                    },
+                  ),
+                  _buildIOSListTile(
+                    label: 'I am a',
+                    value: _selectedRole,
+                    hint: 'Owner / Tenant',
+                    icon: Icons.person_rounded,
+                    iconBackgroundColor: Colors.orange.shade500,
+                    showDivider: false,
+                    onTap: () {
+                      _showSearchableBottomSheet(
+                        title: 'Role',
+                        items: const ['Owner', 'Tenant'],
+                        currentValue: _selectedRole,
+                        enableSearch: false,
+                        useGrid: true,
+                        gridCrossAxisCount: 2,
+                        gridChildAspectRatio: 2.5,
+                        onSelected: (val) {
+                          setState(() => _selectedRole = val);
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
           ),
-          _buildSearchableDropdownField<PropertyItem>(
-            label: 'Tower Number',
-            icon: Icons.business_rounded,
-            hint: 'Select Tower',
-            items: _towers,
-            value: _selectedTower,
-            useGrid: true,
-            onChanged: (val) {
-              if (val != null) _onTowerSelected(val);
-            },
-          ),
-          _buildSearchableDropdownField<PropertyItem>(
-            label: 'Floor',
-            icon: Icons.stairs_rounded,
-            hint: 'Select Floor',
-            items: _floors,
-            value: _selectedFloor,
-            useGrid: true,
-            onChanged: (val) {
-              if (val != null) _onFloorSelected(val);
-            },
-          ),
-          _buildSearchableDropdownField<PropertyItem>(
-            label: 'Apartment Number',
-            icon: Icons.meeting_room_rounded,
-            hint: 'Select Apartment',
-            items: _flats,
-            value: _selectedFlat,
-            useGrid: true,
-            onChanged: (val) {
-              if (val != null) setState(() => _selectedFlat = val);
-            },
-          ),
-          _buildSearchableDropdownField<String>(
-            label: 'I am a...',
-            modalTitle: 'Role',
-            icon: Icons.person_outline_rounded,
-            hint: 'Select Role',
-            items: ['Owner', 'Tenant'],
-            value: _selectedRole,
-            onChanged: (val) => setState(() => _selectedRole = val),
-            enableSearch: false,
-          ),
+          const SizedBox(height: 24),
           _buildBottomNavigation(bottomPadding),
         ],
+      ),
+    );
+  }
+
+  Widget _buildIOSListTile({
+    required String label,
+    required String? value,
+    required String hint,
+    required VoidCallback onTap,
+    required IconData icon,
+    required Color iconBackgroundColor,
+    bool isLoading = false,
+    bool isDisabled = false,
+    bool showDivider = true,
+  }) {
+    return InkWell(
+      onTap: isDisabled || isLoading ? null : onTap,
+      child: Opacity(
+        opacity: isDisabled ? 0.4 : 1.0,
+        child: Container(
+          color: Colors.transparent,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: iconBackgroundColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(icon, color: Colors.white, size: 18),
+                    ),
+                    const SizedBox(width: 14),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AsmitaPalette.deepNavy,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: isLoading
+                          ? const Align(
+                              alignment: Alignment.centerRight,
+                              child: SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE21F26)),
+                              ),
+                            )
+                          : Text(
+                              value ?? hint,
+                              textAlign: TextAlign.right,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 15,
+                                color: value != null ? Colors.black87 : Colors.black38,
+                              ),
+                            ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.chevron_right_rounded, color: Colors.black26, size: 20),
+                  ],
+                ),
+              ),
+              if (showDivider)
+                const Divider(height: 1, thickness: 1, indent: 52, color: Color(0xFFF0F0F0)),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -607,6 +755,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             enableSearch: false,
             useGrid: true,
             gridCrossAxisCount: 3,
+            gridChildAspectRatio: 2.5,
             onChanged: (val) => setState(() => _selectedGender = val),
           ),
           _buildBottomNavigation(bottomPadding),
@@ -666,6 +815,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     bool enableSearch = true,
     bool useGrid = false,
     int gridCrossAxisCount = 4,
+    double gridChildAspectRatio = 2.0,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0),
@@ -684,6 +834,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 enableSearch: enableSearch,
                 useGrid: useGrid,
                 gridCrossAxisCount: gridCrossAxisCount,
+                gridChildAspectRatio: gridChildAspectRatio,
               );
             },
             child: Container(

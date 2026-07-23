@@ -47,6 +47,8 @@
 				</array>
 			</dict>
 		</dict>
+		<key>NSContactsUsageDescription</key>
+		<string>This app requires contacts access to share them in the community chat.</string>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>UILaunchStoryboardName</key>

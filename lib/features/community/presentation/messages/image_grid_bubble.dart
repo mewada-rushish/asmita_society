@@ -112,15 +112,16 @@ class ImageGridBubble extends ConsumerWidget {
       onLongPress: onLongPress,
       onTap:
           onTap ??
-          () => _openSlideshow(context, ref, messages.length - 1 - index),
+          () => _openSlideshow(context, ref, index),
       child: imageWidget,
     );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final chronoMessages = messages.reversed.toList();
-    final int count = chronoMessages.length;
+    // We do NOT reverse here, so the newest image (index 0) stays at the top of the grid
+    final displayMessages = messages;
+    final int count = displayMessages.length;
 
     // Explicit fixed width so IntrinsicWidth works perfectly without throwing hasSize assertion
     final double gridWidth = count == 1 ? 220 : 260;
@@ -173,12 +174,60 @@ class ImageGridBubble extends ConsumerWidget {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: _buildGrid(
-                  context,
-                  ref,
-                  chronoMessages,
-                  count,
-                  gridHeight,
+                child: Stack(
+                  children: [
+                    _buildGrid(
+                      context,
+                      ref,
+                      displayMessages,
+                      count,
+                      gridHeight,
+                    ),
+                    Positioned(
+                      bottom: 4,
+                      right: 4,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              displayMessages.first.time.contains('|')
+                                  ? displayMessages.first.time.split('|')[1]
+                                  : displayMessages.first.time,
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            if (isMe) ...[
+                              const SizedBox(width: 4),
+                              if (displayMessages.first.id.startsWith('temp_'))
+                                const SizedBox(
+                                  height: 10,
+                                  width: 10,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 1.5,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              else
+                                const Icon(
+                                  Icons.done_all_rounded,
+                                  color: Colors.white,
+                                  size: 10,
+                                ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -191,12 +240,12 @@ class ImageGridBubble extends ConsumerWidget {
   Widget _buildGrid(
     BuildContext context,
     WidgetRef ref,
-    List<ChatMessageModel> chronoMessages,
+    List<ChatMessageModel> displayMessages,
     int count,
     double totalHeight,
   ) {
     if (count == 1) {
-      return _buildImageItem(context, ref, chronoMessages[0], 0, count);
+      return _buildImageItem(context, ref, displayMessages[0], 0, count);
     }
 
     if (count == 2) {
@@ -205,11 +254,11 @@ class ImageGridBubble extends ConsumerWidget {
         child: Row(
           children: [
             Expanded(
-              child: _buildImageItem(context, ref, chronoMessages[0], 0, count),
+              child: _buildImageItem(context, ref, displayMessages[0], 0, count),
             ),
             const SizedBox(width: 2),
             Expanded(
-              child: _buildImageItem(context, ref, chronoMessages[1], 1, count),
+              child: _buildImageItem(context, ref, displayMessages[1], 1, count),
             ),
           ],
         ),
@@ -228,7 +277,7 @@ class ImageGridBubble extends ConsumerWidget {
                     child: _buildImageItem(
                       context,
                       ref,
-                      chronoMessages[0],
+                      displayMessages[0],
                       0,
                       count,
                     ),
@@ -238,7 +287,7 @@ class ImageGridBubble extends ConsumerWidget {
                     child: _buildImageItem(
                       context,
                       ref,
-                      chronoMessages[1],
+                      displayMessages[1],
                       1,
                       count,
                     ),
@@ -251,7 +300,7 @@ class ImageGridBubble extends ConsumerWidget {
               child: _buildImageItem(
                 context,
                 ref,
-                chronoMessages[2],
+                displayMessages[2],
                 2,
                 count,
               ), // Full width bottom
@@ -273,7 +322,7 @@ class ImageGridBubble extends ConsumerWidget {
                   child: _buildImageItem(
                     context,
                     ref,
-                    chronoMessages[0],
+                    displayMessages[0],
                     0,
                     count,
                   ),
@@ -283,7 +332,7 @@ class ImageGridBubble extends ConsumerWidget {
                   child: _buildImageItem(
                     context,
                     ref,
-                    chronoMessages[1],
+                    displayMessages[1],
                     1,
                     count,
                   ),
@@ -299,7 +348,7 @@ class ImageGridBubble extends ConsumerWidget {
                   child: _buildImageItem(
                     context,
                     ref,
-                    chronoMessages[2],
+                    displayMessages[2],
                     2,
                     count,
                   ),
@@ -309,7 +358,7 @@ class ImageGridBubble extends ConsumerWidget {
                   child: _buildImageItem(
                     context,
                     ref,
-                    chronoMessages[3],
+                    displayMessages[3],
                     3,
                     count,
                   ),

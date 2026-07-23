@@ -8,6 +8,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../bloc/community_state.dart';
 import '../attachments/attachment_bottom_sheet.dart';
 
@@ -18,7 +19,7 @@ class ChatComposer extends ConsumerStatefulWidget {
   ConsumerState<ChatComposer> createState() => _ChatComposerState();
 }
 
-class _ChatComposerState extends ConsumerState<ChatComposer> with SingleTickerProviderStateMixin {
+class _ChatComposerState extends ConsumerState<ChatComposer> with TickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   bool _isTyping = false;
@@ -26,11 +27,19 @@ class _ChatComposerState extends ConsumerState<ChatComposer> with SingleTickerPr
   late final AnimationController _emojiAnimController;
   late final Animation<double> _emojiAnim;
   
+
   final _audioRecorder = AudioRecorder();
   bool _isRecording = false;
   int _recordingDuration = 0;
   Timer? _recordingTimer;
   String? _recordingPath;
+
+  // Hold-to-record WhatsApp style state
+  double _dragOffset = 0.0;
+  bool _isCancelled = false;
+  late final AnimationController _micScaleController;
+  late final AnimationController _blinkController;
+
 
   @override
   void initState() {
@@ -44,6 +53,16 @@ class _ChatComposerState extends ConsumerState<ChatComposer> with SingleTickerPr
       curve: Curves.easeOutCubic,
       reverseCurve: Curves.easeInCubic,
     );
+    _micScaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+      lowerBound: 1.0,
+      upperBound: 1.5,
+    );
+    _blinkController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..repeat(reverse: true);
     _controller.addListener(() {
       setState(() {
         _isTyping = _controller.text.trim().isNotEmpty;
@@ -62,6 +81,8 @@ class _ChatComposerState extends ConsumerState<ChatComposer> with SingleTickerPr
   @override
   void dispose() {
     _emojiAnimController.dispose();
+    _micScaleController.dispose();
+    _blinkController.dispose();
     _recordingTimer?.cancel();
     _audioRecorder.dispose();
     _controller.dispose();
@@ -122,11 +143,14 @@ class _ChatComposerState extends ConsumerState<ChatComposer> with SingleTickerPr
 
         setState(() {
           _isRecording = true;
+          _isCancelled = false;
+          _dragOffset = 0.0;
           _recordingDuration = 0;
           _emojiShowing = false;
         });
         
         _focusNode.unfocus();
+        _micScaleController.forward();
 
         _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
           setState(() {
@@ -148,7 +172,11 @@ class _ChatComposerState extends ConsumerState<ChatComposer> with SingleTickerPr
     setState(() {
       _isRecording = false;
       _recordingDuration = 0;
+      _dragOffset = 0.0;
+      _isCancelled = false;
     });
+    
+    _micScaleController.reverse();
 
     if (cancel) {
       if (path != null) {
@@ -160,6 +188,22 @@ class _ChatComposerState extends ConsumerState<ChatComposer> with SingleTickerPr
     } else if (path != null) {
       final formattedDuration = '${(durationSeconds ~/ 60)}:${(durationSeconds % 60).toString().padLeft(2, '0')}';
       ref.read(communityProvider.notifier).sendAudioMessage(path, formattedDuration);
+    }
+  }
+
+  Future<void> _openCamera() async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 70,
+      );
+      
+      if (pickedFile != null) {
+        ref.read(communityProvider.notifier).sendImageMessage(pickedFile.path);
+      }
+    } catch (e) {
+      debugPrint('Error opening camera: $e');
     }
   }
 
@@ -301,121 +345,211 @@ class _ChatComposerState extends ConsumerState<ChatComposer> with SingleTickerPr
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF0F2F5),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: _isRecording
-                        ? Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      // Normal text input field
+                      AnimatedOpacity(
+                        opacity: _isRecording ? 0.0 : 1.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: IgnorePointer(
+                          ignoring: _isRecording,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0F2F5),
+                              borderRadius: BorderRadius.circular(24),
+                            ),
                             child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 IconButton(
-                                  icon: const Icon(Icons.delete_outline_rounded, color: AsmitaPalette.actionRed),
-                                  onPressed: () => _stopRecording(cancel: true),
+                                  icon: Icon(
+                                    _emojiShowing 
+                                        ? Icons.keyboard_rounded 
+                                        : Icons.emoji_emotions_outlined,
+                                  ),
+                                  color: AsmitaPalette.textLight,
+                                  onPressed: () {
+                                    setState(() {
+                                      _emojiShowing = !_emojiShowing;
+                                    });
+                                    if (_emojiShowing) {
+                                      _focusNode.unfocus();
+                                      _emojiAnimController.forward();
+                                    } else {
+                                      _focusNode.requestFocus();
+                                      _emojiAnimController.reverse();
+                                    }
+                                  },
                                 ),
-                                const Spacer(),
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: AsmitaPalette.actionRed,
-                                    shape: BoxShape.circle,
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 12, bottom: 14),
+                                    child: TextField(
+                                      controller: _controller,
+                                      focusNode: _focusNode,
+                                      minLines: 1,
+                                      maxLines: 6,
+                                      style: Theme.of(context).textTheme.bodyLarge
+                                          ?.copyWith(color: AsmitaPalette.textDark),
+                                      decoration: const InputDecoration(
+                                        hintText: 'Message...',
+                                        hintStyle: TextStyle(
+                                          color: AsmitaPalette.textLight,
+                                        ),
+                                        border: InputBorder.none,
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.attach_file_rounded),
+                                  color: AsmitaPalette.textLight,
+                                  onPressed: _showAttachmentMenu,
+                                ),
+                                if (!_isTyping)
+                                  IconButton(
+                                    icon: const Icon(Icons.camera_alt_outlined),
+                                    color: AsmitaPalette.textLight,
+                                    onPressed: _openCamera,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      
+                      // Recording active bar
+                      if (_isRecording)
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0F2F5),
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Row(
+                              children: [
+                                FadeTransition(
+                                  opacity: _blinkController,
+                                  child: Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: const BoxDecoration(
+                                      color: AsmitaPalette.actionRed,
+                                      shape: BoxShape.circle,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   '${(_recordingDuration ~/ 60)}:${(_recordingDuration % 60).toString().padLeft(2, '0')}',
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: AsmitaPalette.textDark,
+                                  style: const TextStyle(
+                                    fontSize: 15,
                                     fontWeight: FontWeight.w600,
+                                    color: AsmitaPalette.textDark,
                                   ),
                                 ),
                                 const Spacer(),
-                                const SizedBox(width: 48),
-                              ],
-                            ),
-                          )
-                        : Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              IconButton(
-                                icon: Icon(
-                                  _emojiShowing 
-                                      ? Icons.keyboard_rounded 
-                                      : Icons.emoji_emotions_outlined,
-                                ),
-                                color: AsmitaPalette.textLight,
-                                onPressed: () {
-                                  setState(() {
-                                    _emojiShowing = !_emojiShowing;
-                                  });
-                                  if (_emojiShowing) {
-                                    _focusNode.unfocus();
-                                    _emojiAnimController.forward();
-                                  } else {
-                                    _focusNode.requestFocus();
-                                    _emojiAnimController.reverse();
-                                  }
-                                },
-                              ),
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 12, bottom: 14),
-                                  child: TextField(
-                                    controller: _controller,
-                                    focusNode: _focusNode,
-                                    minLines: 1,
-                                    maxLines: 6,
-                                    style: Theme.of(context).textTheme.bodyLarge
-                                        ?.copyWith(color: AsmitaPalette.textDark),
-                                    decoration: const InputDecoration(
-                                      hintText: 'Message...',
-                                      hintStyle: TextStyle(
+                                AnimatedOpacity(
+                                  opacity: (_dragOffset < -50) ? 0.0 : 1.0,
+                                  duration: const Duration(milliseconds: 200),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.chevron_left_rounded, 
                                         color: AsmitaPalette.textLight,
+                                        size: 20,
                                       ),
-                                      border: InputBorder.none,
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.zero,
-                                    ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Slide to cancel',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: AsmitaPalette.textLight.withValues(alpha: 0.8),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.attach_file_rounded),
-                                color: AsmitaPalette.textLight,
-                                onPressed: _showAttachmentMenu,
-                              ),
-                              if (!_isTyping)
-                                IconButton(
-                                  icon: const Icon(Icons.camera_alt_outlined),
-                                  color: AsmitaPalette.textLight,
-                                  onPressed: () {},
-                                ),
-                            ],
+                                // padding on right so the mic icon has space to move
+                                const SizedBox(width: 40), 
+                              ],
+                            ),
                           ),
+                        ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: _isTyping 
-                      ? _handleSend 
-                      : (_isRecording ? () => _stopRecording(cancel: false) : _startRecording),
-                  child: Container(
-                    height: 48,
-                    width: 48,
-                    decoration: const BoxDecoration(
-                      color: AsmitaPalette.deepNavy,
-                      shape: BoxShape.circle,
+                
+                // Mic / Send button
+                if (_isTyping)
+                  GestureDetector(
+                    onTap: _handleSend,
+                    child: Container(
+                      height: 48,
+                      width: 48,
+                      decoration: const BoxDecoration(
+                        color: AsmitaPalette.deepNavy,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.send_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      ),
                     ),
-                    child: Icon(
-                      _isTyping || _isRecording ? Icons.send_rounded : Icons.mic_rounded,
-                      color: Colors.white,
-                      size: 24,
+                  )
+                else
+                  GestureDetector(
+                    onLongPressStart: (details) {
+                      _startRecording();
+                    },
+                    onLongPressMoveUpdate: (details) {
+                      if (!_isRecording) return;
+                      // Track left drag
+                      if (details.localOffsetFromOrigin.dx < 0) {
+                        setState(() {
+                          _dragOffset = details.localOffsetFromOrigin.dx;
+                        });
+                        
+                        // Cancel threshold: -100 pixels
+                        if (_dragOffset < -100 && !_isCancelled) {
+                          _isCancelled = true;
+                          _stopRecording(cancel: true);
+                        }
+                      }
+                    },
+                    onLongPressEnd: (details) {
+                      if (_isRecording && !_isCancelled) {
+                        _stopRecording(cancel: false);
+                      }
+                    },
+                    child: Transform.translate(
+                      offset: Offset(_dragOffset, 0),
+                      child: ScaleTransition(
+                        scale: _micScaleController,
+                        child: Container(
+                          height: 48,
+                          width: 48,
+                          decoration: const BoxDecoration(
+                            color: AsmitaPalette.deepNavy,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.mic_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),

@@ -1,14 +1,15 @@
+
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
-import 'package:asmita_society/features/community/bloc/community_bloc.dart';
-import 'package:asmita_society/features/community/bloc/community_event.dart';
+import 'package:asmita_society/features/community/presentation/providers/community_provider.dart';
 
-class PollMessageBubble extends StatelessWidget {
+class PollMessageBubble extends ConsumerWidget {
   final String messageId;
   final String question;
   final Map<String, int> options;
+  final List<String> votedOptions;
   final bool isMe;
 
   const PollMessageBubble({
@@ -16,11 +17,12 @@ class PollMessageBubble extends StatelessWidget {
     required this.messageId,
     required this.question,
     required this.options,
+    this.votedOptions = const [],
     required this.isMe,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
 
     final totalVotes = options.values.fold(0, (sum, item) => sum + item);
@@ -59,6 +61,7 @@ class PollMessageBubble extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           ...options.entries.map((entry) {
+            final isVoted = votedOptions.contains(entry.key);
             final percentage = totalVotes == 0
                 ? 0.0
                 : (entry.value / totalVotes);
@@ -66,9 +69,7 @@ class PollMessageBubble extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: InkWell(
                 onTap: () {
-                  context.read<CommunityBloc>().add(
-                    VoteOnPollMessage(messageId: messageId, option: entry.key),
-                  );
+                  ref.read(communityProvider.notifier).voteOnPoll(messageId, entry.key);
                   AsmitaToast.show(
                     context,
                     message: 'Vote casted for "${entry.key}"!',
@@ -84,9 +85,8 @@ class PollMessageBubble extends StatelessWidget {
                           color: isMe ? Colors.white : AsmitaPalette.systemBG,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: isMe
-                                ? Colors.transparent
-                                : AsmitaPalette.borderGrey,
+                            color: isVoted ? AsmitaPalette.deepNavy : (isMe ? Colors.transparent : AsmitaPalette.borderGrey),
+                            width: isVoted ? 1.5 : 1.0,
                           ),
                         ),
                       ),
@@ -97,7 +97,7 @@ class PollMessageBubble extends StatelessWidget {
                         widthFactor: percentage,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: AsmitaPalette.deepNavy.withValues(alpha: 0.15),
+                            color: isVoted ? AsmitaPalette.deepNavy.withValues(alpha: 0.3) : AsmitaPalette.deepNavy.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),

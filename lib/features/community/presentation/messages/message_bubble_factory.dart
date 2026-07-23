@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/features/community/data/models/chat_message_model.dart';
 import '../widgets/swipe_to_reply.dart';
 import 'text_message_bubble.dart';
 import 'image_message_bubble.dart';
@@ -7,6 +8,7 @@ import 'audio_message_bubble.dart';
 import 'document_message_bubble.dart';
 import 'poll_message_bubble.dart';
 import 'video_message_bubble.dart';
+import 'contact_message_bubble.dart';
 
 class MessageBubbleFactory extends StatelessWidget {
   final String messageId;
@@ -19,6 +21,7 @@ class MessageBubbleFactory extends StatelessWidget {
   final String? replyToContent;
   final String? replyToSenderName;
   final Map<String, int>? pollOptions;
+  final List<String> votedOptions;
   final bool isManagement;
   final VoidCallback? onSwipeReply;
   final bool isSelected;
@@ -42,6 +45,7 @@ class MessageBubbleFactory extends StatelessWidget {
     this.replyToContent,
     this.replyToSenderName,
     this.pollOptions,
+    this.votedOptions = const [],
     this.isManagement = false,
     this.onSwipeReply,
     this.isSelected = false,
@@ -192,11 +196,26 @@ class MessageBubbleFactory extends StatelessWidget {
                             VideoMessageBubble(content: content, isMe: isMe),
                           if (type == 'document')
                             DocumentMessageBubble(content: content, isMe: isMe),
+                          if (type == 'contact')
+                            ContactMessageBubble(
+                              message: ChatMessageModel.createMessage(
+                                id: messageId,
+                                sender: sender,
+                                isMe: isMe,
+                                time: time,
+                                type: type,
+                                content: content,
+                              ),
+                              onReply: () => onSwipeReply?.call(),
+                              onStar: () {},
+                              onPin: () {},
+                            ),
                           if (type == 'poll' && pollOptions != null)
                             PollMessageBubble(
                               messageId: messageId,
                               question: content,
                               options: pollOptions!,
+                              votedOptions: votedOptions,
                               isMe: isMe,
                             ),
                           const SizedBox(height: 6),
@@ -214,11 +233,21 @@ class MessageBubbleFactory extends StatelessWidget {
                               ),
                               if (isMe) ...[
                                 const SizedBox(width: 4),
-                                const Icon(
-                                  Icons.done_all_rounded,
-                                  color: AsmitaPalette.deepNavy,
-                                  size: 12,
-                                ),
+                                if (messageId.startsWith('temp_'))
+                                  const SizedBox(
+                                    height: 12,
+                                    width: 12,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AsmitaPalette.deepNavy,
+                                    ),
+                                  )
+                                else
+                                  const Icon(
+                                    Icons.done_all_rounded,
+                                    color: AsmitaPalette.deepNavy,
+                                    size: 12,
+                                  ),
                               ],
                             ],
                           ),

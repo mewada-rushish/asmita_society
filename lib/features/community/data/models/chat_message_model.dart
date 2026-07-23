@@ -17,6 +17,7 @@ class ChatMessageModel {
   final String? replyToContent;
   final Map<String, int>? pollOptions;
   final bool allowMultipleAnswers;
+  final List<String> votedOptions;
   
   final bool isStarred;
   final bool isPinned;
@@ -34,6 +35,7 @@ class ChatMessageModel {
     this.replyToContent,
     this.pollOptions,
     this.allowMultipleAnswers = false,
+    this.votedOptions = const [],
     this.isStarred = false,
     this.isPinned = false,
     this.reactions,
@@ -51,6 +53,7 @@ class ChatMessageModel {
     String? replyToContent,
     Map<String, int>? pollOptions,
     bool? allowMultipleAnswers,
+    List<String>? votedOptions,
     bool? isStarred,
     bool? isPinned,
     Map<String, List<String>>? reactions,
@@ -67,6 +70,7 @@ class ChatMessageModel {
       replyToContent: replyToContent ?? this.replyToContent,
       pollOptions: pollOptions ?? this.pollOptions,
       allowMultipleAnswers: allowMultipleAnswers ?? this.allowMultipleAnswers,
+      votedOptions: votedOptions ?? this.votedOptions,
       isStarred: isStarred ?? this.isStarred,
       isPinned: isPinned ?? this.isPinned,
       reactions: reactions ?? this.reactions,
@@ -116,6 +120,7 @@ class ChatMessageModel {
       replyToContent: parsedReplyToContent,
       pollOptions: pollOpts,
       allowMultipleAnswers: allowMulti,
+      votedOptions: const [],
       isStarred: false,
       isPinned: false,
       reactions: null,
@@ -148,6 +153,7 @@ class ChatMessageModel {
       replyToContent: replyToContent,
       pollOptions: pollOptions,
       allowMultipleAnswers: allowMultipleAnswers,
+      votedOptions: const [],
       isStarred: false,
       isPinned: false,
       reactions: null,

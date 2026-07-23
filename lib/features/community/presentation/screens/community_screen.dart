@@ -91,7 +91,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
   PreferredSizeWidget _buildAppBar(CommunityState state) {
     return const PreferredSize(
       preferredSize: Size.fromHeight(70),
-      child: AsmitaPrimaryHeader(title: 'Community Chat'),
+      child: AsmitaPrimaryHeader(),
     );
   }
 

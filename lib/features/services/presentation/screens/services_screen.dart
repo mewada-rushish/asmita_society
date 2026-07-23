@@ -21,8 +21,6 @@ class ServicesScreen extends StatelessWidget {
       body: Column(
         children: [
           AsmitaPrimaryHeader(
-            title: 'Society Services',
-            subtitle: 'Amenities, payments & more',
             userInitials: 'RM',
             onSearchPressed: onNavigateToSearch,
             onChatPressed: onNavigateToCommunity,
