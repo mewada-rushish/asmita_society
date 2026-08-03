@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'asmita_facility_booking_wizard.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
+import '../../bloc/amenities_bloc.dart';
+import '../../bloc/amenities_state.dart';
+import '../../data/models/amenity_model.dart';
 
 class FacilityBookings extends StatelessWidget {
   const FacilityBookings({super.key});
@@ -11,102 +15,143 @@ class FacilityBookings extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    void onFacilityTap(String title, String availability) {
-      if (availability == 'Available') {
+    void onFacilityTap(AmenityModel facility, bool isAvailable) {
+      if (isAvailable) {
         AsmitaDialog.show(
           context: context,
-          title: 'Book a Facility',
-          content: AsmitaFacilityBookingWizard(initialFacility: title),
+          title: '${facility.name} Booking',
+          content: AsmitaFacilityBookingWizard(initialAmenity: facility),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('$title is currently $availability.'),
+            content: Text('${facility.name} is currently unavailable.'),
             behavior: SnackBarBehavior.floating,
           ),
         );
       }
     }
+    
+    IconData getIconForFacility(String name) {
+      final lower = name.toLowerCase();
+      if (lower.contains('pool')) return Icons.pool_rounded;
+      if (lower.contains('gym')) return Icons.fitness_center_rounded;
+      if (lower.contains('yoga')) return Icons.self_improvement_rounded;
+      if (lower.contains('banquet') || lower.contains('hall')) return Icons.celebration_rounded;
+      return Icons.business_center_rounded;
+    }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Facility Bookings',
-          style: textTheme.titleLarge?.copyWith(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 12),
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.4,
+    return BlocBuilder<AmenitiesBloc, AmenitiesState>(
+      builder: (context, state) {
+        if (state.status == AmenitiesStatus.loading && state.amenities.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        final amenities = state.amenities;
+        final myBookings = state.myBookings;
+
+        // Show max 4 on the main grid
+        final displayAmenities = amenities.take(4).toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _ServiceCard(
-              icon: Icons.celebration_rounded,
-              title: 'Banquet Hall',
-              availability: 'Available',
-              onTap: () => onFacilityTap('Banquet Hall', 'Available'),
-            ),
-            _ServiceCard(
-              icon: Icons.fitness_center_rounded, 
-              title: 'Community Gym', 
-              availability: 'Slots Full',
-              onTap: () => onFacilityTap('Community Gym', 'Slots Full'),
-            ),
-            _ServiceCard(
-              icon: Icons.pool_rounded, 
-              title: 'Swimming Pool', 
-              availability: 'Maintenance',
-              onTap: () => onFacilityTap('Swimming Pool', 'Maintenance'),
-            ),
-             _ServiceCard(
-               icon: Icons.self_improvement_rounded,
-               title: 'Yoga Studio', 
-               availability: 'Available',
-               onTap: () => onFacilityTap('Yoga Studio', 'Available'),
-             ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: InkWell(
-            onTap: () => _showAllFacilitiesSheet(context),
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'View All Facilities',
-                    style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.actionRed, fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                  const Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.actionRed, size: 18),
-                ],
+            Text(
+              'Facility Bookings',
+              style: textTheme.titleLarge?.copyWith(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
               ),
             ),
-          ),
-        ),
-      ],
+            const SizedBox(height: 12),
+            if (displayAmenities.isEmpty && state.status != AmenitiesStatus.loading)
+              const Text('No facilities available at the moment.'),
+            if (displayAmenities.isNotEmpty)
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.4,
+                ),
+                itemCount: displayAmenities.length,
+                itemBuilder: (context, index) {
+                  final fac = displayAmenities[index];
+                  final isAvailable = fac.capacity != 0;
+                  return _ServiceCard(
+                    icon: getIconForFacility(fac.name),
+                    title: fac.name,
+                    availability: isAvailable ? 'Available' : 'Unavailable',
+                    onTap: () => onFacilityTap(fac, isAvailable),
+                  );
+                },
+              ),
+            if (amenities.length > 4) ...[
+              const SizedBox(height: 16),
+              Center(
+                child: InkWell(
+                  onTap: () => _showAllFacilitiesSheet(context, amenities),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'View All Facilities',
+                          style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.actionRed, fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                        const Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.actionRed, size: 18),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            if (myBookings.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              Text(
+                'My Bookings',
+                style: textTheme.titleLarge?.copyWith(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: myBookings.length,
+                itemBuilder: (context, index) {
+                  final booking = myBookings[index];
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      title: Text(booking.amenity?.name ?? 'Facility'),
+                      subtitle: Text('${booking.bookingDate != null ? booking.bookingDate!.toLocal().toString().split(' ')[0] : ''} - Status: ${booking.bookingStatus}'),
+                      trailing: const Icon(Icons.chevron_right),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 
-  void _showAllFacilitiesSheet(BuildContext context) {
-    final allFacilities = [
-      // {'title': 'Clubhouse', 'icon': Icons.sports_tennis_rounded, 'availability': 'Available'},
-      {'title': 'Banquet Hall', 'icon': Icons.celebration_rounded, 'availability': 'Available'},
-      {'title': 'Community Gym', 'icon': Icons.fitness_center_rounded, 'availability': 'Slots Full'},
-      {'title': 'Swimming Pool', 'icon': Icons.pool_rounded, 'availability': 'Maintenance'},
-      {'title': 'Yoga Studio', 'icon': Icons.self_improvement_rounded, 'availability': 'Available'},
-      // {'title': 'Tennis Court', 'icon': Icons.sports_tennis_rounded, 'availability': 'Slots Full'},
-      // {'title': 'Badminton Court', 'icon': Icons.sports_tennis_rounded, 'availability': 'Available'},
-    ];
+  void _showAllFacilitiesSheet(BuildContext context, List<AmenityModel> allFacilities) {
+    IconData getIconForFacility(String name) {
+      final lower = name.toLowerCase();
+      if (lower.contains('pool')) return Icons.pool_rounded;
+      if (lower.contains('gym')) return Icons.fitness_center_rounded;
+      if (lower.contains('yoga')) return Icons.self_improvement_rounded;
+      if (lower.contains('banquet') || lower.contains('hall')) return Icons.celebration_rounded;
+      return Icons.business_center_rounded;
+    }
 
     showAsmitaBottomSheet(
       context: context,
@@ -124,16 +169,17 @@ class FacilityBookings extends StatelessWidget {
         itemCount: allFacilities.length,
         itemBuilder: (context, index) {
           final fac = allFacilities[index];
+          final isAvailable = fac.capacity != 0;
           return _ServiceCard(
-            icon: fac['icon'] as IconData,
-            title: fac['title'] as String,
-            availability: fac['availability'] as String,
+            icon: getIconForFacility(fac.name),
+            title: fac.name,
+            availability: isAvailable ? 'Available' : 'Unavailable',
             onTap: () {
-              if (fac['availability'] == 'Available') {
+              if (isAvailable) {
                 Navigator.pop(context); // Close the bottom sheet first
-                AsmitaDialog.show(context: context, title: 'Book a Facility', content: AsmitaFacilityBookingWizard(initialFacility: fac['title'] as String));
+                AsmitaDialog.show(context: context, title: '${fac.name} Booking', content: AsmitaFacilityBookingWizard(initialAmenity: fac));
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${fac['title']} is currently ${fac['availability']}.'), behavior: SnackBarBehavior.floating));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${fac.name} is currently unavailable.'), behavior: SnackBarBehavior.floating));
               }
             },
           );
