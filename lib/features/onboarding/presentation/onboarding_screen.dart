@@ -15,7 +15,6 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   int _currentPage = 0;
 
   final List<Map<String, dynamic>> _slides = [
@@ -38,10 +37,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   /// Persists onboarding completion flag and transitions to the authenticated routing tree
   Future<void> _completeOnboarding() async {
-    await _secureStorage.write(key: 'has_seen_onboarding', value: 'true');
-    if (!mounted) return;
+    // Write to the exact same secure storage instance configured in AuthBloc
+    // which uses encryptedSharedPreferences on Android.
+    await context.read<AuthBloc>().secureStorage.write(key: 'has_seen_onboarding', value: 'true');
     
-    context.read<AuthBloc>().add(AuthCheckRequested());
+    if (mounted) {
+      context.read<AuthBloc>().add(AuthCheckRequested());
+    }
   }
 
   void _nextPage() {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/widgets/asmita_bottom_nav_bar.dart'; 
+import '../../../core/widgets/asmita_animated_indexed_stack.dart';
 import '../../menu/presentation/screens/menu_screen.dart'; 
 import '../../community/presentation/screens/community_screen.dart';
 import '../../visitor_management/presentation/screens/visitor_history_screen.dart';
@@ -21,13 +22,40 @@ class MainDashboardScreen extends StatefulWidget {
 
 class _MainDashboardScreenState extends State<MainDashboardScreen> {
   int _currentIndex = 0;
-  int _previousIndex = 0; // To track screen before search
 
   void _navigateToSearch() {
-    setState(() {
-      _previousIndex = _currentIndex;
-      _currentIndex = 6; // Index of Search Screen
-    });
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AsmitaSearchScreen(
+          onBack: () => Navigator.pop(context),
+          onQuickRedirect: (targetIndex) {
+            Navigator.pop(context);
+            setState(() {
+              _currentIndex = targetIndex;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  void _navigateToDailyHelp() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DailyHelpScreen(
+          onNavigateToSearch: () {
+            Navigator.pop(context);
+            _navigateToSearch();
+          },
+          onNavigateToCommunity: () {
+            Navigator.pop(context);
+            setState(() => _currentIndex = 2);
+          },
+        ),
+      ),
+    );
   }
 
   // Dynamically builds the view list cleanly to keep callback bindings alive on state mutations
@@ -44,18 +72,6 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       ),
       const VisitorHistoryScreen(),               // Index 3: Gate Records (History)
       MenuScreen(userRole: widget.userRole),      // Index 4: Profile Settings
-      DailyHelpScreen( // Index 5: Daily Help
-        onNavigateToSearch: _navigateToSearch,
-        onNavigateToCommunity: () => setState(() => _currentIndex = 2),
-      ),
-      AsmitaSearchScreen( // Index 6: Search
-        onBack: () => setState(() => _currentIndex = _previousIndex), // Steps back to the previous view
-        onQuickRedirect: (targetIndex) {
-          setState(() {
-            _currentIndex = targetIndex; // Natively jumps directly to the screen within the global bar structure
-          });
-        },
-      ),
     ];
   }
 
@@ -84,7 +100,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
               _currentIndex = 1; // FIXED: Natively switches view canvas to Services (Index 1)
             });
           },
-          onNavigateToDailyHelp: () => setState(() => _currentIndex = 5),
+          onNavigateToDailyHelp: _navigateToDailyHelp,
           onNavigateToSearch: _navigateToSearch,
         );
       case 'tenant':
@@ -105,7 +121,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
             });
           },
           onNavigateToServices: () => setState(() => _currentIndex = 1),
-          onNavigateToDailyHelp: () => setState(() => _currentIndex = 5),
+          onNavigateToDailyHelp: _navigateToDailyHelp,
           onNavigateToSearch: _navigateToSearch,
         );
       default:
@@ -117,7 +133,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: IndexedStack(
+      body: AsmitaAnimatedIndexedStack(
         index: _currentIndex,
         children: _buildScreens(),
       ),

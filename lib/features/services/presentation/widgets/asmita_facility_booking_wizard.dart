@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
+import '../../data/models/amenity_model.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../bloc/amenities_bloc.dart';
 
 enum FieldType { text, number, dropdown, checkbox, checkboxGroup, repeater }
 
@@ -17,9 +21,9 @@ class FormFieldConfig {
 }
 
 class AsmitaFacilityBookingWizard extends StatefulWidget {
-  final String? initialFacility;
+  final AmenityModel? initialAmenity;
 
-  const AsmitaFacilityBookingWizard({super.key, this.initialFacility});
+  const AsmitaFacilityBookingWizard({super.key, this.initialAmenity});
 
   @override
   State<AsmitaFacilityBookingWizard> createState() => _AsmitaFacilityBookingWizardState();
@@ -32,19 +36,26 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
   
   final ScrollController _scrollController = ScrollController();
   
-  int _currentTab = 0;
-  final _tab1Key = GlobalKey<FormState>();
-  final _tab2Key = GlobalKey<FormState>();
-  final _tab3Key = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
 
-  // Tab 1 & 2 Workflow States
-  String? _eventType;
-  String? _customEventType;
-  final List<String> _functionNames = [''];
-  int _internalQty = 0; // Represents Family Members (Event) or Society Members (Activity)
+  String _bookingFor = 'Myself Only'; // 'Myself Only', 'Family', 'Guests'
+  final List<Map<String, dynamic>> _mockFamilyMembers = [
+    {'name': 'Ramesh Kumar', 'relation': 'Spouse', 'selected': false},
+    {'name': 'Suresh Kumar', 'relation': 'Son', 'selected': false},
+    {'name': 'Anita Kumar', 'relation': 'Daughter', 'selected': false},
+  ];
+
+  // For Bookings (e.g. Banquet Hall)
+  String? _bookingPurpose;
+  String? _customBookingPurpose;
+  int _expectedGuests = 0;
+
+  // For Events
+  int _internalQty = 1; // Default 1 for Myself
   int _outsideQty = 0;
-  final List<String> _societyMemberNames = [''];
-  final List<String> _outsideMemberNames = [''];
+  
+  // For Guests
+  final List<Map<String, String>> _guestDetails = [{'name': '', 'phone': ''}];
 
   // Tab 3 Common States
   DateTime? _bookingDate;
@@ -54,43 +65,29 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
   
   final Map<String, dynamic> _dynamicFormData = {};
 
-  // Activity-Specific Dynamics (Excluding Event ones which are hardcoded per requirements)
-  Map<String, List<FormFieldConfig>> get _activitySpecificFields => {
-    'Swimming Pool': [
-      FormFieldConfig(key: 'adultsCount', label: 'Adults Count', type: FieldType.number),
-      FormFieldConfig(key: 'childrenCount', label: 'Children Count', type: FieldType.number),
-      FormFieldConfig(key: 'instructor', label: 'Instructor Required', type: FieldType.checkbox),
-    ],
-    // 'Community Gym': [
-    //   FormFieldConfig(key: 'fitnessGoal', label: 'Fitness Goal', type: FieldType.text),
-    //   FormFieldConfig(key: 'trainer', label: 'Trainer Required', type: FieldType.checkbox),
-    //   FormFieldConfig(key: 'emergencyContact', label: 'Emergency Contact Number', type: FieldType.number),
-    // ],
-    'Yoga Studio': [
-      FormFieldConfig(key: 'sessionType', label: 'Session Type', type: FieldType.dropdown, options: ['Group', 'Private']),
-      FormFieldConfig(key: 'experience', label: 'Experience Level', type: FieldType.dropdown, options: ['Beginner', 'Intermediate', 'Advanced']),
-      FormFieldConfig(key: 'instructor', label: 'Instructor Required', type: FieldType.checkbox),
-    ]
-  };
+  // Removed unused _activitySpecificFields (now dynamically loaded from backend)
 
   final List<Map<String, dynamic>> _facilitiesData = [
-    {'id': 'banquet_hall', 'label': 'Banquet Hall', 'type': 'event', 'icon': Icons.celebration_rounded, 'available': true, 'maxFamily': 500, 'maxOutside': 500, 'maxTotal': 1000, 'timeSlots': ['10:00 AM - 04:00 PM', '06:00 PM - 12:00 AM']},
+    {'id': 'banquet_hall', 'label': 'Banquet Hall', 'type': 'event', 'icon': Icons.celebration_rounded, 'available': true, 'maxFamily': 500, 'maxOutside': 500, 'maxTotal': 1000, 'timeSlots': ['10:00 AM - 04:00 PM', '06:00 PM - 12:00 AM'], 'bookingOptions': ['Birthday Party', 'Wedding', 'Reception', 'Get Together']},
     {'id': 'pool', 'label': 'Swimming Pool', 'type': 'activity', 'icon': Icons.pool_rounded, 'available': false, 'maxFamily': 5, 'maxOutside': 2, 'maxTotal': 7, 'timeSlots': ['06:00 AM - 07:00 AM', '07:00 AM - 08:00 AM']},
     {'id': 'gym', 'label': 'Community Gym', 'type': 'activity', 'icon': Icons.fitness_center_rounded, 'available': true, 'maxFamily': 2, 'maxOutside': 10, 'maxTotal': 2, 'timeSlots': ['06:00 AM - 08:00 AM', '06:00 PM - 08:00 PM']},
     {'id': 'yoga_studio', 'label': 'Yoga Studio', 'type': 'activity', 'icon': Icons.self_improvement_rounded, 'available': true, 'maxFamily': 15, 'maxOutside': 5, 'maxTotal': 20, 'timeSlots': ['06:00 AM - 07:00 AM', '07:00 AM - 08:00 AM']},
   ];
-
-  bool get _isEventFlow {
-    if (_selectedFacility.isEmpty) return false;
-    final facility = _facilitiesData.firstWhere((f) => f['label'] == _selectedFacility);
-    return facility['type'] == 'event';
+  bool get _isBookingType {
+    if (widget.initialAmenity != null) {
+      final type = widget.initialAmenity!.type.toLowerCase();
+      final name = widget.initialAmenity!.name.toLowerCase();
+      return type == 'booking' || type == 'event' || name.contains('hall') || name.contains('banquet') || name.contains('court');
+    }
+    final facility = _facilitiesData.firstWhere((f) => f['label'] == _selectedFacility, orElse: () => _facilitiesData.first);
+    return facility['type'] == 'booking' || facility['type'] == 'event';
   }
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialFacility != null) {
-      _selectedFacility = widget.initialFacility!;
+    if (widget.initialAmenity != null) {
+      _selectedFacility = widget.initialAmenity!.name;
       _currentStep = 1; // Skip selection if opened from a specific card
     } else {
       _currentStep = 0;
@@ -103,19 +100,30 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
     super.dispose();
   }
 
-  void _nextStep() => setState(() => _currentStep++);
-  
+  void _nextStep() {
+    if (_currentStep == 0 && !_validateForm()) return;
+    
+    if (_currentStep == 0) {
+       _submitForm();
+       return;
+    }
+
+    if (_currentStep < 2) setState(() => _currentStep++);
+  }
+
   void _prevStep() {
     if (_currentStep > 0) {
-      if (_currentStep == 1 && widget.initialFacility != null) {
-        if (mounted && !_isClosing) {
-          _isClosing = true;
-          Navigator.pop(context); // Close dialog if back is pressed on the initial injected step
-        }
-      } else {
-        setState(() => _currentStep--);
-      }
+      setState(() => _currentStep--);
+    } else {
+      _closeWizard();
     }
+  }
+
+  void _closeWizard() {
+    setState(() => _isClosing = true);
+    Future.delayed(const Duration(milliseconds: 250), () {
+      if (mounted && Navigator.canPop(context)) Navigator.pop(context);
+    });
   }
 
   String _formatDate(DateTime date) {
@@ -123,15 +131,12 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
     return '${months[date.month - 1]} ${date.day.toString().padLeft(2, '0')}, ${date.year}';
   }
 
-  bool _validateCurrentTab() {
-    if (_currentTab == 0) return _tab1Key.currentState?.validate() ?? true;
-    if (_currentTab == 1) return _tab2Key.currentState?.validate() ?? true;
-    if (_currentTab == 2) return _tab3Key.currentState?.validate() ?? true;
-    return true;
+  bool _validateForm() {
+    return _formKey.currentState?.validate() ?? true;
   }
 
   void _submitForm() {
-    if (!_validateCurrentTab()) return;
+    if (!_validateForm()) return;
     if (!_termsAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please accept the Terms & Conditions.'), behavior: SnackBarBehavior.floating));
       return;
@@ -142,35 +147,27 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
       return;
     }
 
-    _tab1Key.currentState?.save();
-    _tab2Key.currentState?.save();
-    _tab3Key.currentState?.save();
-
-    _nextStep();
-  }
-
-  void _confirmBooking() {
     final payload = {
       'facility': _selectedFacility,
-      'flowType': _isEventFlow ? 'Event' : 'Activity',
+      'bookingType': _isBookingType ? 'Booking' : 'Activity',
       'bookingDate': _bookingDate?.toIso8601String(),
       'timeSlot': _selectedTimeSlot,
       'commonDetails': {
         'specialNotes': _specialNotes,
         'termsAccepted': _termsAccepted,
       },
-      'memberDetails': {
+      'memberDetails': _isBookingType ? {
+        'purpose': _bookingPurpose == 'Other' ? _customBookingPurpose : _bookingPurpose,
+        'expectedGuests': _expectedGuests,
+      } : {
+        'bookingFor': _bookingFor,
         'internalQty': _internalQty,
         'outsideQty': _outsideQty,
         'totalParticipants': _internalQty + _outsideQty,
-        if (!_isEventFlow) 'internalNames': _societyMemberNames.where((n) => n.trim().isNotEmpty).toList(),
-        if (!_isEventFlow) 'outsideNames': _outsideMemberNames.where((n) => n.trim().isNotEmpty).toList(),
+        'familyMembers': _bookingFor == 'With Family' ? _mockFamilyMembers.where((m) => m['selected'] == true).map((m) => m['name']).toList() : [],
+        'guests': _bookingFor == 'With Guests' ? _guestDetails.where((g) => g['name']?.isNotEmpty == true || g['phone']?.isNotEmpty == true).toList() : [],
       },
-      if (_isEventFlow) 'eventDetails': {
-        'eventType': _eventType == 'Other' ? _customEventType : _eventType,
-        'functionNames': _functionNames.where((n) => n.trim().isNotEmpty).toList(),
-      },
-      if (!_isEventFlow) 'activityDetails': _dynamicFormData,
+      'customDetails': _dynamicFormData,
     };
 
     try {
@@ -186,36 +183,22 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).copyWith(
-        scrollbarTheme: ScrollbarThemeData(
-          thumbColor: WidgetStateProperty.all(Colors.grey.withValues(alpha: 0.2)),
-          thickness: WidgetStateProperty.all(3.0),
-          radius: const Radius.circular(10),
-        ),
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.65,
       ),
-      child: Scrollbar(
+      child: SingleChildScrollView(
         controller: _scrollController,
-        thumbVisibility: true,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.65,
-          ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(),
-            child: AnimatedSize(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOutCubic,
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: EdgeInsets.only(
-                  right: 4.0,
-                  bottom: MediaQuery.viewInsetsOf(context).bottom > 0 ? 16.0 : 0.0,
-                ),
-                child: _buildCurrentStep(),
-              ),
+        physics: const BouncingScrollPhysics(),
+        child: AnimatedSize(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOutCubic,
+          alignment: Alignment.topCenter,
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.viewInsetsOf(context).bottom > 0 ? 16.0 : 0.0,
             ),
+            child: _buildCurrentStep(),
           ),
         ),
       ),
@@ -309,7 +292,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
     );
   }
 
-  Widget _buildTextField(String label, {bool isRequired = true, TextInputType keyboardType = TextInputType.text, String? initialValue, void Function(String?)? onSaved, void Function(String)? onChanged, String? Function(String?)? validator}) {
+  Widget _buildTextField(String label, {bool isRequired = true, TextInputType keyboardType = TextInputType.text, String? initialValue, void Function(String?)? onSaved, void Function(String)? onChanged, String? Function(String?)? validator, String? hintText}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -323,7 +306,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
             initialValue: initialValue,
             onChanged: onChanged,
             decoration: InputDecoration(
-              hintText: 'Enter $label',
+              hintText: hintText ?? 'Enter $label',
               hintStyle: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.textLight),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AsmitaPalette.borderGrey, width: 1.2)),
               enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AsmitaPalette.borderGrey, width: 1.2)),
@@ -345,75 +328,6 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
     );
   }
 
-  Widget _buildSimpleRepeaterField(String label, List<String> items, {bool isRequired = true, String? hintText}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6.0),
-            child: Text(label + (isRequired ? ' *' : ''), style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textDark)),
-          ),
-          ...items.asMap().entries.map((entry) {
-            int idx = entry.key;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      initialValue: entry.value,
-                      onChanged: (v) {
-                        setState(() => items[idx] = v);
-                      },
-                      validator: isRequired ? (v) {
-                        if (v == null || v.trim().isEmpty) return 'Field cannot be empty';
-                        return null;
-                      } : null,
-                      decoration: InputDecoration(
-                        hintText: hintText ?? '$label ${idx + 1}',
-                        hintStyle: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.textLight),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AsmitaPalette.borderGrey, width: 1.2)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AsmitaPalette.borderGrey, width: 1.2)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AsmitaPalette.deepNavy, width: 1.2)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                      style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.deepNavy, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                  if (items.length > 1)
-                    IconButton(
-                      icon: const Icon(Icons.remove_circle_outline, color: AsmitaPalette.actionRed),
-                      onPressed: () {
-                        setState(() {
-                          items.removeAt(idx);
-                        });
-                      },
-                    ),
-                ],
-              ),
-            );
-          }),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add Another'),
-              style: TextButton.styleFrom(foregroundColor: AsmitaPalette.deepNavy),
-              onPressed: () {
-                setState(() {
-                  items.add('');
-                });
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildCheckboxGroup(FormFieldConfig field) {
     if (!_dynamicFormData.containsKey(field.key)) {
@@ -461,8 +375,26 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
   }
 
   Widget _buildDynamicFields() {
-    final fields = _activitySpecificFields[_selectedFacility] ?? [];
-    if (fields.isEmpty) return const SizedBox.shrink();
+    if (widget.initialAmenity == null || widget.initialAmenity!.customFields.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final fields = widget.initialAmenity!.customFields.map((cf) {
+      FieldType type = FieldType.text;
+      if (cf['type'] == 'number') type = FieldType.number;
+      if (cf['type'] == 'dropdown') type = FieldType.dropdown;
+      if (cf['type'] == 'checkbox') type = FieldType.checkbox;
+      if (cf['type'] == 'checkboxGroup') type = FieldType.checkboxGroup;
+      if (cf['type'] == 'repeater') type = FieldType.repeater;
+
+      return FormFieldConfig(
+        key: cf['key'] ?? '',
+        label: cf['label'] ?? '',
+        type: type,
+        options: cf['options'] != null ? List<String>.from(cf['options']) : null,
+        isRequired: cf['isRequired'] ?? true,
+      );
+    }).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -521,256 +453,65 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
   // STEP 1: Booking Form Workflow
   // =========================================================================
   Widget _buildBookingForm() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: AsmitaPalette.deepNavy.withValues(alpha: 0.04),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AsmitaPalette.deepNavy.withValues(alpha: 0.15), width: 1.2),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              InkWell(
-                onTap: _prevStep,
-                borderRadius: BorderRadius.circular(20),
-                child: const Padding(
-                  padding: EdgeInsets.only(right: 12.0, top: 2.0, bottom: 2.0),
-                  child: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AsmitaPalette.deepNavy),
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  '$_selectedFacility Booking',
-                  style: const TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: AsmitaPalette.deepNavy.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              _buildCustomTab(0, _isEventFlow ? 'Family' : 'Members'),
-              _buildCustomTab(1, 'Guest'),
-              _buildCustomTab(2, 'Schedule'),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-        if (_currentTab == 0) _isEventFlow ? _buildEventTab1() : _buildActivityTab1(),
-        if (_currentTab == 1) _isEventFlow ? _buildEventTab2() : _buildActivityTab2(),
-        if (_currentTab == 2) _buildTab3(),
-      ],
-    );
-  }
-
-  Widget _buildCustomTab(int index, String label) {
-    final isSelected = _currentTab == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          if (index > _currentTab) {
-            if (_validateCurrentTab()) {
-              if (index == 2 && _currentTab == 0) {
-                if (_tab2Key.currentState?.validate() ?? true) {
-                  setState(() => _currentTab = index);
-                }
-              } else {
-                setState(() => _currentTab = index);
-              }
-            }
-          } else {
-            setState(() => _currentTab = index);
-          }
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected ? AsmitaPalette.actionRed : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: isSelected ? [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 2))] : [],
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 13,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_isBookingType) 
+            _buildHallBookingCard() 
+          else ...[
+            _buildScheduleCard(),
+            const SizedBox(height: 16),
+            _buildAttendeesCard(),
+          ],
+          const SizedBox(height: 16),
+          if (widget.initialAmenity != null && widget.initialAmenity!.customFields.isNotEmpty) ...[
+            _buildDynamicFieldsCard(),
+            const SizedBox(height: 16),
+          ],
+          _buildTextField('Special Requirements / Notes', isRequired: false, initialValue: _specialNotes, onSaved: (v) => _specialNotes = v),
+          const SizedBox(height: 16),
+          InkWell(
+            onTap: () => setState(() => _termsAccepted = !_termsAccepted),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(_termsAccepted ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded, color: AsmitaPalette.actionRed),
+                const SizedBox(width: 12),
+                const Expanded(child: Text('I accept the Terms & Conditions and agree to the society amenity usage rules.', style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textDark))),
+              ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEventTab1() {
-    return Form(
-      key: _tab1Key,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text('Family & Event Details', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
-          const SizedBox(height: 16),
-          _buildBottomSheetTrigger(
-            label: 'Event Type *',
-            value: _eventType ?? 'Select Event Type',
-            onTap: () {
-              _buildOptionPickerSheet(
-                title: 'Event Type',
-                options: ['Birthday', 'Anniversary', 'Engagement', 'Wedding', 'Reception', 'Corporate Meeting', 'Religious Event', 'Other'],
-                selectedValue: _eventType,
-                onSelected: (val) => setState(() => _eventType = val),
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-          if (_eventType == 'Other') 
-            _buildTextField('Custom Event Name', isRequired: true, initialValue: _customEventType, onSaved: (v) => _customEventType = v),
-          
-          _buildSimpleRepeaterField('Function Names (Optional)', _functionNames, isRequired: false, hintText: 'e.g., Mehendi, Sangeet'),
-          
-          _buildTextField(
-            'Family Members Quantity', 
-            keyboardType: TextInputType.number, 
-            initialValue: _internalQty == 0 ? '' : _internalQty.toString(),
-            onChanged: (v) => setState(() => _internalQty = int.tryParse(v) ?? 0),
-            onSaved: (v) => _internalQty = int.tryParse(v ?? '0') ?? 0,
-            validator: (v) {
-              final qty = int.tryParse(v ?? '');
-              if (qty == null) return 'Enter a valid quantity';
-              final facility = _facilitiesData.firstWhere((f) => f['label'] == _selectedFacility);
-              if (qty > facility['maxFamily']) return 'Exceeds maximum family limit (${facility['maxFamily']})';
-              return null;
-            },
-          ),
           const SizedBox(height: 24),
-          _buildPrimaryButton(label: 'Next', onPressed: () { if (_validateCurrentTab()) setState(() => _currentTab = 1); }),
+          _buildPrimaryButton(label: 'Review Booking', onPressed: _submitForm),
         ],
       ),
     );
   }
 
-  Widget _buildEventTab2() {
-    return Form(
-      key: _tab2Key,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text('Outside Members', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Outside Members Quantity', 
-            keyboardType: TextInputType.number, 
-            initialValue: _outsideQty == 0 ? '' : _outsideQty.toString(),
-            onSaved: (v) => _outsideQty = int.tryParse(v ?? '0') ?? 0,
-            onChanged: (v) => setState(() => _outsideQty = int.tryParse(v) ?? 0),
-            validator: (v) {
-              final qty = int.tryParse(v ?? '');
-              if (qty == null) return 'Enter a valid quantity';
-              final facility = _facilitiesData.firstWhere((f) => f['label'] == _selectedFacility);
-              if (qty > facility['maxOutside']) return 'Exceeds maximum outside limit (${facility['maxOutside']})';
-              if ((qty + _internalQty) > facility['maxTotal']) return 'Exceeds total capacity (${facility['maxTotal']})';
-              return null;
-            },
-          ),
-          _buildTotalSummaryCard('Attendees'),
-          const SizedBox(height: 24),
-          _buildPrimaryButton(label: 'Next', onPressed: () { if (_validateCurrentTab()) setState(() => _currentTab = 2); }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActivityTab1() {
-    return Form(
-      key: _tab1Key,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text('Society Members', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Society Members Quantity', 
-            keyboardType: TextInputType.number, 
-            initialValue: _internalQty == 0 ? '' : _internalQty.toString(),
-            onChanged: (v) => setState(() => _internalQty = int.tryParse(v) ?? 0),
-            onSaved: (v) => _internalQty = int.tryParse(v ?? '0') ?? 0,
-            validator: (v) {
-              final qty = int.tryParse(v ?? '');
-              if (qty == null || qty < 1) return 'Quantity is required';
-              final facility = _facilitiesData.firstWhere((f) => f['label'] == _selectedFacility);
-              if (qty > facility['maxFamily']) return 'Exceeds limit (${facility['maxFamily']})';
-              return null;
-            },
-          ),
-          _buildSimpleRepeaterField('Society Member Names (Optional)', _societyMemberNames, isRequired: false, hintText: 'Enter Member Name'),
-          const SizedBox(height: 16),
-          // const Text('Activity Specific Details', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
-          // const SizedBox(height: 16),
-          _buildDynamicFields(),
-          const SizedBox(height: 24),
-          _buildPrimaryButton(label: 'Next', onPressed: () { if (_validateCurrentTab()) setState(() => _currentTab = 1); }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActivityTab2() {
-    return Form(
-      key: _tab2Key,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text('Outside Members', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'Outside Members Quantity', 
-            keyboardType: TextInputType.number, 
-            initialValue: _outsideQty == 0 ? '' : _outsideQty.toString(),
-            onSaved: (v) => _outsideQty = int.tryParse(v ?? '0') ?? 0,
-            onChanged: (v) => setState(() => _outsideQty = int.tryParse(v) ?? 0),
-            validator: (v) {
-              final qty = int.tryParse(v ?? '');
-              if (qty == null) return 'Quantity is required';
-              final facility = _facilitiesData.firstWhere((f) => f['label'] == _selectedFacility);
-              if (qty > facility['maxOutside']) return 'Exceeds limit (${facility['maxOutside']})';
-              if ((qty + _internalQty) > facility['maxTotal']) return 'Exceeds total capacity (${facility['maxTotal']})';
-              return null;
-            },
-          ),
-          _buildSimpleRepeaterField('Outside Member Names (Optional)', _outsideMemberNames, isRequired: false, hintText: 'Enter Guest Name'),
-          _buildTotalSummaryCard('Participants'),
-          const SizedBox(height: 24),
-          _buildPrimaryButton(label: 'Next', onPressed: () { if (_validateCurrentTab()) setState(() => _currentTab = 2); }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTab3() {
-    final facility = _facilitiesData.firstWhere((f) => f['label'] == _selectedFacility);
+  Widget _buildScheduleCard() {
+    final facility = _facilitiesData.firstWhere((f) => f['label'] == _selectedFacility, orElse: () => _facilitiesData.first);
     final timeSlots = facility['timeSlots'] as List<String>;
-    
-    return Form(
-      key: _tab3Key,
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white, 
+        border: Border.all(color: AsmitaPalette.borderGrey.withValues(alpha: 0.5)), 
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Time Slots & Details', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
+          Row(
+            children: [
+              const Icon(Icons.calendar_month_rounded, color: AsmitaPalette.actionRed, size: 20),
+              const SizedBox(width: 8),
+              const Text('Schedule', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
+            ],
+          ),
           const SizedBox(height: 16),
           _buildBottomSheetTrigger(
             label: 'Booking Date *',
@@ -790,43 +531,189 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
               );
             },
           ),
-          const SizedBox(height: 16),
-          _buildTextField('Special Requirements / Notes', isRequired: false, initialValue: _specialNotes, onSaved: (v) => _specialNotes = v),
-          InkWell(
-            onTap: () => setState(() => _termsAccepted = !_termsAccepted),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(_termsAccepted ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded, color: AsmitaPalette.actionRed),
-                const SizedBox(width: 12),
-                const Expanded(child: Text('I accept the Terms & Conditions and agree to the society amenity usage rules.', style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textDark))),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          _buildPrimaryButton(label: 'Review Booking', onPressed: _submitForm),
         ],
       ),
     );
   }
 
-  Widget _buildTotalSummaryCard(String labelSuffix) {
+  Widget _buildHallBookingCard() {
+    final facility = _facilitiesData.firstWhere((f) => f['label'] == _selectedFacility, orElse: () => _facilitiesData.first);
+    final timeSlots = facility['timeSlots'] as List<String>;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildBottomSheetTrigger(
+          label: 'Purpose of Booking *',
+          value: _bookingPurpose == 'Other' ? (_customBookingPurpose?.isNotEmpty == true ? _customBookingPurpose! : 'Other') : (_bookingPurpose ?? 'Select Purpose'),
+          onTap: _showPurposePickerSheet,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          'Expected Number of Guests', 
+          hintText: 'Excluding Family Members',
+          keyboardType: TextInputType.number,
+          initialValue: _expectedGuests == 0 ? '' : _expectedGuests.toString(),
+          onChanged: (v) => _expectedGuests = int.tryParse(v) ?? 0,
+        ),
+        const SizedBox(height: 16),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _buildBottomSheetTrigger(
+                label: 'Booking Date *',
+                value: _bookingDate == null ? 'Select Date' : _formatDate(_bookingDate!),
+                onTap: _showDatePickerSheet,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildBottomSheetTrigger(
+                label: 'Select Slot *',
+                value: _selectedTimeSlot ?? 'Select Slot',
+                onTap: () {
+                  _buildOptionPickerSheet(
+                    title: 'Available Slots',
+                    options: timeSlots,
+                    selectedValue: _selectedTimeSlot,
+                    onSelected: (val) => setState(() => _selectedTimeSlot = val),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAttendeesCard() {
     return Container(
-      margin: const EdgeInsets.only(top: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AsmitaPalette.deepNavy.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12), border: Border.all(color: AsmitaPalette.borderGrey)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white, 
+        border: Border.all(color: AsmitaPalette.borderGrey.withValues(alpha: 0.5)), 
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Text('Total $labelSuffix', style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textLight)),
-              const SizedBox(height: 4),
-              Text('$_internalQty Inside + $_outsideQty Outside', style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.deepNavy)),
+              const Icon(Icons.group_rounded, color: AsmitaPalette.actionRed, size: 20),
+              const SizedBox(width: 8),
+              const Text('Attendees', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
             ],
           ),
-          Text('${_internalQty + _outsideQty}', style: const TextStyle(fontFamily: 'Montserrat', fontSize: 20, fontWeight: FontWeight.bold, color: AsmitaPalette.actionRed)),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: ['Myself Only', 'With Family', 'With Guests'].map((option) {
+              final isSelected = _bookingFor == option;
+              return ChoiceChip(
+                label: Text(option, style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: isSelected ? Colors.white : AsmitaPalette.deepNavy)),
+                selected: isSelected,
+                selectedColor: AsmitaPalette.actionRed,
+                backgroundColor: Colors.grey.shade200,
+                onSelected: (selected) {
+                  if (selected) {
+                    setState(() {
+                      _bookingFor = option;
+                      if (option == 'Myself Only') {
+                        _internalQty = 1;
+                        _outsideQty = 0;
+                      } else if (option == 'With Guests') {
+                        _internalQty = 1; // Owner
+                        _outsideQty = 1;
+                      }
+                    });
+                  }
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+          if (_bookingFor == 'With Family') ...[
+            const Text('Select Family Members:', style: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy)),
+            const SizedBox(height: 8),
+            ..._mockFamilyMembers.map((member) {
+              return CheckboxListTile(
+                title: Text('${member['name']} (${member['relation']})', style: const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
+                value: member['selected'],
+                activeColor: AsmitaPalette.actionRed,
+                onChanged: (val) {
+                  setState(() {
+                    member['selected'] = val;
+                    _internalQty = 1 + _mockFamilyMembers.where((m) => m['selected'] == true).length;
+                  });
+                },
+                controlAffinity: ListTileControlAffinity.leading,
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+              );
+            }),
+          ],
+          if (_bookingFor == 'With Guests') ...[
+            _buildTextField(
+              'Number of Guests',
+              keyboardType: TextInputType.number,
+              initialValue: _outsideQty == 0 ? '' : _outsideQty.toString(),
+              onChanged: (v) {
+                setState(() {
+                  _outsideQty = int.tryParse(v) ?? 0;
+                  if (_outsideQty > 0) {
+                    _guestDetails.clear();
+                    for (int i = 0; i < _outsideQty; i++) {
+                      _guestDetails.add({'name': '', 'phone': ''});
+                    }
+                  } else {
+                    _guestDetails.clear();
+                  }
+                });
+              },
+            ),
+            const SizedBox(height: 8),
+            ..._guestDetails.asMap().entries.map((entry) {
+              int index = entry.key;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField('Guest ${index + 1} Name (Optional)', isRequired: false, initialValue: entry.value['name'], onChanged: (v) => _guestDetails[index]['name'] = v),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildTextField('Phone (Optional)', isRequired: false, keyboardType: TextInputType.phone, initialValue: entry.value['phone'], onChanged: (v) => _guestDetails[index]['phone'] = v),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDynamicFieldsCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white, 
+        border: Border.all(color: AsmitaPalette.borderGrey.withValues(alpha: 0.5)), 
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Additional Details', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
+          const SizedBox(height: 16),
+          _buildDynamicFields(),
         ],
       ),
     );
@@ -875,15 +762,38 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildReviewRow('Facility', _selectedFacility),
-              if (_isEventFlow) _buildReviewRow('Event Type', _eventType == 'Other' ? _customEventType ?? 'Other' : _eventType ?? ''),
+              if (_isBookingType) ...[
+                _buildReviewRow('Purpose', _bookingPurpose == 'Other' ? _customBookingPurpose ?? 'Other' : _bookingPurpose ?? ''),
+                _buildReviewRow('Expected Guests', _expectedGuests.toString()),
+              ],
               _buildReviewRow('Date', _bookingDate != null ? _formatDate(_bookingDate!) : ''),
               _buildReviewRow('Time Slot', _selectedTimeSlot ?? ''),
               const Divider(height: 24),
-              _buildReviewRow(_isEventFlow ? 'Family Members' : 'Society Members', '$_internalQty'),
-              _buildReviewRow('Guest Members', '$_outsideQty'),
+              _buildReviewRow('Booking For', _bookingFor),
+              if (_bookingFor == 'With Family')
+                _buildReviewRow('Family Members', _mockFamilyMembers.where((m) => m['selected'] == true).map((m) => m['name']).join(', ')),
+              if (_bookingFor == 'With Guests' && _outsideQty > 0) ...[
+                _buildReviewRow('Guests Qty', '$_outsideQty'),
+                ..._guestDetails.asMap().entries.map((entry) {
+                   String guestStr = entry.value['name'] ?? '';
+                   if (entry.value['phone']?.isNotEmpty == true) {
+                     guestStr += guestStr.isEmpty ? entry.value['phone']! : ' (${entry.value['phone']})';
+                   }
+                   if (guestStr.trim().isEmpty) return const SizedBox.shrink();
+                   return _buildReviewRow('Guest ${entry.key + 1}', guestStr);
+                }).whereType<Widget>(),
+              ],
               _buildReviewRow('Total Attendees', '${_internalQty + _outsideQty}'),
               const Divider(height: 24),
               if (_specialNotes?.isNotEmpty == true) _buildReviewRow('Special Notes', _specialNotes!),
+              ..._dynamicFormData.entries.map((e) {
+                final cf = widget.initialAmenity?.customFields.firstWhere(
+                  (c) => c['key'] == e.key,
+                  orElse: () => <String, dynamic>{'label': e.key},
+                );
+                final label = cf?['label'] ?? e.key;
+                return _buildReviewRow(label, e.value.toString());
+              }),
             ],
           ),
         ),
@@ -891,6 +801,10 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
         _buildPrimaryButton(label: 'Confirm Booking', onPressed: _confirmBooking),
       ],
     );
+  }
+
+  void _confirmBooking() {
+    _nextStep();
   }
 
   Widget _buildReviewRow(String label, String value) {
@@ -964,6 +878,189 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
     );
   }
 
+  void _showPurposePickerSheet() {
+    String? tempPurpose = _bookingPurpose;
+    String? tempCustom = _customBookingPurpose;
+    
+    final facility = _facilitiesData.firstWhere((f) => f['label'] == _selectedFacility, orElse: () => _facilitiesData.first);
+    List<Map<String, dynamic>> options = [];
+    
+    // Look up the actual amenity model from the state based on the current selection
+    AmenityModel? currentAmenity = widget.initialAmenity;
+    if (currentAmenity == null || currentAmenity.name != _selectedFacility) {
+      final state = context.read<AmenitiesBloc>().state;
+      try {
+        currentAmenity = state.amenities.firstWhere((a) => a.name.toLowerCase() == _selectedFacility.toLowerCase());
+      } catch (_) {}
+    }
+    
+    if (currentAmenity != null && currentAmenity.bookingOptions.isNotEmpty) {
+      options = List<Map<String, dynamic>>.from(currentAmenity.bookingOptions);
+    } else {
+      // Fallback for mock data (hardcoded strings)
+      final fallbackStrings = List<String>.from(facility['bookingOptions'] ?? []);
+      options = fallbackStrings.map<Map<String, dynamic>>((s) => <String, dynamic>{'label': s, 'icon': ''}).toList();
+    }
+    
+    if (!options.any((opt) => opt['label'] == 'Other')) {
+      options.add(<String, dynamic>{'label': 'Other', 'icon': 'ellipsis'});
+    }
+
+    showAsmitaBottomSheet(
+      context: context,
+      title: 'Booking Purpose',
+      isScrollControlled: true,
+      child: StatefulBuilder(
+        builder: (context, setSheetState) {
+          return SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                GridView.builder(
+                  padding: const EdgeInsets.all(2), // Prevent border clipping
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 2.8,
+                  ),
+                  itemCount: options.length,
+                  itemBuilder: (context, index) {
+                    final optionMap = options[index];
+                    final option = optionMap['label'] as String;
+                    final iconStr = (optionMap['icon'] as String?)?.toLowerCase() ?? '';
+                    final isSelected = tempPurpose == option;
+                    
+                    FaIconData icon = FontAwesomeIcons.solidCalendarCheck; // Default event icon
+                    if (iconStr == 'champagne-glasses') { icon = FontAwesomeIcons.champagneGlasses; }
+                    else if (iconStr == 'calendar-check') { icon = FontAwesomeIcons.solidCalendarCheck; }
+                    else if (iconStr == 'heart') { icon = FontAwesomeIcons.solidHeart; }
+                    else if (iconStr == 'cake-candles') { icon = FontAwesomeIcons.cakeCandles; }
+                    else if (iconStr == 'gift') { icon = FontAwesomeIcons.gift; }
+                    else if (iconStr == 'baseball-bat-ball') { icon = FontAwesomeIcons.baseballBatBall; }
+                    else if (iconStr == 'table-tennis-paddle-ball') { icon = FontAwesomeIcons.tableTennisPaddleBall; }
+                    else if (iconStr == 'basketball') { icon = FontAwesomeIcons.basketball; }
+                    else if (iconStr == 'futbol') { icon = FontAwesomeIcons.futbol; }
+                    else if (iconStr == 'volleyball') { icon = FontAwesomeIcons.volleyball; }
+                    else if (iconStr == 'dumbbell') { icon = FontAwesomeIcons.dumbbell; }
+                    else if (iconStr == 'person-running') { icon = FontAwesomeIcons.personRunning; }
+                    else if (iconStr == 'person-biking') { icon = FontAwesomeIcons.personBiking; }
+                    else if (iconStr == 'person-swimming') { icon = FontAwesomeIcons.personSwimming; }
+                    else if (iconStr == 'gamepad') { icon = FontAwesomeIcons.gamepad; }
+                    else if (iconStr == 'spa') { icon = FontAwesomeIcons.spa; }
+                    else if (iconStr == 'yin-yang') { icon = FontAwesomeIcons.yinYang; }
+                    else if (iconStr == 'tree') { icon = FontAwesomeIcons.tree; }
+                    else if (iconStr == 'leaf') { icon = FontAwesomeIcons.leaf; }
+                    else if (iconStr == 'child-reaching') { icon = FontAwesomeIcons.childReaching; }
+                    else if (iconStr == 'book-open') { icon = FontAwesomeIcons.bookOpen; }
+                    else if (iconStr == 'film') { icon = FontAwesomeIcons.film; }
+                    else if (iconStr == 'music') { icon = FontAwesomeIcons.music; }
+                    else if (iconStr == 'handshake') { icon = FontAwesomeIcons.handshake; }
+                    else if (iconStr == 'briefcase') { icon = FontAwesomeIcons.briefcase; }
+                    else if (iconStr == 'users') { icon = FontAwesomeIcons.users; }
+                    else if (iconStr == 'laptop-code') { icon = FontAwesomeIcons.laptopCode; }
+                    else if (iconStr == 'square-parking') { icon = FontAwesomeIcons.squareParking; }
+                    else if (iconStr == 'utensils') { icon = FontAwesomeIcons.utensils; }
+                    else if (iconStr == 'mug-hot') { icon = FontAwesomeIcons.mugHot; }
+                    else if (iconStr == 'kit-medical') { icon = FontAwesomeIcons.kitMedical; }
+                    else if (iconStr == 'shop') { icon = FontAwesomeIcons.shop; }
+                    else if (iconStr == 'paw') { icon = FontAwesomeIcons.paw; }
+                    else if (iconStr == 'ellipsis') { icon = FontAwesomeIcons.ellipsis; }
+                    else {
+                      final lower = option.toLowerCase();
+                      if (lower.contains('birthday')) { icon = FontAwesomeIcons.cakeCandles; }
+                      else if (lower.contains('wedding') || lower.contains('anniversary')) { icon = FontAwesomeIcons.solidHeart; }
+                      else if (lower.contains('meeting') || lower.contains('corporate')) { icon = FontAwesomeIcons.briefcase; }
+                      else if (lower.contains('reception')) { icon = FontAwesomeIcons.users; }
+                      else if (lower.contains('practice')) { icon = FontAwesomeIcons.dumbbell; }
+                      else if (lower.contains('tournament')) { icon = FontAwesomeIcons.trophy; }
+                      else if (lower.contains('other')) { icon = FontAwesomeIcons.ellipsis; }
+                    }
+                    
+                    return InkWell(
+                      onTap: () {
+                        setSheetState(() {
+                          tempPurpose = option;
+                          if (option != 'Other') {
+                            tempCustom = null;
+                          }
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected ? AsmitaPalette.actionRed.withValues(alpha: 0.1) : Colors.white,
+                          border: Border.all(color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey, width: 1.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            FaIcon(icon, color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy, size: 16),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                option,
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 11,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                  color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                if (tempPurpose == 'Other') ...[
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    initialValue: tempCustom,
+                    onChanged: (val) => tempCustom = val,
+                    decoration: InputDecoration(
+                      hintText: 'Please specify purpose',
+                      hintStyle: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.textLight),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AsmitaPalette.borderGrey, width: 1.2)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AsmitaPalette.borderGrey, width: 1.2)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AsmitaPalette.actionRed, width: 1.5)),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _bookingPurpose = tempPurpose;
+                      _customBookingPurpose = tempCustom;
+                    });
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AsmitaPalette.actionRed,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text('Confirm', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   void _buildOptionPickerSheet({
     required String title,
     required List<String> options,
@@ -985,27 +1082,82 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                child: Text(title, style: const TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
-              ),
-              // const Divider(),
               Flexible(
                 child: ListView.builder(
                   shrinkWrap: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   itemCount: options.length,
                   itemBuilder: (context, index) {
                     final option = options[index];
-                    return ListTile(
-                      title: Text(option, style: TextStyle(fontFamily: 'Poppins', fontSize: 14, color: selectedValue == option ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy, fontWeight: selectedValue == option ? FontWeight.w600 : FontWeight.normal)),
-                      trailing: selectedValue == option ? const Icon(Icons.check, color: AsmitaPalette.actionRed) : null,
-                      onTap: () {
-                        if (!isSheetClosing) {
-                          isSheetClosing = true;
-                          onSelected(option);
-                          Navigator.pop(context);
-                        }
-                      },
+                    final isSelected = selectedValue == option;
+
+                    IconData icon = Icons.event_note_rounded;
+                    final lower = option.toLowerCase();
+                    if (lower.contains('birthday')) {
+                      icon = Icons.cake_rounded;
+                    } else if (lower.contains('wedding') || lower.contains('anniversary') || lower.contains('engagement')) {
+                      icon = Icons.favorite_rounded;
+                    } else if (lower.contains('meeting') || lower.contains('corporate')) {
+                      icon = Icons.business_center_rounded;
+                    } else if (lower.contains('reception')) {
+                      icon = Icons.people_alt_rounded;
+                    } else if (lower.contains('religious')) {
+                      icon = Icons.brightness_high_rounded;
+                    } else if (lower.contains('am') || lower.contains('pm')) {
+                      icon = Icons.schedule_rounded;
+                    } else if (lower.contains('group')) {
+                      icon = Icons.groups_rounded;
+                    } else if (lower.contains('private')) {
+                      icon = Icons.person_rounded;
+                    } else if (lower.contains('beginner')) {
+                      icon = Icons.battery_1_bar_rounded;
+                    } else if (lower.contains('intermediate')) {
+                      icon = Icons.battery_4_bar_rounded;
+                    } else if (lower.contains('advanced')) {
+                      icon = Icons.battery_full_rounded;
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: InkWell(
+                        onTap: () {
+                          if (!isSheetClosing) {
+                            isSheetClosing = true;
+                            onSelected(option);
+                            Navigator.pop(context);
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: isSelected ? AsmitaPalette.actionRed.withValues(alpha: 0.05) : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(icon, color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy, size: 22),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  option, 
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins', 
+                                    fontSize: 14, 
+                                    color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy, 
+                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500
+                                  ),
+                                ),
+                              ),
+                              if (isSelected) const Icon(Icons.check_circle_rounded, color: AsmitaPalette.actionRed, size: 20),
+                            ],
+                          ),
+                        ),
+                      ),
                     );
                   },
                 ),

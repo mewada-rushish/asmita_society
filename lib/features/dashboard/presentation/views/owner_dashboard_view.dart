@@ -43,6 +43,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
     showDialog(
       context: context,
       builder: (context) => const AsmitaDialog(
+        title: 'Pre-Approve Entry',
         content: AsmitaPreApproveWizard(),
       ),
     );
@@ -52,6 +53,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
     showDialog(
       context: context,
       builder: (context) => const AsmitaDialog(
+        title: 'Security Alert',
         content: AsmitaSecurityWizard(),
       ),
     );
@@ -61,6 +63,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
     showDialog(
       context: context,
       builder: (context) => const AsmitaDialog(
+        title: 'Raise an Alert',
         content: AsmitaRaiseAlertWizard(),
       ),
     );

@@ -16,6 +16,9 @@ import 'features/auth/bloc/auth_bloc.dart';
 import 'features/auth/presentation/root_screen.dart';
 import 'features/visitor_management/data/repositories/visitor_repository.dart';
 import 'features/visitor_management/bloc/visitor_bloc.dart';
+import 'features/services/data/repositories/amenities_repository.dart';
+import 'features/services/bloc/amenities_bloc.dart';
+import 'features/services/bloc/amenities_event.dart';
 import 'package:safe_device/safe_device.dart';
 import 'features/auth/presentation/unsafe_device_screen.dart';
 
@@ -40,6 +43,7 @@ Future<void> main() async {
   final dioClient = AsmitaDioClient(secureStorage);
   final authRepo = AuthRepository(dio: dioClient.dio);
   final visitorRepo = VisitorRepository(dio: dioClient.dio);
+  final amenitiesRepo = AmenitiesRepository(dio: dioClient.dio);
 
   bool isDeviceSafe = true;
   try {
@@ -54,6 +58,7 @@ Future<void> main() async {
       secureStorage: secureStorage,
       authRepository: authRepo,
       visitorRepository: visitorRepo,
+      amenitiesRepository: amenitiesRepo,
       isDeviceSafe: isDeviceSafe,
     ),
   ));
@@ -63,6 +68,7 @@ class AsmitaApp extends StatelessWidget {
   final SecureStorageService secureStorage;
   final AuthRepository authRepository;
   final VisitorRepository visitorRepository;
+  final AmenitiesRepository amenitiesRepository;
   final bool isDeviceSafe;
 
   const AsmitaApp({
@@ -70,6 +76,7 @@ class AsmitaApp extends StatelessWidget {
     required this.secureStorage,
     required this.authRepository,
     required this.visitorRepository,
+    required this.amenitiesRepository,
     required this.isDeviceSafe,
   });
 
@@ -87,6 +94,12 @@ class AsmitaApp extends StatelessWidget {
           create: (context) => VisitorBloc(
             visitorRepository: visitorRepository,
           ),
+        ),
+        BlocProvider<AmenitiesBloc>(
+          create: (context) => AmenitiesBloc(
+            repository: amenitiesRepository,
+            authBloc: context.read<AuthBloc>(),
+          )..add(const FetchAmenities()),
         ),
       ],
       child: MaterialApp(
