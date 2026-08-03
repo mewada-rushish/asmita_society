@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 
 class AmenityModel extends Equatable {
@@ -39,7 +40,7 @@ class AmenityModel extends Equatable {
           parsedOptions = (json['booking_options'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
         }
       } catch (e) {
-        print('Error parsing booking_options: $e');
+        debugPrint('Error parsing booking_options: $e');
       }
     }
 
@@ -55,7 +56,7 @@ class AmenityModel extends Equatable {
           parsedCustomFields = (json['custom_fields'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
         }
       } catch (e) {
-        print('Error parsing custom_fields: $e');
+        debugPrint('Error parsing custom_fields: $e');
       }
     }
 
