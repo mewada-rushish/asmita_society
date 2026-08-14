@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/config/env_config.dart';
 import '../models/invite_model.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 
 class VisitorRepository {
   final Dio _dio;
@@ -49,19 +50,25 @@ class VisitorRepository {
 
       final invitesResp = responses[0];
       final requestsResp = responses[1];
+      
+      debugPrint('Invites Response: ${invitesResp.statusCode} ${invitesResp.data}');
+      debugPrint('Requests Response: ${requestsResp.statusCode} ${requestsResp.data}');
 
       final List<dynamic> mergedHistory = [];
 
-      if (invitesResp.statusCode == 200 && invitesResp.data['success'] == true) {
-        final invitesList = (invitesResp.data['invites'] ?? invitesResp.data['entries'] ?? []) as List<dynamic>;
+      if (invitesResp.statusCode == 200) {
+        final data = invitesResp.data;
+        // The backend might not have 'success': true
+        final invitesList = (data['invites'] ?? data['entries'] ?? data['data'] ?? (data is List ? data : [])) as List<dynamic>;
         mergedHistory.addAll(invitesList.map((e) => {
           ...e,
           'record_type': 'PRE_APPROVED'
         }));
       }
 
-      if (requestsResp.statusCode == 200 && requestsResp.data['success'] == true) {
-        final requestsList = (requestsResp.data['requests'] ?? requestsResp.data['entries'] ?? []) as List<dynamic>;
+      if (requestsResp.statusCode == 200) {
+        final data = requestsResp.data;
+        final requestsList = (data['requests'] ?? data['entries'] ?? data['data'] ?? (data is List ? data : [])) as List<dynamic>;
         mergedHistory.addAll(requestsList.map((e) => {
           ...e,
           'record_type': 'WALK_IN'
@@ -75,6 +82,7 @@ class VisitorRepository {
         return dateB.compareTo(dateA);
       });
 
+      debugPrint('mergedHistory count: ${mergedHistory.length}');
       return mergedHistory;
     } on DioException catch (e) {
       final msg = e.response?.data?['message'] ?? 'Network error fetching history';

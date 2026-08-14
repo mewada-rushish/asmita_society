@@ -62,20 +62,24 @@ class AsmitaBottomSheet extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          Center(
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: textTheme.titleLarge?.copyWith(
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-                color: AsmitaPalette.deepNavy,
-                letterSpacing: -0.5,
+          if (title.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Center(
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: textTheme.titleLarge?.copyWith(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: AsmitaPalette.deepNavy,
+                  letterSpacing: -0.5,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
+          ] else ...[
+            const SizedBox(height: 24),
+          ],
           Flexible(child: child),
         ],
       ),

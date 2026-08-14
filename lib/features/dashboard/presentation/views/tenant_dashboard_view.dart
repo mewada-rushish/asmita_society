@@ -8,6 +8,13 @@ import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wiz
 import 'package:asmita_society/features/dashboard/widgets/asmita_raise_alert_wizard.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:asmita_society/features/visitor_management/bloc/visitor_bloc.dart';
+import 'package:asmita_society/features/visitor_management/bloc/visitor_state.dart';
+import 'package:asmita_society/features/visitor_management/bloc/visitor_event.dart';
+import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
+import 'package:asmita_society/features/auth/bloc/auth_state.dart';
+
 class TenantDashboardView extends StatefulWidget {
   final VoidCallback? onNavigateToCommunity; 
   final VoidCallback? onNavigateToHistory; 
@@ -32,6 +39,19 @@ class TenantDashboardView extends StatefulWidget {
 
 class _TenantDashboardViewState extends State<TenantDashboardView> {
   final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = context.read<AuthBloc>().state;
+      int residentId = 1;
+      if (authState is AuthAuthenticated) {
+        residentId = authState.user.userId;
+      }
+      context.read<VisitorBloc>().add(LoadMyHistory(residentId: residentId, isRefresh: true));
+    });
+  }
 
   @override
   void dispose() {
@@ -314,14 +334,97 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
               ],
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                _buildCircularAvatarHook(context, 'Shaikh Nisar', hasBadge: true),
-                const SizedBox(width: 14),
-                _buildCircularAvatarHook(context, 'Aaqib', hasBadge: true),
-                const SizedBox(width: 14),
-                _buildCircularActionHook(context, Icons.engineering_outlined, 'Daily Help'),
-              ],
+            BlocBuilder<VisitorBloc, VisitorState>(
+              builder: (context, state) {
+                if (state is VisitorHistoryLoaded) {
+                  final today = DateTime.now();
+                  final todayEntries = state.history.where((rawItem) {
+                    final item = rawItem is Map ? Map<String, dynamic>.from(rawItem) : <String, dynamic>{};
+                    final dateStr = item['created_at'] ?? item['valid_from'];
+                    if (dateStr == null) return false;
+                    try {
+                      final dt = DateTime.parse(dateStr).toLocal();
+                      return dt.year == today.year && dt.month == today.month && dt.day == today.day;
+                    } catch (_) {
+                      return false;
+                    }
+                  }).take(10).toList();
+
+                  if (todayEntries.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 12.0),
+                      child: Text('You have no new updates', style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.textLight)),
+                    );
+                  }
+
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const ClampingScrollPhysics(),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Row(
+                      children: todayEntries.map((rawItem) {
+                        final item = rawItem is Map ? Map<String, dynamic>.from(rawItem) : <String, dynamic>{};
+                        final name = item['visitor_name'] ?? item['title'] ?? 'Unknown';
+                        final company = item['company_name'] ?? item['purpose'] ?? 'Visitor';
+                        final isPreApproved = item['record_type'] == 'PRE_APPROVED';
+                        final category = (isPreApproved ? (item['invite_type'] ?? 'Invite') : 'Walk-in').toString().toLowerCase();
+                        
+                        final authState = context.read<AuthBloc>().state;
+                        final currentUserId = authState is AuthAuthenticated ? authState.user.userId : null;
+                        final isUnviewed = item['is_viewed'] == false;
+                        final isForCurrentUser = item['resident_id'] == currentUserId;
+                        final showBadge = isUnviewed && isForCurrentUser;
+                        
+                        String titleText = name;
+                        if (category == 'delivery' || category == 'cab' || name.toLowerCase().contains('invite')) {
+                          titleText = company;
+                          if (titleText.toLowerCase().contains('invite')) {
+                            titleText = titleText.replaceAll(RegExp(r' invite', caseSensitive: false), '').trim();
+                          }
+                        }
+                        // fallback length
+                        if (titleText.length > 15) {
+                          titleText = '${titleText.substring(0, 12)}...';
+                        }
+
+                        IconData icon = Icons.person_rounded;
+                        Color brandColor = AsmitaPalette.deepNavy;
+
+                        if (category == 'delivery') {
+                          icon = Icons.local_shipping_rounded;
+                          if (company.toString().toLowerCase().contains('amazon')) {
+                            brandColor = const Color(0xFFFF9900);
+                          } else if (company.toString().toLowerCase().contains('zomato')) {
+                            icon = Icons.fastfood_rounded;
+                            brandColor = const Color(0xFFCB202D);
+                          } else if (company.toString().toLowerCase().contains('swiggy')) {
+                            icon = Icons.fastfood_rounded;
+                            brandColor = const Color(0xFFFC8019);
+                          }
+                        } else if (company.toString().toLowerCase().contains('uber') || category.contains('cab')) {
+                          icon = Icons.directions_car_rounded;
+                          brandColor = Colors.black;
+                        } else if (category == 'guest') {
+                          icon = Icons.group_rounded;
+                        } else if (category == 'daily help') {
+                          icon = Icons.engineering_outlined;
+                        }
+
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 14, top: 2, bottom: 2),
+                          child: _buildCircularActionHook(context, icon, titleText, hasBadge: showBadge, iconColor: brandColor),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                );
+              }
+                return const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: CircularProgressIndicator(),
+                );
+              },
             ),
           ],
         ),
@@ -451,31 +554,9 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
     );
   }
 
-  Widget _buildCircularAvatarHook(BuildContext context, String shortName, {bool hasBadge = false}) {
-    final textTheme = Theme.of(context).textTheme;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(color: AsmitaPalette.borderGrey, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
-              child: const Center(child: Icon(Icons.account_circle, color: AsmitaPalette.deepNavy, size: 36)),
-            ),
-            if (hasBadge)
-              Positioned(top: -2, right: -2, child: Container(padding: const EdgeInsets.all(3), decoration: const BoxDecoration(color: AsmitaPalette.actionRed, shape: BoxShape.circle), child: const Icon(Icons.add, color: Colors.white, size: 8))),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Text(shortName, style: textTheme.bodyMedium?.copyWith(fontSize: 10, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
-      ],
-    );
-  }
 
-  Widget _buildCircularActionHook(BuildContext context, IconData icon, String label) {
+
+  Widget _buildCircularActionHook(BuildContext context, IconData icon, String label, {bool hasBadge = false, Color iconColor = AsmitaPalette.deepNavy}) {
     final textTheme = Theme.of(context).textTheme;
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -487,13 +568,14 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
               width: 46,
               height: 46,
               decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5)),
-              child: Icon(icon, color: AsmitaPalette.deepNavy, size: 20),
+              child: Center(child: Icon(icon, color: iconColor, size: 22)),
             ),
-            Positioned(top: 0, right: 0, child: Container(padding: const EdgeInsets.all(2), decoration: const BoxDecoration(color: AsmitaPalette.actionRed, shape: BoxShape.circle), child: const Icon(Icons.add, color: Colors.white, size: 10))),
+            if (hasBadge)
+              Positioned(top: -2, right: -2, child: Container(width: 12, height: 12, decoration: BoxDecoration(color: AsmitaPalette.actionRed, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)))),
           ],
         ),
         const SizedBox(height: 6),
-        Text(label, style: textTheme.bodyMedium?.copyWith(fontSize: 10, fontWeight: FontWeight.w600)),
+        Text(label, style: textTheme.bodyMedium?.copyWith(fontSize: 10, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
       ],
     );
   }
