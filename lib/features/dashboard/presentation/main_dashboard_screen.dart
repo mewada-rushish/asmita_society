@@ -70,7 +70,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         onNavigateToSearch: _navigateToSearch,
         onNavigateToCommunity: () => setState(() => _currentIndex = 2),
       ),
-      const VisitorHistoryScreen(),               // Index 3: Gate Records (History)
+      VisitorHistoryScreen(onBack: () => setState(() => _currentIndex = 0)),               // Index 3: Gate Records (History)
       MenuScreen(userRole: widget.userRole),      // Index 4: Profile Settings
     ];
   }

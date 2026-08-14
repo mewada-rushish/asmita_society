@@ -7,6 +7,8 @@ import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import '../../data/models/amenity_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/amenities_bloc.dart';
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/security/secure_storage_service.dart';
 
 enum FieldType { text, number, dropdown, checkbox, checkboxGroup, repeater }
 
@@ -76,16 +78,27 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
   bool get _isBookingType {
     if (widget.initialAmenity != null) {
       final type = widget.initialAmenity!.type.toLowerCase();
-      final name = widget.initialAmenity!.name.toLowerCase();
-      return type == 'booking' || type == 'event' || name.contains('hall') || name.contains('banquet') || name.contains('court');
+      return type == 'booking' || type == 'event';
     }
     final facility = _facilitiesData.firstWhere((f) => f['label'] == _selectedFacility, orElse: () => _facilitiesData.first);
     return facility['type'] == 'booking' || facility['type'] == 'event';
   }
 
+  bool get _needsApproval {
+    if (widget.initialAmenity != null) {
+      return widget.initialAmenity!.type.toLowerCase() == 'event';
+    }
+    final facility = _facilitiesData.firstWhere((f) => f['label'] == _selectedFacility, orElse: () => _facilitiesData.first);
+    return facility['type'] == 'event';
+  }
+
+  
   @override
   void initState() {
     super.initState();
+    _bookingDate = DateTime.now();
+    _selectedTimeSlot = _formatTime(DateTime.now().add(const Duration(minutes: 30)));
+
     if (widget.initialAmenity != null) {
       _selectedFacility = widget.initialAmenity!.name;
       _currentStep = 1; // Skip selection if opened from a specific card
@@ -101,14 +114,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
   }
 
   void _nextStep() {
-    if (_currentStep == 0 && !_validateForm()) return;
-    
-    if (_currentStep == 0) {
-       _submitForm();
-       return;
-    }
-
-    if (_currentStep < 2) setState(() => _currentStep++);
+    if (_currentStep < 3) setState(() => _currentStep++);
   }
 
   void _prevStep() {
@@ -135,7 +141,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
     return _formKey.currentState?.validate() ?? true;
   }
 
-  void _submitForm() {
+  void _reviewBooking() {
     if (!_validateForm()) return;
     if (!_termsAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please accept the Terms & Conditions.'), behavior: SnackBarBehavior.floating));
@@ -147,38 +153,60 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
       return;
     }
 
-    final payload = {
-      'facility': _selectedFacility,
-      'bookingType': _isBookingType ? 'Booking' : 'Activity',
-      'bookingDate': _bookingDate?.toIso8601String(),
-      'timeSlot': _selectedTimeSlot,
-      'commonDetails': {
-        'specialNotes': _specialNotes,
-        'termsAccepted': _termsAccepted,
-      },
-      'memberDetails': _isBookingType ? {
-        'purpose': _bookingPurpose == 'Other' ? _customBookingPurpose : _bookingPurpose,
-        'expectedGuests': _expectedGuests,
-      } : {
-        'bookingFor': _bookingFor,
-        'internalQty': _internalQty,
-        'outsideQty': _outsideQty,
-        'totalParticipants': _internalQty + _outsideQty,
-        'familyMembers': _bookingFor == 'With Family' ? _mockFamilyMembers.where((m) => m['selected'] == true).map((m) => m['name']).toList() : [],
-        'guests': _bookingFor == 'With Guests' ? _guestDetails.where((g) => g['name']?.isNotEmpty == true || g['phone']?.isNotEmpty == true).toList() : [],
-      },
-      'customDetails': _dynamicFormData,
-    };
+    _nextStep();
+  }
 
+  void _submitBooking() async {
     try {
+      final payload = {
+        'facility': _selectedFacility,
+        'bookingType': _isBookingType ? 'Booking' : 'Activity',
+        'bookingDate': _bookingDate?.toIso8601String(),
+        'timeSlot': _selectedTimeSlot,
+        'commonDetails': {
+          'specialNotes': _specialNotes,
+          'termsAccepted': _termsAccepted,
+        },
+        'memberDetails': _isBookingType ? {
+          'purpose': _bookingPurpose == 'Other' ? _customBookingPurpose : _bookingPurpose,
+          'expectedGuests': _expectedGuests,
+        } : {
+          'bookingFor': _bookingFor,
+          'internalQty': _internalQty,
+          'outsideQty': _outsideQty,
+          'totalParticipants': _internalQty + _outsideQty,
+          'familyMembers': _bookingFor == 'With Family' ? _mockFamilyMembers.where((m) => m['selected'] == true).map((m) => m['name']).toList() : [],
+          'guests': _bookingFor == 'With Guests' ? _guestDetails.where((g) => g['name']?.isNotEmpty == true || g['phone']?.isNotEmpty == true).toList() : [],
+        },
+        'customDetails': _dynamicFormData,
+      };
+
       final jsonString = const JsonEncoder.withIndent('  ').convert(payload);
       developer.log('\n=== BOOKING SUBMISSION PAYLOAD ===\n$jsonString\n==================================\n', name: 'BookingWizard');
+      
+      // Perform the actual API call
+      setState(() => _isClosing = true); // Use this flag to show loading if needed
+      
+      final dio = AsmitaDioClient(SecureStorageService()).dio;
+      final response = await dio.post('/app-api/bookings', data: payload);
+      
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        if (mounted) {
+          setState(() => _isClosing = false);
+          _nextStep();
+        }
+      } else {
+        throw Exception('Failed to submit booking');
+      }
     } catch (e) {
-      developer.log('\n=== BOOKING SUBMISSION PAYLOAD (Unformatted) ===\n$payload\n==================================\n', name: 'BookingWizard');
-      developer.log('JSON Encoding Error', name: 'BookingWizard', error: e);
+      if (mounted) {
+        setState(() => _isClosing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to submit booking: $e'), behavior: SnackBarBehavior.floating),
+        );
+      }
+      developer.log('Error creating payload: $e', name: 'BookingWizard', error: e);
     }
-    
-    _nextStep();
   }
 
   @override
@@ -449,6 +477,61 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
     );
   }
 
+  
+  String _formatTime(DateTime dt) {
+    int h = dt.hour;
+    int m = dt.minute;
+    String ampm = h >= 12 ? 'PM' : 'AM';
+    if (h > 12) h -= 12;
+    if (h == 0) h = 12;
+    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')} $ampm';
+  }
+
+  Widget _buildNumberStepper(String label, int value, ValueChanged<int> onChanged, {int? maxLimit}) {
+    String displayLabel = label;
+    if (maxLimit != null && maxLimit > 0) {
+      displayLabel += ' (Max: $maxLimit)';
+    }
+    
+    void updateValue(int newVal) {
+      if (maxLimit != null && maxLimit > 0 && newVal > maxLimit) newVal = maxLimit;
+      onChanged(newVal);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(displayLabel, style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textDark, fontWeight: FontWeight.w500)),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: AsmitaPalette.borderGrey.withValues(alpha: 0.5)),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(icon: const Icon(Icons.remove, size: 20, color: AsmitaPalette.actionRed), onPressed: () => updateValue(value > 0 ? value - 1 : 0)),
+              Expanded(
+                child: TextField(
+                  controller: TextEditingController(text: value.toString())..selection = TextSelection.collapsed(offset: value.toString().length),
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 14, fontWeight: FontWeight.w600),
+                  decoration: const InputDecoration(border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero),
+                  onChanged: (v) => updateValue(int.tryParse(v) ?? 0),
+                ),
+              ),
+              IconButton(icon: const Icon(Icons.add, size: 20, color: AsmitaPalette.actionRed), onPressed: () => updateValue(value + 1)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   // =========================================================================
   // STEP 1: Booking Form Workflow
   // =========================================================================
@@ -485,15 +568,13 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
             ),
           ),
           const SizedBox(height: 24),
-          _buildPrimaryButton(label: 'Review Booking', onPressed: _submitForm),
+          _buildPrimaryButton(label: 'Review Booking', onPressed: _reviewBooking),
         ],
       ),
     );
   }
 
   Widget _buildScheduleCard() {
-    final facility = _facilitiesData.firstWhere((f) => f['label'] == _selectedFacility, orElse: () => _facilitiesData.first);
-    final timeSlots = facility['timeSlots'] as List<String>;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -520,15 +601,26 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
           ),
           const SizedBox(height: 16),
           _buildBottomSheetTrigger(
-            label: 'Select Slot *',
-            value: _selectedTimeSlot ?? 'Select Slot',
-            onTap: () {
-              _buildOptionPickerSheet(
-                title: 'Available Slots',
-                options: timeSlots,
-                selectedValue: _selectedTimeSlot,
-                onSelected: (val) => setState(() => _selectedTimeSlot = val),
+            label: 'Time *',
+            value: _selectedTimeSlot ?? 'Select Time',
+            onTap: () async {
+              final TimeOfDay? picked = await showTimePicker(
+                context: context,
+                initialTime: TimeOfDay.fromDateTime(DateTime.now().add(const Duration(minutes: 30))),
+                builder: (context, child) {
+                  return Theme(
+                    data: ThemeData.light().copyWith(
+                      colorScheme: const ColorScheme.light(primary: AsmitaPalette.deepNavy),
+                    ),
+                    child: child!,
+                  );
+                },
               );
+              if (picked != null) {
+                final now = DateTime.now();
+                final dt = DateTime(now.year, now.month, now.day, picked.hour, picked.minute);
+                setState(() => _selectedTimeSlot = _formatTime(dt));
+              }
             },
           ),
         ],
@@ -537,26 +629,41 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
   }
 
   Widget _buildHallBookingCard() {
-    final facility = _facilitiesData.firstWhere((f) => f['label'] == _selectedFacility, orElse: () => _facilitiesData.first);
-    final timeSlots = facility['timeSlots'] as List<String>;
+    AmenityModel? currentAmenity = widget.initialAmenity;
+    if (currentAmenity == null || currentAmenity.name != _selectedFacility) {
+      final state = context.read<AmenitiesBloc>().state;
+      try {
+        currentAmenity = state.amenities.firstWhere((a) => a.name.toLowerCase() == _selectedFacility.toLowerCase());
+      } catch (_) {}
+    }
+
+    // If fetched from backend and options are empty, it means purpose is not needed
+    bool hasBookingOptions = true;
+    if (currentAmenity != null && currentAmenity.bookingOptions.isEmpty) {
+      hasBookingOptions = false;
+    }
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildBottomSheetTrigger(
-          label: 'Purpose of Booking *',
-          value: _bookingPurpose == 'Other' ? (_customBookingPurpose?.isNotEmpty == true ? _customBookingPurpose! : 'Other') : (_bookingPurpose ?? 'Select Purpose'),
-          onTap: _showPurposePickerSheet,
-        ),
-        const SizedBox(height: 16),
-        _buildTextField(
-          'Expected Number of Guests', 
-          hintText: 'Excluding Family Members',
-          keyboardType: TextInputType.number,
-          initialValue: _expectedGuests == 0 ? '' : _expectedGuests.toString(),
-          onChanged: (v) => _expectedGuests = int.tryParse(v) ?? 0,
-        ),
-        const SizedBox(height: 16),
+        if (hasBookingOptions) ...[
+          _buildBottomSheetTrigger(
+            label: 'Purpose of Booking *',
+            value: _bookingPurpose == 'Other' ? (_customBookingPurpose?.isNotEmpty == true ? _customBookingPurpose! : 'Other') : (_bookingPurpose ?? 'Select Purpose'),
+            onTap: _showPurposePickerSheet,
+          ),
+          if (_bookingPurpose == 'Other') ...[
+            const SizedBox(height: 16),
+            _buildTextField(
+              'Specify Custom Purpose *',
+              hintText: 'E.g., Corporate Meeting',
+              initialValue: _customBookingPurpose,
+              onChanged: (v) => _customBookingPurpose = v,
+              validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+            ),
+          ],
+          const SizedBox(height: 16),
+        ],
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -570,25 +677,50 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
             const SizedBox(width: 12),
             Expanded(
               child: _buildBottomSheetTrigger(
-                label: 'Select Slot *',
-                value: _selectedTimeSlot ?? 'Select Slot',
-                onTap: () {
-                  _buildOptionPickerSheet(
-                    title: 'Available Slots',
-                    options: timeSlots,
-                    selectedValue: _selectedTimeSlot,
-                    onSelected: (val) => setState(() => _selectedTimeSlot = val),
+                label: 'Time *',
+                value: _selectedTimeSlot ?? 'Select Time',
+                onTap: () async {
+                  final TimeOfDay? picked = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay.fromDateTime(DateTime.now().add(const Duration(minutes: 30))),
+                    builder: (context, child) {
+                      return Theme(
+                        data: ThemeData.light().copyWith(
+                          colorScheme: const ColorScheme.light(primary: AsmitaPalette.deepNavy),
+                        ),
+                        child: child!,
+                      );
+                    },
                   );
+                  if (picked != null) {
+                    final now = DateTime.now();
+                    final dt = DateTime(now.year, now.month, now.day, picked.hour, picked.minute);
+                    setState(() => _selectedTimeSlot = _formatTime(dt));
+                  }
                 },
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 16),
+        _buildNumberStepper(
+          'Expected Number of Guests (Excluding Family)',
+          _expectedGuests,
+          (v) => setState(() => _expectedGuests = v),
+          maxLimit: currentAmenity?.maxBookingSize,
         ),
       ],
     );
   }
 
   Widget _buildAttendeesCard() {
+    AmenityModel? currentAmenity = widget.initialAmenity;
+    if (currentAmenity == null || currentAmenity.name != _selectedFacility) {
+      final state = context.read<AmenitiesBloc>().state;
+      try {
+        currentAmenity = state.amenities.firstWhere((a) => a.name.toLowerCase() == _selectedFacility.toLowerCase());
+      } catch (_) {}
+    }
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -608,7 +740,15 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
             ],
           ),
           const SizedBox(height: 16),
-          Wrap(
+          if (widget.initialAmenity != null && widget.initialAmenity!.outsiderFee == 0) ...[
+            _buildNumberStepper(
+              'Number of Players / Attendees',
+              _internalQty,
+              (v) => setState(() => _internalQty = v),
+              maxLimit: currentAmenity?.maxBookingSize,
+            ),
+          ] else ...[
+            Wrap(
             spacing: 8,
             runSpacing: 8,
             children: ['Myself Only', 'With Family', 'With Guests'].map((option) {
@@ -657,13 +797,12 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
             }),
           ],
           if (_bookingFor == 'With Guests') ...[
-            _buildTextField(
+            _buildNumberStepper(
               'Number of Guests',
-              keyboardType: TextInputType.number,
-              initialValue: _outsideQty == 0 ? '' : _outsideQty.toString(),
-              onChanged: (v) {
+              _outsideQty,
+              (v) {
                 setState(() {
-                  _outsideQty = int.tryParse(v) ?? 0;
+                  _outsideQty = v;
                   if (_outsideQty > 0) {
                     _guestDetails.clear();
                     for (int i = 0; i < _outsideQty; i++) {
@@ -674,6 +813,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
                   }
                 });
               },
+              maxLimit: currentAmenity?.maxBookingSize,
             ),
             const SizedBox(height: 8),
             ..._guestDetails.asMap().entries.map((entry) {
@@ -693,6 +833,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
                 ),
               );
             }),
+            ],
           ],
         ],
       ),
@@ -737,9 +878,9 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              InkWell(
+              GestureDetector(
                 onTap: _prevStep,
-                borderRadius: BorderRadius.circular(20),
+                behavior: HitTestBehavior.opaque,
                 child: const Padding(
                   padding: EdgeInsets.only(right: 12.0, top: 2.0, bottom: 2.0),
                   child: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AsmitaPalette.deepNavy),
@@ -758,9 +899,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AsmitaPalette.borderGrey)),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          child: _buildIOSList([
               _buildReviewRow('Facility', _selectedFacility),
               if (_isBookingType) ...[
                 _buildReviewRow('Purpose', _bookingPurpose == 'Other' ? _customBookingPurpose ?? 'Other' : _bookingPurpose ?? ''),
@@ -768,23 +907,25 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
               ],
               _buildReviewRow('Date', _bookingDate != null ? _formatDate(_bookingDate!) : ''),
               _buildReviewRow('Time Slot', _selectedTimeSlot ?? ''),
-              const Divider(height: 24),
-              _buildReviewRow('Booking For', _bookingFor),
-              if (_bookingFor == 'With Family')
-                _buildReviewRow('Family Members', _mockFamilyMembers.where((m) => m['selected'] == true).map((m) => m['name']).join(', ')),
-              if (_bookingFor == 'With Guests' && _outsideQty > 0) ...[
-                _buildReviewRow('Guests Qty', '$_outsideQty'),
-                ..._guestDetails.asMap().entries.map((entry) {
-                   String guestStr = entry.value['name'] ?? '';
-                   if (entry.value['phone']?.isNotEmpty == true) {
-                     guestStr += guestStr.isEmpty ? entry.value['phone']! : ' (${entry.value['phone']})';
-                   }
-                   if (guestStr.trim().isEmpty) return const SizedBox.shrink();
-                   return _buildReviewRow('Guest ${entry.key + 1}', guestStr);
-                }).whereType<Widget>(),
+              if (!_isBookingType) ...[
+                if (widget.initialAmenity != null && widget.initialAmenity!.outsiderFee > 0) ...[
+                  _buildReviewRow('Booking For', _bookingFor),
+                  if (_bookingFor == 'With Family')
+                    _buildReviewRow('Family Members', _mockFamilyMembers.where((m) => m['selected'] == true).map((m) => m['name']).join(', ')),
+                  if (_bookingFor == 'With Guests' && _outsideQty > 0) ...[
+                    _buildReviewRow('Guests Qty', '$_outsideQty'),
+                    ..._guestDetails.asMap().entries.map((entry) {
+                       String guestStr = entry.value['name'] ?? '';
+                       if (entry.value['phone']?.isNotEmpty == true) {
+                         guestStr += guestStr.isEmpty ? entry.value['phone']! : ' (${entry.value['phone']})';
+                       }
+                       if (guestStr.trim().isEmpty) return null;
+                       return _buildReviewRow('Guest ${entry.key + 1}', guestStr);
+                    }).whereType<Widget>(),
+                  ],
+                ],
+                _buildReviewRow('Total Attendees', '${_internalQty + _outsideQty}'),
               ],
-              _buildReviewRow('Total Attendees', '${_internalQty + _outsideQty}'),
-              const Divider(height: 24),
               if (_specialNotes?.isNotEmpty == true) _buildReviewRow('Special Notes', _specialNotes!),
               ..._dynamicFormData.entries.map((e) {
                 final cf = widget.initialAmenity?.customFields.firstWhere(
@@ -793,28 +934,46 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
                 );
                 final label = cf?['label'] ?? e.key;
                 return _buildReviewRow(label, e.value.toString());
-              }),
-            ],
-          ),
+              }).whereType<Widget>(),
+          ]),
         ),
         const SizedBox(height: 24),
-        _buildPrimaryButton(label: 'Confirm Booking', onPressed: _confirmBooking),
+        _buildPrimaryButton(label: 'Confirm Booking', onPressed: _submitBooking),
       ],
     );
   }
 
-  void _confirmBooking() {
-    _nextStep();
+
+
+  Widget _buildIOSList(List<Widget> rows) {
+    if (rows.isEmpty) return const SizedBox.shrink();
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (int i = 0; i < rows.length; i++) ...[
+          rows[i],
+          if (i < rows.length - 1)
+            Padding(
+              padding: const EdgeInsets.only(left: 16.0),
+              child: Divider(height: 1, thickness: 1, color: AsmitaPalette.borderGrey.withValues(alpha: 0.5)),
+            ),
+        ],
+      ],
+    );
   }
 
   Widget _buildReviewRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(flex: 2, child: Text(label, style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.textLight))),
-          Expanded(flex: 3, child: Text(value, textAlign: TextAlign.right, style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy))),
+          Text(label, style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w400, color: AsmitaPalette.textLight)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(value, textAlign: TextAlign.right, style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w500, color: AsmitaPalette.deepNavy)),
+          ),
         ],
       ),
     );
@@ -824,29 +983,69 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
   // STEP 3: Success Message
   // =========================================================================
   Widget _buildSuccessPass() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: const BoxDecoration(color: Color(0xFFFFF4E5), shape: BoxShape.circle),
-          child: const Icon(Icons.access_time_filled_rounded, color: Color(0xFFFF9800), size: 40),
-        ),
-        const SizedBox(height: 16),
-        const Text('Booking Pending', style: TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
-        const SizedBox(height: 8),
-        Text('Your booking request for $_selectedFacility has been submitted for admin approval.', textAlign: TextAlign.center, style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.textLight)),
-        const SizedBox(height: 32),
-        _buildPrimaryButton(label: 'Done', onPressed: () {
-          // This check prevents a race condition where the widget might be disposed
-          // while the pop navigation is being processed.
-          if (mounted && !_isClosing) {
-            _isClosing = true;
-            Navigator.of(context).pop();
-          }
-        }),
-      ],
-    );
+    try {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _needsApproval ? const Color(0xFFFFF4E5) : const Color(0xFFE8F5E9), 
+              shape: BoxShape.circle
+            ),
+            child: Icon(
+              _needsApproval ? Icons.access_time_filled_rounded : Icons.check_circle_rounded, 
+              color: _needsApproval ? const Color(0xFFFF9800) : const Color(0xFF4CAF50), 
+              size: 40
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(_needsApproval ? 'Booking Pending' : 'Booking Confirmed', style: const TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
+          const SizedBox(height: 8),
+          Text(
+            _needsApproval 
+              ? 'Your booking request for $_selectedFacility has been submitted for admin approval.' 
+              : 'Your booking for $_selectedFacility has been successfully confirmed.', 
+            textAlign: TextAlign.center, 
+            style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.textLight)
+          ),
+          if ((_isBookingType && _expectedGuests > 0) || (!_isBookingType && (_outsideQty > 0 || _internalQty > 1))) ...[
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: AsmitaPalette.borderGrey),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  const Text('Share with Guests', style: TextStyle(fontFamily: 'Montserrat', fontSize: 14, fontWeight: FontWeight.w700, color: AsmitaPalette.deepNavy)),
+                  const SizedBox(height: 8),
+                  const Icon(Icons.qr_code_2_rounded, size: 80, color: AsmitaPalette.deepNavy),
+                  const SizedBox(height: 8),
+                  const Text('Scan for Guest Entry Pass', style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textLight)),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 32),
+          _buildPrimaryButton(label: 'Done', onPressed: () {
+            // This check prevents a race condition where the widget might be disposed
+            // while the pop navigation is being processed.
+            if (mounted && !_isClosing) {
+              _isClosing = true;
+              Navigator.of(context).pop();
+            }
+          }),
+        ],
+      );
+    } catch (e) {
+      return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Text('Error building success pass: $e', style: const TextStyle(color: Colors.red)),
+      );
+    }
   }
 
   // =========================================================================

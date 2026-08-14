@@ -13,6 +13,9 @@ class AmenityModel extends Equatable {
   final List<Map<String, dynamic>> customFields;
   final List<AmenityTimeSlot> bookedSlots;
   final List<Map<String, dynamic>> bookingOptions;
+  final int minBookingSize;
+  final int? maxBookingSize;
+  final double outsiderFee;
 
   const AmenityModel({
     required this.amenityId,
@@ -25,6 +28,9 @@ class AmenityModel extends Equatable {
     this.customFields = const [],
     this.bookedSlots = const [],
     this.bookingOptions = const [],
+    this.minBookingSize = 1,
+    this.maxBookingSize,
+    this.outsiderFee = 0.0,
   });
 
   factory AmenityModel.fromJson(Map<String, dynamic> json) {
@@ -74,11 +80,14 @@ class AmenityModel extends Equatable {
               ?.map((e) => AmenityTimeSlot.fromJson(Map<String, dynamic>.from(e as Map)))
               .toList() ??
           [],
+      minBookingSize: json['min_booking_size'] != null ? int.tryParse(json['min_booking_size'].toString()) ?? 1 : 1,
+      maxBookingSize: json['max_booking_size'] != null ? int.tryParse(json['max_booking_size'].toString()) : null,
+      outsiderFee: json['outsider_fee'] != null ? double.tryParse(json['outsider_fee'].toString()) ?? 0.0 : 0.0,
     );
   }
 
   @override
-  List<Object?> get props => [amenityId, societyId, name, description, capacity, rules, type, customFields, bookedSlots, bookingOptions];
+  List<Object?> get props => [amenityId, societyId, name, description, capacity, rules, type, customFields, bookedSlots, bookingOptions, minBookingSize, maxBookingSize, outsiderFee];
 }
 
 class AmenityTimeSlot extends Equatable {
