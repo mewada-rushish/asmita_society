@@ -19,6 +19,8 @@ import 'features/visitor_management/bloc/visitor_bloc.dart';
 import 'features/services/data/repositories/amenities_repository.dart';
 import 'features/services/bloc/amenities_bloc.dart';
 import 'features/services/bloc/amenities_event.dart';
+import 'features/dashboard/data/repositories/search_repository.dart';
+import 'features/dashboard/bloc/search/search_bloc.dart';
 import 'package:safe_device/safe_device.dart';
 import 'features/auth/presentation/unsafe_device_screen.dart';
 
@@ -44,6 +46,7 @@ Future<void> main() async {
   final authRepo = AuthRepository(dio: dioClient.dio);
   final visitorRepo = VisitorRepository(dio: dioClient.dio);
   final amenitiesRepo = AmenitiesRepository(dio: dioClient.dio);
+  final searchRepo = SearchRepository(dio: dioClient.dio);
 
   bool isDeviceSafe = true;
   try {
@@ -59,6 +62,7 @@ Future<void> main() async {
       authRepository: authRepo,
       visitorRepository: visitorRepo,
       amenitiesRepository: amenitiesRepo,
+      searchRepository: searchRepo,
       isDeviceSafe: isDeviceSafe,
     ),
   ));
@@ -69,6 +73,7 @@ class AsmitaApp extends StatelessWidget {
   final AuthRepository authRepository;
   final VisitorRepository visitorRepository;
   final AmenitiesRepository amenitiesRepository;
+  final SearchRepository searchRepository;
   final bool isDeviceSafe;
 
   const AsmitaApp({
@@ -77,6 +82,7 @@ class AsmitaApp extends StatelessWidget {
     required this.authRepository,
     required this.visitorRepository,
     required this.amenitiesRepository,
+    required this.searchRepository,
     required this.isDeviceSafe,
   });
 
@@ -100,6 +106,11 @@ class AsmitaApp extends StatelessWidget {
             repository: amenitiesRepository,
             authBloc: context.read<AuthBloc>(),
           )..add(const FetchAmenities()),
+        ),
+        BlocProvider<SearchBloc>(
+          create: (context) => SearchBloc(
+            searchRepository: searchRepository,
+          ),
         ),
       ],
       child: MaterialApp(

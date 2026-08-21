@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import '../../data/models/amenity_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/amenities_bloc.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/security/secure_storage_service.dart';
+import '../../../auth/bloc/auth_bloc.dart';
+import '../../../auth/bloc/auth_state.dart';
 
 enum FieldType { text, number, dropdown, checkbox, checkboxGroup, repeater }
 
@@ -144,12 +148,12 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
   void _reviewBooking() {
     if (!_validateForm()) return;
     if (!_termsAccepted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please accept the Terms & Conditions.'), behavior: SnackBarBehavior.floating));
+      AsmitaToast.show(context, message: 'Please accept the Terms & Conditions.', type: AsmitaToastType.error);
       return;
     }
     
     if (_bookingDate == null || _selectedTimeSlot == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select an available date and time slot.'), behavior: SnackBarBehavior.floating));
+      AsmitaToast.show(context, message: 'Please select an available date and time slot.', type: AsmitaToastType.error);
       return;
     }
 
@@ -158,37 +162,68 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
 
   void _submitBooking() async {
     try {
+      if (_bookingDate == null || _selectedTimeSlot == null) {
+        AsmitaToast.show(context, message: 'Please select an available date and time slot.', type: AsmitaToastType.error);
+        return;
+      }
+
+      // Get authenticated user details
+      final authState = context.read<AuthBloc>().state;
+      if (authState is! AuthAuthenticated) {
+        throw Exception('User not authenticated');
+      }
+      final user = authState.user;
+      final flatId = user.flatMappings.isNotEmpty ? user.flatMappings.first.flatId : 0;
+      final societyId = user.societyId ?? 0;
+      final userId = user.userId;
+
+      // Extract start and end times from _selectedTimeSlot (e.g., "18:00 - 19:00" or "1:28 PM - 2:28 PM")
+      final timeParts = _selectedTimeSlot!.split(' - ');
+      final startStr = timeParts[0];
+      final endStr = timeParts.length > 1 ? timeParts[1] : startStr;
+
+      int parseHour(String t) {
+        final isPM = t.toLowerCase().contains('pm');
+        final clean = t.replaceAll(RegExp(r'[a-zA-Z\s]'), '');
+        int h = int.parse(clean.split(':')[0]);
+        if (isPM && h != 12) h += 12;
+        if (!isPM && h == 12 && t.toLowerCase().contains('am')) h = 0;
+        return h;
+      }
+
+      int parseMinute(String t) {
+        final clean = t.replaceAll(RegExp(r'[a-zA-Z\s]'), '');
+        return int.parse(clean.split(':')[1]);
+      }
+
+      // Create proper DateTimes
+      final baseDate = _bookingDate!;
+      final startHour = parseHour(startStr);
+      final startMinute = parseMinute(startStr);
+      final endHour = parseHour(endStr);
+      final endMinute = parseMinute(endStr);
+      
+      final startTime = DateTime(baseDate.year, baseDate.month, baseDate.day, startHour, startMinute);
+      final endTime = DateTime(baseDate.year, baseDate.month, baseDate.day, endHour, endMinute);
+
       final payload = {
-        'facility': _selectedFacility,
-        'bookingType': _isBookingType ? 'Booking' : 'Activity',
-        'bookingDate': _bookingDate?.toIso8601String(),
-        'timeSlot': _selectedTimeSlot,
-        'commonDetails': {
-          'specialNotes': _specialNotes,
-          'termsAccepted': _termsAccepted,
-        },
-        'memberDetails': _isBookingType ? {
-          'purpose': _bookingPurpose == 'Other' ? _customBookingPurpose : _bookingPurpose,
-          'expectedGuests': _expectedGuests,
-        } : {
-          'bookingFor': _bookingFor,
-          'internalQty': _internalQty,
-          'outsideQty': _outsideQty,
-          'totalParticipants': _internalQty + _outsideQty,
-          'familyMembers': _bookingFor == 'With Family' ? _mockFamilyMembers.where((m) => m['selected'] == true).map((m) => m['name']).toList() : [],
-          'guests': _bookingFor == 'With Guests' ? _guestDetails.where((g) => g['name']?.isNotEmpty == true || g['phone']?.isNotEmpty == true).toList() : [],
-        },
-        'customDetails': _dynamicFormData,
+        'amenity_id': widget.initialAmenity?.amenityId ?? 0,
+        'society_id': societyId,
+        'user_id': userId,
+        'flat_id': flatId,
+        'booking_date': baseDate.toIso8601String(),
+        'start_time': startTime.toIso8601String(),
+        'end_time': endTime.toIso8601String(),
       };
 
       final jsonString = const JsonEncoder.withIndent('  ').convert(payload);
       developer.log('\n=== BOOKING SUBMISSION PAYLOAD ===\n$jsonString\n==================================\n', name: 'BookingWizard');
       
       // Perform the actual API call
-      setState(() => _isClosing = true); // Use this flag to show loading if needed
+      setState(() => _isClosing = true);
       
       final dio = AsmitaDioClient(SecureStorageService()).dio;
-      final response = await dio.post('/app-api/bookings', data: payload);
+      final response = await dio.post('/app-api/amenities/book', data: payload);
       
       if (response.statusCode == 201 || response.statusCode == 200) {
         if (mounted) {
@@ -201,9 +236,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
     } catch (e) {
       if (mounted) {
         setState(() => _isClosing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit booking: $e'), behavior: SnackBarBehavior.floating),
-        );
+        AsmitaToast.show(context, message: 'Failed to submit booking: $e', type: AsmitaToastType.error);
       }
       developer.log('Error creating payload: $e', name: 'BookingWizard', error: e);
     }
@@ -277,9 +310,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
                   });
                   _nextStep();
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${facility['label']} is currently unavailable.'), behavior: SnackBarBehavior.floating),
-                  );
+                  AsmitaToast.show(context, message: '${facility['label']} is currently unavailable.', type: AsmitaToastType.info);
                 }
               },
               borderRadius: BorderRadius.circular(16),
@@ -603,25 +634,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
           _buildBottomSheetTrigger(
             label: 'Time *',
             value: _selectedTimeSlot ?? 'Select Time',
-            onTap: () async {
-              final TimeOfDay? picked = await showTimePicker(
-                context: context,
-                initialTime: TimeOfDay.fromDateTime(DateTime.now().add(const Duration(minutes: 30))),
-                builder: (context, child) {
-                  return Theme(
-                    data: ThemeData.light().copyWith(
-                      colorScheme: const ColorScheme.light(primary: AsmitaPalette.deepNavy),
-                    ),
-                    child: child!,
-                  );
-                },
-              );
-              if (picked != null) {
-                final now = DateTime.now();
-                final dt = DateTime(now.year, now.month, now.day, picked.hour, picked.minute);
-                setState(() => _selectedTimeSlot = _formatTime(dt));
-              }
-            },
+            onTap: _showTimePickerSheet,
           ),
         ],
       ),
@@ -679,25 +692,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
               child: _buildBottomSheetTrigger(
                 label: 'Time *',
                 value: _selectedTimeSlot ?? 'Select Time',
-                onTap: () async {
-                  final TimeOfDay? picked = await showTimePicker(
-                    context: context,
-                    initialTime: TimeOfDay.fromDateTime(DateTime.now().add(const Duration(minutes: 30))),
-                    builder: (context, child) {
-                      return Theme(
-                        data: ThemeData.light().copyWith(
-                          colorScheme: const ColorScheme.light(primary: AsmitaPalette.deepNavy),
-                        ),
-                        child: child!,
-                      );
-                    },
-                  );
-                  if (picked != null) {
-                    final now = DateTime.now();
-                    final dt = DateTime(now.year, now.month, now.day, picked.hour, picked.minute);
-                    setState(() => _selectedTimeSlot = _formatTime(dt));
-                  }
-                },
+                onTap: _showTimePickerSheet,
               ),
             ),
           ],
@@ -1004,7 +999,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
           const SizedBox(height: 8),
           Text(
             _needsApproval 
-              ? 'Your booking request for $_selectedFacility has been submitted for admin approval.' 
+              ? 'Your booking request for $_selectedFacility has been submitted to the Committee.' 
               : 'Your booking for $_selectedFacility has been successfully confirmed.', 
             textAlign: TextAlign.center, 
             style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.textLight)
@@ -1396,14 +1391,90 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
     );
   }
 
-  Widget _buildPrimaryButton({required String label, required VoidCallback onPressed}) {
+  Widget _buildPrimaryButton({required String label, VoidCallback? onPressed}) {
     return SizedBox(
       width: double.infinity,
       height: 52, 
       child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(backgroundColor: AsmitaPalette.actionRed, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0),
-        child: Text(label, style: const TextStyle(fontFamily: 'Montserrat', color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
+        onPressed: _isClosing ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AsmitaPalette.actionRed,
+          disabledBackgroundColor: AsmitaPalette.actionRed.withValues(alpha: 0.7),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), 
+          elevation: 0
+        ),
+        child: _isClosing
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : Text(label, style: const TextStyle(fontFamily: 'Montserrat', color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
+      ),
+    );
+  }
+
+  void _showTimePickerSheet() {
+    TimeOfDay initialTime = TimeOfDay.fromDateTime(DateTime.now().add(const Duration(minutes: 30)));
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Select Time',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: AsmitaPalette.deepNavy,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 180,
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.time,
+                  initialDateTime: DateTime(
+                    DateTime.now().year,
+                    DateTime.now().month,
+                    DateTime.now().day,
+                    initialTime.hour,
+                    initialTime.minute,
+                  ),
+                  onDateTimeChanged: (time) {
+                    setState(() {
+                      _selectedTimeSlot = _formatTime(time);
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildPrimaryButton(
+                label: 'Done',
+                onPressed: () {
+                  if (_selectedTimeSlot == null) {
+                    final dt = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, initialTime.hour, initialTime.minute);
+                    setState(() => _selectedTimeSlot = _formatTime(dt));
+                  }
+                  Navigator.pop(ctx);
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

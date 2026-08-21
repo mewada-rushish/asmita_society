@@ -10,6 +10,11 @@ import 'views/owner_dashboard_view.dart';
 import 'views/tenant_dashboard_view.dart';
 import 'package:asmita_society/features/services/presentation/screens/daily_help_screen.dart';
 import 'screens/search_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
+import 'package:asmita_society/features/services/bloc/daily_help_bloc.dart';
+import 'package:asmita_society/features/services/bloc/daily_help_event.dart';
+import 'package:asmita_society/features/services/data/repositories/daily_help_repository.dart';
 
 class MainDashboardScreen extends StatefulWidget {
   final String userRole;
@@ -44,15 +49,21 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => DailyHelpScreen(
-          onNavigateToSearch: () {
-            Navigator.pop(context);
-            _navigateToSearch();
-          },
-          onNavigateToCommunity: () {
-            Navigator.pop(context);
-            setState(() => _currentIndex = 2);
-          },
+        builder: (_) => BlocProvider(
+          create: (context) => DailyHelpBloc(
+            repository: DailyHelpRepository(),
+            authBloc: context.read<AuthBloc>(),
+          )..add(const FetchDailyHelp()),
+          child: DailyHelpScreen(
+            onNavigateToSearch: () {
+              Navigator.pop(context);
+              _navigateToSearch();
+            },
+            onNavigateToCommunity: () {
+              Navigator.pop(context);
+              setState(() => _currentIndex = 2);
+            },
+          ),
         ),
       ),
     );

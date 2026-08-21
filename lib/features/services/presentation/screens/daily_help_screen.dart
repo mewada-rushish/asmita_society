@@ -3,6 +3,12 @@ import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart'; 
 import '../../../../core/widgets/asmita_text_field.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../bloc/daily_help_bloc.dart';
+import '../../bloc/daily_help_state.dart';
+import '../../bloc/daily_help_event.dart';
+import '../../data/models/daily_help_model.dart';
+import '../../../../core/widgets/asmita_toast.dart';
 
 class DailyHelpScreen extends StatefulWidget {
   final VoidCallback? onNavigateToSearch;
@@ -34,13 +40,6 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
   int _selectedCategoryIndex = 0;
   String? _selectedModalCategory; 
 
-  // Mock data matching list architecture
-  final List<Map<String, dynamic>> _directory = [
-    {'name': 'Sunita Bai', 'role': 'Maids', 'rating': 4.8, 'verified': true, 'addedBy': 'B-102'},
-    {'name': 'Ramesh Driver', 'role': 'Drivers', 'rating': 4.5, 'verified': true, 'addedBy': 'A-405'},
-    {'name': 'Gopal Milkman', 'role': 'Milkmen', 'rating': 4.9, 'verified': false, 'addedBy': 'C-201'},
-    {'name': 'Kishore Cleaning', 'role': 'Car Cleaners', 'rating': 4.2, 'verified': true, 'addedBy': 'Mgmt'},
-  ];
 
   // Helper method to map category names to precise clean utility icons
   IconData _getCategoryIcon(String category) {
@@ -131,6 +130,8 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
 
   void _showAddProviderModal(BuildContext context, TextTheme textTheme, double systemBottomPadding) {
     _selectedModalCategory = null;
+    final nameController = TextEditingController();
+    final phoneController = TextEditingController();
 
     showAsmitaBottomSheet(
       context: context,
@@ -143,11 +144,11 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Help us build the society directory. The management will verify this entry.', style: textTheme.bodyMedium?.copyWith(fontSize: 13, height: 1.4)),
+                Text('Add a new daily help contact to your society directory.', style: textTheme.bodyMedium?.copyWith(fontSize: 13, height: 1.4)),
                 const SizedBox(height: 24),
-                AsmitaTextField(label: 'Full Name', hint: 'e.g., Raju Plumber', icon: Icons.person_outline_rounded),
+                AsmitaTextField(label: 'Full Name', hint: 'e.g., Raju Plumber', icon: Icons.person_outline_rounded, controller: nameController),
                 const SizedBox(height: 16),
-                AsmitaTextField(label: 'Phone Number', hint: '10-digit mobile number', icon: Icons.phone_outlined, keyboardType: TextInputType.phone),
+                AsmitaTextField(label: 'Phone Number', hint: '10-digit mobile number', icon: Icons.phone_outlined, keyboardType: TextInputType.phone, controller: phoneController),
                 const SizedBox(height: 16),
 
                 Text('Category', style: textTheme.bodyMedium?.copyWith(fontSize: 12, fontWeight: FontWeight.w600, color: AsmitaPalette.textDark)),
@@ -192,10 +193,24 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                   padding: EdgeInsets.only(bottom: systemBottomPadding > 0 ? systemBottomPadding : 16.0),
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Thank you! Provider added for verification.', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green),
+                      final name = nameController.text.trim();
+                      final phone = phoneController.text.trim();
+                      
+                      if (name.isEmpty || phone.isEmpty || _selectedModalCategory == null) {
+                        AsmitaToast.show(context, message: 'Please fill all fields', type: AsmitaToastType.error);
+                        return;
+                      }
+
+                      context.read<DailyHelpBloc>().add(
+                        AddDailyHelp(
+                          name: name,
+                          phone: phone,
+                          role: _selectedModalCategory!,
+                        )
                       );
+
+                      Navigator.pop(context);
+                      AsmitaToast.show(context, message: 'Contact added successfully.', type: AsmitaToastType.success);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AsmitaPalette.deepNavy,
@@ -203,7 +218,7 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       elevation: 0,
                     ),
-                    child: Text('Submit for Verification', style: textTheme.bodyLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                    child: Text('Add Contact', style: textTheme.bodyLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
                   ),
                 ),
               ],
@@ -218,10 +233,6 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final systemBottomPadding = MediaQuery.of(context).padding.bottom;
-
-    final filteredDirectory = _selectedCategoryIndex == 0 
-        ? _directory 
-        : _directory.where((item) => item['role'].toLowerCase() == _categories[_selectedCategoryIndex].toLowerCase()).toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -293,7 +304,7 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                         OutlinedButton.icon(
                           onPressed: () => _showAddProviderModal(context, textTheme, systemBottomPadding),
                           icon: const Icon(Icons.add_rounded, size: 14, color: AsmitaPalette.actionRed),
-                          label: Text("Contribute", style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.actionRed, fontSize: 11, fontWeight: FontWeight.w700)),
+                          label: Text("Add Contact", style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.actionRed, fontSize: 11, fontWeight: FontWeight.w700)),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AsmitaPalette.actionRed,
                             side: const BorderSide(color: AsmitaPalette.actionRed, width: 1.2),
@@ -308,14 +319,39 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                   
                   // Providers Feed List View
                   Expanded(
-                    child: filteredDirectory.isEmpty 
-                      ? Center(child: Text("No helpers registered in this category.", style: textTheme.bodyMedium))
-                      : ListView.builder(
-                      padding: const EdgeInsets.only(left: 16, right: 16, top: 4, bottom: 24),
-                      itemCount: filteredDirectory.length,
-                      itemBuilder: (context, index) {
-                        return _buildDirectoryCard(context, filteredDirectory[index]);
-                      },
+                    child: BlocBuilder<DailyHelpBloc, DailyHelpState>(
+                      builder: (context, state) {
+                        if (state.status == DailyHelpStatus.loading) {
+                          return const Center(child: CircularProgressIndicator(color: AsmitaPalette.deepNavy));
+                        } else if (state.status == DailyHelpStatus.error) {
+                          return Center(child: Text("Error: ${state.errorMessage}", style: textTheme.bodyMedium));
+                        }
+
+                        final filteredDirectory = _selectedCategoryIndex == 0 
+                            ? state.dailyHelpList 
+                            : state.dailyHelpList.where((item) => item.role.toLowerCase() == _categories[_selectedCategoryIndex].toLowerCase()).toList();
+
+                        if (filteredDirectory.isEmpty) {
+                          return Center(child: Text("No helpers registered in this category.", style: textTheme.bodyMedium));
+                        }
+
+                        return RefreshIndicator(
+                          color: AsmitaPalette.actionRed,
+                          backgroundColor: Colors.white,
+                          onRefresh: () async {
+                            context.read<DailyHelpBloc>().add(const FetchDailyHelp());
+                            // Add a small delay to let the animation play smoothly
+                            await Future.delayed(const Duration(milliseconds: 600));
+                          },
+                          child: ListView.builder(
+                            padding: const EdgeInsets.only(left: 16, right: 16, top: 4, bottom: 24),
+                            itemCount: filteredDirectory.length,
+                            itemBuilder: (context, index) {
+                              return _buildDirectoryCard(context, filteredDirectory[index]);
+                            },
+                          ),
+                        );
+                      }
                     ),
                   ),
                 ],
@@ -327,7 +363,7 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
     );
   }
 
-  Widget _buildDirectoryCard(BuildContext context, Map<String, dynamic> item) {
+  Widget _buildDirectoryCard(BuildContext context, DailyHelpModel item) {
     final textTheme = Theme.of(context).textTheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -350,7 +386,7 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
               shape: BoxShape.circle,
               border: Border.all(color: AsmitaPalette.borderGrey),
             ),
-            child: Icon(_getCategoryIcon(item['role']), color: AsmitaPalette.deepNavy, size: 20),
+            child: Icon(_getCategoryIcon(item.role), color: AsmitaPalette.deepNavy, size: 20),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -359,8 +395,8 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
               children: [
                 Row(
                   children: [
-                    Text(item['name'], style: textTheme.titleLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700, color: AsmitaPalette.textDark)),
-                    if (item['verified']) ...[
+                    Text(item.name, style: textTheme.titleLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700, color: AsmitaPalette.textDark)),
+                    if (item.kycStatus == 'Approved' || item.kycStatus == 'Verified') ...[
                       const SizedBox(width: 4),
                       const Icon(Icons.verified_rounded, color: Colors.green, size: 14),
                     ]
@@ -372,16 +408,16 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(color: AsmitaPalette.systemBG, borderRadius: BorderRadius.circular(6)),
-                      child: Text(item['role'], style: textTheme.bodyMedium?.copyWith(fontSize: 9, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy)),
+                      child: Text(item.role, style: textTheme.bodyMedium?.copyWith(fontSize: 9, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy)),
                     ),
                     const SizedBox(width: 10),
                     Icon(Icons.star_rounded, color: Colors.amber.shade600, size: 14),
                     const SizedBox(width: 2),
-                    Text('${item['rating']}', style: textTheme.bodyMedium?.copyWith(fontSize: 11, fontWeight: FontWeight.w700, color: AsmitaPalette.textDark)),
+                    Text('4.5', style: textTheme.bodyMedium?.copyWith(fontSize: 11, fontWeight: FontWeight.w700, color: AsmitaPalette.textDark)),
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text('Trusted by ${item['addedBy']}', style: textTheme.bodyMedium?.copyWith(fontSize: 10, color: AsmitaPalette.textLight, fontWeight: FontWeight.w500)),
+                Text('Trusted by Management', style: textTheme.bodyMedium?.copyWith(fontSize: 10, color: AsmitaPalette.textLight, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
