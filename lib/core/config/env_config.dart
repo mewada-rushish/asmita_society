@@ -1,14 +1,15 @@
 import 'dart:io';
 
+
 /// Defines the operational environment for the application.
 enum AppEnvironment { development, production }
 
 /// Central configuration for API environment endpoints and base URLs.
 class EnvConfig {
-  static const AppEnvironment currentEnvironment = AppEnvironment.production;
+  static AppEnvironment get currentEnvironment => AppEnvironment.production;
 
-  static const String _devBaseUrlAndroid = 'http://192.168.0.184:5000';
-  static const String _devBaseUrliOS = 'http://192.168.0.184:5000';
+  static const String _devBaseUrlAndroid = 'http://192.168.0.87:5000';
+  static const String _devBaseUrliOS = 'http://192.168.0.87:5000';
   static const String _prodBaseUrl = 'https://admin.myasmita.com';
 
   /// Resolves the base URL based on the current environment and platform.
@@ -45,6 +46,9 @@ class EnvConfig {
   static String get residentVisitorRequests =>
       '$baseUrl/app-api/resident/visitor-requests';
   static String get usersMe => '$baseUrl/app-api/users/me';
+
+  /// Global Search
+  static String get globalSearch => '$baseUrl/app-api/search';
 
   /// Endpoints for Community
   static String get communityMessages => '$baseUrl/app-api/community/messages';

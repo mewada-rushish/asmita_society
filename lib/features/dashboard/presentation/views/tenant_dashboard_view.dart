@@ -79,7 +79,6 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -148,17 +147,6 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                             ),
                           ),
                           const SizedBox(height: 24),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Text(
-                              'You have no new updates',
-                              style: textTheme.bodyLarge?.copyWith(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
                           _buildGateSyncModule(context),
                           const SizedBox(height: 24),
                           _buildAdPlaceholder(context, typeLabel: 'Card Ad', height: 80, margin: const EdgeInsets.symmetric(horizontal: 16)),

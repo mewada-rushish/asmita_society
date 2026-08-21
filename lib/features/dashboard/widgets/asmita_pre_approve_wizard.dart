@@ -411,6 +411,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 setState(() {
                   _selectedCategory = cat['label'] as String;
                   _selectedDurationHours = 1;
+                  _selectedCompany = _selectedCategory == 'Cab' ? 'Uber' : 'Amazon';
                 });
                 _nextStep();
               },
