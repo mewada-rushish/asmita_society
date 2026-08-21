@@ -132,6 +132,7 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
     _selectedModalCategory = null;
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
+    final dailyHelpBloc = context.read<DailyHelpBloc>();
 
     showAsmitaBottomSheet(
       context: context,
@@ -201,7 +202,7 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                         return;
                       }
 
-                      context.read<DailyHelpBloc>().add(
+                      dailyHelpBloc.add(
                         AddDailyHelp(
                           name: name,
                           phone: phone,
