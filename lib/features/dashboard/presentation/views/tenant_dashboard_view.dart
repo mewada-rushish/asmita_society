@@ -620,6 +620,8 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                 context, 
                 getIconForFacility(fac.name), 
                 fac.name,
+                containerColor: AsmitaPalette.deepNavy,
+                iconColor: Colors.white,
                 onTap: () {
                   AsmitaDialog.show(
                     context: context,
@@ -652,7 +654,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
     );
   }
 
-  Widget _buildGridItem(BuildContext context, IconData icon, String label, {String? badgeLabel, int? notificationCount, Color iconColor = AsmitaPalette.deepNavy, bool isUtilityButton = false, VoidCallback? onTap}) {
+  Widget _buildGridItem(BuildContext context, IconData icon, String label, {String? badgeLabel, int? notificationCount, Color containerColor = Colors.white, Color iconColor = AsmitaPalette.deepNavy, bool isUtilityButton = false, VoidCallback? onTap}) {
     final textTheme = Theme.of(context).textTheme;
     return SizedBox(
       width: 78,
@@ -671,7 +673,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: containerColor,
                     borderRadius: BorderRadius.circular(16),
                     border: isUtilityButton ? Border.all(color: AsmitaPalette.borderGrey, width: 1.5) : null,
                     boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
