@@ -167,9 +167,8 @@ class AsmitaPrimaryHeader extends StatelessWidget {
             right: 16
           ),
           child: Row(
-            children: [
-          SizedBox(
-            width: MediaQuery.sizeOf(context).width * 0.5,
+              children: [
+            Expanded(
             child: Row(
               children: [
                 Container(
@@ -223,7 +222,6 @@ class AsmitaPrimaryHeader extends StatelessWidget {
               ],
             ),
           ),
-          const Spacer(),
           InkWell(
             onTap: onSearchPressed ?? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AsmitaSearchScreen())),
             borderRadius: BorderRadius.circular(20),

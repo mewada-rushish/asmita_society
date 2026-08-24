@@ -63,7 +63,7 @@ class AsmitaBottomSheet extends StatelessWidget {
             ),
           ),
           if (title.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             Center(
               child: Text(
                 title,

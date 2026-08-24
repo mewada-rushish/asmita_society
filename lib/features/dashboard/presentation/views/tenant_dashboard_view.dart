@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:asmita_society/features/community/presentation/screens/all_notices_screen.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
@@ -14,6 +15,14 @@ import 'package:asmita_society/features/visitor_management/bloc/visitor_state.da
 import 'package:asmita_society/features/visitor_management/bloc/visitor_event.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
+import 'package:asmita_society/features/services/bloc/amenities_bloc.dart';
+import 'package:asmita_society/features/services/bloc/amenities_state.dart';
+import 'package:asmita_society/features/services/presentation/widgets/asmita_facility_booking_wizard.dart';
+import 'package:asmita_society/features/community/presentation/widgets/add_community_post_modal.dart';
+import 'package:asmita_society/features/community/presentation/widgets/community_post_item.dart';
+import 'package:asmita_society/features/community/bloc/community_post_bloc.dart';
+import 'package:asmita_society/features/community/bloc/community_post_state.dart';
+import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 
 class TenantDashboardView extends StatefulWidget {
   final VoidCallback? onNavigateToCommunity; 
@@ -39,6 +48,7 @@ class TenantDashboardView extends StatefulWidget {
 
 class _TenantDashboardViewState extends State<TenantDashboardView> {
   final ScrollController _scrollController = ScrollController();
+  int _currentPostSliderIndex = 0;
 
   @override
   void initState() {
@@ -156,6 +166,8 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                           _buildCommunityPostsModule(context),
                           const SizedBox(height: 24),
                           _buildServicesFooter(context),
+                          const SizedBox(height: 12),
+                          _buildFrequentServices(context),
                           const SizedBox(height: 40),
                         ],
                       ),
@@ -225,16 +237,46 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text("Community Posts", style: textTheme.titleLarge?.copyWith(fontSize: 15, fontWeight: FontWeight.w700)),
-          OutlinedButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.edit_note_rounded, size: 16, color: AsmitaPalette.actionRed),
-            label: Text("New Post", style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.actionRed, fontSize: 12, fontWeight: FontWeight.w600)),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AsmitaPalette.actionRed,
-              side: const BorderSide(color: AsmitaPalette.actionRed, width: 1.2),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              InkWell(
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const AllNoticesScreen()));
+                },
+                borderRadius: BorderRadius.circular(4),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('View All', style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.deepNavy, fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 2),
+                      const Icon(Icons.arrow_forward_ios_rounded, size: 10, color: AsmitaPalette.deepNavy),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: () {
+                  showAsmitaBottomSheet(
+                    context: context,
+                    title: 'New Community Post',
+                    isScrollControlled: true,
+                    child: const AddCommunityPostModal(),
+                  );
+                },
+                icon: const Icon(Icons.edit_note_rounded, size: 16, color: AsmitaPalette.actionRed),
+                label: Text("New Post", style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.actionRed, fontSize: 12, fontWeight: FontWeight.w600)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AsmitaPalette.actionRed,
+                  side: const BorderSide(color: AsmitaPalette.actionRed, width: 1.2),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -421,39 +463,85 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
   }
 
   Widget _buildCommunityPostsModule(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: AsmitaPalette.actionRed.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.assignment_outlined, color: AsmitaPalette.actionRed, size: 22),
+    return BlocBuilder<CommunityPostBloc, CommunityPostState>(
+      builder: (context, state) {
+        if (state.status == CommunityPostStatus.loading && state.posts.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final activePosts = state.posts.where((p) {
+          if (p.status != 'approved') return false;
+          final now = DateTime.now();
+          final today = DateTime(now.year, now.month, now.day);
+          if (p.startDate != null) {
+            final start = DateTime(p.startDate!.year, p.startDate!.month, p.startDate!.day);
+            if (start.isAfter(today)) return false;
+          }
+          if (p.endDate != null) {
+            final end = DateTime(p.endDate!.year, p.endDate!.month, p.endDate!.day);
+            if (end.isBefore(today)) return false;
+          }
+          return true;
+        }).toList();
+
+        activePosts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        final top3 = activePosts.take(3).toList();
+
+        if (top3.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+              ),
+              child: const Center(child: Text("No community posts yet.")),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Notice", style: textTheme.titleLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 2),
-                  Text("Water supply shutdown scheduled for maintenance this Thursday from 10:00 AM to 2:00 PM.", style: textTheme.bodyMedium?.copyWith(fontSize: 12, height: 1.4)),
-                ],
+          );
+        }
+
+        return Column(
+          children: [
+            SizedBox(
+              height: 160,
+              child: PageView.builder(
+                itemCount: top3.length,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentPostSliderIndex = index;
+                  });
+                },
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: CommunityPostItem(post: top3[index]),
+                  );
+                },
               ),
             ),
-            Icon(Icons.more_vert_rounded, color: Colors.grey.shade400, size: 20),
+            if (top3.length > 1) ...[
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  top3.length,
+                  (index) => Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _currentPostSliderIndex == index ? AsmitaPalette.deepNavy : Colors.grey.shade300,
+                    ),
+                  ),
+                ),
+              ),
+            ]
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -482,6 +570,68 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFrequentServices(BuildContext context) {
+    return BlocBuilder<AmenitiesBloc, AmenitiesState>(
+      builder: (context, state) {
+        if (state.status == AmenitiesStatus.loading && state.amenities.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        // Count booking frequency by amenity ID
+        final bookingCounts = <int, int>{};
+        for (final booking in state.myBookings) {
+          if (booking.amenity != null) {
+            bookingCounts[booking.amenity!.amenityId] = (bookingCounts[booking.amenity!.amenityId] ?? 0) + 1;
+          }
+        }
+
+        // Sort amenities by booking count (descending)
+        final sortedAmenities = List.of(state.amenities)..sort((a, b) {
+          final countA = bookingCounts[a.amenityId] ?? 0;
+          final countB = bookingCounts[b.amenityId] ?? 0;
+          return countB.compareTo(countA);
+        });
+
+        final topFacilities = sortedAmenities.take(4).toList();
+
+        if (topFacilities.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        IconData getIconForFacility(String name) {
+          final lower = name.toLowerCase();
+          if (lower.contains('pool')) return Icons.pool_rounded;
+          if (lower.contains('gym')) return Icons.fitness_center_rounded;
+          if (lower.contains('yoga')) return Icons.self_improvement_rounded;
+          if (lower.contains('banquet') || lower.contains('hall')) return Icons.celebration_rounded;
+          return Icons.business_center_rounded;
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: topFacilities.map((fac) {
+              return _buildGridItem(
+                context, 
+                getIconForFacility(fac.name), 
+                fac.name,
+                onTap: () {
+                  AsmitaDialog.show(
+                    context: context,
+                    title: '${fac.name} Booking',
+                    content: AsmitaFacilityBookingWizard(initialAmenity: fac),
+                  );
+                }
+              );
+            }).toList(),
+          ),
+        );
+      },
     );
   }
 

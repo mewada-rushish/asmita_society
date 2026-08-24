@@ -1,23 +1,28 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/design_system.dart';
-import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart'; 
+import '../../../../core/widgets/asmita_bottom_nav_bar.dart'; 
 import '../../../../core/widgets/asmita_text_field.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_contacts/flutter_contacts.dart' as flutter_contacts;
 import '../../bloc/daily_help_bloc.dart';
 import '../../bloc/daily_help_state.dart';
 import '../../bloc/daily_help_event.dart';
 import '../../data/models/daily_help_model.dart';
 import '../../../../core/widgets/asmita_toast.dart';
+import '../../../../core/widgets/asmita_animated_refresh.dart';
 
 class DailyHelpScreen extends StatefulWidget {
   final VoidCallback? onNavigateToSearch;
   final VoidCallback? onNavigateToCommunity;
+  final ValueChanged<int>? onNavigateToTab;
 
   const DailyHelpScreen({
     super.key,
     this.onNavigateToSearch,
     this.onNavigateToCommunity,
+    this.onNavigateToTab,
   });
 
   @override
@@ -237,14 +242,50 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AsmitaPalette.deepNavy, size: 20),
+          onPressed: () => Navigator.pop(context),
+          splashRadius: 24,
+        ),
+        title: Text('Daily Help', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy, fontSize: 18)),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search_rounded, color: AsmitaPalette.deepNavy),
+            onPressed: widget.onNavigateToSearch,
+            splashRadius: 24,
+          ),
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline_rounded, color: AsmitaPalette.deepNavy),
+            onPressed: widget.onNavigateToCommunity,
+            splashRadius: 24,
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      bottomNavigationBar: AsmitaBottomNavBar(
+        currentIndex: -1,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pop(context);
+            return;
+          }
+          if (widget.onNavigateToTab != null) {
+            widget.onNavigateToTab!(index);
+          } else {
+            Navigator.pop(context);
+            if (index == 2 && widget.onNavigateToCommunity != null) {
+              widget.onNavigateToCommunity!();
+            }
+          }
+        },
+      ),
       body: Column(
         children: [          
-          AsmitaPrimaryHeader(
-            userInitials: 'RM',
-            onSearchPressed: widget.onNavigateToSearch,
-            onChatPressed: widget.onNavigateToCommunity,
-          ),
-          
           // Directory Content Area
           Expanded(
             child: Container(
@@ -322,35 +363,41 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                   Expanded(
                     child: BlocBuilder<DailyHelpBloc, DailyHelpState>(
                       builder: (context, state) {
-                        if (state.status == DailyHelpStatus.loading) {
+                        if (state.status == DailyHelpStatus.loading && state.dailyHelpList.isEmpty) {
                           return const Center(child: CircularProgressIndicator(color: AsmitaPalette.deepNavy));
-                        } else if (state.status == DailyHelpStatus.error) {
+                        } else if (state.status == DailyHelpStatus.error && state.dailyHelpList.isEmpty) {
                           return Center(child: Text("Error: ${state.errorMessage}", style: textTheme.bodyMedium));
                         }
 
                         final filteredDirectory = _selectedCategoryIndex == 0 
                             ? state.dailyHelpList 
-                            : state.dailyHelpList.where((item) => item.role.toLowerCase() == _categories[_selectedCategoryIndex].toLowerCase()).toList();
+                            : state.dailyHelpList.where((item) => item.role.toLowerCase() == _dropdownCategories[_selectedCategoryIndex - 1].toLowerCase()).toList();
 
                         if (filteredDirectory.isEmpty) {
                           return Center(child: Text("No helpers registered in this category.", style: textTheme.bodyMedium));
                         }
 
-                        return RefreshIndicator(
-                          color: AsmitaPalette.actionRed,
-                          backgroundColor: Colors.white,
-                          onRefresh: () async {
-                            context.read<DailyHelpBloc>().add(const FetchDailyHelp());
-                            // Add a small delay to let the animation play smoothly
-                            await Future.delayed(const Duration(milliseconds: 600));
-                          },
-                          child: ListView.builder(
-                            padding: const EdgeInsets.only(left: 16, right: 16, top: 4, bottom: 24),
-                            itemCount: filteredDirectory.length,
-                            itemBuilder: (context, index) {
-                              return _buildDirectoryCard(context, filteredDirectory[index]);
-                            },
-                          ),
+                        return CustomScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                          slivers: [
+                            AsmitaAnimatedRefresh(
+                              onRefresh: () async {
+                                context.read<DailyHelpBloc>().add(const FetchDailyHelp());
+                                await Future.delayed(const Duration(milliseconds: 600));
+                              },
+                            ),
+                            SliverPadding(
+                              padding: const EdgeInsets.only(left: 16, right: 16, top: 4, bottom: 24),
+                              sliver: SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    return _buildDirectoryCard(context, filteredDirectory[index]);
+                                  },
+                                  childCount: filteredDirectory.length,
+                                ),
+                              ),
+                            ),
+                          ],
                         );
                       }
                     ),
@@ -422,14 +469,61 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
               ],
             ),
           ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.call_rounded, color: AsmitaPalette.actionRed, size: 18),
-            style: IconButton.styleFrom(
-              backgroundColor: AsmitaPalette.actionRed.withValues(alpha: 0.08),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.all(10),
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                onPressed: () async {
+                    try {
+                      final readStatus = await flutter_contacts.FlutterContacts.permissions.request(flutter_contacts.PermissionType.read);
+                      final writeStatus = await flutter_contacts.FlutterContacts.permissions.request(flutter_contacts.PermissionType.write);
+                      if (readStatus == flutter_contacts.PermissionStatus.granted && writeStatus == flutter_contacts.PermissionStatus.granted) {
+                        final newContact = flutter_contacts.Contact(
+                        name: flutter_contacts.Name(first: item.name),
+                        phones: [flutter_contacts.Phone(number: item.phone)],
+                      );
+                      await flutter_contacts.FlutterContacts.create(newContact);
+                      if (context.mounted) {
+                        AsmitaToast.show(context, message: 'Contact saved to phone', type: AsmitaToastType.success);
+                      }
+                    } else {
+                      if (context.mounted) {
+                        AsmitaToast.show(context, message: 'Permission denied', type: AsmitaToastType.error);
+                      }
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      AsmitaToast.show(context, message: 'Error: ${e.toString()}', type: AsmitaToastType.error);
+                    }
+                  }
+                },
+                icon: const Icon(Icons.person_add_rounded, color: AsmitaPalette.deepNavy, size: 18),
+                style: IconButton.styleFrom(
+                  backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.all(10),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () async {
+                  final uri = Uri.parse('tel:${item.phone}');
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri);
+                  } else {
+                    if (context.mounted) {
+                      AsmitaToast.show(context, message: 'Could not launch dialer', type: AsmitaToastType.error);
+                    }
+                  }
+                },
+                icon: const Icon(Icons.call_rounded, color: AsmitaPalette.actionRed, size: 18),
+                style: IconButton.styleFrom(
+                  backgroundColor: AsmitaPalette.actionRed.withValues(alpha: 0.08),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.all(10),
+                ),
+              ),
+            ],
           )
         ],
       ),
