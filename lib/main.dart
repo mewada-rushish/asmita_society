@@ -21,6 +21,7 @@ import 'features/services/bloc/amenities_bloc.dart';
 import 'features/services/bloc/amenities_event.dart';
 import 'features/dashboard/data/repositories/search_repository.dart';
 import 'features/dashboard/bloc/search/search_bloc.dart';
+import 'features/community/data/repositories/community_post_repository.dart';
 import 'features/community/bloc/community_post_bloc.dart';
 import 'features/community/bloc/community_post_event.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -51,6 +52,7 @@ Future<void> main() async {
   final visitorRepo = VisitorRepository(dio: dioClient.dio);
   final amenitiesRepo = AmenitiesRepository(dio: dioClient.dio);
   final searchRepo = SearchRepository(dio: dioClient.dio);
+  final communityPostRepo = ApiCommunityPostRepository(dio: dioClient.dio);
 
   bool isDeviceSafe = true;
   try {
@@ -67,6 +69,7 @@ Future<void> main() async {
       visitorRepository: visitorRepo,
       amenitiesRepository: amenitiesRepo,
       searchRepository: searchRepo,
+      communityPostRepository: communityPostRepo,
       isDeviceSafe: isDeviceSafe,
     ),
   ));
@@ -78,6 +81,7 @@ class AsmitaApp extends StatelessWidget {
   final VisitorRepository visitorRepository;
   final AmenitiesRepository amenitiesRepository;
   final SearchRepository searchRepository;
+  final CommunityPostRepository communityPostRepository;
   final bool isDeviceSafe;
 
   const AsmitaApp({
@@ -87,6 +91,7 @@ class AsmitaApp extends StatelessWidget {
     required this.visitorRepository,
     required this.amenitiesRepository,
     required this.searchRepository,
+    required this.communityPostRepository,
     required this.isDeviceSafe,
   });
 
@@ -117,7 +122,9 @@ class AsmitaApp extends StatelessWidget {
           ),
         ),
         BlocProvider<CommunityPostBloc>(
-          create: (context) => CommunityPostBloc()..add(LoadCommunityPosts()),
+          create: (context) => CommunityPostBloc(
+            repository: communityPostRepository,
+          )..add(LoadCommunityPosts()),
         ),
       ],
       child: MaterialApp(
@@ -137,4 +144,4 @@ class AsmitaApp extends StatelessWidget {
       ),
     );
   }
-}
+}
