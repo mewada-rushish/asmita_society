@@ -21,6 +21,10 @@ import 'features/services/bloc/amenities_bloc.dart';
 import 'features/services/bloc/amenities_event.dart';
 import 'features/dashboard/data/repositories/search_repository.dart';
 import 'features/dashboard/bloc/search/search_bloc.dart';
+import 'features/community/bloc/community_post_bloc.dart';
+import 'features/community/bloc/community_post_event.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_quill/flutter_quill.dart' show FlutterQuillLocalizations;
 import 'package:safe_device/safe_device.dart';
 import 'features/auth/presentation/unsafe_device_screen.dart';
 
@@ -112,11 +116,23 @@ class AsmitaApp extends StatelessWidget {
             searchRepository: searchRepository,
           ),
         ),
+        BlocProvider<CommunityPostBloc>(
+          create: (context) => CommunityPostBloc()..add(LoadCommunityPosts()),
+        ),
       ],
       child: MaterialApp(
         title: 'AsmitA',
         debugShowCheckedModeBanner: false,
         theme: AsmitaTheme.lightTheme,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+          FlutterQuillLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('en', 'US'),
+        ],
         home: isDeviceSafe ? const RootScreen() : const UnsafeDeviceScreen(),
       ),
     );

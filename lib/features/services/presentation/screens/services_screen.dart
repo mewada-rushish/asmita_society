@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import '../widgets/facility_bookings.dart';
-import '../widgets/verified_local_handymen.dart';
 
 class ServicesScreen extends StatelessWidget {
   final VoidCallback? onNavigateToSearch;
@@ -25,15 +24,13 @@ class ServicesScreen extends StatelessWidget {
             onSearchPressed: onNavigateToSearch,
             onChatPressed: onNavigateToCommunity,
           ),
-          Expanded(
+          const Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const FacilityBookings(),
-                  const SizedBox(height: 24),
-                  const VerifiedLocalHandymen(),
+                  FacilityBookings(),
                 ],
               ),
             ),

@@ -63,6 +63,10 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
               Navigator.pop(context);
               setState(() => _currentIndex = 2);
             },
+            onNavigateToTab: (index) {
+              Navigator.pop(context);
+              setState(() => _currentIndex = index);
+            },
           ),
         ),
       ),
