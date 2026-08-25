@@ -5,10 +5,21 @@ import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_event.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 
+import 'committee_members_screen.dart';
+import 'documents_screen.dart';
+import 'family_members_screen.dart';
+import 'help_support_screen.dart';
+import 'pets_screen.dart';
+import 'profile_screen.dart';
+import 'rules_screen.dart';
+import 'settings_screen.dart';
+import 'vehicles_screen.dart';
+
 class MenuScreen extends StatelessWidget {
   final String userRole;
+  final void Function(int index)? onNavigateToTab;
 
-  const MenuScreen({super.key, required this.userRole});
+  const MenuScreen({super.key, required this.userRole, this.onNavigateToTab});
 
   @override
   Widget build(BuildContext context) {
@@ -84,19 +95,28 @@ class MenuScreen extends StatelessWidget {
 
   Widget _buildProfileCard(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return InkWell(
+      onTap: () {
+        // We'll import the profile screen later, but since it's already in the same directory, we can navigate
+        Navigator.pop(context); // Close the tab
+        if (onNavigateToTab != null) onNavigateToTab!(4); // Dummy index just to trigger rebuild or we can navigate directly
+        // Wait, navigating from a tab means we just push on top of it.
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
@@ -121,6 +141,7 @@ class MenuScreen extends StatelessWidget {
           ),
           const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AsmitaPalette.textLight),
         ],
+      ),
       ),
     );
   }
@@ -156,7 +177,23 @@ class MenuScreen extends StatelessWidget {
       onTap: () {
         if (isDestructive && title == 'Logout') {
           context.read<AuthBloc>().add(AuthLogoutRequested());
+          return;
         }
+        
+        Widget screen;
+        switch (title) {
+          case 'Committee Members': screen = const CommitteeMembersScreen(); break;
+          case 'Rules & Regulations': screen = const RulesScreen(); break;
+          case 'Important Documents': screen = const DocumentsScreen(); break;
+          case 'Family Members': screen = const FamilyMembersScreen(); break;
+          case 'Vehicles': screen = const VehiclesScreen(); break;
+          case 'Pets': screen = const PetsScreen(); break;
+          case 'Settings': screen = const SettingsScreen(); break;
+          case 'Help & Support': screen = const HelpSupportScreen(); break;
+          default: return;
+        }
+        
+        Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
       },
       borderRadius: BorderRadius.circular(16),
       child: Padding(

@@ -104,7 +104,7 @@ class ApiCommunityRepository implements CommunityRepository {
           currentUserName,
         ).reversed.toList();
       }
-      rethrow;
+      return []; // Return empty list instead of crashing
     }
   }
 

@@ -12,12 +12,14 @@ class AsmitaPrimaryHeader extends StatelessWidget {
   final String userInitials;
   final VoidCallback? onSearchPressed;
   final VoidCallback? onChatPressed;
+  final bool showBackButton;
 
   const AsmitaPrimaryHeader({
     super.key,
     this.userInitials = 'RM',
     this.onSearchPressed,
     this.onChatPressed,
+    this.showBackButton = false,
   });
 
   void _showPropertiesBottomSheet(BuildContext context, UserModel user) {
@@ -168,6 +170,18 @@ class AsmitaPrimaryHeader extends StatelessWidget {
           ),
           child: Row(
               children: [
+            if (showBackButton)
+              Padding(
+                padding: const EdgeInsets.only(right: 12.0),
+                child: InkWell(
+                  onTap: () => Navigator.pop(context),
+                  borderRadius: BorderRadius.circular(20),
+                  child: const Padding(
+                    padding: EdgeInsets.all(4.0),
+                    child: Icon(Icons.arrow_back_ios_new_rounded, color: AsmitaPalette.deepNavy, size: 20),
+                  ),
+                ),
+              ),
             Expanded(
             child: Row(
               children: [
