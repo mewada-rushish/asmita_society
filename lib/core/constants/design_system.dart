@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AsmitaPalette {
+  static const Color successGreen = Color(0xFF4CAF50);
   static const Color actionRed = Color(0xFFE21F26);
   static const Color deepNavy = Color(0xFF27347B);
   static const Color systemBG = Color(0xFFF8F8FB);

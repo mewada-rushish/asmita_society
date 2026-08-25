@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:asmita_society/features/community/presentation/screens/all_notices_screen.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
@@ -30,6 +29,7 @@ class OwnerDashboardView extends StatefulWidget {
   final VoidCallback? onNavigateToViewMore; 
   final VoidCallback? onNavigateToServices;
   final VoidCallback? onNavigateToDailyHelp;
+  final VoidCallback? onNavigateToAllNotices;
   final VoidCallback? onNavigateToSearch;
 
   const OwnerDashboardView({
@@ -39,6 +39,7 @@ class OwnerDashboardView extends StatefulWidget {
     this.onNavigateToViewMore, 
     this.onNavigateToServices,
     this.onNavigateToDailyHelp,
+    this.onNavigateToAllNotices,
     this.onNavigateToSearch,
   });
 
@@ -208,7 +209,9 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
             children: [
               InkWell(
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const AllNoticesScreen()));
+                  if (widget.onNavigateToAllNotices != null) {
+                    widget.onNavigateToAllNotices!();
+                  }
                 },
                 borderRadius: BorderRadius.circular(4),
                 child: Padding(
@@ -500,7 +503,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
         return Column(
           children: [
             SizedBox(
-              height: 160,
+              height: 190,
               child: PageView.builder(
                 itemCount: top3.length,
                 onPageChanged: (index) {

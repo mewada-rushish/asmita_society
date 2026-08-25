@@ -60,4 +60,14 @@ class EnvConfig {
   static String get floors => '$baseUrl/app-api/properties/floors';
   static String get flats => '$baseUrl/app-api/properties/flats';
   static String get linkFlat => '$baseUrl/app-api/properties/link-flat';
+
+  /// Endpoints for Menu Sub-Pages
+  static String get familyMembers => '$baseUrl/app-api/family-members';
+  static String get userVehicles => '$baseUrl/app-api/vehicles';
+  static String get userPets => '$baseUrl/app-api/pets';
+  static String get committeeMembers => '$baseUrl/app-api/committee-members';
+  static String get societyRules => '$baseUrl/app-api/rules';
+  static String get societyDocuments => '$baseUrl/app-api/documents';
+  static String get supportTickets => '$baseUrl/app-api/support-tickets';
+  static String get userPreferences => '$baseUrl/app-api/user-preferences';
 }

@@ -85,7 +85,14 @@ class VisitorRepository {
       debugPrint('mergedHistory count: ${mergedHistory.length}');
       return mergedHistory;
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? 'Network error fetching history';
+      String msg = 'Network error fetching history';
+      if (e.response?.data != null) {
+        if (e.response!.data is Map) {
+          msg = e.response!.data['message'] ?? msg;
+        } else {
+          msg = 'Server Error: ${e.response!.statusCode}';
+        }
+      }
       throw Exception(msg);
     } catch (e, stackTrace) {
       FirebaseCrashlytics.instance.recordError(e, stackTrace, reason: 'Fetch History Failure');

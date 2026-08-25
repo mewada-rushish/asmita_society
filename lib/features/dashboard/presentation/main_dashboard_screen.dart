@@ -3,6 +3,7 @@ import '../../../core/widgets/asmita_bottom_nav_bar.dart';
 import '../../../core/widgets/asmita_animated_indexed_stack.dart';
 import '../../menu/presentation/screens/menu_screen.dart'; 
 import '../../community/presentation/screens/community_screen.dart';
+import '../../community/presentation/screens/all_notices_screen.dart';
 import '../../visitor_management/presentation/screens/visitor_history_screen.dart';
 import '../../services/presentation/screens/services_screen.dart';
 import 'screens/view_more_screen.dart';
@@ -73,6 +74,28 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
     );
   }
 
+  void _navigateToAllNotices() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AllNoticesScreen(
+          onNavigateToSearch: () {
+            Navigator.pop(context);
+            _navigateToSearch();
+          },
+          onNavigateToCommunity: () {
+            Navigator.pop(context);
+            setState(() => _currentIndex = 2);
+          },
+          onNavigateToTab: (index) {
+            Navigator.pop(context);
+            setState(() => _currentIndex = index);
+          },
+        ),
+      ),
+    );
+  }
+
   // Dynamically builds the view list cleanly to keep callback bindings alive on state mutations
   List<Widget> _buildScreens() {
     return [
@@ -86,7 +109,12 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         onNavigateToCommunity: () => setState(() => _currentIndex = 2),
       ),
       VisitorHistoryScreen(onBack: () => setState(() => _currentIndex = 0)),               // Index 3: Gate Records (History)
-      MenuScreen(userRole: widget.userRole),      // Index 4: Profile Settings
+      MenuScreen(
+        userRole: widget.userRole,
+        onNavigateToTab: (index) {
+          setState(() => _currentIndex = index);
+        },
+      ),      // Index 4: Profile Settings
     ];
   }
 
@@ -116,6 +144,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
             });
           },
           onNavigateToDailyHelp: _navigateToDailyHelp,
+          onNavigateToAllNotices: _navigateToAllNotices,
           onNavigateToSearch: _navigateToSearch,
         );
       case 'tenant':
@@ -137,6 +166,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
           },
           onNavigateToServices: () => setState(() => _currentIndex = 1),
           onNavigateToDailyHelp: _navigateToDailyHelp,
+          onNavigateToAllNotices: _navigateToAllNotices,
           onNavigateToSearch: _navigateToSearch,
         );
       default:

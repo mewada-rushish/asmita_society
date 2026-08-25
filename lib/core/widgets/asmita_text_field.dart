@@ -9,6 +9,7 @@ class AsmitaTextField extends StatelessWidget {
   final IconData icon;
   final TextEditingController? controller;
   final TextInputType? keyboardType;
+  final bool readOnly;
 
   const AsmitaTextField({
     super.key,
@@ -17,6 +18,7 @@ class AsmitaTextField extends StatelessWidget {
     required this.icon,
     this.controller,
     this.keyboardType,
+    this.readOnly = false,
   });
 
   @override
@@ -30,6 +32,7 @@ class AsmitaTextField extends StatelessWidget {
         TextField(
           controller: controller,
           keyboardType: keyboardType,
+          readOnly: readOnly,
           style: textTheme.bodyLarge?.copyWith(fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,
