@@ -25,6 +25,7 @@ class FamilyRepository {
   Future<FamilyMemberModel?> addFamilyMember({
     required String name,
     required String relationship,
+    String? contactNumber,
     bool isEmergencyContact = false,
   }) async {
     try {
@@ -33,6 +34,7 @@ class FamilyRepository {
         data: {
           'name': name,
           'relationship': relationship,
+          'contact_number': contactNumber,
           'is_emergency_contact': isEmergencyContact,
         },
       );
@@ -49,6 +51,7 @@ class FamilyRepository {
   Future<bool> updateFamilyMember(int id, {
     required String name,
     required String relationship,
+    String? contactNumber,
     required bool isEmergencyContact,
   }) async {
     try {
@@ -57,6 +60,7 @@ class FamilyRepository {
         data: {
           'name': name,
           'relationship': relationship,
+          'contact_number': contactNumber,
           'is_emergency_contact': isEmergencyContact,
         },
       );

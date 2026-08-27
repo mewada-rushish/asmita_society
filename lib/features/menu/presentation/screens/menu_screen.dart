@@ -185,7 +185,7 @@ class MenuScreen extends StatelessWidget {
           case 'Committee Members': screen = const CommitteeMembersScreen(); break;
           case 'Rules & Regulations': screen = const RulesScreen(); break;
           case 'Important Documents': screen = const DocumentsScreen(); break;
-          case 'Family Members': screen = const FamilyMembersScreen(); break;
+          case 'Family Members': screen = FamilyMembersScreen(onNavigateToTab: onNavigateToTab); break;
           case 'Vehicles': screen = const VehiclesScreen(); break;
           case 'Pets': screen = const PetsScreen(); break;
           case 'Settings': screen = const SettingsScreen(); break;

@@ -122,6 +122,44 @@ class AuthRepository {
     }
   }
 
+  /// Updates the user's profile information
+  Future<AuthResponse> updateProfile({
+    required String fullName,
+    required String email,
+    required String mobile,
+    String? token,
+  }) async {
+    try {
+      final options = token != null 
+          ? Options(headers: {'Authorization': 'Bearer $token'}) 
+          : null;
+
+      final response = await _dio.put(
+        '${EnvConfig.baseUrl}/app-api/users/me/update',
+        data: {
+          'full_name': fullName,
+          'email_id': email,
+          'mobile_number': mobile,
+        },
+        options: options,
+      );
+
+      final data = _ensureMap(response.data);
+      if (data['success'] == true && data['user'] != null) {
+        // We can create an AuthResponse from the user data or at least return the user part
+        // Since AuthResponse needs user and society, let's just return what we have mapped
+        return AuthResponse.fromJson({
+          'status': 'success',
+          'user': data['user'],
+        });
+      }
+      
+      throw Exception(data['message'] ?? 'Failed to update profile');
+    } on DioException catch (e) {
+      throw _parseError(e, 'Failed to update profile.');
+    }
+  }
+
   /// Inform the backend that the session is terminating
   Future<void> logout(int? userId, String? userType) async {
     try {

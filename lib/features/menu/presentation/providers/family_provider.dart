@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/family_repository.dart';
 import '../../data/models/family_member_model.dart';
@@ -20,27 +21,58 @@ class FamilyNotifier extends AsyncNotifier<List<FamilyMemberModel>> {
 
   @override
   FutureOr<List<FamilyMemberModel>> build() async {
-    return _repository.getFamilyMembers();
+    return _fetchAndInject();
   }
 
   Future<void> fetchMembers() async {
     state = const AsyncValue.loading();
     try {
-      final members = await _repository.getFamilyMembers();
+      final members = await _fetchAndInject();
       state = AsyncValue.data(members);
     } catch (e, stackTrace) {
       state = AsyncValue.error(e, stackTrace);
     }
   }
 
+  Future<List<FamilyMemberModel>> _fetchAndInject() async {
+    final members = await _repository.getFamilyMembers();
+    
+    // Inject the primary member (the logged-in user)
+    final secureStorage = SecureStorageService();
+    final userProfileJsonStr = await secureStorage.read(key: 'user_profile');
+    FamilyMemberModel? primaryMember;
+    
+    if (userProfileJsonStr != null) {
+      try {
+        final profileMap = jsonDecode(userProfileJsonStr);
+        primaryMember = FamilyMemberModel(
+          id: -1, // Use -1 to identify primary member in UI
+          name: profileMap['full_name'] ?? 'Primary Member',
+          relationship: 'Primary',
+          contactNumber: profileMap['mobile_number'],
+          isEmergencyContact: true,
+          avatarUrl: profileMap['profile_picture_url'],
+        );
+      } catch (_) {}
+    }
+
+    if (primaryMember != null) {
+      return [primaryMember, ...members];
+    } else {
+      return members;
+    }
+  }
+
   Future<bool> addMember({
     required String name,
     required String relationship,
+    String? contactNumber,
     bool isEmergencyContact = false,
   }) async {
     final newMember = await _repository.addFamilyMember(
       name: name,
       relationship: relationship,
+      contactNumber: contactNumber,
       isEmergencyContact: isEmergencyContact,
     );
     if (newMember != null) {
@@ -57,12 +89,14 @@ class FamilyNotifier extends AsyncNotifier<List<FamilyMemberModel>> {
   Future<bool> updateMember(int id, {
     required String name,
     required String relationship,
+    String? contactNumber,
     required bool isEmergencyContact,
   }) async {
     final success = await _repository.updateFamilyMember(
       id,
       name: name,
       relationship: relationship,
+      contactNumber: contactNumber,
       isEmergencyContact: isEmergencyContact,
     );
     if (success && state.value != null) {
@@ -72,6 +106,7 @@ class FamilyNotifier extends AsyncNotifier<List<FamilyMemberModel>> {
             id: m.id,
             name: name,
             relationship: relationship,
+            contactNumber: contactNumber,
             isEmergencyContact: isEmergencyContact,
             avatarUrl: m.avatarUrl,
           );

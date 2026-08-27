@@ -3,18 +3,20 @@ import 'package:asmita_society/core/constants/design_system.dart';
 
 class AsmitaSubHeader extends StatelessWidget {
   final String title;
+  final Widget? trailing;
 
   const AsmitaSubHeader({
     super.key,
     required this.title,
+    this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0, bottom: 8.0),
+      padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 12.0, bottom: 8.0),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: AsmitaPalette.deepNavy.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(12),
@@ -49,6 +51,7 @@ class AsmitaSubHeader extends StatelessWidget {
                 ),
               ),
             ),
+            ?trailing,
           ],
         ),
       ),

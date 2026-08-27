@@ -19,6 +19,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthInitiateRequested>(_onInitiateRequested);
     on<AuthVerifyRequested>(_onVerifyRequested);
     on<AuthRegisterRequested>(_onRegisterRequested);
+    on<AuthUpdateProfileRequested>(_onUpdateProfileRequested);
     on<AuthLogoutRequested>(_onLogoutRequested);
   }
 
@@ -140,6 +141,41 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await _emitAuthenticated(response, emit);
     } catch (e) {
       emit(AuthError(message: _formatException(e)));
+    }
+  }
+
+  Future<void> _onUpdateProfileRequested(
+    AuthUpdateProfileRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! AuthAuthenticated) return;
+    
+    emit(AuthLoading());
+    try {
+      final token = await secureStorage.getToken();
+      final response = await authRepository.updateProfile(
+        fullName: event.fullName,
+        email: event.email,
+        mobile: event.mobile,
+        token: token,
+      );
+      
+      if (response.data != null) {
+        // We only get updated user data, keep existing token
+        final updatedResponse = AuthResponse(
+          status: 'success',
+          token: token ?? '',
+          data: response.data,
+        );
+        await _emitAuthenticated(updatedResponse, emit);
+      } else {
+        emit(const AuthError(message: 'Invalid update payload.'));
+      }
+    } catch (e) {
+      // Revert to old state
+      emit(AuthError(message: _formatException(e)));
+      emit(currentState);
     }
   }
 
