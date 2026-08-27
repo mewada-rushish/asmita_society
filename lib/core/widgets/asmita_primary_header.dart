@@ -13,6 +13,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
   final VoidCallback? onSearchPressed;
   final VoidCallback? onChatPressed;
   final bool showBackButton;
+  final Color? backgroundColor;
 
   const AsmitaPrimaryHeader({
     super.key,
@@ -20,6 +21,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
     this.onSearchPressed,
     this.onChatPressed,
     this.showBackButton = false,
+    this.backgroundColor,
   });
 
   void _showPropertiesBottomSheet(BuildContext context, UserModel user) {
@@ -161,7 +163,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
         }
 
         return Container(
-          color: AsmitaPalette.systemBG,
+          color: backgroundColor ?? AsmitaPalette.systemBG,
           padding: EdgeInsets.only(
             top: topPadding > 0 ? topPadding + 8 : 24, 
             bottom: 12, 
