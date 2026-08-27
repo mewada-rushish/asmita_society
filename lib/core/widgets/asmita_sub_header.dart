@@ -4,11 +4,13 @@ import 'package:asmita_society/core/constants/design_system.dart';
 class AsmitaSubHeader extends StatelessWidget {
   final String title;
   final Widget? trailing;
+  final VoidCallback? onBackPressed;
 
   const AsmitaSubHeader({
     super.key,
     required this.title,
     this.trailing,
+    this.onBackPressed,
   });
 
   @override
@@ -29,7 +31,7 @@ class AsmitaSubHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             GestureDetector(
-              onTap: () => Navigator.pop(context),
+              onTap: onBackPressed ?? () => Navigator.pop(context),
               behavior: HitTestBehavior.opaque,
               child: const Padding(
                 padding: EdgeInsets.only(right: 12.0, top: 2.0, bottom: 2.0),

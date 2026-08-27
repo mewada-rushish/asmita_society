@@ -8,7 +8,8 @@ import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/auth/data/models/user_model.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final void Function(int)? onNavigateToTab;
+  const ProfileScreen({super.key, this.onNavigateToTab});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -110,6 +111,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 AsmitaSubHeader(
                   title: 'Profile',
+                  onBackPressed: () {
+                    widget.onNavigateToTab?.call(4);
+                    Navigator.pop(context);
+                  },
                   trailing: GestureDetector(
                     onTap: isLoading ? null : _toggleEdit,
                     behavior: HitTestBehavior.opaque,

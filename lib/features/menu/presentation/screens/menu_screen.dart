@@ -101,7 +101,7 @@ class MenuScreen extends StatelessWidget {
         Navigator.pop(context); // Close the tab
         if (onNavigateToTab != null) onNavigateToTab!(4); // Dummy index just to trigger rebuild or we can navigate directly
         // Wait, navigating from a tab means we just push on top of it.
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+        Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(onNavigateToTab: onNavigateToTab)));
       },
       borderRadius: BorderRadius.circular(20),
       child: Container(
