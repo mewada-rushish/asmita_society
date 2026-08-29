@@ -37,8 +37,11 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
 
   String? selectedSlot;
   List<String> parkingSlots = [];
+  List<String> filteredSlots = [];
   bool isLoadingSlots = true;
   bool isSaving = false;
+  bool isSlotPickerOpen = false;
+  final TextEditingController slotSearchCtrl = TextEditingController();
   FlatMapping? selectedFlat;
   List<FlatMapping> userFlats = [];
 
@@ -90,16 +93,29 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
       makeModelCtrl = TextEditingController();
     }
 
+    slotSearchCtrl.addListener(() {
+      setState(() {
+        filteredSlots = parkingSlots.where((s) => s.toLowerCase().contains(slotSearchCtrl.text.toLowerCase())).toList();
+      });
+    });
+    
     _loadParkingSlots();
   }
 
   Future<void> _loadParkingSlots() async {
-    final slots = await ref.read(vehiclesRepositoryProvider).getParkingSlots();
-    if (mounted) {
-      setState(() {
-        parkingSlots = slots;
-        isLoadingSlots = false;
-      });
+    try {
+      final slots = await ref.read(vehiclesRepositoryProvider).getParkingSlots();
+      if (mounted) {
+        setState(() {
+          parkingSlots = slots;
+          filteredSlots = slots;
+          isLoadingSlots = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => isLoadingSlots = false);
+      }
     }
   }
 
@@ -145,6 +161,11 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
             ],
           ),
           const SizedBox(height: 24),
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
           
           Text('VEHICLE TYPE', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AsmitaPalette.textLight, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
           const SizedBox(height: 8),
@@ -219,46 +240,40 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
           Text('PARKING SLOT (OPTIONAL)', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AsmitaPalette.textLight, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
           const SizedBox(height: 8),
           if (isLoadingSlots)
-             const Center(child: CupertinoActivityIndicator())
+            const Center(child: CupertinoActivityIndicator())
           else if (parkingSlots.isEmpty)
-             const Text("No parking slots available")
+            const Text("No parking slots available")
           else
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                childAspectRatio: 2.5,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-              ),
-              itemCount: parkingSlots.length,
-              itemBuilder: (context, index) {
-                final slot = parkingSlots[index];
-                final isSelected = selectedSlot == slot;
-                return GestureDetector(
-                  onTap: () => setState(() => selectedSlot = isSelected ? null : slot),
-                  child: Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: isSelected ? AsmitaPalette.deepNavy : Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: isSelected ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey),
-                    ),
-                    child: Text(
-                      slot,
+            GestureDetector(
+              onTap: () => _showSlotPickerBottomSheet(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AsmitaPalette.borderGrey),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      selectedSlot ?? 'Select Parking Slot',
                       style: TextStyle(
-                        color: isSelected ? Colors.white : AsmitaPalette.textDark,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        fontSize: 12,
+                        color: selectedSlot == null ? CupertinoColors.placeholderText : AsmitaPalette.textDark,
+                        fontWeight: selectedSlot == null ? FontWeight.normal : FontWeight.bold,
                       ),
                     ),
-                  ),
-                );
-              },
+                    const Icon(CupertinoIcons.chevron_down, color: AsmitaPalette.textLight, size: 18),
+                  ],
+                ),
+              ),
             ),
 
-          const SizedBox(height: 32),
+              ],
+            ),
+          ),
+          ),
+          const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: CupertinoButton(
@@ -273,6 +288,109 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
           ),
         ],
       ),
+    );
+  }
+
+
+  void _showSlotPickerBottomSheet(BuildContext context) {
+    slotSearchCtrl.clear();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            void updateSearch() {
+              setModalState(() {
+                filteredSlots = parkingSlots
+                    .where((s) => s.toLowerCase().contains(slotSearchCtrl.text.toLowerCase()))
+                    .toList();
+              });
+            }
+            
+            // Need to remove previous listener if we are adding a new one that captures setModalState, 
+            // but it's easier to just use onChanged on the TextField directly instead of a listener.
+            
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.7,
+              padding: const EdgeInsets.only(top: 24, left: 16, right: 16),
+              decoration: const BoxDecoration(
+                color: AsmitaPalette.systemBG,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Select Parking Slot', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(CupertinoIcons.xmark_circle_fill, color: AsmitaPalette.textLight, size: 28),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  CupertinoTextField(
+                    controller: slotSearchCtrl,
+                    placeholder: 'Search Slot (e.g. B-001)',
+                    prefix: const Padding(padding: EdgeInsets.only(left: 12), child: Icon(CupertinoIcons.search, size: 18, color: AsmitaPalette.textLight)),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AsmitaPalette.borderGrey),
+                    ),
+                    onChanged: (val) => updateSearch(),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: filteredSlots.isEmpty
+                        ? const Center(child: Text('No slots found'))
+                        : GridView.builder(
+                            physics: const BouncingScrollPhysics(),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 4,
+                              childAspectRatio: 2.5,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                            ),
+                            itemCount: filteredSlots.length,
+                            itemBuilder: (context, index) {
+                              final slot = filteredSlots[index];
+                              final isSelected = selectedSlot == slot;
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() => selectedSlot = isSelected ? null : slot);
+                                  Navigator.pop(context);
+                                },
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? AsmitaPalette.deepNavy : Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: isSelected ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey),
+                                  ),
+                                  child: Text(
+                                    slot,
+                                    style: TextStyle(
+                                      color: isSelected ? Colors.white : AsmitaPalette.textDark,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
