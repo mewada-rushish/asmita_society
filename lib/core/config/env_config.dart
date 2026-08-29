@@ -65,6 +65,7 @@ class EnvConfig {
   static String get familyMembers => '$baseUrl/app-api/family-members';
   static String get userVehicles => '$baseUrl/app-api/vehicles';
   static String get userPets => '$baseUrl/app-api/pets';
+  static String get parkingSlots => '$baseUrl/app-api/parking-slots';
   static String get committeeMembers => '$baseUrl/app-api/committee-members';
   static String get societyRules => '$baseUrl/app-api/rules';
   static String get societyDocuments => '$baseUrl/app-api/documents';

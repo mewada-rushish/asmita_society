@@ -4,6 +4,7 @@ class VehicleModel {
   final String makeModel;
   final String licensePlate;
   final String? parkingSlot;
+  final int? flatId;
 
   VehicleModel({
     required this.id,
@@ -11,6 +12,7 @@ class VehicleModel {
     required this.makeModel,
     required this.licensePlate,
     this.parkingSlot,
+    this.flatId,
   });
 
   factory VehicleModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class VehicleModel {
       makeModel: json['make_model'] as String? ?? '',
       licensePlate: json['license_plate'] as String? ?? '',
       parkingSlot: json['parking_slot'] as String?,
+      flatId: json['flat_id'] as int?,
     );
   }
 
@@ -30,6 +33,7 @@ class VehicleModel {
       'make_model': makeModel,
       'license_plate': licensePlate,
       'parking_slot': parkingSlot,
+      'flat_id': flatId,
     };
   }
 }

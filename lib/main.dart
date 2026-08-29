@@ -39,6 +39,7 @@ Future<void> main() async {
 
   await Hive.initFlutter();
   await Hive.openBox('community_chat');
+  await Hive.openBox('app_cache');
 
   FlutterError.onError = (details) => FirebaseCrashlytics.instance.recordFlutterFatalError(details);
   PlatformDispatcher.instance.onError = (error, stack) {

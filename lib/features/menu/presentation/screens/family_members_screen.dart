@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
@@ -82,7 +83,7 @@ class FamilyMembersScreen extends ConsumerWidget {
                           sliver: SliverGrid(
                             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
-                              childAspectRatio: 1.05,
+                              childAspectRatio: 0.85,
                               crossAxisSpacing: 16,
                               mainAxisSpacing: 16,
                             ),
@@ -254,6 +255,7 @@ class FamilyMembersScreen extends ConsumerWidget {
     final contactCtrl = TextEditingController(text: member?.contactNumber ?? '');
     String selectedRel = member?.relationship ?? 'Spouse';
     bool isEmergency = member?.isEmergencyContact ?? false;
+    bool isLoading = false;
     
     final relationships = ['Spouse', 'Son', 'Daughter', 'Father', 'Mother', 'Brother', 'Sister', 'Other'];
     if (!relationships.contains(selectedRel)) {
@@ -450,6 +452,7 @@ class FamilyMembersScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(12),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       onPressed: () async {
+                        if (isLoading) return;
                         final name = nameCtrl.text.trim();
                         final contact = contactCtrl.text.trim();
                         
@@ -473,6 +476,9 @@ class FamilyMembersScreen extends ConsumerWidget {
                         }
 
                         final notifier = ref.read(familyProvider.notifier);
+                        
+                        setState(() => isLoading = true);
+                        
                         bool success;
                         if (member == null) {
                           success = await notifier.addMember(
@@ -490,11 +496,29 @@ class FamilyMembersScreen extends ConsumerWidget {
                             isEmergencyContact: isEmergency
                           );
                         }
-                        if (success && context.mounted) {
-                          Navigator.pop(context);
+                        
+                        if (context.mounted) {
+                          setState(() => isLoading = false);
+                          if (success) {
+                            AsmitaToast.show(
+                              context,
+                              message: member == null ? 'Family member saved successfully!' : 'Family member updated successfully!',
+                              type: AsmitaToastType.success,
+                            );
+                            Navigator.pop(context);
+                          }
                         }
                       },
-                      child: Text(member == null ? 'Save Member' : 'Update Member', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                      child: isLoading 
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                          : Text(member == null ? 'Save Member' : 'Update Member', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                     ),
                   ),
                 ],
