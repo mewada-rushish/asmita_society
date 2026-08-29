@@ -21,23 +21,36 @@ class FamilyNotifier extends AsyncNotifier<List<FamilyMemberModel>> {
 
   @override
   FutureOr<List<FamilyMemberModel>> build() async {
-    return _fetchAndInject();
+    final cached = _repository.getCachedFamilyMembers();
+    if (cached.isNotEmpty) {
+      Future.microtask(() => fetchMembers(showLoading: false));
+      return _injectPrimary(cached);
+    }
+    return _fetchNetworkAndInject();
   }
 
-  Future<void> fetchMembers() async {
-    state = const AsyncValue.loading();
+  Future<void> fetchMembers({bool showLoading = true}) async {
+    if (showLoading) {
+      state = const AsyncValue.loading();
+    }
     try {
-      final members = await _fetchAndInject();
+      final members = await _fetchNetworkAndInject();
       state = AsyncValue.data(members);
     } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
+      if (showLoading) {
+        state = AsyncValue.error(e, stackTrace);
+      }
     }
   }
 
-  Future<List<FamilyMemberModel>> _fetchAndInject() async {
+  Future<List<FamilyMemberModel>> _fetchNetworkAndInject() async {
     final members = await _repository.getFamilyMembers();
-    
-    // Inject the primary member (the logged-in user)
+    final injected = await _injectPrimary(members);
+    _repository.saveToCache(injected);
+    return injected;
+  }
+
+  Future<List<FamilyMemberModel>> _injectPrimary(List<FamilyMemberModel> members) async {
     final secureStorage = SecureStorageService();
     final userProfileJsonStr = await secureStorage.read(key: 'user_profile');
     FamilyMemberModel? primaryMember;
@@ -53,14 +66,15 @@ class FamilyNotifier extends AsyncNotifier<List<FamilyMemberModel>> {
           isEmergencyContact: true,
           avatarUrl: profileMap['profile_picture_url'],
         );
-      } catch (_) {}
+      } catch (e) {
+        // Handle json decode error silently
+      }
     }
 
     if (primaryMember != null) {
       return [primaryMember, ...members];
-    } else {
-      return members;
     }
+    return members;
   }
 
   Future<bool> addMember({
@@ -77,9 +91,9 @@ class FamilyNotifier extends AsyncNotifier<List<FamilyMemberModel>> {
     );
     if (newMember != null) {
       if (state.value != null) {
-        state = AsyncValue.data([...state.value!, newMember]);
-      } else {
-        state = AsyncValue.data([newMember]);
+        final updatedList = [...state.value!, newMember];
+        state = AsyncValue.data(updatedList);
+        _repository.saveToCache(updatedList);
       }
       return true;
     }
@@ -114,6 +128,7 @@ class FamilyNotifier extends AsyncNotifier<List<FamilyMemberModel>> {
         return m;
       }).toList();
       state = AsyncValue.data(updatedList);
+      _repository.saveToCache(updatedList);
     }
     return success;
   }
@@ -123,6 +138,7 @@ class FamilyNotifier extends AsyncNotifier<List<FamilyMemberModel>> {
     if (success && state.value != null) {
       final updatedList = state.value!.where((m) => m.id != id).toList();
       state = AsyncValue.data(updatedList);
+      _repository.saveToCache(updatedList);
     }
     return success;
   }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/pets_repository.dart';
 import '../../data/models/pet_model.dart';
@@ -20,16 +21,25 @@ class PetsNotifier extends AsyncNotifier<List<PetModel>> {
 
   @override
   FutureOr<List<PetModel>> build() async {
+    final cached = _repository.getCachedPets();
+    if (cached.isNotEmpty) {
+      Future.microtask(() => fetchPets(showLoading: false));
+      return cached;
+    }
     return _repository.getPets();
   }
 
-  Future<void> fetchPets() async {
-    state = const AsyncValue.loading();
+  Future<void> fetchPets({bool showLoading = true}) async {
+    if (showLoading) {
+      state = const AsyncValue.loading();
+    }
     try {
       final pets = await _repository.getPets();
       state = AsyncValue.data(pets);
     } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
+      if (showLoading) {
+        state = AsyncValue.error(e, stackTrace);
+      }
     }
   }
 
@@ -37,17 +47,22 @@ class PetsNotifier extends AsyncNotifier<List<PetModel>> {
     required String name,
     required String breed,
     bool isVaccinated = false,
+    required File imageFile,
   }) async {
     final newPet = await _repository.addPet(
       name: name,
       breed: breed,
       isVaccinated: isVaccinated,
+      imageFile: imageFile,
     );
     if (newPet != null) {
       if (state.value != null) {
-        state = AsyncValue.data([...state.value!, newPet]);
+        final updatedList = [...state.value!, newPet];
+        state = AsyncValue.data(updatedList);
+        _repository.saveToCache(updatedList);
       } else {
         state = AsyncValue.data([newPet]);
+        _repository.saveToCache([newPet]);
       }
       return true;
     }
@@ -58,26 +73,19 @@ class PetsNotifier extends AsyncNotifier<List<PetModel>> {
     required String name,
     required String breed,
     required bool isVaccinated,
+    File? imageFile,
   }) async {
     final success = await _repository.updatePet(
       id,
       name: name,
       breed: breed,
       isVaccinated: isVaccinated,
+      imageFile: imageFile,
     );
-    if (success && state.value != null) {
-      final updatedList = state.value!.map((p) {
-        if (p.id == id) {
-          return PetModel(
-            id: p.id,
-            name: name,
-            breed: breed,
-            isVaccinated: isVaccinated,
-          );
-        }
-        return p;
-      }).toList();
-      state = AsyncValue.data(updatedList);
+    if (success) {
+      // Refetch to get the updated avatarUrl from server or we could manually update it if we had the url.
+      // Easiest is to re-fetch the list, which will automatically update cache.
+      fetchPets(showLoading: false);
     }
     return success;
   }
@@ -87,6 +95,7 @@ class PetsNotifier extends AsyncNotifier<List<PetModel>> {
     if (success && state.value != null) {
       final updatedList = state.value!.where((p) => p.id != id).toList();
       state = AsyncValue.data(updatedList);
+      _repository.saveToCache(updatedList);
     }
     return success;
   }

@@ -20,16 +20,25 @@ class VehiclesNotifier extends AsyncNotifier<List<VehicleModel>> {
 
   @override
   FutureOr<List<VehicleModel>> build() async {
+    final cached = _repository.getCachedVehicles();
+    if (cached.isNotEmpty) {
+      Future.microtask(() => fetchVehicles(showLoading: false));
+      return cached;
+    }
     return _repository.getVehicles();
   }
 
-  Future<void> fetchVehicles() async {
-    state = const AsyncValue.loading();
+  Future<void> fetchVehicles({bool showLoading = true}) async {
+    if (showLoading) {
+      state = const AsyncValue.loading();
+    }
     try {
       final vehicles = await _repository.getVehicles();
       state = AsyncValue.data(vehicles);
     } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
+      if (showLoading) {
+        state = AsyncValue.error(e, stackTrace);
+      }
     }
   }
 
@@ -38,18 +47,23 @@ class VehiclesNotifier extends AsyncNotifier<List<VehicleModel>> {
     required String makeModel,
     required String licensePlate,
     String? parkingSlot,
+    required int flatId,
   }) async {
     final newVehicle = await _repository.addVehicle(
       type: type,
       makeModel: makeModel,
       licensePlate: licensePlate,
       parkingSlot: parkingSlot,
+      flatId: flatId,
     );
     if (newVehicle != null) {
       if (state.value != null) {
-        state = AsyncValue.data([...state.value!, newVehicle]);
+        final updatedList = [...state.value!, newVehicle];
+        state = AsyncValue.data(updatedList);
+        _repository.saveToCache(updatedList);
       } else {
         state = AsyncValue.data([newVehicle]);
+        _repository.saveToCache([newVehicle]);
       }
       return true;
     }
@@ -61,6 +75,7 @@ class VehiclesNotifier extends AsyncNotifier<List<VehicleModel>> {
     required String makeModel,
     required String licensePlate,
     String? parkingSlot,
+    int? flatId,
   }) async {
     final success = await _repository.updateVehicle(
       id,
@@ -68,6 +83,7 @@ class VehiclesNotifier extends AsyncNotifier<List<VehicleModel>> {
       makeModel: makeModel,
       licensePlate: licensePlate,
       parkingSlot: parkingSlot,
+      flatId: flatId,
     );
     if (success && state.value != null) {
       final updatedList = state.value!.map((v) {
@@ -78,11 +94,13 @@ class VehiclesNotifier extends AsyncNotifier<List<VehicleModel>> {
             makeModel: makeModel,
             licensePlate: licensePlate,
             parkingSlot: parkingSlot,
+            flatId: flatId ?? v.flatId,
           );
         }
         return v;
       }).toList();
       state = AsyncValue.data(updatedList);
+      _repository.saveToCache(updatedList);
     }
     return success;
   }
@@ -92,6 +110,7 @@ class VehiclesNotifier extends AsyncNotifier<List<VehicleModel>> {
     if (success && state.value != null) {
       final updatedList = state.value!.where((v) => v.id != id).toList();
       state = AsyncValue.data(updatedList);
+      _repository.saveToCache(updatedList);
     }
     return success;
   }

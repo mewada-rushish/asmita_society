@@ -1,12 +1,20 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
+import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
+import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
+import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
 import 'package:asmita_society/features/menu/presentation/providers/vehicles_provider.dart';
 import 'package:asmita_society/features/menu/data/models/vehicle_model.dart';
+import 'package:asmita_society/features/menu/presentation/screens/widgets/add_edit_vehicle_sheet.dart';
 
 class VehiclesScreen extends ConsumerWidget {
-  const VehiclesScreen({super.key});
+  final ValueChanged<int>? onNavigateToTab;
+
+  const VehiclesScreen({super.key, this.onNavigateToTab});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -15,23 +23,47 @@ class VehiclesScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AsmitaPalette.systemBG,
+      bottomNavigationBar: AsmitaBottomNavBar(
+        currentIndex: -1,
+        onTap: (index) {
+          Navigator.pop(context);
+          if (onNavigateToTab != null) {
+            onNavigateToTab!(index);
+          }
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddEditSheet(context, ref),
+        backgroundColor: AsmitaPalette.deepNavy,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: const Icon(CupertinoIcons.add, color: Colors.white),
+      ),
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
+            AsmitaPrimaryHeader(
+              showBackButton: false,
+              backgroundColor: Colors.white,
+              onSearchPressed: () {},
+              onChatPressed: () {},
+            ),
             const AsmitaSubHeader(title: 'Vehicles'),
             Expanded(
               child: vehiclesState.when(
                 data: (vehicles) {
-                  return ListView(
-                    physics: const ClampingScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      _buildAddButton(context, ref, textTheme),
-                      const SizedBox(height: 24),
+                  return CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    slivers: [
+                      AsmitaAnimatedRefresh(
+                        onRefresh: () async {
+                          ref.invalidate(vehiclesProvider);
+                          await Future.delayed(const Duration(milliseconds: 1000));
+                        },
+                      ),
                       if (vehicles.isEmpty)
-                        Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(32.0),
+                        SliverFillRemaining(
+                          child: Center(
                             child: Text(
                               'No vehicles added yet.',
                               style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.textLight),
@@ -39,16 +71,29 @@ class VehiclesScreen extends ConsumerWidget {
                           ),
                         )
                       else
-                        ...vehicles.map((v) => Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: _buildVehicleCard(context, ref, textTheme, v),
-                        )),
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          sliver: SliverGrid(
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.85,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                            ),
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                return _buildVehicleGridCard(context, ref, textTheme, vehicles[index]);
+                              },
+                              childCount: vehicles.length,
+                            ),
+                          ),
+                        ),
                     ],
                   );
                 },
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: CupertinoActivityIndicator()),
                 error: (error, _) => Center(
-                  child: Text('Error: $error', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
+                  child: Text('Error: ', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
                 ),
               ),
             ),
@@ -58,228 +103,137 @@ class VehiclesScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAddButton(BuildContext context, WidgetRef ref, TextTheme textTheme) {
-    return InkWell(
-      onTap: () => _showAddEditSheet(context, ref),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AsmitaPalette.deepNavy.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AsmitaPalette.deepNavy, width: 1.5, style: BorderStyle.solid),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.add_circle_outline_rounded, color: AsmitaPalette.deepNavy),
-            const SizedBox(width: 8),
-            Text('Add Vehicle', style: textTheme.titleMedium?.copyWith(color: AsmitaPalette.deepNavy, fontWeight: FontWeight.w600)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVehicleCard(BuildContext context, WidgetRef ref, TextTheme textTheme, VehicleModel vehicle) {
+  Widget _buildVehicleGridCard(BuildContext context, WidgetRef ref, TextTheme textTheme, VehicleModel vehicle) {
     bool isCar = vehicle.type.toLowerCase() == '4-wheeler' || vehicle.type.toLowerCase() == 'car';
 
-    return Dismissible(
-      key: ValueKey(vehicle.id),
-      direction: DismissDirection.endToStart,
-      confirmDismiss: (direction) async {
-        return await showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Delete Vehicle'),
-            content: Text('Are you sure you want to remove ${vehicle.makeModel}?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-              TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
-            ],
-          ),
-        );
-      },
-      onDismissed: (direction) {
-        ref.read(vehiclesProvider.notifier).deleteVehicle(vehicle.id);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${vehicle.makeModel} deleted')));
-      },
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        decoration: BoxDecoration(
-          color: Colors.red,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Icon(Icons.delete, color: Colors.white),
-      ),
+    return GestureDetector(
+      onTap: () => _showVehicleOptions(context, ref, vehicle),
       child: Container(
-        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+          border: Border.all(color: AsmitaPalette.borderGrey, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 8,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: Row(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AsmitaPalette.deepNavy.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(isCar ? Icons.directions_car_rounded : Icons.two_wheeler_rounded, color: AsmitaPalette.deepNavy, size: 28),
+            const Spacer(),
+            CircleAvatar(
+              radius: 38,
+              backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+              child: Icon(isCar ? Icons.directions_car_rounded : Icons.two_wheeler_rounded, color: AsmitaPalette.deepNavy, size: 36),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 12),
+            Text(
+              vehicle.makeModel, 
+              style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.amber, width: 1),
+              ),
+              child: Text(vehicle.licensePlate, style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
+            ),
+            const Spacer(),
+            if (vehicle.parkingSlot != null && vehicle.parkingSlot!.isNotEmpty)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(vehicle.makeModel, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Colors.amber, width: 1),
-                    ),
-                    child: Text(vehicle.licensePlate, style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
-                  ),
-                  const SizedBox(height: 8),
-                  if (vehicle.parkingSlot != null && vehicle.parkingSlot!.isNotEmpty)
-                    Row(
-                      children: [
-                        const Icon(Icons.local_parking_rounded, size: 14, color: AsmitaPalette.textLight),
-                        const SizedBox(width: 4),
-                        Text('Slot: ${vehicle.parkingSlot}', style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight, fontWeight: FontWeight.w600)),
-                      ],
-                    ),
+                  const Icon(Icons.local_parking_rounded, size: 14, color: AsmitaPalette.textLight),
+                  const SizedBox(width: 4),
+                  Text('Slot: ${vehicle.parkingSlot}', style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight, fontWeight: FontWeight.w600)),
                 ],
               ),
-            ),
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert_rounded, color: AsmitaPalette.textLight),
-              onSelected: (val) {
-                if (val == 'edit') {
-                  _showAddEditSheet(context, ref, vehicle: vehicle);
-                } else if (val == 'delete') {
-                  ref.read(vehiclesProvider.notifier).deleteVehicle(vehicle.id);
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
-              ],
-            ),
           ],
         ),
       ),
     );
   }
 
-  void _showAddEditSheet(BuildContext context, WidgetRef ref, {VehicleModel? vehicle}) {
-    final makeModelCtrl = TextEditingController(text: vehicle?.makeModel ?? '');
-    final licenseCtrl = TextEditingController(text: vehicle?.licensePlate ?? '');
-    final slotCtrl = TextEditingController(text: vehicle?.parkingSlot ?? '');
-    String type = vehicle?.type ?? '4-wheeler';
+  void _showVehicleOptions(BuildContext context, WidgetRef ref, VehicleModel vehicle) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) => CupertinoActionSheet(
+        title: Text(vehicle.makeModel),
+        message: const Text('Select an action'),
+        actions: <CupertinoActionSheetAction>[
+          CupertinoActionSheetAction(
+            child: const Text('Edit Vehicle'),
+            onPressed: () {
+              Navigator.pop(context);
+              _showAddEditSheet(context, ref, vehicle: vehicle);
+            },
+          ),
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(context);
+              _confirmDelete(context, ref, vehicle);
+            },
+            child: const Text('Delete Vehicle'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          child: const Text('Cancel'),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+    );
+  }
 
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref, VehicleModel vehicle) async {
+    final confirm = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Delete Vehicle'),
+        content: Text('Are you sure you want to remove ?'),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(ctx, false),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            child: const Text('Delete'),
+            onPressed: () => Navigator.pop(ctx, true),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirm == true) {
+      final success = await ref.read(vehiclesProvider.notifier).deleteVehicle(vehicle.id);
+      if (success && context.mounted) {
+        AsmitaToast.show(context, message: ' deleted', type: AsmitaToastType.success);
+      }
+    }
+  }
+
+  void _showAddEditSheet(BuildContext context, WidgetRef ref, {VehicleModel? vehicle}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-                left: 20,
-                right: 20,
-                top: 20,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(vehicle == null ? 'Add Vehicle' : 'Edit Vehicle', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    initialValue: type,
-                    decoration: const InputDecoration(labelText: 'Vehicle Type', border: OutlineInputBorder()),
-                    items: const [
-                      DropdownMenuItem(value: '2-wheeler', child: Text('2-Wheeler')),
-                      DropdownMenuItem(value: '4-wheeler', child: Text('4-Wheeler')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) setState(() => type = val);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: makeModelCtrl,
-                    decoration: const InputDecoration(labelText: 'Make & Model (e.g. Honda City)', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: licenseCtrl,
-                    textCapitalization: TextCapitalization.characters,
-                    decoration: const InputDecoration(labelText: 'License Plate (e.g. MH 04 AB 1234)', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: slotCtrl,
-                    decoration: const InputDecoration(labelText: 'Parking Slot (Optional)', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (makeModelCtrl.text.isEmpty || licenseCtrl.text.isEmpty) return;
-                        final notifier = ref.read(vehiclesProvider.notifier);
-                        bool success;
-                        if (vehicle == null) {
-                          success = await notifier.addVehicle(
-                            type: type,
-                            makeModel: makeModelCtrl.text,
-                            licensePlate: licenseCtrl.text,
-                            parkingSlot: slotCtrl.text.isEmpty ? null : slotCtrl.text,
-                          );
-                        } else {
-                          success = await notifier.updateVehicle(
-                            vehicle.id,
-                            type: type,
-                            makeModel: makeModelCtrl.text,
-                            licensePlate: licenseCtrl.text,
-                            parkingSlot: slotCtrl.text.isEmpty ? null : slotCtrl.text,
-                          );
-                        }
-                        if (success && context.mounted) {
-                          Navigator.pop(context);
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AsmitaPalette.deepNavy,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: Text(vehicle == null ? 'Save Vehicle' : 'Update Vehicle', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            );
-          }
-        );
-      }
+        return AddEditVehicleSheet(vehicle: vehicle);
+      },
     );
   }
 }

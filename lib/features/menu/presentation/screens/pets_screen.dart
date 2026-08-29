@@ -1,12 +1,21 @@
+import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
+import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
+import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
+import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
 import 'package:asmita_society/features/menu/presentation/providers/pets_provider.dart';
 import 'package:asmita_society/features/menu/data/models/pet_model.dart';
+import 'package:image_picker/image_picker.dart';
 
 class PetsScreen extends ConsumerWidget {
-  const PetsScreen({super.key});
+  final ValueChanged<int>? onNavigateToTab;
+
+  const PetsScreen({super.key, this.onNavigateToTab});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -15,23 +24,47 @@ class PetsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AsmitaPalette.systemBG,
+      bottomNavigationBar: AsmitaBottomNavBar(
+        currentIndex: -1,
+        onTap: (index) {
+          Navigator.pop(context);
+          if (onNavigateToTab != null) {
+            onNavigateToTab!(index);
+          }
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddEditSheet(context, ref),
+        backgroundColor: AsmitaPalette.deepNavy,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: const Icon(CupertinoIcons.add, color: Colors.white),
+      ),
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
+            AsmitaPrimaryHeader(
+              showBackButton: false,
+              backgroundColor: Colors.white,
+              onSearchPressed: () {},
+              onChatPressed: () {},
+            ),
             const AsmitaSubHeader(title: 'Pets'),
             Expanded(
               child: petsState.when(
                 data: (pets) {
-                  return ListView(
-                    physics: const ClampingScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      _buildAddButton(context, ref, textTheme),
-                      const SizedBox(height: 24),
+                  return CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    slivers: [
+                      AsmitaAnimatedRefresh(
+                        onRefresh: () async {
+                          ref.invalidate(petsProvider);
+                          await Future.delayed(const Duration(milliseconds: 1000));
+                        },
+                      ),
                       if (pets.isEmpty)
-                        Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(32.0),
+                        SliverFillRemaining(
+                          child: Center(
                             child: Text(
                               'No pets added yet.',
                               style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.textLight),
@@ -39,16 +72,29 @@ class PetsScreen extends ConsumerWidget {
                           ),
                         )
                       else
-                        ...pets.map((p) => Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: _buildPetCard(context, ref, textTheme, p),
-                        )),
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          sliver: SliverGrid(
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.85,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                            ),
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                return _buildPetGridCard(context, ref, textTheme, pets[index]);
+                              },
+                              childCount: pets.length,
+                            ),
+                          ),
+                        ),
                     ],
                   );
                 },
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: CupertinoActivityIndicator()),
                 error: (error, _) => Center(
-                  child: Text('Error: $error', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
+                  child: Text('Error: ', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
                 ),
               ),
             ),
@@ -58,218 +104,334 @@ class PetsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAddButton(BuildContext context, WidgetRef ref, TextTheme textTheme) {
-    return InkWell(
-      onTap: () => _showAddEditSheet(context, ref),
-      borderRadius: BorderRadius.circular(16),
+  Widget _buildPetGridCard(BuildContext context, WidgetRef ref, TextTheme textTheme, PetModel pet) {
+    return GestureDetector(
+      onTap: () => _showPetOptions(context, ref, pet),
       child: Container(
-        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AsmitaPalette.deepNavy.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AsmitaPalette.deepNavy, width: 1.5, style: BorderStyle.solid),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AsmitaPalette.borderGrey, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        child: Row(
+        padding: const EdgeInsets.all(12),
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.add_circle_outline_rounded, color: AsmitaPalette.deepNavy),
-            const SizedBox(width: 8),
-            Text('Add Pet', style: textTheme.titleMedium?.copyWith(color: AsmitaPalette.deepNavy, fontWeight: FontWeight.w600)),
+            const Spacer(),
+            CircleAvatar(
+              radius: 38,
+              backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+              backgroundImage: pet.avatarUrl != null && pet.avatarUrl!.isNotEmpty 
+                  ? NetworkImage(pet.avatarUrl!) 
+                  : null,
+              child: pet.avatarUrl == null || pet.avatarUrl!.isEmpty
+                ? Text(
+                    pet.name.isNotEmpty ? pet.name.substring(0, 1).toUpperCase() : '?', 
+                    style: textTheme.headlineSmall?.copyWith(
+                      color: AsmitaPalette.deepNavy, 
+                      fontWeight: FontWeight.bold
+                    )
+                  )
+                : null,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              pet.name, 
+              style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              pet.breed, 
+              style: textTheme.bodyMedium?.copyWith(
+                color: AsmitaPalette.textLight,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: pet.isVaccinated ? AsmitaPalette.successGreen.withValues(alpha: 0.1) : AsmitaPalette.actionRed.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(pet.isVaccinated ? Icons.check_circle_rounded : Icons.error_outline_rounded, 
+                    size: 12, 
+                    color: pet.isVaccinated ? AsmitaPalette.successGreen : AsmitaPalette.actionRed
+                  ),
+                  const SizedBox(width: 4),
+                  Text(pet.isVaccinated ? 'Vaccinated' : 'Pending', 
+                    style: textTheme.bodySmall?.copyWith(
+                      color: pet.isVaccinated ? AsmitaPalette.successGreen : AsmitaPalette.actionRed, 
+                      fontSize: 10, 
+                      fontWeight: FontWeight.w700
+                    )
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPetCard(BuildContext context, WidgetRef ref, TextTheme textTheme, PetModel pet) {
-    return Dismissible(
-      key: ValueKey(pet.id),
-      direction: DismissDirection.endToStart,
-      confirmDismiss: (direction) async {
-        return await showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Delete Pet'),
-            content: Text('Are you sure you want to remove ${pet.name}?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-              TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
-            ],
+  void _showPetOptions(BuildContext context, WidgetRef ref, PetModel pet) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) => CupertinoActionSheet(
+        title: Text(pet.name),
+        message: const Text('Select an action'),
+        actions: <CupertinoActionSheetAction>[
+          CupertinoActionSheetAction(
+            child: const Text('Edit Pet'),
+            onPressed: () {
+              Navigator.pop(context);
+              _showAddEditSheet(context, ref, pet: pet);
+            },
           ),
-        );
-      },
-      onDismissed: (direction) {
-        ref.read(petsProvider.notifier).deletePet(pet.id);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${pet.name} deleted')));
-      },
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        decoration: BoxDecoration(
-          color: Colors.red,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Icon(Icons.delete, color: Colors.white),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.pets_rounded, color: Colors.orange, size: 28),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(pet.name, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 4),
-                  Text(pet.breed, style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.textLight)),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: pet.isVaccinated ? AsmitaPalette.successGreen.withValues(alpha: 0.1) : AsmitaPalette.actionRed.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(pet.isVaccinated ? Icons.check_circle_rounded : Icons.error_outline_rounded, 
-                              size: 12, 
-                              color: pet.isVaccinated ? AsmitaPalette.successGreen : AsmitaPalette.actionRed
-                            ),
-                            const SizedBox(width: 4),
-                            Text(pet.isVaccinated ? 'Vaccinated' : 'Pending', 
-                              style: textTheme.bodySmall?.copyWith(
-                                color: pet.isVaccinated ? AsmitaPalette.successGreen : AsmitaPalette.actionRed, 
-                                fontSize: 10, 
-                                fontWeight: FontWeight.w700
-                              )
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert_rounded, color: AsmitaPalette.textLight),
-              onSelected: (val) {
-                if (val == 'edit') {
-                  _showAddEditSheet(context, ref, pet: pet);
-                } else if (val == 'delete') {
-                  ref.read(petsProvider.notifier).deletePet(pet.id);
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
-              ],
-            ),
-          ],
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(context);
+              _confirmDelete(context, ref, pet);
+            },
+            child: const Text('Delete Pet'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          child: const Text('Cancel'),
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref, PetModel pet) async {
+    final confirm = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Delete Pet'),
+        content: Text('Are you sure you want to remove ?'),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(ctx, false),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            child: const Text('Delete'),
+            onPressed: () => Navigator.pop(ctx, true),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirm == true) {
+      final success = await ref.read(petsProvider.notifier).deletePet(pet.id);
+      if (success && context.mounted) {
+        AsmitaToast.show(context, message: ' deleted', type: AsmitaToastType.success);
+      }
+    }
   }
 
   void _showAddEditSheet(BuildContext context, WidgetRef ref, {PetModel? pet}) {
     final nameCtrl = TextEditingController(text: pet?.name ?? '');
     final breedCtrl = TextEditingController(text: pet?.breed ?? '');
     bool isVaccinated = pet?.isVaccinated ?? false;
+    bool isLoading = false;
+    File? imageFile;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            return Padding(
+            return Container(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-                left: 20,
-                right: 20,
-                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                left: 16,
+                right: 16,
+                top: 24,
+              ),
+              decoration: const BoxDecoration(
+                color: AsmitaPalette.systemBG,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(pet == null ? 'Add Pet' : 'Edit Pet', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: nameCtrl,
-                    decoration: const InputDecoration(labelText: 'Pet Name', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: breedCtrl,
-                    decoration: const InputDecoration(labelText: 'Breed (e.g. Golden Retriever)', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 12),
-                  SwitchListTile(
-                    title: const Text('Vaccinated'),
-                    value: isVaccinated,
-                    onChanged: (val) => setState(() => isVaccinated = val),
-                    contentPadding: EdgeInsets.zero,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(pet == null ? 'Add Pet' : 'Edit Pet', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(CupertinoIcons.xmark_circle_fill, color: AsmitaPalette.textLight, size: 28),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 24),
+                  
+                  // Photo picker
+                  GestureDetector(
+                    onTap: () async {
+                      final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+                      if (picked != null) {
+                        setState(() => imageFile = File(picked.path));
+                      }
+                    },
+                    child: CircleAvatar(
+                      radius: 40,
+                      backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                      backgroundImage: imageFile != null 
+                        ? FileImage(imageFile!) as ImageProvider
+                        : (pet?.avatarUrl != null && pet!.avatarUrl!.isNotEmpty) 
+                          ? NetworkImage(pet.avatarUrl!) 
+                          : null,
+                      child: (imageFile == null && (pet?.avatarUrl == null || pet!.avatarUrl!.isEmpty))
+                        ? const Icon(CupertinoIcons.camera_fill, color: AsmitaPalette.deepNavy, size: 30)
+                        : null,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text('Tap to select photo', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight)),
+                  const SizedBox(height: 24),
+
+                  Text('PET NAME', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AsmitaPalette.textLight, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+                  const SizedBox(height: 8),
+                  CupertinoTextField(
+                    controller: nameCtrl,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AsmitaPalette.borderGrey),
+                    ),
+                    placeholder: 'Enter pet name',
+                    placeholderStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AsmitaPalette.borderGrey),
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 20),
+                  Text('BREED', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AsmitaPalette.textLight, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+                  const SizedBox(height: 8),
+                  CupertinoTextField(
+                    controller: breedCtrl,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AsmitaPalette.borderGrey),
+                    ),
+                    placeholder: 'Enter breed',
+                    placeholderStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AsmitaPalette.borderGrey),
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AsmitaPalette.borderGrey),
+                    ),
+                    child: CupertinoListTile(
+                      title: Text('Vaccinated', style: Theme.of(context).textTheme.bodyLarge),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      trailing: CupertinoSwitch(
+                        value: isVaccinated,
+                        activeTrackColor: AsmitaPalette.deepNavy,
+                        onChanged: (val) => setState(() => isVaccinated = val),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
+                    child: CupertinoButton(
+                      color: AsmitaPalette.deepNavy,
+                      borderRadius: BorderRadius.circular(12),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       onPressed: () async {
-                        if (nameCtrl.text.isEmpty || breedCtrl.text.isEmpty) return;
+                        if (isLoading) return;
+                        
+                        final name = nameCtrl.text.trim();
+                        final breed = breedCtrl.text.trim();
+                        
+                        if (name.isEmpty || breed.isEmpty) {
+                           AsmitaToast.show(context, message: 'Please enter all details', type: AsmitaToastType.error);
+                           return;
+                        }
+
+                        if (pet == null && imageFile == null) {
+                           AsmitaToast.show(context, message: 'Photo is mandatory for pets', type: AsmitaToastType.error);
+                           return;
+                        }
+
                         final notifier = ref.read(petsProvider.notifier);
+                        setState(() => isLoading = true);
+                        
                         bool success;
                         if (pet == null) {
                           success = await notifier.addPet(
-                            name: nameCtrl.text,
-                            breed: breedCtrl.text,
+                            name: name, 
+                            breed: breed, 
                             isVaccinated: isVaccinated,
+                            imageFile: imageFile!,
                           );
                         } else {
                           success = await notifier.updatePet(
-                            pet.id,
-                            name: nameCtrl.text,
-                            breed: breedCtrl.text,
+                            pet.id, 
+                            name: name, 
+                            breed: breed, 
                             isVaccinated: isVaccinated,
+                            imageFile: imageFile,
                           );
                         }
-                        if (success && context.mounted) {
-                          Navigator.pop(context);
+                        
+                        if (context.mounted) {
+                          setState(() => isLoading = false);
+                          if (success) {
+                            AsmitaToast.show(
+                              context,
+                              message: pet == null ? 'Pet saved successfully!' : 'Pet updated successfully!',
+                              type: AsmitaToastType.success,
+                            );
+                            Navigator.pop(context);
+                          }
                         }
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AsmitaPalette.deepNavy,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: Text(pet == null ? 'Save Pet' : 'Update Pet', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: isLoading 
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                          : Text(pet == null ? 'Save Pet' : 'Update Pet', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                     ),
                   ),
-                  const SizedBox(height: 24),
                 ],
               ),
             );
