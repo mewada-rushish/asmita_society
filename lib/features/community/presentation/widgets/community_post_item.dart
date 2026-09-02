@@ -95,7 +95,47 @@ class CommunityPostItem extends StatelessWidget {
                       onTap: () {
                         showAsmitaBottomSheet(
                           context: context,
-                          title: '', // We will use a custom header in the child
+                          customHeader: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                post.title,
+                                textAlign: TextAlign.center,
+                                style: textTheme.titleLarge?.copyWith(fontSize: 22, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy, letterSpacing: -0.5),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      color: AsmitaPalette.actionRed.withValues(alpha: 0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Center(
+                                      child: Icon(Icons.person_rounded, size: 20, color: AsmitaPalette.actionRed),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        post.authorName,
+                                        style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                                      ),
+                                      Text(
+                                        DateFormat('MMMM d, yyyy • hh:mm a').format(post.createdAt),
+                                        style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight, fontSize: 11),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                           isScrollControlled: true,
                           child: SizedBox(
                             height: MediaQuery.of(context).size.height * 0.65,
@@ -193,47 +233,6 @@ class _ScrollableQuillContentState extends State<_ScrollableQuillContent> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Premium Header inside the modal
-            Text(
-              widget.post.title,
-              textAlign: TextAlign.center,
-              style: textTheme.titleLarge?.copyWith(fontSize: 22, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy, letterSpacing: -0.5),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AsmitaPalette.actionRed.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.person_rounded, size: 20, color: AsmitaPalette.actionRed),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.post.authorName,
-                      style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                    Text(
-                      DateFormat('MMMM d, yyyy • hh:mm a').format(widget.post.createdAt),
-                      style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight, fontSize: 11),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            const Divider(color: AsmitaPalette.borderGrey, height: 1),
-            const SizedBox(height: 16),
-            
             // Scrollable Content
             Expanded(
               child: SingleChildScrollView(

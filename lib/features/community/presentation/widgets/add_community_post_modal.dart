@@ -5,9 +5,11 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/features/community/bloc/community_post_bloc.dart';
 import 'package:asmita_society/features/community/bloc/community_post_event.dart';
+import 'package:asmita_society/features/community/bloc/community_post_state.dart';
 import 'package:asmita_society/features/community/data/models/community_post_model.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 
 class AddCommunityPostModal extends StatefulWidget {
   const AddCommunityPostModal({super.key});
@@ -114,11 +116,12 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
     }
   }
 
+  bool _wasSubmitting = false;
+  String _pendingStatus = '';
+
   void _submitPost() {
     if (_titleController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a title')),
-      );
+      AsmitaToast.show(context, message: 'Please enter a title', type: AsmitaToastType.error);
       return;
     }
     
@@ -131,6 +134,7 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
     }
 
     final String status = (userRole == 'admin' || userRole == 'guard') ? 'approved' : 'pending';
+    _pendingStatus = status;
     
     final contentJson = jsonEncode(_quillController.document.toDelta().toJson());
     
@@ -146,13 +150,6 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
     );
 
     context.read<CommunityPostBloc>().add(AddCommunityPost(newPost));
-    Navigator.pop(context);
-
-    if (status == 'pending') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Post submitted for admin approval')),
-      );
-    }
   }
 
   @override
@@ -243,14 +240,31 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
               ),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _submitPost,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AsmitaPalette.deepNavy,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('Post', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            BlocConsumer<CommunityPostBloc, CommunityPostState>(
+              listener: (context, state) {
+                if (_wasSubmitting && !state.isSubmitting) {
+                  Navigator.pop(context);
+                  if (_pendingStatus == 'pending') {
+                    AsmitaToast.show(context, message: 'Post submitted for admin approval', type: AsmitaToastType.success);
+                  } else {
+                    AsmitaToast.show(context, message: 'Post published successfully', type: AsmitaToastType.success);
+                  }
+                }
+                _wasSubmitting = state.isSubmitting;
+              },
+              builder: (context, state) {
+                return ElevatedButton(
+                  onPressed: state.isSubmitting ? null : _submitPost,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AsmitaPalette.deepNavy,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: state.isSubmitting 
+                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Post', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                );
+              },
             ),
             const SizedBox(height: 24),
           ],

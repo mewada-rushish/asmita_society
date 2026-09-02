@@ -136,7 +136,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
           onNavigateToViewMore: () {
             showViewMoreSheet(context, onNavigationItemSelected: (index) {
               setState(() => _currentIndex = index);
-            });
+            }, onNavigateToPosts: _navigateToAllNotices);
           },
           onNavigateToServices: () {
             setState(() {

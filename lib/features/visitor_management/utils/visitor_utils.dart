@@ -284,29 +284,7 @@ class VisitorUtils {
           if (visitor['exitTime'] != '--')
             _buildDetailRow(textTheme, label: 'Outbound Timestamp', value: visitor['exitTime'] as String),
           
-          const SizedBox(height: 20),
-          
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AsmitaPalette.actionRed,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text(
-                'Dismiss Entry Records',
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                ),
-              ),
-            ),
-          ),
+
         ],
       ),
     );

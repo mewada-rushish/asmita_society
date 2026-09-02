@@ -22,6 +22,12 @@ import 'package:asmita_society/features/community/presentation/widgets/community
 import 'package:asmita_society/features/community/bloc/community_post_bloc.dart';
 import 'package:asmita_society/features/community/bloc/community_post_state.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
+import 'package:asmita_society/features/dashboard/bloc/quick_actions/quick_actions_bloc.dart';
+import 'package:asmita_society/features/dashboard/bloc/quick_actions/quick_actions_state.dart';
+import 'package:asmita_society/features/dashboard/data/models/quick_action_registry.dart';
+import 'package:asmita_society/features/dashboard/presentation/screens/customise_quick_actions_sheet.dart';
+import 'package:asmita_society/features/community/presentation/attachments/create_poll_dialog.dart';
+import 'package:asmita_society/features/menu/presentation/screens/vehicles_screen.dart';
 
 class OwnerDashboardView extends StatefulWidget {
   final VoidCallback? onNavigateToCommunity; 
@@ -263,64 +269,93 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Quick Actions', style: textTheme.titleLarge?.copyWith(fontSize: 15, fontWeight: FontWeight.w700)),
-              Row(
-                children: [
-                  const Icon(Icons.tune_rounded, size: 14, color: AsmitaPalette.textLight),
-                  const SizedBox(width: 4),
-                  Text('Customise', style: textTheme.bodyMedium?.copyWith(fontSize: 12, fontWeight: FontWeight.w600)),
-                ],
+              InkWell(
+                onTap: () {
+                  showAsmitaBottomSheet(
+                    context: context,
+                    title: 'Customise Quick Actions',
+                    subtitle: 'Select and hold to reorder up to 7 actions for your dashboard.',
+                    isScrollControlled: true,
+                    child: const CustomiseQuickActionsSheet(),
+                  );
+                },
+                child: Row(
+                  children: [
+                    const Icon(Icons.tune_rounded, size: 14, color: AsmitaPalette.textLight),
+                    const SizedBox(width: 4),
+                    Text('Customise', style: textTheme.bodyMedium?.copyWith(fontSize: 12, fontWeight: FontWeight.w600)),
+                  ],
+                ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildGridItem(context, Icons.person_add_alt_1_rounded, 'Pre-Approve', badgeLabel: 'Safe mode', onTap: () => _showPreApproveModal(context)),
-              _buildGridItem(context, Icons.local_police_outlined, 'Security', onTap: () => _showSecurityModal(context)),
-              _buildGridItem(
-                context, 
-                Icons.quiz_outlined, 
-                'Ask Society', 
-                onTap: widget.onNavigateToCommunity, 
-              ),
-              _buildGridItem(
-                context, 
-                Icons.dynamic_feed_rounded, 
-                'Posts', 
-                notificationCount: 9,
-                onTap: widget.onNavigateToCommunity, // Linked to community/posts tab
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildGridItem(context, Icons.credit_card_rounded, 'Pay Bills', onTap: widget.onNavigateToServices), // Linked to services/bills tab
-              _buildGridItem(
-                context, 
-                Icons.face_retouching_natural_rounded, 
-                'Daily Help',
-                onTap: widget.onNavigateToDailyHelp,
-              ),
-              _buildGridItem(
-                context, 
-                Icons.gpp_bad_outlined, 
-                'Raise Alert', 
-                iconColor: AsmitaPalette.actionRed,
-                onTap: () => _showRaiseAlertModal(context),
-              ),
-              _buildGridItem(
-                context, 
-                Icons.add_rounded, 
-                'View More', 
-                isUtilityButton: true,
-                onTap: widget.onNavigateToViewMore,
-              ),
-            ],
+          BlocBuilder<QuickActionsBloc, QuickActionsState>(
+            builder: (context, state) {
+              final selectedActions = state is QuickActionsLoaded 
+                  ? state.selectedActions 
+                  : QuickActionRegistry.defaultActions;
+                  
+              return GridView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 0.8,
+                ),
+                itemCount: selectedActions.length + 1, // +1 for View More
+                itemBuilder: (context, index) {
+                  if (index == selectedActions.length) {
+                    return _buildGridItem(
+                      context, 
+                      Icons.add_rounded, 
+                      'View More', 
+                      iconColor: Colors.white,
+                      containerColor: AsmitaPalette.deepNavy,
+                      hasBorder: true,
+                      onTap: widget.onNavigateToViewMore,
+                    );
+                  }
+                  
+                  final type = selectedActions[index];
+                  final meta = QuickActionRegistry.allActions[type]!;
+                  
+                  if (type == QuickActionType.posts) {
+                    return BlocBuilder<CommunityPostBloc, CommunityPostState>(
+                      builder: (context, postState) {
+                        return _buildGridItem(
+                          context, 
+                          meta.icon, 
+                          meta.label, 
+                          iconColor: meta.iconColor,
+                          containerColor: meta.containerColor,
+                          isUtilityButton: meta.isUtilityButton,
+                          notificationCount: postState.activePosts.isNotEmpty ? postState.activePosts.length : null,
+                          onTap: widget.onNavigateToAllNotices,
+                        );
+                      },
+                    );
+                  }
+                  
+                  String? badgeLabel;
+                  if (type == QuickActionType.preApprove) badgeLabel = 'Safe mode';
+                  
+                  return _buildGridItem(
+                    context, 
+                    meta.icon, 
+                    meta.label,
+                    iconColor: meta.iconColor,
+                    containerColor: meta.containerColor,
+                    isUtilityButton: meta.isUtilityButton,
+                    badgeLabel: badgeLabel,
+                    onTap: _getOnTapForAction(type, context),
+                  );
+                },
+              );
+            },
           ),
         ],
       ),
@@ -339,6 +374,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
           border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -571,6 +607,38 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
     );
   }
 
+  VoidCallback? _getOnTapForAction(QuickActionType type, BuildContext context) {
+    switch (type) {
+      case QuickActionType.preApprove: return () => _showPreApproveModal(context);
+      case QuickActionType.security: return () => _showSecurityModal(context);
+      case QuickActionType.askSociety: return widget.onNavigateToCommunity;
+      case QuickActionType.posts: return widget.onNavigateToAllNotices;
+      case QuickActionType.maintenance: return widget.onNavigateToServices;
+      case QuickActionType.dailyHelp: return widget.onNavigateToDailyHelp;
+      case QuickActionType.raiseAlert: return () => _showRaiseAlertModal(context);
+      case QuickActionType.myVehicles: 
+        return () {
+           Navigator.push(context, MaterialPageRoute(builder: (context) => const VehiclesScreen()));
+        };
+      case QuickActionType.opinionPoll:
+        return () {
+           showAsmitaBottomSheet(
+             context: context, 
+             title: 'Create Opinion Poll',
+             isScrollControlled: true,
+             child: const CreatePollDialog()
+           );
+        };
+      case QuickActionType.deliveries:
+      case QuickActionType.complaints:
+      case QuickActionType.management:
+      case QuickActionType.utilityPay:
+      case QuickActionType.amenities:
+      case QuickActionType.emergency:
+        return widget.onNavigateToViewMore;
+    }
+  }
+
   Widget _buildFrequentServices(BuildContext context) {
     return BlocBuilder<AmenitiesBloc, AmenitiesState>(
       builder: (context, state) {
@@ -652,7 +720,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
     );
   }
 
-  Widget _buildGridItem(BuildContext context, IconData icon, String label, {String? badgeLabel, int? notificationCount, Color containerColor = Colors.white, Color iconColor = AsmitaPalette.deepNavy, bool isUtilityButton = false, VoidCallback? onTap}) {
+  Widget _buildGridItem(BuildContext context, IconData icon, String label, {String? badgeLabel, int? notificationCount, Color containerColor = AsmitaPalette.deepNavy, Color iconColor = Colors.white, bool isUtilityButton = false, bool hasBorder = false, VoidCallback? onTap}) {
     final textTheme = Theme.of(context).textTheme;
     return SizedBox(
       width: 78,
@@ -671,12 +739,12 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: containerColor,
+                    color: isUtilityButton ? AsmitaPalette.actionRed : containerColor,
                     borderRadius: BorderRadius.circular(16),
-                    border: isUtilityButton ? Border.all(color: AsmitaPalette.borderGrey, width: 1.5) : null,
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+                    border: hasBorder ? Border.all(color: AsmitaPalette.borderGrey, width: 1.5) : null,
+                    boxShadow: hasBorder ? [] : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
                   ),
-                  child: Icon(icon, color: isUtilityButton ? AsmitaPalette.actionRed : iconColor, size: 24),
+                  child: Icon(icon, color: isUtilityButton ? Colors.white : iconColor, size: 24),
                 ),
                 if (badgeLabel != null)
                   Positioned(top: -6, left: -4, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: const Color(0xFF5E35B1), borderRadius: BorderRadius.circular(6)), child: Text(badgeLabel.toUpperCase(), style: textTheme.bodyMedium?.copyWith(color: Colors.white, fontSize: 7, fontWeight: FontWeight.w800, letterSpacing: 0.3)))),

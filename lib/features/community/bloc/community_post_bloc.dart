@@ -24,16 +24,18 @@ class CommunityPostBloc extends Bloc<CommunityPostEvent, CommunityPostState> {
     });
 
     on<AddCommunityPost>((event, emit) async {
+      emit(state.copyWith(isSubmitting: true));
       try {
         // Assume API returns the created post with its generated ID
         final newPost = await repository.createPost(event.post);
         final updatedPosts = List.of(state.posts)..insert(0, newPost);
-        emit(state.copyWith(posts: updatedPosts));
+        emit(state.copyWith(posts: updatedPosts, isSubmitting: false));
       } catch (e) {
         // Fallback or show error
         emit(state.copyWith(
           status: CommunityPostStatus.error,
           errorMessage: e.toString(),
+          isSubmitting: false,
         ));
         // Also might want to revert the status back to loaded so it doesn't stay in error state forever
         emit(state.copyWith(status: CommunityPostStatus.loaded));

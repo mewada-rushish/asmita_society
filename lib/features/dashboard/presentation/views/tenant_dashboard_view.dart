@@ -657,7 +657,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
     );
   }
 
-  Widget _buildGridItem(BuildContext context, IconData icon, String label, {String? badgeLabel, int? notificationCount, Color containerColor = Colors.white, Color iconColor = AsmitaPalette.deepNavy, bool isUtilityButton = false, VoidCallback? onTap}) {
+  Widget _buildGridItem(BuildContext context, IconData icon, String label, {String? badgeLabel, int? notificationCount, Color containerColor = AsmitaPalette.deepNavy, Color iconColor = Colors.white, bool isUtilityButton = false, VoidCallback? onTap}) {
     final textTheme = Theme.of(context).textTheme;
     return SizedBox(
       width: 78,
