@@ -196,8 +196,9 @@ class FamilyMembersScreen extends ConsumerWidget {
   void _showMemberOptions(BuildContext context, WidgetRef ref, FamilyMemberModel member) {
     showCupertinoModalPopup(
       context: context,
-      builder: (BuildContext context) => CupertinoActionSheet(
-        title: Text(member.name),
+      builder: (BuildContext context) => SafeArea(
+        child: CupertinoActionSheet(
+          title: Text(member.name),
         message: const Text('Select an action'),
         actions: <CupertinoActionSheetAction>[
           CupertinoActionSheetAction(
@@ -222,6 +223,7 @@ class FamilyMembersScreen extends ConsumerWidget {
             Navigator.pop(context);
           },
         ),
+      ),
       ),
     );
   }
@@ -271,7 +273,7 @@ class FamilyMembersScreen extends ConsumerWidget {
           builder: (context, setState) {
             return Container(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 24,
                 left: 16,
                 right: 16,
                 top: 24,

@@ -220,7 +220,11 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                             Flexible(
                               child: Text(
                                 societyName, 
-                                style: textTheme.titleLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w800),
+                                style: textTheme.titleLarge?.copyWith(
+                                  fontSize: 16, 
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.1,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -235,6 +239,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                             fontSize: 12, 
                             fontWeight: FontWeight.w400,
                             color: AsmitaPalette.textLight,
+                            height: 1.1,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

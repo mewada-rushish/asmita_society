@@ -168,8 +168,9 @@ class VehiclesScreen extends ConsumerWidget {
   void _showVehicleOptions(BuildContext context, WidgetRef ref, VehicleModel vehicle) {
     showCupertinoModalPopup(
       context: context,
-      builder: (BuildContext context) => CupertinoActionSheet(
-        title: Text(vehicle.makeModel),
+      builder: (BuildContext context) => SafeArea(
+        child: CupertinoActionSheet(
+          title: Text(vehicle.makeModel),
         message: const Text('Select an action'),
         actions: <CupertinoActionSheetAction>[
           CupertinoActionSheetAction(
@@ -194,6 +195,7 @@ class VehiclesScreen extends ConsumerWidget {
             Navigator.pop(context);
           },
         ),
+      ),
       ),
     );
   }

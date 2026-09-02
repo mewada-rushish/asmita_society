@@ -17,7 +17,6 @@ import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/services/bloc/amenities_bloc.dart';
 import 'package:asmita_society/features/services/bloc/amenities_state.dart';
 import 'package:asmita_society/features/services/presentation/widgets/asmita_facility_booking_wizard.dart';
-import 'package:asmita_society/features/community/presentation/widgets/add_community_post_modal.dart';
 import 'package:asmita_society/features/community/presentation/widgets/community_post_item.dart';
 import 'package:asmita_society/features/community/bloc/community_post_bloc.dart';
 import 'package:asmita_society/features/community/bloc/community_post_state.dart';
@@ -214,41 +213,14 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
             mainAxisSize: MainAxisSize.min,
             children: [
               InkWell(
-                onTap: () {
-                  if (widget.onNavigateToAllNotices != null) {
-                    widget.onNavigateToAllNotices!();
-                  }
-                },
-                borderRadius: BorderRadius.circular(4),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('View All', style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.deepNavy, fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 2),
-                      const Icon(Icons.arrow_forward_ios_rounded, size: 10, color: AsmitaPalette.deepNavy),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton.icon(
-                onPressed: () {
-                  showAsmitaBottomSheet(
-                    context: context,
-                    title: 'New Community Post',
-                    isScrollControlled: true,
-                    child: const AddCommunityPostModal(),
-                  );
-                },
-                icon: const Icon(Icons.edit_note_rounded, size: 16, color: AsmitaPalette.actionRed),
-                label: Text("New Post", style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.actionRed, fontSize: 12, fontWeight: FontWeight.w600)),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AsmitaPalette.actionRed,
-                  side: const BorderSide(color: AsmitaPalette.actionRed, width: 1.2),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                onTap: widget.onNavigateToAllNotices,
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                child: Row(
+                  children: [
+                    Text('View All', style: textTheme.bodyMedium?.copyWith(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+                    Icon(Icons.chevron_right_rounded, color: Colors.grey.shade600, size: 16),
+                  ],
                 ),
               ),
             ],

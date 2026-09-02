@@ -193,8 +193,9 @@ class PetsScreen extends ConsumerWidget {
   void _showPetOptions(BuildContext context, WidgetRef ref, PetModel pet) {
     showCupertinoModalPopup(
       context: context,
-      builder: (BuildContext context) => CupertinoActionSheet(
-        title: Text(pet.name),
+      builder: (BuildContext context) => SafeArea(
+        child: CupertinoActionSheet(
+          title: Text(pet.name),
         message: const Text('Select an action'),
         actions: <CupertinoActionSheetAction>[
           CupertinoActionSheetAction(
@@ -219,6 +220,7 @@ class PetsScreen extends ConsumerWidget {
             Navigator.pop(context);
           },
         ),
+      ),
       ),
     );
   }
@@ -267,7 +269,7 @@ class PetsScreen extends ConsumerWidget {
           builder: (context, setState) {
             return Container(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 24,
                 left: 16,
                 right: 16,
                 top: 24,

@@ -5,6 +5,7 @@ import '../models/community_post_model.dart';
 abstract class CommunityPostRepository {
   Future<List<CommunityPostModel>> getPosts();
   Future<CommunityPostModel> createPost(CommunityPostModel post);
+  Future<void> deletePost(String id);
 }
 
 class ApiCommunityPostRepository implements CommunityPostRepository {
@@ -51,6 +52,19 @@ class ApiCommunityPostRepository implements CommunityPostRepository {
       throw Exception('Failed to create post');
     } catch (e) {
       debugPrint('Error creating community post: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deletePost(String id) async {
+    try {
+      final response = await dio.delete('/app-api/community/posts/$id');
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete post');
+      }
+    } catch (e) {
+      debugPrint('Error deleting community post: $e');
       rethrow;
     }
   }
