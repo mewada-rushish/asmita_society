@@ -137,7 +137,7 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 24,
         left: 16,
         right: 16,
         top: 24,

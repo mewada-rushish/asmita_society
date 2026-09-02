@@ -41,5 +41,19 @@ class CommunityPostBloc extends Bloc<CommunityPostEvent, CommunityPostState> {
         emit(state.copyWith(status: CommunityPostStatus.loaded));
       }
     });
+
+    on<DeleteCommunityPost>((event, emit) async {
+      // Optimistically remove the post from the UI so Dismissible doesn't crash
+      final previousPosts = List.of(state.posts);
+      final updatedPosts = state.posts.where((post) => post.id != event.postId).toList();
+      emit(state.copyWith(posts: updatedPosts));
+      
+      try {
+        await repository.deletePost(event.postId);
+      } catch (e) {
+        // Revert on error
+        emit(state.copyWith(posts: previousPosts));
+      }
+    });
   }
 }

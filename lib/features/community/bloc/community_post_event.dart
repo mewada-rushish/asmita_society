@@ -18,3 +18,12 @@ class AddCommunityPost extends CommunityPostEvent {
   @override
   List<Object> get props => [post];
 }
+
+class DeleteCommunityPost extends CommunityPostEvent {
+  final String postId;
+
+  const DeleteCommunityPost(this.postId);
+
+  @override
+  List<Object> get props => [postId];
+}

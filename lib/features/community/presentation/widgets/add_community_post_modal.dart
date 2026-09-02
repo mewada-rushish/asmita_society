@@ -159,7 +159,7 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
         left: 16,
         right: 16,
-        top: 32,
+        top: 8,
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -169,8 +169,10 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
             TextField(
               controller: _titleController,
               focusNode: _titleFocus,
+              style: const TextStyle(color: Colors.black),
               decoration: InputDecoration(
-                labelText: 'Post Title',
+                hintText: 'Post Title',
+                hintStyle: const TextStyle(color: Colors.grey),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -197,6 +199,7 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
                 focusNode: _editorFocus,
                 config: const QuillEditorConfig(
                   padding: EdgeInsets.all(16),
+                  placeholder: 'Write your post here...',
                 ),
               ),
             ),
@@ -243,12 +246,12 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
             BlocConsumer<CommunityPostBloc, CommunityPostState>(
               listener: (context, state) {
                 if (_wasSubmitting && !state.isSubmitting) {
-                  Navigator.pop(context);
                   if (_pendingStatus == 'pending') {
                     AsmitaToast.show(context, message: 'Post submitted for admin approval', type: AsmitaToastType.success);
                   } else {
                     AsmitaToast.show(context, message: 'Post published successfully', type: AsmitaToastType.success);
                   }
+                  Navigator.pop(context);
                 }
                 _wasSubmitting = state.isSubmitting;
               },

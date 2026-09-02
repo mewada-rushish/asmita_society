@@ -238,7 +238,7 @@ class HelpSupportScreen extends ConsumerWidget {
           builder: (context, setState) {
             return Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
+                bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 20,
                 left: 20,
                 right: 20,
                 top: 20,
