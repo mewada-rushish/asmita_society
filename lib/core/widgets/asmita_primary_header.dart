@@ -164,13 +164,21 @@ class AsmitaPrimaryHeader extends StatelessWidget {
 
         return Container(
           color: backgroundColor ?? AsmitaPalette.systemBG,
-          padding: EdgeInsets.only(
-            top: topPadding > 0 ? topPadding + 8 : 24, 
-            bottom: 12, 
-            left: 16, 
-            right: 16
-          ),
-          child: Row(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Container(
+            padding: EdgeInsets.fromLTRB(16, topPadding > 0 ? topPadding + 12 : 24, 16, 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
               children: [
             if (showBackButton)
               Padding(
@@ -261,9 +269,10 @@ class AsmitaPrimaryHeader extends StatelessWidget {
             backgroundColor: AsmitaPalette.deepNavy,
             child: Text(initials, style: textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
           ),
-        ],
-      ),
-    );
+              ],
+            ),
+          ),
+        );
       },
     );
   }

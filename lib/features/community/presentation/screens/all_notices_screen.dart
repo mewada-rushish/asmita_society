@@ -57,22 +57,7 @@ class _AllNoticesScreenState extends State<AllNoticesScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (state.status == CommunityPostStatus.loaded) {
-                  final now = DateTime.now();
-                  final activePosts = state.posts.where((p) {
-                    if (p.status != 'approved') return false;
-                    final today = DateTime(now.year, now.month, now.day);
-                    if (p.startDate != null) {
-                      final start = DateTime(p.startDate!.year, p.startDate!.month, p.startDate!.day);
-                      if (start.isAfter(today)) return false;
-                    }
-                    if (p.endDate != null) {
-                      final end = DateTime(p.endDate!.year, p.endDate!.month, p.endDate!.day);
-                      if (end.isBefore(today)) return false;
-                    }
-                    return true;
-                  }).toList();
-
-                  activePosts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+                  final activePosts = state.activePosts;
 
                   if (activePosts.isEmpty) {
                     return const Center(child: Text("No active notices right now."));

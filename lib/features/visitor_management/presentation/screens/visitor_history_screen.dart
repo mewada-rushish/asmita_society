@@ -14,7 +14,8 @@ import 'package:intl/intl.dart';
 
 class VisitorHistoryScreen extends StatefulWidget {
   final VoidCallback? onBack;
-  const VisitorHistoryScreen({super.key, this.onBack});
+  final String? filterCategory;
+  const VisitorHistoryScreen({super.key, this.onBack, this.filterCategory});
 
   @override
   State<VisitorHistoryScreen> createState() => _VisitorHistoryScreenState();
@@ -196,67 +197,68 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
 
     showAsmitaBottomSheet(
       context: context,
-      title: '', // Hidden here because we render the titleText inside the child below.
-      child: Column(
+      customHeader: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Visitor Avatar with High-Assurance Enclosed Border
+          Center(
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: visitor['brandColor'] as Color, width: 2),
+              ),
+              child: CircleAvatar(
+                radius: 36,
+                backgroundColor: AsmitaPalette.systemBG,
+                child: Icon(
+                  visitor['icon'] as IconData, 
+                  color: visitor['brandColor'] as Color, 
+                  size: 32
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Header Labels (Montserrat for structural emphasis)
+          Center(
+            child: Text(
+              visitor['titleText'] as String,
+              style: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AsmitaPalette.deepNavy,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: (visitor['brandColor'] as Color).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                visitor['modalSubtitleText'] as String? ?? visitor['subtitleText'] as String,
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: visitor['brandColor'] as Color,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      child: SingleChildScrollView(
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-              
-          // Visitor Avatar with High-Assurance Enclosed Border
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: visitor['brandColor'] as Color, width: 2),
-                  ),
-                  child: CircleAvatar(
-                    radius: 36,
-                    backgroundColor: AsmitaPalette.systemBG,
-                    child: Icon(
-                      visitor['icon'] as IconData, 
-                      color: visitor['brandColor'] as Color, 
-                      size: 32
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Header Labels (Montserrat for structural emphasis)
-              Center(
-                child: Text(
-                  visitor['titleText'] as String,
-                  style: const TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: AsmitaPalette.deepNavy,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: (visitor['brandColor'] as Color).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    visitor['modalSubtitleText'] as String? ?? visitor['subtitleText'] as String,
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: visitor['brandColor'] as Color,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Divider(color: AsmitaPalette.borderGrey, height: 1),
-              const SizedBox(height: 20),
 
               // Data Parameters Section (Poppins for legible data layouts)
               if (visitor['inviteSubType'] != null && visitor['inviteSubType'] != 'ONCE')
@@ -300,32 +302,11 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
               if (visitor['exitTime'] != '--')
                 _buildDetailRow(textTheme, label: 'Outbound Timestamp', value: visitor['exitTime'] as String),
               
-              const SizedBox(height: 20),
-              
-              // Bottom Action Call Button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AsmitaPalette.actionRed,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text(
-                    'Dismiss Entry Records',
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-              ),
+
             ],
-          ));
+          ),
+        ),
+      );
   }
 
   Widget _buildDetailRow(
@@ -460,39 +441,31 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
           
           if (widget.onBack != null || Navigator.canPop(context))
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AsmitaPalette.deepNavy.withValues(alpha: 0.15), width: 1.2),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        if (widget.onBack != null) {
-                          widget.onBack!();
-                        } else {
-                          Navigator.pop(context);
-                        }
-                      },
-                      behavior: HitTestBehavior.opaque,
-                      child: const Padding(
-                        padding: EdgeInsets.only(right: 12.0, top: 2.0, bottom: 2.0),
-                        child: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AsmitaPalette.deepNavy),
-                      ),
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      if (widget.onBack != null) {
+                        widget.onBack!();
+                      } else {
+                        Navigator.pop(context);
+                      }
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: const Padding(
+                      padding: EdgeInsets.only(right: 12.0, top: 4.0, bottom: 4.0),
+                      child: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AsmitaPalette.deepNavy),
                     ),
-                    const Expanded(
-                      child: Text(
-                        'Visitor History',
-                        style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy),
-                      ),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Visitor History',
+                      style: TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             
@@ -518,7 +491,15 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                   );
                 }
 
-                final rawHistory = state is VisitorHistoryLoaded ? state.history : [];
+                var rawHistory = state is VisitorHistoryLoaded ? state.history : [];
+                if (widget.filterCategory != null) {
+                  rawHistory = rawHistory.where((item) {
+                    final rawItem = item is Map ? Map<String, dynamic>.from(item) : <String, dynamic>{};
+                    final isPreApproved = rawItem['record_type'] == 'PRE_APPROVED';
+                    final category = isPreApproved ? (rawItem['invite_type'] ?? 'Invite') : 'Walk-in';
+                    return category.toString().toLowerCase() == widget.filterCategory!.toLowerCase();
+                  }).toList();
+                }
                 
                 return CustomScrollView(
                   physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),

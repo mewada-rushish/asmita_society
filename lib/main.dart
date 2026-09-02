@@ -24,6 +24,7 @@ import 'features/dashboard/bloc/search/search_bloc.dart';
 import 'features/community/data/repositories/community_post_repository.dart';
 import 'features/community/bloc/community_post_bloc.dart';
 import 'features/community/bloc/community_post_event.dart';
+import 'features/dashboard/bloc/quick_actions/quick_actions_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart' show FlutterQuillLocalizations;
 import 'package:safe_device/safe_device.dart';
@@ -126,6 +127,9 @@ class AsmitaApp extends StatelessWidget {
           create: (context) => CommunityPostBloc(
             repository: communityPostRepository,
           )..add(LoadCommunityPosts()),
+        ),
+        BlocProvider<QuickActionsBloc>(
+          create: (context) => QuickActionsBloc()..add(LoadQuickActions()),
         ),
       ],
       child: MaterialApp(

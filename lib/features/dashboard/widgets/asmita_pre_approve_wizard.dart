@@ -540,45 +540,33 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 1. Enclosed Background Title Block
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: AsmitaPalette.deepNavy.withValues(alpha: 0.04),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AsmitaPalette.deepNavy.withValues(alpha: 0.15),
-              width: 1.2,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            GestureDetector(
+              onTap: _prevStep,
+              behavior: HitTestBehavior.opaque,
+              child: const Padding(
+                padding: EdgeInsets.only(right: 12.0, top: 4.0, bottom: 4.0),
+                child: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 18,
+                  color: AsmitaPalette.deepNavy,
+                ),
+              ),
             ),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              GestureDetector(
-                onTap: _prevStep,
-                behavior: HitTestBehavior.opaque,
-                child: const Padding(
-                  padding: EdgeInsets.only(right: 12.0, top: 2.0, bottom: 2.0),
-                  child: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: 18,
-                    color: AsmitaPalette.deepNavy,
-                  ),
+            Expanded(
+              child: Text(
+                '$_selectedCategory Invitation',
+                style: const TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AsmitaPalette.deepNavy,
                 ),
               ),
-              Expanded(
-                child: Text(
-                  '$_selectedCategory Invitation',
-                  style: const TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AsmitaPalette.deepNavy,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
         const SizedBox(height: 20),
 
