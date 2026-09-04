@@ -51,7 +51,8 @@ class FamilyMembersScreen extends ConsumerWidget {
           children: [
             AsmitaPrimaryHeader(
               showBackButton: false,
-              backgroundColor: Colors.white,
+              backgroundColor: AsmitaPalette.systemBG,
+              bottomPadding: 0.0,
               onSearchPressed: onNavigateToSearch,
               onChatPressed: onNavigateToCommunity,
             ),

@@ -44,7 +44,8 @@ class VehiclesScreen extends ConsumerWidget {
           children: [
             AsmitaPrimaryHeader(
               showBackButton: false,
-              backgroundColor: Colors.white,
+              backgroundColor: AsmitaPalette.systemBG,
+              bottomPadding: 0.0,
               onSearchPressed: () {},
               onChatPressed: () {},
             ),

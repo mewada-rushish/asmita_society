@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/menu/presentation/providers/society_provider.dart';
+import 'package:asmita_society/features/menu/data/models/committee_member_model.dart';
 
 class CommitteeMembersScreen extends ConsumerWidget {
   const CommitteeMembersScreen({super.key});
@@ -34,7 +36,7 @@ class CommitteeMembersScreen extends ConsumerWidget {
                       final member = members[index];
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
-                        child: _buildMemberCard(textTheme, member.name, member.role, member.phone ?? ''),
+                        child: _buildMemberCard(textTheme, member),
                       );
                     },
                   );
@@ -49,7 +51,22 @@ class CommitteeMembersScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildMemberCard(TextTheme textTheme, String name, String role, String phone) {
+  Widget _buildMemberCard(TextTheme textTheme, CommitteeMemberModel member) {
+    String formattedDate = '';
+    if (member.createdAt != null && member.createdAt!.isNotEmpty) {
+      try {
+        final date = DateTime.parse(member.createdAt!);
+        formattedDate = DateFormat('dd MMM yyyy').format(date);
+      } catch (e) {
+        formattedDate = member.createdAt!;
+      }
+    }
+
+    final name = member.name;
+    final role = member.role;
+    final phone = member.phone ?? '';
+    final email = member.email ?? '';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -84,6 +101,36 @@ class CommitteeMembersScreen extends ConsumerWidget {
                     Text(name, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                     const SizedBox(height: 4),
                     Text(role, style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.actionRed, fontWeight: FontWeight.w600)),
+                    if (formattedDate.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_today_outlined, size: 14, color: AsmitaPalette.textLight),
+                          const SizedBox(width: 4),
+                          Expanded(child: Text('Joined $formattedDate', style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                        ],
+                      ),
+                    ],
+                    if (phone.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.call_outlined, size: 14, color: AsmitaPalette.textLight),
+                          const SizedBox(width: 4),
+                          Expanded(child: Text(phone, style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                        ],
+                      ),
+                    ],
+                    if (email.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.email_outlined, size: 14, color: AsmitaPalette.textLight),
+                          const SizedBox(width: 4),
+                          Expanded(child: Text(email, style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
