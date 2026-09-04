@@ -14,6 +14,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
   final VoidCallback? onChatPressed;
   final bool showBackButton;
   final Color? backgroundColor;
+  final double bottomPadding;
 
   const AsmitaPrimaryHeader({
     super.key,
@@ -22,6 +23,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
     this.onChatPressed,
     this.showBackButton = false,
     this.backgroundColor,
+    this.bottomPadding = 12.0,
   });
 
   void _showPropertiesBottomSheet(BuildContext context, UserModel user) {
@@ -164,7 +166,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
 
         return Container(
           color: backgroundColor ?? AsmitaPalette.systemBG,
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: EdgeInsets.only(bottom: bottomPadding),
           child: Container(
             padding: EdgeInsets.fromLTRB(16, topPadding > 0 ? topPadding + 12 : 24, 16, 12),
             decoration: BoxDecoration(
@@ -178,8 +180,10 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                 ),
               ],
             ),
-            child: Row(
-              children: [
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48),
+              child: Row(
+                children: [
             if (showBackButton)
               Padding(
                 padding: const EdgeInsets.only(right: 12.0),
@@ -223,7 +227,6 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                                 style: textTheme.titleLarge?.copyWith(
                                   fontSize: 16, 
                                   fontWeight: FontWeight.w800,
-                                  height: 1.1,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -233,13 +236,13 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                             Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.deepNavy.withValues(alpha: 0.8), size: 18),
                           ],
                         ),
+                        const SizedBox(height: 4),
                         Text(
                           flatDetails, 
                           style: textTheme.bodyMedium?.copyWith(
                             fontSize: 12, 
                             fontWeight: FontWeight.w400,
                             color: AsmitaPalette.textLight,
-                            height: 1.1,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -275,6 +278,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
             child: Text(initials, style: textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
           ),
               ],
+            ),
             ),
           ),
         );

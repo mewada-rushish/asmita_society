@@ -285,9 +285,10 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                       context, 
                       Icons.add_rounded, 
                       'View More', 
-                      iconColor: Colors.white,
-                      containerColor: AsmitaPalette.deepNavy,
+                      iconColor: AsmitaPalette.deepNavy,
+                      containerColor: Colors.white,
                       hasBorder: true,
+                      borderColor: AsmitaPalette.deepNavy,
                       onTap: widget.onNavigateToViewMore,
                     );
                   }
@@ -692,7 +693,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
     );
   }
 
-  Widget _buildGridItem(BuildContext context, IconData icon, String label, {String? badgeLabel, int? notificationCount, Color containerColor = AsmitaPalette.deepNavy, Color iconColor = Colors.white, bool isUtilityButton = false, bool hasBorder = false, VoidCallback? onTap}) {
+  Widget _buildGridItem(BuildContext context, IconData icon, String label, {String? badgeLabel, int? notificationCount, Color containerColor = AsmitaPalette.deepNavy, Color iconColor = Colors.white, Color? borderColor, bool isUtilityButton = false, bool hasBorder = false, VoidCallback? onTap}) {
     final textTheme = Theme.of(context).textTheme;
     return SizedBox(
       width: 78,
@@ -713,7 +714,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                   decoration: BoxDecoration(
                     color: isUtilityButton ? AsmitaPalette.actionRed : containerColor,
                     borderRadius: BorderRadius.circular(16),
-                    border: hasBorder ? Border.all(color: AsmitaPalette.borderGrey, width: 1.5) : null,
+                    border: hasBorder ? Border.all(color: borderColor ?? AsmitaPalette.borderGrey, width: 1.5) : null,
                     boxShadow: hasBorder ? [] : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
                   ),
                   child: Icon(icon, color: isUtilityButton ? Colors.white : iconColor, size: 24),

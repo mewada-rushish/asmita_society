@@ -4,6 +4,7 @@ class CommitteeMemberModel {
   final String role;
   final String? phone;
   final String? email;
+  final String? createdAt;
 
   CommitteeMemberModel({
     required this.id,
@@ -11,6 +12,7 @@ class CommitteeMemberModel {
     required this.role,
     this.phone,
     this.email,
+    this.createdAt,
   });
 
   factory CommitteeMemberModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class CommitteeMemberModel {
       role: json['role'] as String? ?? '',
       phone: json['phone'] as String?,
       email: json['email'] as String?,
+      createdAt: json['created_at'] as String?,
     );
   }
 }
