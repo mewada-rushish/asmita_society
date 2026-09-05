@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
+import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/features/menu/presentation/providers/society_provider.dart';
 import 'package:asmita_society/features/menu/data/models/committee_member_model.dart';
 
@@ -28,17 +29,31 @@ class CommitteeMembersScreen extends ConsumerWidget {
                       child: Text('No committee members found.', style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.textLight)),
                     );
                   }
-                  return ListView.builder(
-                    physics: const ClampingScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    itemCount: members.length,
-                    itemBuilder: (context, index) {
-                      final member = members[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: _buildMemberCard(textTheme, member),
-                      );
-                    },
+                  return CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    slivers: [
+                      AsmitaAnimatedRefresh(
+                        onRefresh: () async {
+                          ref.invalidate(committeeProvider);
+                          await Future.delayed(const Duration(milliseconds: 1000));
+                        },
+                      ),
+                      SliverPadding(
+                        padding: const EdgeInsets.all(16),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final member = members[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: _buildMemberCard(textTheme, member),
+                              );
+                            },
+                            childCount: members.length,
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
