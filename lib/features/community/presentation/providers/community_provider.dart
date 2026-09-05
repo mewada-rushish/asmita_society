@@ -8,8 +8,10 @@ import 'package:asmita_society/core/network/dio_client.dart';
 import 'package:asmita_society/core/security/secure_storage_service.dart';
 
 final communityRepositoryProvider = Provider<CommunityRepository>((ref) {
+  final secureStorage = SecureStorageService();
   return ApiCommunityRepository(
-    dio: AsmitaDioClient(SecureStorageService()).dio,
+    dio: AsmitaDioClient(secureStorage).dio,
+    secureStorage: secureStorage,
   );
 });
 
