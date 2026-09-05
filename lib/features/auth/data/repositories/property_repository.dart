@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../../../core/config/env_config.dart';
 import '../models/property_models.dart';
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/security/secure_storage_service.dart';
 
 class PropertyRepository {
   final Dio _dio;
 
-  PropertyRepository({Dio? dio}) : _dio = dio ?? Dio();
+  PropertyRepository({Dio? dio}) : _dio = dio ?? AsmitaDioClient(SecureStorageService()).dio;
 
   Future<List<PropertyItem>> getSocieties() async {
     try {
