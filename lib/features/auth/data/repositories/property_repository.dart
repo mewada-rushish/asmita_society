@@ -76,6 +76,9 @@ class PropertyRepository {
       }
     } catch (e) {
       if (e is DioException) {
+        if (e.response?.statusCode == 404) {
+          throw Exception('404 Not Found');
+        }
         final errorData = _ensureMap(e.response?.data);
         throw Exception(errorData['message'] ?? 'Network error occurred');
       }
