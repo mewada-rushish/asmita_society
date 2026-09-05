@@ -14,6 +14,7 @@ class SecureStorageService {
   static const String _roleKey = 'user_role';
   static const String _userIdKey = 'user_id';
   static const String _userNameKey = 'user_name';
+  static const String _societyIdKey = 'society_id';
 
   Future<void> saveToken(String token) async {
     await _storage.write(key: _tokenKey, value: token);
@@ -48,11 +49,21 @@ class SecureStorageService {
     return await _storage.read(key: _userNameKey);
   }
 
+  Future<void> saveSocietyId(int id) async {
+    await _storage.write(key: _societyIdKey, value: id.toString());
+  }
+
+  Future<int?> getSocietyId() async {
+    final val = await _storage.read(key: _societyIdKey);
+    return val != null ? int.tryParse(val) : null;
+  }
+
   Future<void> clearSession() async {
     await _storage.delete(key: _tokenKey);
     await _storage.delete(key: _roleKey);
     await _storage.delete(key: _userIdKey);
     await _storage.delete(key: _userNameKey);
+    await _storage.delete(key: _societyIdKey);
   }
 
   /// Reads a generic string value from the secure keystore.

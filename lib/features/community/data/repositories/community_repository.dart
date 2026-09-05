@@ -3,6 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../models/chat_message_model.dart';
 
 import 'package:dio/dio.dart';
+import '../../../../core/security/secure_storage_service.dart';
 
 abstract class CommunityRepository {
   Future<List<ChatMessageModel>> getMessages({
@@ -18,8 +19,9 @@ abstract class CommunityRepository {
 
 class ApiCommunityRepository implements CommunityRepository {
   final Dio dio;
+  final SecureStorageService secureStorage;
 
-  ApiCommunityRepository({required this.dio});
+  ApiCommunityRepository({required this.dio, required this.secureStorage});
 
   // Helper method to parse raw JSON into ChatMessageModel
   List<ChatMessageModel> _parseMessages(
@@ -111,7 +113,11 @@ class ApiCommunityRepository implements CommunityRepository {
   @override
   Future<void> sendMessage(ChatMessageModel message, {int? senderId}) async {
     try {
-      final payload = message.toApiJson(101, senderId: senderId);
+      final societyId = await secureStorage.getSocietyId();
+      if (societyId == null) {
+        throw Exception('No active society selected');
+      }
+      final payload = message.toApiJson(societyId, senderId: senderId);
       await dio.post('/app-api/community/messages', data: payload);
     } catch (e) {
       debugPrint('sendMessage backend failed. Mocking success for UI testing.');

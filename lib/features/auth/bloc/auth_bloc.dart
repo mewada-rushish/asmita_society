@@ -200,6 +200,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await secureStorage.saveUserRole(response.role);
       await secureStorage.saveUserId(response.data!.userId);
       await secureStorage.saveUserName(response.data!.fullName);
+      if (response.data!.societyId != null) {
+        await secureStorage.saveSocietyId(response.data!.societyId!);
+      }
       await secureStorage.write(key: 'user_profile', value: jsonEncode(response.data!.toJson()));
       emit(AuthAuthenticated(user: response.data!));
     } else {
