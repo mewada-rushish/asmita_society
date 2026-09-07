@@ -19,6 +19,8 @@ import 'features/visitor_management/bloc/visitor_bloc.dart';
 import 'features/services/data/repositories/amenities_repository.dart';
 import 'features/services/bloc/amenities_bloc.dart';
 import 'features/services/bloc/amenities_event.dart';
+import 'features/services/data/repositories/daily_help_repository.dart';
+import 'features/services/bloc/daily_help_bloc.dart';
 import 'features/dashboard/data/repositories/search_repository.dart';
 import 'features/dashboard/bloc/search/search_bloc.dart';
 import 'features/community/data/repositories/community_post_repository.dart';
@@ -53,6 +55,7 @@ Future<void> main() async {
   final authRepo = AuthRepository(dio: dioClient.dio);
   final visitorRepo = VisitorRepository(dio: dioClient.dio);
   final amenitiesRepo = AmenitiesRepository(dio: dioClient.dio);
+  final dailyHelpRepo = DailyHelpRepository(dio: dioClient.dio);
   final searchRepo = SearchRepository(dio: dioClient.dio);
   final communityPostRepo = ApiCommunityPostRepository(dio: dioClient.dio);
 
@@ -70,6 +73,7 @@ Future<void> main() async {
       authRepository: authRepo,
       visitorRepository: visitorRepo,
       amenitiesRepository: amenitiesRepo,
+      dailyHelpRepository: dailyHelpRepo,
       searchRepository: searchRepo,
       communityPostRepository: communityPostRepo,
       isDeviceSafe: isDeviceSafe,
@@ -82,6 +86,7 @@ class AsmitaApp extends StatelessWidget {
   final AuthRepository authRepository;
   final VisitorRepository visitorRepository;
   final AmenitiesRepository amenitiesRepository;
+  final DailyHelpRepository dailyHelpRepository;
   final SearchRepository searchRepository;
   final CommunityPostRepository communityPostRepository;
   final bool isDeviceSafe;
@@ -92,6 +97,7 @@ class AsmitaApp extends StatelessWidget {
     required this.authRepository,
     required this.visitorRepository,
     required this.amenitiesRepository,
+    required this.dailyHelpRepository,
     required this.searchRepository,
     required this.communityPostRepository,
     required this.isDeviceSafe,
@@ -117,6 +123,12 @@ class AsmitaApp extends StatelessWidget {
             repository: amenitiesRepository,
             authBloc: context.read<AuthBloc>(),
           )..add(const FetchAmenities()),
+        ),
+        BlocProvider<DailyHelpBloc>(
+          create: (context) => DailyHelpBloc(
+            repository: dailyHelpRepository,
+            authBloc: context.read<AuthBloc>(),
+          ),
         ),
         BlocProvider<SearchBloc>(
           create: (context) => SearchBloc(
@@ -149,4 +161,4 @@ class AsmitaApp extends StatelessWidget {
       ),
     );
   }
-}
+}
