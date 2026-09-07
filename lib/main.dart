@@ -10,20 +10,14 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'firebase_options.dart';
 import 'core/constants/design_system.dart';
 import 'core/security/secure_storage_service.dart';
-import 'core/network/dio_client.dart';
-import 'features/auth/data/repositories/auth_repository.dart';
 import 'features/auth/bloc/auth_bloc.dart';
 import 'features/auth/presentation/root_screen.dart';
-import 'features/visitor_management/data/repositories/visitor_repository.dart';
+import 'core/di/injection_container.dart' as di;
 import 'features/visitor_management/bloc/visitor_bloc.dart';
-import 'features/services/data/repositories/amenities_repository.dart';
 import 'features/services/bloc/amenities_bloc.dart';
 import 'features/services/bloc/amenities_event.dart';
-import 'features/services/data/repositories/daily_help_repository.dart';
 import 'features/services/bloc/daily_help_bloc.dart';
-import 'features/dashboard/data/repositories/search_repository.dart';
 import 'features/dashboard/bloc/search/search_bloc.dart';
-import 'features/community/data/repositories/community_post_repository.dart';
 import 'features/community/bloc/community_post_bloc.dart';
 import 'features/community/bloc/community_post_event.dart';
 import 'features/dashboard/bloc/quick_actions/quick_actions_bloc.dart';
@@ -44,20 +38,13 @@ Future<void> main() async {
   await Hive.openBox('community_chat');
   await Hive.openBox('app_cache');
 
+  await di.init();
+
   FlutterError.onError = (details) => FirebaseCrashlytics.instance.recordFlutterFatalError(details);
   PlatformDispatcher.instance.onError = (error, stack) {
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     return true;
   };
-
-  final secureStorage = SecureStorageService();
-  final dioClient = AsmitaDioClient(secureStorage);
-  final authRepo = AuthRepository(dio: dioClient.dio);
-  final visitorRepo = VisitorRepository(dio: dioClient.dio);
-  final amenitiesRepo = AmenitiesRepository(dio: dioClient.dio);
-  final dailyHelpRepo = DailyHelpRepository(dio: dioClient.dio);
-  final searchRepo = SearchRepository(dio: dioClient.dio);
-  final communityPostRepo = ApiCommunityPostRepository(dio: dioClient.dio);
 
   bool isDeviceSafe = true;
   try {
@@ -69,37 +56,16 @@ Future<void> main() async {
 
   runApp(ProviderScope(
     child: AsmitaApp(
-      secureStorage: secureStorage,
-      authRepository: authRepo,
-      visitorRepository: visitorRepo,
-      amenitiesRepository: amenitiesRepo,
-      dailyHelpRepository: dailyHelpRepo,
-      searchRepository: searchRepo,
-      communityPostRepository: communityPostRepo,
       isDeviceSafe: isDeviceSafe,
     ),
   ));
 }
 
 class AsmitaApp extends StatelessWidget {
-  final SecureStorageService secureStorage;
-  final AuthRepository authRepository;
-  final VisitorRepository visitorRepository;
-  final AmenitiesRepository amenitiesRepository;
-  final DailyHelpRepository dailyHelpRepository;
-  final SearchRepository searchRepository;
-  final CommunityPostRepository communityPostRepository;
   final bool isDeviceSafe;
 
   const AsmitaApp({
     super.key,
-    required this.secureStorage,
-    required this.authRepository,
-    required this.visitorRepository,
-    required this.amenitiesRepository,
-    required this.dailyHelpRepository,
-    required this.searchRepository,
-    required this.communityPostRepository,
     required this.isDeviceSafe,
   });
 
@@ -109,35 +75,35 @@ class AsmitaApp extends StatelessWidget {
       providers: [
         BlocProvider<AuthBloc>(
           create: (context) => AuthBloc(
-            authRepository: authRepository,
-            secureStorage: secureStorage,
+            authRepository: di.sl(),
+            secureStorage: di.sl(),
           ),
         ),
         BlocProvider<VisitorBloc>(
           create: (context) => VisitorBloc(
-            visitorRepository: visitorRepository,
+            visitorRepository: di.sl(),
           ),
         ),
         BlocProvider<AmenitiesBloc>(
           create: (context) => AmenitiesBloc(
-            repository: amenitiesRepository,
+            repository: di.sl(),
             authBloc: context.read<AuthBloc>(),
           )..add(const FetchAmenities()),
         ),
         BlocProvider<DailyHelpBloc>(
           create: (context) => DailyHelpBloc(
-            repository: dailyHelpRepository,
+            repository: di.sl(),
             authBloc: context.read<AuthBloc>(),
           ),
         ),
         BlocProvider<SearchBloc>(
           create: (context) => SearchBloc(
-            searchRepository: searchRepository,
+            searchRepository: di.sl(),
           ),
         ),
         BlocProvider<CommunityPostBloc>(
           create: (context) => CommunityPostBloc(
-            repository: communityPostRepository,
+            repository: di.sl(),
           )..add(LoadCommunityPosts()),
         ),
         BlocProvider<QuickActionsBloc>(
