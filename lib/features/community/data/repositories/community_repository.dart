@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
+
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/chat_message_model.dart';
 
 import 'package:dio/dio.dart';
 import '../../../../core/security/secure_storage_service.dart';
+import '../../../../core/security/encryption_service.dart';
 
 abstract class CommunityRepository {
   Future<List<ChatMessageModel>> getMessages({
@@ -28,6 +30,7 @@ class ApiCommunityRepository implements CommunityRepository {
     List<dynamic> rawMessages,
     int? currentUserId,
     String? currentUserName,
+    {Uint8List? encryptionKey}
   ) {
     return rawMessages.map((json) {
       final int senderId = json['sender_id'] is int
@@ -48,8 +51,16 @@ class ApiCommunityRepository implements CommunityRepository {
       final isManagement =
           (apiSenderName.toLowerCase() == 'management' || senderId == 0);
 
+      final map = Map<String, dynamic>.from(json as Map);
+      if (encryptionKey != null && map['content'] != null) {
+        try {
+          map['content'] = EncryptionService.decrypt(map['content'], encryptionKey);
+        } catch (e) {
+          // Fallback to plain text if decryption fails (e.g. old unencrypted message)
+        }
+      }
       return ChatMessageModel.fromJson(
-        Map<String, dynamic>.from(json as Map),
+        map,
         isMe: isMe,
         isManagement: isManagement,
       );
@@ -72,10 +83,13 @@ class ApiCommunityRepository implements CommunityRepository {
       );
       if (response.statusCode == 200 && response.data != null) {
         final List<dynamic> rawMessages = response.data['messages'] ?? [];
+        final societyId = await secureStorage.getSocietyId();
+        final encryptionKey = societyId != null ? EncryptionService.getSocietyKey(societyId) : null;
         final parsedMessages = _parseMessages(
           rawMessages,
           currentUserId,
           currentUserName,
+          encryptionKey: encryptionKey,
         );
 
         if (page == 1) {
@@ -87,10 +101,13 @@ class ApiCommunityRepository implements CommunityRepository {
       // If we got a weird status code on page 1, try falling back to cache
       if (page == 1 && box.containsKey('messages_page_1')) {
         final cachedData = box.get('messages_page_1') as List<dynamic>;
+        final societyId = await secureStorage.getSocietyId();
+        final encryptionKey = societyId != null ? EncryptionService.getSocietyKey(societyId) : null;
         return _parseMessages(
           cachedData,
           currentUserId,
           currentUserName,
+          encryptionKey: encryptionKey,
         ).reversed.toList();
       }
       return [];
@@ -100,10 +117,13 @@ class ApiCommunityRepository implements CommunityRepository {
       }
       if (page == 1 && box.containsKey('messages_page_1')) {
         final cachedData = box.get('messages_page_1') as List<dynamic>;
+        final societyId = await secureStorage.getSocietyId();
+        final encryptionKey = societyId != null ? EncryptionService.getSocietyKey(societyId) : null;
         return _parseMessages(
           cachedData,
           currentUserId,
           currentUserName,
+          encryptionKey: encryptionKey,
         ).reversed.toList();
       }
       return []; // Return empty list instead of crashing
@@ -118,6 +138,10 @@ class ApiCommunityRepository implements CommunityRepository {
         throw Exception('No active society selected');
       }
       final payload = message.toApiJson(societyId, senderId: senderId);
+      
+      final encryptionKey = EncryptionService.getSocietyKey(societyId);
+      payload['content'] = EncryptionService.encrypt(payload['content'], encryptionKey);
+      
       await dio.post('/app-api/community/messages', data: payload);
     } catch (e) {
       debugPrint('sendMessage backend failed. Mocking success for UI testing.');

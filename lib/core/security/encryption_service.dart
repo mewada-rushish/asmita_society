@@ -68,4 +68,11 @@ class EncryptionService {
     final decryptedBytes = cipher.process(encryptedBytes);
     return utf8.decode(decryptedBytes);
   }
+  /// Generates a deterministic 256-bit AES key for a specific society using a salt.
+  static Uint8List getSocietyKey(int societyId) {
+    const String salt = 'asmita_society_secret_salt_2026_e2ee';
+    final String input = '${societyId}_$salt';
+    final bytes = utf8.encode(input);
+    return SHA256Digest().process(Uint8List.fromList(bytes));
+  }
 }

@@ -1,6 +1,3 @@
-import 'dart:io';
-
-
 /// Defines the operational environment for the application.
 enum AppEnvironment { development, production }
 
@@ -8,22 +5,16 @@ enum AppEnvironment { development, production }
 class EnvConfig {
   static AppEnvironment get currentEnvironment => AppEnvironment.production;
 
-  static const String _devBaseUrlAndroid = 'http://192.168.0.87:5000';
-  static const String _devBaseUrliOS = 'http://192.168.0.87:5000';
   static const String _prodBaseUrl = 'https://admin.myasmita.com';
 
   /// Resolves the base URL based on the current environment and platform.
+  /// Resolves the base URL using dart-define with a fallback to production.
   static String get baseUrl {
-    if (currentEnvironment == AppEnvironment.production) {
-      return _prodBaseUrl;
+    const String envUrl = String.fromEnvironment('API_URL');
+    if (envUrl.isNotEmpty) {
+      return envUrl;
     }
-
-    switch (currentEnvironment) {
-      case AppEnvironment.development:
-        return Platform.isIOS ? _devBaseUrliOS : _devBaseUrlAndroid;
-      default:
-        return _prodBaseUrl;
-    }
+    return _prodBaseUrl;
   }
 
   /// Endpoint for initiating OTP dispatch.
