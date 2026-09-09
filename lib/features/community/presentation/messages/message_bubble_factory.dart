@@ -27,6 +27,7 @@ class MessageBubbleFactory extends StatelessWidget {
   final bool isSelected;
   final VoidCallback? onLongPress;
   final VoidCallback? onTap;
+  final bool isFailed;
 
   // Audio specific
   final bool isPlaying;
@@ -51,6 +52,7 @@ class MessageBubbleFactory extends StatelessWidget {
     this.isSelected = false,
     this.onLongPress,
     this.onTap,
+    this.isFailed = false,
     this.isPlaying = false,
     this.playProgress = 0,
     required this.onTogglePlayback,
@@ -223,6 +225,15 @@ class MessageBubbleFactory extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
+                              if (isFailed)
+                                Text(
+                                  'Failed to send - Tap to retry ',
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
+                                    color: AsmitaPalette.actionRed,
+                                  ),
+                                ),
                               Text(
                                 time,
                                 style: textTheme.bodyMedium?.copyWith(
@@ -233,7 +244,13 @@ class MessageBubbleFactory extends StatelessWidget {
                               ),
                               if (isMe) ...[
                                 const SizedBox(width: 4),
-                                if (messageId.startsWith('temp_'))
+                                if (isFailed)
+                                  const Icon(
+                                    Icons.error_outline_rounded,
+                                    color: AsmitaPalette.actionRed,
+                                    size: 12,
+                                  )
+                                else if (messageId.startsWith('temp_'))
                                   const SizedBox(
                                     height: 12,
                                     width: 12,

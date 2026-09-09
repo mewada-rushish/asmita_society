@@ -137,6 +137,7 @@ class ChatListSliver extends ConsumerWidget {
               pollOptions: msg.pollOptions,
               isManagement: msg.sender.toLowerCase().contains('admin') ||
                   msg.sender.toLowerCase().contains('security'),
+              isFailed: msg.isFailed,
               isSelected: selectedIds.contains(msg.id),
               onLongPress: () {
                 ref.read(communityProvider.notifier).toggleSelection(msg.id);

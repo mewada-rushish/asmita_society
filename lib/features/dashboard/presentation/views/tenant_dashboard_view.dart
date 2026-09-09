@@ -72,6 +72,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
     showDialog(
       context: context,
       builder: (context) => const AsmitaDialog(
+        title: 'Pre-Approve Entry',
         content: AsmitaPreApproveWizard(), // Plugs in our dynamic wizard safely
       ),
     );

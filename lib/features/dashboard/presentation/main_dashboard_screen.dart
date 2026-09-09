@@ -9,6 +9,7 @@ import '../../services/presentation/screens/services_screen.dart';
 import 'screens/view_more_screen.dart';
 import 'views/owner_dashboard_view.dart';
 import 'views/tenant_dashboard_view.dart';
+import 'views/guard_dashboard_view.dart';
 import 'package:asmita_society/features/services/presentation/screens/daily_help_screen.dart';
 import 'screens/search_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -168,6 +169,11 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
           onNavigateToDailyHelp: _navigateToDailyHelp,
           onNavigateToAllNotices: _navigateToAllNotices,
           onNavigateToSearch: _navigateToSearch,
+        );
+      case 'guard':
+        return GuardDashboardView(
+          onNavigateToMenu: () => setState(() => _currentIndex = 4),
+          onNavigateToHistory: () => setState(() => _currentIndex = 3),
         );
       default:
         return Center(child: Text('Role Architecture: $role'));

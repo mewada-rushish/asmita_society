@@ -11,6 +11,8 @@ import '../../bloc/visitor_state.dart';
 import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_state.dart';
 import 'package:intl/intl.dart';
+import 'package:asmita_society/core/widgets/asmita_dialog.dart';
+import '../../../dashboard/widgets/asmita_pre_approve_wizard.dart';
 
 class VisitorHistoryScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -658,6 +660,20 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => const AsmitaDialog(
+              title: 'Pre-Approve Entry',
+              content: AsmitaPreApproveWizard(),
+            ),
+          );
+        },
+        backgroundColor: AsmitaPalette.deepNavy,
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text('Add Visitor', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
       ),
     );
   }

@@ -9,16 +9,16 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import 'firebase_options.dart';
 import 'core/constants/design_system.dart';
-import 'core/security/secure_storage_service.dart';
 import 'features/auth/bloc/auth_bloc.dart';
 import 'features/auth/presentation/root_screen.dart';
+import 'features/community/bloc/community_post_bloc.dart';
+import 'features/visitor_management/bloc/guard_gate_bloc.dart';
 import 'core/di/injection_container.dart' as di;
 import 'features/visitor_management/bloc/visitor_bloc.dart';
 import 'features/services/bloc/amenities_bloc.dart';
 import 'features/services/bloc/amenities_event.dart';
 import 'features/services/bloc/daily_help_bloc.dart';
 import 'features/dashboard/bloc/search/search_bloc.dart';
-import 'features/community/bloc/community_post_bloc.dart';
 import 'features/community/bloc/community_post_event.dart';
 import 'features/dashboard/bloc/quick_actions/quick_actions_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -83,6 +83,9 @@ class AsmitaApp extends StatelessWidget {
           create: (context) => VisitorBloc(
             visitorRepository: di.sl(),
           ),
+        ),
+        BlocProvider<GuardGateBloc>(
+          create: (context) => GuardGateBloc(repository: di.sl()),
         ),
         BlocProvider<AmenitiesBloc>(
           create: (context) => AmenitiesBloc(

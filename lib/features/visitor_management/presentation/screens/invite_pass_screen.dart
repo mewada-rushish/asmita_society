@@ -3,6 +3,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:intl/intl.dart';
 import '../../data/models/invite_model.dart';
+import 'package:share_plus/share_plus.dart';
 
 class InvitePassScreen extends StatelessWidget {
   final PreApprovedInvite invite;
@@ -89,7 +90,20 @@ class InvitePassScreen extends StatelessWidget {
             ),
             const SizedBox(height: 40),
             ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                final String passDetails = '''
+Visitor Pass for ${invite.companyName ?? 'Visitor'}
+Unit: Flat ${invite.unitId}
+Pass Type: ${invite.inviteType}
+Valid Until: ${_formatDate(invite.validTo?.toIso8601String())}
+Pass Code: ${invite.passCode ?? 'N/A'}
+
+Please present this code at the gate.
+''';
+                // Ignore deprecation warning for now since Share is stable or use standard Share
+                // ignore: deprecated_member_use
+                Share.share(passDetails);
+              },
               icon: const Icon(Icons.share_rounded, color: Colors.white, size: 18),
               label: Text(
                 'Share Invite Pass',

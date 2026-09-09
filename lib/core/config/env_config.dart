@@ -38,6 +38,13 @@ class EnvConfig {
       '$baseUrl/app-api/resident/visitor-requests';
   static String get usersMe => '$baseUrl/app-api/users/me';
 
+  /// Guard Endpoints
+  static String get gateSearchInvite => '$baseUrl/app-api/gate/pre-approved-invites/search';
+  static String get gateExpectedInvites => '$baseUrl/app-api/gate/pre-approved-invites/expected';
+  static String gateCheckInInvite(String id) => '$baseUrl/app-api/gate/pre-approved-invites/$id/check-in';
+  static String get guardVisitorEntries => '$baseUrl/app-api/guard/visitor-entries';
+  static String get createVisitorEntry => '$baseUrl/app-api/visitor-entries';
+
   /// Global Search
   static String get globalSearch => '$baseUrl/app-api/search';
 
