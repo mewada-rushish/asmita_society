@@ -22,6 +22,7 @@ class ChatMessageModel {
   final bool isStarred;
   final bool isPinned;
   final Map<String, List<String>>? reactions;
+  final bool isFailed;
 
   const ChatMessageModel({
     required this.id,
@@ -39,6 +40,7 @@ class ChatMessageModel {
     this.isStarred = false,
     this.isPinned = false,
     this.reactions,
+    this.isFailed = false,
   });
 
   ChatMessageModel copyWith({
@@ -57,6 +59,7 @@ class ChatMessageModel {
     bool? isStarred,
     bool? isPinned,
     Map<String, List<String>>? reactions,
+    bool? isFailed,
   }) {
     return ChatMessageModel(
       id: id ?? this.id,
@@ -74,6 +77,7 @@ class ChatMessageModel {
       isStarred: isStarred ?? this.isStarred,
       isPinned: isPinned ?? this.isPinned,
       reactions: reactions ?? this.reactions,
+      isFailed: isFailed ?? this.isFailed,
     );
   }
 

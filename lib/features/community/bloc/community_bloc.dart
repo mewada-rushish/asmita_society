@@ -84,22 +84,29 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     if (state is! CommunityLoaded) return;
     final currentState = state as CommunityLoaded;
 
-    try {
-      final encryptedMsg = ChatMessageModel.createMessage(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        sender: 'You',
-        isMe: true,
-        time: 'Today|${_getCurrentFormattedTime()}',
-        type: 'text',
-        content: event.text,
-        replyToMessageId: event.replyToMessageId,
-        replyToContent: event.replyToContent,
-      );
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    final tempMsg = ChatMessageModel.createMessage(
+      id: tempId,
+      sender: 'You',
+      isMe: true,
+      time: 'Today|${_getCurrentFormattedTime()}',
+      type: 'text',
+      content: event.text,
+      replyToMessageId: event.replyToMessageId,
+      replyToContent: event.replyToContent,
+    );
 
-      await repository.sendMessage(encryptedMsg, senderId: _currentUserId);
+    emit(currentState.copyWith(messages: [tempMsg, ...currentState.messages]));
+
+    try {
+      await repository.sendMessage(tempMsg, senderId: _currentUserId);
       await _fetchAndMergeLatestMessages(currentState, emit);
     } catch (e) {
-      emit(currentState);
+      final messages = (state as CommunityLoaded).messages.map((m) {
+        if (m.id == tempId) return m.copyWith(isFailed: true);
+        return m;
+      }).toList();
+      emit(currentState.copyWith(messages: messages));
     }
   }
 
@@ -124,20 +131,19 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
       
       final content = '$uploadedUrl|${event.duration}';
 
-      final encryptedMsg = ChatMessageModel.createMessage(
+      final finalMsg = tempMsg.copyWith(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        sender: 'You',
-        isMe: true,
-        time: 'Today|${_getCurrentFormattedTime()}',
-        type: 'audio',
         content: content,
       );
 
-      await repository.sendMessage(encryptedMsg, senderId: _currentUserId);
+      await repository.sendMessage(finalMsg, senderId: _currentUserId);
       await _fetchAndMergeLatestMessages(currentState, emit, isUploadingAttachment: false);
     } catch (e) {
-      final filteredMessages = currentState.messages.where((m) => !m.id.startsWith('temp_')).toList();
-      emit(currentState.copyWith(messages: filteredMessages, isUploadingAttachment: false));
+      final messages = (state as CommunityLoaded).messages.map((m) {
+        if (m.id == tempMsg.id) return m.copyWith(isFailed: true);
+        return m;
+      }).toList();
+      emit(currentState.copyWith(messages: messages, isUploadingAttachment: false));
     }
   }
 
@@ -145,22 +151,29 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     if (state is! CommunityLoaded) return;
     final currentState = state as CommunityLoaded;
 
-    try {
-      final encryptedMsg = ChatMessageModel.createMessage(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        sender: 'You',
-        isMe: true,
-        time: 'Today|${_getCurrentFormattedTime()}',
-        type: 'poll',
-        content: event.question,
-        pollOptions: event.options,
-        allowMultipleAnswers: event.allowMultipleAnswers,
-      );
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    final tempMsg = ChatMessageModel.createMessage(
+      id: tempId,
+      sender: 'You',
+      isMe: true,
+      time: 'Today|${_getCurrentFormattedTime()}',
+      type: 'poll',
+      content: event.question,
+      pollOptions: event.options,
+      allowMultipleAnswers: event.allowMultipleAnswers,
+    );
 
-      await repository.sendMessage(encryptedMsg, senderId: _currentUserId);
+    emit(currentState.copyWith(messages: [tempMsg, ...currentState.messages]));
+
+    try {
+      await repository.sendMessage(tempMsg, senderId: _currentUserId);
       await _fetchAndMergeLatestMessages(currentState, emit);
     } catch (e) {
-      emit(currentState);
+      final messages = (state as CommunityLoaded).messages.map((m) {
+        if (m.id == tempId) return m.copyWith(isFailed: true);
+        return m;
+      }).toList();
+      emit(currentState.copyWith(messages: messages));
     }
   }
 
@@ -183,20 +196,19 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
       final String? uploadedUrl = await repository.uploadFile(event.imagePath);
       if (uploadedUrl == null) throw Exception('Upload failed');
       
-      final encryptedMsg = ChatMessageModel.createMessage(
+      final finalMsg = tempMsg.copyWith(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        sender: 'You',
-        isMe: true,
-        time: 'Today|${_getCurrentFormattedTime()}',
-        type: 'image',
         content: uploadedUrl,
       );
 
-      await repository.sendMessage(encryptedMsg, senderId: _currentUserId);
+      await repository.sendMessage(finalMsg, senderId: _currentUserId);
       await _fetchAndMergeLatestMessages(currentState, emit, isUploadingAttachment: false);
     } catch (e) {
-      final filteredMessages = currentState.messages.where((m) => !m.id.startsWith('temp_')).toList();
-      emit(currentState.copyWith(messages: filteredMessages, isUploadingAttachment: false));
+      final messages = (state as CommunityLoaded).messages.map((m) {
+        if (m.id == tempMsg.id) return m.copyWith(isFailed: true);
+        return m;
+      }).toList();
+      emit(currentState.copyWith(messages: messages, isUploadingAttachment: false));
     }
   }
 
@@ -250,20 +262,19 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
       final String? uploadedUrl = await repository.uploadFile(event.documentPath);
       if (uploadedUrl == null) throw Exception('Upload failed');
       
-      final encryptedMsg = ChatMessageModel.createMessage(
+      final finalMsg = tempMsg.copyWith(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        sender: 'You',
-        isMe: true,
-        time: 'Today|${_getCurrentFormattedTime()}',
-        type: 'document',
         content: '$uploadedUrl|${event.fileName}|${event.fileSize}',
       );
 
-      await repository.sendMessage(encryptedMsg, senderId: _currentUserId);
+      await repository.sendMessage(finalMsg, senderId: _currentUserId);
       await _fetchAndMergeLatestMessages(currentState, emit, isUploadingAttachment: false);
     } catch (e) {
-      final filteredMessages = currentState.messages.where((m) => !m.id.startsWith('temp_')).toList();
-      emit(currentState.copyWith(messages: filteredMessages, isUploadingAttachment: false));
+      final messages = (state as CommunityLoaded).messages.map((m) {
+        if (m.id == tempMsg.id) return m.copyWith(isFailed: true);
+        return m;
+      }).toList();
+      emit(currentState.copyWith(messages: messages, isUploadingAttachment: false));
     }
   }
 }

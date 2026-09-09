@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:pointycastle/export.dart';
+import 'package:encrypt/encrypt.dart' as encrypt;
+import 'package:rsa_encrypt/rsa_encrypt.dart';
+import 'package:pointycastle/asymmetric/api.dart' as crypto;
 
 /// Service to handle end-to-end symmetric encryption and decryption.
 /// Uses AES-256 in CBC mode with PKCS7 padding.
@@ -20,7 +23,7 @@ class EncryptionService {
 
   /// Encrypts plain text using AES-256-CBC.
   /// Prefixes the random IV to the ciphertext before Base64 encoding.
-  static String encrypt(String plainText, Uint8List key) {
+  static String encryptAES(String plainText, Uint8List key) {
     final iv = generateRandomIV();
     final cipher = PaddedBlockCipherImpl(
       PKCS7Padding(),
@@ -45,7 +48,7 @@ class EncryptionService {
   }
 
   /// Decrypts a combined Base64 ciphertext (IV + Ciphertext) using AES-256-CBC.
-  static String decrypt(String cipherTextBase64, Uint8List key) {
+  static String decryptAES(String cipherTextBase64, Uint8List key) {
     final combined = base64.decode(cipherTextBase64);
     if (combined.length < 16) {
       throw ArgumentError('Ciphertext is too short to contain a valid IV.');
@@ -68,11 +71,44 @@ class EncryptionService {
     final decryptedBytes = cipher.process(encryptedBytes);
     return utf8.decode(decryptedBytes);
   }
+  
   /// Generates a deterministic 256-bit AES key for a specific society using a salt.
   static Uint8List getSocietyKey(int societyId) {
     const String salt = 'asmita_society_secret_salt_2026_e2ee';
     final String input = '${societyId}_$salt';
     final bytes = utf8.encode(input);
     return SHA256Digest().process(Uint8List.fromList(bytes));
+  }
+
+  /// Generates an RSA key pair.
+  static Future<Map<String, String>> generateRSAKeyPair() async {
+    final helper = RsaKeyHelper();
+    final keyPair = await helper.computeRSAKeyPair(helper.getSecureRandom());
+    
+    final pubPem = helper.encodePublicKeyToPemPKCS1(keyPair.publicKey as crypto.RSAPublicKey);
+    final privPem = helper.encodePrivateKeyToPemPKCS1(keyPair.privateKey as crypto.RSAPrivateKey);
+    
+    return {
+      'publicKey': pubPem,
+      'privateKey': privPem,
+    };
+  }
+
+  /// Encrypts plain text using RSA public key.
+  static String encryptRSA(String plainText, String publicKeyPem) {
+    final helper = RsaKeyHelper();
+    final publicKey = helper.parsePublicKeyFromPem(publicKeyPem);
+    final encrypter = encrypt.Encrypter(encrypt.RSA(publicKey: publicKey));
+    final encrypted = encrypter.encrypt(plainText);
+    return encrypted.base64;
+  }
+
+  /// Decrypts a Base64 ciphertext using RSA private key.
+  static String decryptRSA(String cipherTextBase64, String privateKeyPem) {
+    final helper = RsaKeyHelper();
+    final privateKey = helper.parsePrivateKeyFromPem(privateKeyPem);
+    final encrypter = encrypt.Encrypter(encrypt.RSA(privateKey: privateKey));
+    final decrypted = encrypter.decrypt(encrypt.Encrypted.fromBase64(cipherTextBase64));
+    return decrypted;
   }
 }

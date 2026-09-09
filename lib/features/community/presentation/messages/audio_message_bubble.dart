@@ -25,6 +25,7 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
   StreamSubscription? _playerStateSubscription;
   StreamSubscription? _durationSubscription;
   StreamSubscription? _positionSubscription;
+  StreamSubscription? _playerCompleteSubscription;
 
   @override
   void initState() {
@@ -56,6 +57,15 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
         });
       }
     });
+
+    _playerCompleteSubscription = _audioPlayer.onPlayerComplete.listen((_) {
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+          _position = Duration.zero;
+        });
+      }
+    });
     
     // Set the source
     try {
@@ -75,6 +85,7 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
     _playerStateSubscription?.cancel();
     _durationSubscription?.cancel();
     _positionSubscription?.cancel();
+    _playerCompleteSubscription?.cancel();
     _audioPlayer.dispose();
     super.dispose();
   }
@@ -83,6 +94,9 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
     if (_isPlaying) {
       await _audioPlayer.pause();
     } else {
+      if (_position == Duration.zero) {
+        await _audioPlayer.seek(Duration.zero);
+      }
       await _audioPlayer.resume();
     }
   }

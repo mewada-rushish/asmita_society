@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import '../../../../core/config/env_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,11 +10,19 @@ import '../../auth/data/models/user_model.dart';
 import '../../visitor_management/bloc/visitor_bloc.dart';
 import '../../visitor_management/bloc/visitor_event.dart';
 import '../../visitor_management/bloc/visitor_state.dart';
+import '../../visitor_management/bloc/guard_gate_bloc.dart';
+import '../../visitor_management/bloc/guard_gate_event.dart';
+import '../../visitor_management/bloc/guard_gate_state.dart';
 import '../../visitor_management/presentation/screens/invite_pass_screen.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 
 class AsmitaPreApproveWizard extends StatefulWidget {
-  const AsmitaPreApproveWizard({super.key});
+  final bool isGuardMode;
+
+  const AsmitaPreApproveWizard({
+    super.key,
+    this.isGuardMode = false,
+  });
 
   @override
   State<AsmitaPreApproveWizard> createState() => _AsmitaPreApproveWizardState();
@@ -28,6 +38,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   final ScrollController _scrollController = ScrollController();
 
   FlatMapping? _selectedFlatMapping;
+  List<FlatMapping> _societyFlats = [];
+  bool _isLoadingFlats = false;
+
+  final TextEditingController _visitorNameController = TextEditingController();
+  final TextEditingController _mobileNumberController = TextEditingController();
 
   bool _surpriseDelivery = false;
   bool _secureCabMode = false;
@@ -69,6 +84,39 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) setState(() {});
     });
+    if (widget.isGuardMode) {
+      _fetchSocietyFlats();
+    }
+  }
+
+  Future<void> _fetchSocietyFlats() async {
+    setState(() => _isLoadingFlats = true);
+    try {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AuthAuthenticated) {
+        final societyId = authState.user.societyId;
+        final response = await Dio().get(
+          '${EnvConfig.baseUrl}/app-api/flats/society/$societyId',
+        );
+        if (response.statusCode == 200 && response.data['flats'] != null) {
+          final List<dynamic> flatsJson = response.data['flats'];
+          setState(() {
+            _societyFlats = flatsJson.map((f) => FlatMapping(
+              mappingId: 0,
+              flatId: f['id'] as int,
+              flatNumber: f['unit_number'] as String,
+              towerId: f['tower_id'] as int,
+              towerName: f['tower_name'] ?? 'Tower',
+              ownershipType: 'tenant', // Dummy value
+            )).toList();
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching flats: $e');
+    } finally {
+      setState(() => _isLoadingFlats = false);
+    }
   }
 
   @override
@@ -76,6 +124,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     _tabController.dispose();
     _scrollController.dispose();
     _cabNoController.dispose();
+    _visitorNameController.dispose();
+    _mobileNumberController.dispose();
     super.dispose();
   }
 
@@ -91,15 +141,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     final user = authState.user;
     FlatMapping? flat = _selectedFlatMapping;
 
-    debugPrint('=== _submitInvite DEBUG ===');
-    debugPrint('Full UserModel JSON: ${user.toJson()}');
-    debugPrint('Initial flat selection: $flat');
-    debugPrint('User flat mappings count: ${user.flatMappings.length}');
-    if (user.flatMappings.isNotEmpty) {
-      debugPrint('First flat mapping: ${user.flatMappings.first.flatNumber}');
-    }
-
-    if (flat == null && user.flatMappings.isNotEmpty) {
+    if (flat == null && user.flatMappings.isNotEmpty && !widget.isGuardMode) {
       if (user.flatMappings.length == 1) {
         flat = user.flatMappings.first;
       }
@@ -110,6 +152,34 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         context,
         message: 'Please select a flat.',
         type: AsmitaToastType.error,
+      );
+      return;
+    }
+
+    if (widget.isGuardMode) {
+      if (_visitorNameController.text.trim().isEmpty || _mobileNumberController.text.trim().isEmpty) {
+        AsmitaToast.show(
+          context,
+          message: 'Please enter visitor name and mobile number.',
+          type: AsmitaToastType.error,
+        );
+        return;
+      }
+      final payload = {
+        'society_id': user.societyId,
+        'tower_id': flat.towerId,
+        'unit_id': flat.flatId,
+        'visitor_name': _visitorNameController.text.trim(),
+        'visitor_phone': _mobileNumberController.text.trim(),
+        'purpose': _selectedCategory == 'Visiting Help' ? 'Help' : _selectedCategory,
+        'company_name': _selectedCategory == 'Guest'
+            ? 'Guest'
+            : (_selectedCategory == 'Cab' ? 'Cab' : _selectedCompany),
+        'vehicle_number': _cabNoController.text.trim(),
+        'no_of_visitors': _selectedCategory == 'Guest' ? _guestCount : 1,
+      };
+      context.read<GuardGateBloc>().add(
+        SubmitWalkInVisitor(payload),
       );
       return;
     }
@@ -238,70 +308,89 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<VisitorBloc, VisitorState>(
-      listener: (context, state) {
-        if (state is VisitorCreateSuccess) {
-          if (_selectedCategory == 'Cab' || _selectedCategory == 'Delivery') {
-            setState(() {
-              _currentStep = 2;
-            });
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => InvitePassScreen(invite: state.invite),
-              ),
-            );
-          }
-        } else if (state is VisitorError) {
+    return BlocListener<GuardGateBloc, GuardGateState>(
+      listener: (context, guardState) {
+        if (guardState.status == GuardGateStatus.success) {
           AsmitaToast.show(
             context,
-            message: state.message,
+            message: 'Walk-in visitor logged successfully!',
+            type: AsmitaToastType.success,
+          );
+          Navigator.pop(context); // Or go to a success screen
+        } else if (guardState.status == GuardGateStatus.error) {
+          AsmitaToast.show(
+            context,
+            message: guardState.errorMessage ?? 'Failed to log visitor',
             type: AsmitaToastType.error,
           );
         }
       },
-      builder: (context, state) {
-        return Stack(
-          children: [
-            AnimatedSize(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOutCubic,
-              alignment: Alignment.topCenter,
-              child: Theme(
-                data: Theme.of(context).copyWith(
-                  scrollbarTheme: ScrollbarThemeData(
-                    thumbColor: WidgetStateProperty.all(
-                      Colors.grey.withValues(alpha: 0.2),
-                    ),
-                    thickness: WidgetStateProperty.all(3.0),
-                    radius: const Radius.circular(10),
-                  ),
+      child: BlocConsumer<VisitorBloc, VisitorState>(
+        listener: (context, state) {
+          if (state is VisitorCreateSuccess) {
+            if (_selectedCategory == 'Cab' || _selectedCategory == 'Delivery') {
+              setState(() {
+                _currentStep = 2;
+              });
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => InvitePassScreen(invite: state.invite),
                 ),
-                child: Scrollbar(
-                  controller: _scrollController,
-                  thumbVisibility: true,
-                  child: SingleChildScrollView(
+              );
+            }
+          } else if (state is VisitorError) {
+            AsmitaToast.show(
+              context,
+              message: state.message,
+              type: AsmitaToastType.error,
+            );
+          }
+        },
+        builder: (context, state) {
+          final isGuardSubmitting = context.watch<GuardGateBloc>().state.isSubmitting;
+          return Stack(
+            children: [
+              AnimatedSize(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOutCubic,
+                alignment: Alignment.topCenter,
+                child: Theme(
+                  data: Theme.of(context).copyWith(
+                    scrollbarTheme: ScrollbarThemeData(
+                      thumbColor: WidgetStateProperty.all(
+                        Colors.grey.withValues(alpha: 0.2),
+                      ),
+                      thickness: WidgetStateProperty.all(3.0),
+                      radius: const Radius.circular(10),
+                    ),
+                  ),
+                  child: Scrollbar(
                     controller: _scrollController,
-                    physics: const ClampingScrollPhysics(),
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 4.0),
-                      child: _buildCurrentStep(),
+                    thumbVisibility: true,
+                    child: SingleChildScrollView(
+                      controller: _scrollController,
+                      physics: const ClampingScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 4.0),
+                        child: _buildCurrentStep(),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            if (state is VisitorLoading)
-              Positioned.fill(
-                child: Container(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  child: const Center(child: CircularProgressIndicator()),
+              if (state is VisitorLoading || isGuardSubmitting)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
                 ),
-              ),
-          ],
-        );
-      },
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -329,17 +418,13 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       {'label': 'Visiting Help', 'icon': Icons.build_outlined},
     ];
 
-    final authState = context.watch<AuthBloc>().state;
-    UserModel? user;
-    if (authState is AuthAuthenticated) {
-      user = authState.user;
-    }
+
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (user != null && user.flatMappings.length > 1) ...[
+        if (widget.isGuardMode) ...[
           const Text(
             'Select Flat',
             style: TextStyle(
@@ -350,43 +435,50 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             ),
           ),
           const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              border: Border.all(color: AsmitaPalette.borderGrey),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<FlatMapping>(
-                value: _selectedFlatMapping,
-                isExpanded: true,
-                icon: const Icon(
-                  Icons.arrow_drop_down_rounded,
-                  color: AsmitaPalette.deepNavy,
-                ),
-                items: user.flatMappings.map((flat) {
-                  return DropdownMenuItem(
-                    value: flat,
-                    child: Text(
-                      '${flat.towerName} - ${flat.flatNumber}',
-                      style: const TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 14,
+          if (_isLoadingFlats)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                border: Border.all(color: AsmitaPalette.borderGrey),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<FlatMapping>(
+                  value: _selectedFlatMapping,
+                  hint: const Text('Search and select flat'),
+                  isExpanded: true,
+                  icon: const Icon(
+                    Icons.arrow_drop_down_rounded,
+                    color: AsmitaPalette.deepNavy,
+                  ),
+                  items: _societyFlats.map((flat) {
+                    return DropdownMenuItem(
+                      value: flat,
+                      child: Text(
+                        '${flat.towerName} - ${flat.flatNumber}',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 14,
+                        ),
                       ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) setState(() => _selectedFlatMapping = val);
-                },
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) setState(() => _selectedFlatMapping = val);
+                  },
+                ),
               ),
             ),
-          ),
           const SizedBox(height: 16),
         ],
-        const Text(
-          'Allow Future Entries',
-          style: TextStyle(
+        Text(
+          widget.isGuardMode ? 'Select Visitor Category' : 'Allow Future Entries',
+          style: const TextStyle(
             fontFamily: 'Montserrat',
             fontSize: 18,
             fontWeight: FontWeight.w800,
@@ -536,6 +628,45 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   // STEP 1: Form Router
   // =========================================================================
   Widget _buildCategoryWorkflowRouter() {
+    if (widget.isGuardMode) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              GestureDetector(
+                onTap: _prevStep,
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.only(right: 12.0, top: 4.0, bottom: 4.0),
+                  child: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    size: 18,
+                    color: AsmitaPalette.deepNavy,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  'Walk-In $_selectedCategory Entry',
+                  style: const TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AsmitaPalette.deepNavy,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _buildGuardWalkInLayout(),
+        ],
+      );
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -749,6 +880,196 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         ],
         _buildPrimaryButton(label: 'Authorize Entry', onPressed: _submitInvite),
       ],
+    );
+  }
+
+  Widget _buildGuardWalkInLayout() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _visitorNameController,
+          textCapitalization: TextCapitalization.words,
+          decoration: InputDecoration(
+            labelText: 'Visitor Name*',
+            labelStyle: const TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 13,
+              color: AsmitaPalette.textLight,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AsmitaPalette.actionRed),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+          ),
+          style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _mobileNumberController,
+          keyboardType: TextInputType.phone,
+          maxLength: 10,
+          decoration: InputDecoration(
+            labelText: 'Mobile Number*',
+            counterText: '',
+            labelStyle: const TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 13,
+              color: AsmitaPalette.textLight,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AsmitaPalette.actionRed),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+          ),
+          style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
+        ),
+        const SizedBox(height: 16),
+        if (_selectedCategory == 'Delivery') ...[
+          _buildCompanyDropdown(),
+          const SizedBox(height: 16),
+        ],
+        if (_selectedCategory == 'Cab' || _selectedCategory == 'Delivery') ...[
+          TextField(
+            controller: _cabNoController,
+            textCapitalization: TextCapitalization.characters,
+            decoration: InputDecoration(
+              labelText: 'Vehicle Number (Optional)',
+              labelStyle: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 13,
+                color: AsmitaPalette.textLight,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AsmitaPalette.actionRed),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+            ),
+            style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+        ],
+        if (_selectedCategory == 'Guest') ...[
+          _buildGuestCountSelector(),
+          const SizedBox(height: 16),
+        ],
+        const SizedBox(height: 24),
+        _buildActionButtons(),
+      ],
+    );
+  }
+
+  Widget _buildCompanyDropdown() {
+    return _buildBottomSheetTrigger(
+      label: 'Company Name',
+      value: _selectedCompany == 'Other' && _customCompanyName.isNotEmpty
+          ? _customCompanyName
+          : _selectedCompany,
+      onTap: _showCompanySelectionSheet,
+    );
+  }
+
+  Widget _buildGuestCountSelector() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          'Number of Guests:',
+          style: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: AsmitaPalette.textDark,
+          ),
+        ),
+        Row(
+          children: [
+            IconButton(
+              icon: const Icon(
+                Icons.remove_circle_outline,
+                color: AsmitaPalette.actionRed,
+              ),
+              onPressed: () {
+                if (_guestCount > 1) setState(() => _guestCount--);
+              },
+            ),
+            Text(
+              '$_guestCount',
+              style: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(
+                Icons.add_circle_outline,
+                color: AsmitaPalette.actionRed,
+              ),
+              onPressed: () {
+                if (_guestCount < 20) setState(() => _guestCount++);
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _submitInvite,
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          backgroundColor: AsmitaPalette.actionRed,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 2,
+        ),
+        child: const Text(
+          'Submit Request',
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+      ),
     );
   }
 
