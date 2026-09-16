@@ -16,6 +16,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.secureStorage,
   }) : super(AuthInitial()) {
     on<AuthCheckRequested>(_onAuthCheckRequested);
+    on<AuthCheckStatusRequested>(_onCheckStatusRequested);
     on<AuthInitiateRequested>(_onInitiateRequested);
     on<AuthVerifyRequested>(_onVerifyRequested);
     on<AuthRegisterRequested>(_onRegisterRequested);
@@ -61,6 +62,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     } catch (e) {
       emit(AuthUnauthenticated());
+    }
+  }
+
+  Future<void> _onCheckStatusRequested(
+    AuthCheckStatusRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final status = await authRepository.checkStatus(event.mobile);
+      if (status == 'APPROVED') {
+        emit(AuthUnauthenticated());
+      } else {
+        emit(AuthPendingApproval());
+      }
+    } catch (e) {
+      emit(AuthError(message: _formatException(e)));
     }
   }
 

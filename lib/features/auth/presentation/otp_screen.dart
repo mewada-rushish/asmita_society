@@ -104,7 +104,7 @@ class _OtpScreenState extends State<OtpScreen> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (_) => const ApprovalPendingScreen(),
+                builder: (_) => ApprovalPendingScreen(mobile: widget.phoneNumber),
               ),
             );
           } else if (state is AuthError) {

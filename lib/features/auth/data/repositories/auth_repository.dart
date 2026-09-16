@@ -61,6 +61,24 @@ class AuthRepository {
     }
   }
 
+  /// Checks the user's approval status
+  Future<String> checkStatus(String mobile) async {
+    try {
+      final response = await _dio.post(
+        EnvConfig.loginStatus,
+        data: {'mobile': mobile},
+      );
+
+      final data = _ensureMap(response.data);
+      if (data['success'] == true && data['status'] != null) {
+        return data['status'] as String;
+      }
+      throw Exception('Failed to check status');
+    } on DioException catch (e) {
+      throw _parseError(e, 'Unable to check status');
+    }
+  }
+
   /// Completes the onboarding process for new users.
   Future<AuthResponse> registerUser({
     required String mobile,

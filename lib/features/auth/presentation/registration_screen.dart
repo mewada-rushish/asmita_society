@@ -365,7 +365,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           } else if (state is AuthPendingApproval) {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (_) => const ApprovalPendingScreen()),
+              MaterialPageRoute(builder: (_) => ApprovalPendingScreen(mobile: widget.verifiedMobile)),
               (route) => false,
             );
           }
