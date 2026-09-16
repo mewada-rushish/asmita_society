@@ -150,10 +150,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   }
 
   void _submitRegistration() {
-    if (_nameController.text.trim().isEmpty || _selectedGender == null) {
+    if (_nameController.text.trim().isEmpty || _emailController.text.trim().isEmpty || _selectedGender == null) {
       AsmitaToast.show(
         context,
         message: 'Please fill in all required fields to continue.',
+        type: AsmitaToastType.error,
+      );
+      return;
+    }
+
+    final email = _emailController.text.trim();
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+      AsmitaToast.show(
+        context,
+        message: 'Please enter a valid email address.',
         type: AsmitaToastType.error,
       );
       return;
