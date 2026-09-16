@@ -94,10 +94,17 @@ class AuthRepository {
             await MultipartFile.fromFile(profilePicture),
           ));
         } else if (profilePicture is File) {
-          formData.files.add(MapEntry(
-            'profile_picture',
-            await MultipartFile.fromFile(profilePicture.path),
-          ));
+          if (profilePicture.existsSync()) {
+            formData.files.add(MapEntry(
+              'profile_picture',
+              await MultipartFile.fromFile(
+                profilePicture.path,
+                filename: profilePicture.path.split('/').last,
+              ),
+            ));
+          } else {
+            throw Exception('Selected profile picture could not be found on your device. Please pick the image again.');
+          }
         }
       }
 
