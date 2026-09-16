@@ -117,27 +117,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         floor: event.floor,
         flat: event.flat,
         role: event.role,
+        profilePicture: event.profilePicture,
       );
       
-      // Save token first so the upload request can use it
+      // Save token if available (e.g. for pre-approved users)
       if (response.token.isNotEmpty) {
         await secureStorage.saveToken(response.token);
-      }
-      
-      if (event.profilePicture != null) {
-        try {
-          final imageUrl = await authRepository.uploadProfilePicture(event.profilePicture!, token: response.token);
-          // Update the user model with the new image URL
-          if (response.data != null) {
-            response = AuthResponse(
-              status: response.status,
-              token: response.token,
-              data: response.data!.copyWith(profilePictureUrl: imageUrl),
-            );
-          }
-        } catch (e) {
-          // Non-fatal error, registration still succeeded
-        }
       }
       
       await _emitAuthenticated(response, emit);
