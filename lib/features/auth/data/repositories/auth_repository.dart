@@ -71,21 +71,38 @@ class AuthRepository {
     required String floor,
     required String flat,
     required String role,
+    dynamic profilePicture,
   }) async {
     try {
+      final formData = FormData.fromMap({
+        'mobile_number': mobile,
+        'full_name': fullName,
+        'email_id': email,
+        'gender': gender,
+        'society_id': society,
+        'tower_id': tower,
+        'floor_id': floor,
+        'flat_id': flat,
+        'ownership_type': role,
+      });
+
+      if (profilePicture != null) {
+        if (profilePicture is String) {
+          formData.files.add(MapEntry(
+            'profile_picture',
+            await MultipartFile.fromFile(profilePicture),
+          ));
+        } else if (profilePicture is File) {
+          formData.files.add(MapEntry(
+            'profile_picture',
+            await MultipartFile.fromFile(profilePicture.path),
+          ));
+        }
+      }
+
       final response = await _dio.post(
         EnvConfig.register,
-        data: {
-          'mobile_number': mobile,
-          'full_name': fullName,
-          'email_id': email,
-          'gender': gender,
-          'society_id': society,
-          'tower_id': tower,
-          'floor_id': floor,
-          'flat_id': flat,
-          'ownership_type': role,
-        },
+        data: formData,
       );
 
       final data = _ensureMap(response.data);
