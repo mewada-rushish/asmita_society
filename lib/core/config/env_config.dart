@@ -23,6 +23,9 @@ class EnvConfig {
   /// Endpoint for verifying OTP.
   static String get loginVerify => '$baseUrl/app-api/auth/otp/verify';
 
+  /// Endpoint for checking user approval status.
+  static String get loginStatus => '$baseUrl/app-api/auth/otp/status';
+
   /// Endpoint for registering a new user.
   static String get register => '$baseUrl/app-api/auth/otp/register';
 
