@@ -40,6 +40,8 @@ class AuthRegistrationRequired extends AuthState {
   List<Object?> get props => [mobile];
 }
 
+class AuthPendingApproval extends AuthState {}
+
 class AuthError extends AuthState {
   final String message;
   const AuthError({required this.message});
