@@ -44,7 +44,7 @@ class _RootScreenState extends State<RootScreen> {
       },
       builder: (context, state) {
         if (state is AuthAuthenticated) {
-          return MainDashboardScreen(userRole: state.user.userType);
+          return MainDashboardScreen(userRole: state.user.systemRole ?? state.user.primaryRole);
         } else if (state is AuthNeedsOnboarding) {
           return const OnboardingScreen();
         } else if (state is AuthUnauthenticated || state is AuthError) {

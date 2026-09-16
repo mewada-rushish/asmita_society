@@ -190,7 +190,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 16),
           Text(user.fullName, style: textTheme.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
-          Text(user.userType.toUpperCase(), style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.textLight)),
+          Text((user.systemRole ?? user.primaryRole).toUpperCase(), style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.textLight)),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

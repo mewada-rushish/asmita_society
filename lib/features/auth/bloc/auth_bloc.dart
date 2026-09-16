@@ -45,7 +45,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           sessionUser = UserModel(
             userId: cachedUserId, 
             fullName: cachedUserName, 
-            userType: cachedRole, 
+            primaryRole: cachedRole, 
             accountType: 'app',
           );
         }
@@ -188,7 +188,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     // Attempt to inform the backend
     final userId = await secureStorage.getUserId();
     final role = await secureStorage.getUserRole();
-    await authRepository.logout(userId, role);
+    await authRepository.logout(userId, null, role);
     
     await secureStorage.clearSession();
     emit(AuthUnauthenticated());
