@@ -43,7 +43,8 @@ class AuthRepository {
         return AuthResponse.fromJson(data);
       }
 
-      throw Exception('Invalid verification response');
+      final message = data['message'] ?? 'Invalid verification response';
+      throw Exception(message);
     } on DioException catch (e) {
       // Logic to handle 401 as a registration signal rather than a network failure
       if (e.response?.statusCode == 401) {
