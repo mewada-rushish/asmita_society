@@ -51,7 +51,9 @@ class FlatMapping {
 class UserModel {
   final int userId;
   final String fullName;
-  final String userType;
+  final String? systemRole;
+  final String primaryRole;
+  final String? secondaryRole;
   final String accountType;
   final int? societyId;
   final String? emailId;
@@ -64,7 +66,9 @@ class UserModel {
   UserModel({
     required this.userId,
     required this.fullName,
-    required this.userType,
+    this.systemRole,
+    required this.primaryRole,
+    this.secondaryRole,
     required this.accountType,
     this.societyId,
     this.emailId,
@@ -88,7 +92,9 @@ class UserModel {
           ? (json['user_id'] is int ? json['user_id'] as int : int.tryParse(json['user_id'].toString()) ?? 0)
           : (json['id'] != null ? (json['id'] is int ? json['id'] as int : int.tryParse(json['id'].toString()) ?? 0) : 0),
       fullName: json['full_name']?.toString() ?? '',
-      userType: json['user_type']?.toString() ?? 'resident',
+      systemRole: json['system_role']?.toString(),
+      primaryRole: json['primary_role']?.toString() ?? 'resident',
+      secondaryRole: json['secondary_role']?.toString(),
       accountType: json['account_type']?.toString() ?? 'app',
       societyId: json['society_id'] is int
           ? json['society_id'] as int
@@ -106,7 +112,9 @@ class UserModel {
     return {
       'user_id': userId,
       'full_name': fullName,
-      'user_type': userType,
+      'system_role': systemRole,
+      'primary_role': primaryRole,
+      'secondary_role': secondaryRole,
       'account_type': accountType,
       'society_id': societyId,
       'email_id': emailId,
@@ -121,7 +129,9 @@ class UserModel {
   UserModel copyWith({
     int? userId,
     String? fullName,
-    String? userType,
+    String? systemRole,
+    String? primaryRole,
+    String? secondaryRole,
     String? accountType,
     int? societyId,
     String? emailId,
@@ -134,7 +144,9 @@ class UserModel {
     return UserModel(
       userId: userId ?? this.userId,
       fullName: fullName ?? this.fullName,
-      userType: userType ?? this.userType,
+      systemRole: systemRole ?? this.systemRole,
+      primaryRole: primaryRole ?? this.primaryRole,
+      secondaryRole: secondaryRole ?? this.secondaryRole,
       accountType: accountType ?? this.accountType,
       societyId: societyId ?? this.societyId,
       emailId: emailId ?? this.emailId,

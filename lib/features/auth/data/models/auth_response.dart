@@ -5,7 +5,7 @@ class AuthResponse {
   final String token;
   final UserModel? data;
 
-  String get role => data?.userType ?? 'resident';
+  String get role => data?.systemRole ?? data?.primaryRole ?? 'resident';
   bool get isExistingUser => token.isNotEmpty;
 
   AuthResponse({

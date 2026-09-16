@@ -129,7 +129,7 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
     String userRole = 'resident';
     String authorName = 'User';
     if (authState is AuthAuthenticated) {
-      userRole = authState.user.userType;
+      userRole = authState.user.systemRole ?? authState.user.primaryRole;
       authorName = authState.user.fullName;
     }
 

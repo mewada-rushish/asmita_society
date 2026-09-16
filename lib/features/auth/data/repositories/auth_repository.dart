@@ -161,13 +161,14 @@ class AuthRepository {
   }
 
   /// Inform the backend that the session is terminating
-  Future<void> logout(int? userId, String? userType) async {
+  Future<void> logout(int? userId, String? systemRole, String? primaryRole) async {
     try {
       await _dio.post(
         EnvConfig.logout,
         data: {
           'user_id': userId,
-          'user_type': userType,
+          'system_role': systemRole,
+          'primary_role': primaryRole,
         },
       );
     } catch (_) {
