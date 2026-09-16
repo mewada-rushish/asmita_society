@@ -11,6 +11,7 @@ import '../bloc/auth_state.dart';
 import '../data/repositories/property_repository.dart';
 import '../data/models/property_models.dart';
 import '../../dashboard/presentation/main_dashboard_screen.dart';
+import 'approval_pending_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
   final String verifiedMobile;
@@ -360,6 +361,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               context,
               message: state.message,
               type: AsmitaToastType.error,
+            );
+          } else if (state is AuthPendingApproval) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const ApprovalPendingScreen()),
+              (route) => false,
             );
           }
         },
