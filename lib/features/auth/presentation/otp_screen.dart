@@ -9,6 +9,7 @@ import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import 'registration_screen.dart';
+import 'approval_pending_screen.dart';
 
 class OtpScreen extends StatefulWidget {
   final String phoneNumber;
@@ -97,6 +98,13 @@ class _OtpScreenState extends State<OtpScreen> {
               context,
               MaterialPageRoute(
                 builder: (_) => RegistrationScreen(verifiedMobile: state.mobile),
+              ),
+            );
+          } else if (state is AuthPendingApproval) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ApprovalPendingScreen(),
               ),
             );
           } else if (state is AuthError) {

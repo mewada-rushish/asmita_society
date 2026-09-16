@@ -41,6 +41,8 @@ class AuthRepository {
 
       if (data['status'] == 'success') {
         return AuthResponse.fromJson(data);
+      } else if (data['status'] == 'pending_approval') {
+        throw Exception('PENDING_APPROVAL');
       }
 
       final message = data['message'] ?? 'Invalid verification response';

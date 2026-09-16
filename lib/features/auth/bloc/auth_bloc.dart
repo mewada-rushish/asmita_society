@@ -93,6 +93,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final errorMsg = e.toString();
       if (errorMsg.contains('REGISTRATION_REQUIRED')) {
         emit(AuthRegistrationRequired(mobile: event.mobile));
+      } else if (errorMsg.contains('PENDING_APPROVAL')) {
+        emit(AuthPendingApproval());
       } else {
         emit(AuthError(message: _formatException(e)));
       }
