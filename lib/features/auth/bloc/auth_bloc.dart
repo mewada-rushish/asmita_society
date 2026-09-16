@@ -127,7 +127,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       
       await _emitAuthenticated(response, emit);
     } catch (e) {
-      emit(AuthError(message: _formatException(e)));
+      final errorMsg = e.toString();
+      if (errorMsg.contains('PENDING_APPROVAL')) {
+        emit(AuthPendingApproval());
+      } else {
+        emit(AuthError(message: _formatException(e)));
+      }
     }
   }
 
