@@ -89,7 +89,15 @@ class AuthRepository {
       );
 
       final data = _ensureMap(response.data);
-      return AuthResponse.fromJson(data);
+      
+      if (data['status'] == 'success') {
+        return AuthResponse.fromJson(data);
+      } else if (data['status'] == 'pending_approval') {
+        throw Exception('PENDING_APPROVAL');
+      }
+
+      final message = data['message'] ?? 'Registration failed.';
+      throw Exception(message);
     } on DioException catch (e) {
       throw _parseError(e, 'Registration request failed.');
     }
