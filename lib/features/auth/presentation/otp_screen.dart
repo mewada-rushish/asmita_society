@@ -89,7 +89,7 @@ class _OtpScreenState extends State<OtpScreen> {
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
-                builder: (_) => MainDashboardScreen(userRole: state.user.systemRole ?? state.user.primaryRole), // Fixed placeholder navigation to match architecture roles
+                builder: (_) => MainDashboardScreen(userRole: state.user.systemRole ?? state.user.secondaryRole ?? state.user.primaryRole), // Fixed placeholder navigation to match architecture roles
               ),
               (route) => false,
             );
