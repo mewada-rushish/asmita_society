@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/design_system.dart';
+import '../../../core/widgets/asmita_primary_header.dart';
 import '../../../core/widgets/asmita_bottom_nav_bar.dart'; 
 import '../../../core/widgets/asmita_animated_indexed_stack.dart';
 import '../../menu/presentation/screens/menu_screen.dart'; 
@@ -183,14 +185,21 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   Widget _resolveRoleBasedHistoryView(String role) {
     if (role.toLowerCase() == 'guard') {
       return Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          title: const Text('Gate History', style: TextStyle(color: Colors.black)),
-          backgroundColor: Colors.white,
-          elevation: 0,
-        ),
-        body: const Center(
-          child: Text('Guard Gate History (Coming Soon)'),
+        backgroundColor: AsmitaPalette.systemBG,
+        body: Column(
+          children: [
+            AsmitaPrimaryHeader(
+              subtitleOverride: 'Security Guard',
+              allowPropertySwitching: false,
+              onProfilePressed: () => setState(() => _currentIndex = 4),
+              trailingActions: const SizedBox(),
+            ),
+            const Expanded(
+              child: Center(
+                child: Text('Guard Gate History (Coming Soon)'),
+              ),
+            ),
+          ],
         ),
       );
     }
