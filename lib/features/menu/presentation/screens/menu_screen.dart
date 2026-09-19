@@ -54,26 +54,28 @@ class MenuScreen extends StatelessWidget {
                 children: [
             _buildProfileCard(context),
             const SizedBox(height: 24),
-            _buildMenuSection(
-              context,
-              title: 'My Household',
-              items: [
-                _buildMenuItem(context, Icons.people_outline_rounded, 'Family Members'),
-                _buildMenuItem(context, Icons.directions_car_filled_outlined, 'Vehicles'),
-                _buildMenuItem(context, Icons.pets_rounded, 'Pets'),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildMenuSection(
-              context,
-              title: 'Society Info',
-              items: [
-                _buildMenuItem(context, Icons.contact_page_outlined, 'Committee Members'),
-                _buildMenuItem(context, Icons.gavel_rounded, 'Rules & Regulations'),
-                _buildMenuItem(context, Icons.description_outlined, 'Important Documents'),
-              ],
-            ),
-            const SizedBox(height: 16),
+            if (userRole.toLowerCase() != 'guard') ...[
+              _buildMenuSection(
+                context,
+                title: 'My Household',
+                items: [
+                  _buildMenuItem(context, Icons.people_outline_rounded, 'Family Members'),
+                  _buildMenuItem(context, Icons.directions_car_filled_outlined, 'Vehicles'),
+                  _buildMenuItem(context, Icons.pets_rounded, 'Pets'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildMenuSection(
+                context,
+                title: 'Society Info',
+                items: [
+                  _buildMenuItem(context, Icons.contact_page_outlined, 'Committee Members'),
+                  _buildMenuItem(context, Icons.gavel_rounded, 'Rules & Regulations'),
+                  _buildMenuItem(context, Icons.description_outlined, 'Important Documents'),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
             _buildMenuSection(
               context,
               title: 'Application',
@@ -135,7 +137,15 @@ class MenuScreen extends StatelessWidget {
               children: [
                 Text('Rushish Mewada', style: textTheme.titleLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                Text('Flat A-402 • ${userRole.toUpperCase()}', style: textTheme.bodyMedium?.copyWith(fontSize: 11, fontWeight: FontWeight.w700, color: AsmitaPalette.actionRed)),
+                Text(
+                  userRole.toLowerCase() == 'guard'
+                      ? userRole.toUpperCase()
+                      : 'Flat A-402 • ${userRole.toUpperCase()}',
+                  style: textTheme.bodyMedium?.copyWith(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AsmitaPalette.actionRed),
+                ),
               ],
             ),
           ),
