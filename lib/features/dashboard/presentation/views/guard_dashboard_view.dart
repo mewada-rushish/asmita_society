@@ -131,9 +131,22 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                   const SizedBox(height: 24),
                   _buildNewVisitorAction(context),
                   const SizedBox(height: 24),
-                  Text('Expected Today', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  _buildExpectedList(state),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Expected Today', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 16),
+                        _buildExpectedList(state),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
