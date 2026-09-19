@@ -18,6 +18,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
   final String? subtitleOverride;
   final Widget? trailingActions;
   final bool allowPropertySwitching;
+  final VoidCallback? onProfilePressed;
 
   const AsmitaPrimaryHeader({
     super.key,
@@ -30,6 +31,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
     this.subtitleOverride,
     this.trailingActions,
     this.allowPropertySwitching = true,
+    this.onProfilePressed,
   });
 
   void _showPropertiesBottomSheet(BuildContext context, UserModel user) {
@@ -292,10 +294,13 @@ class AsmitaPrimaryHeader extends StatelessWidget {
             ),
           ],
           const SizedBox(width: 12),
-          CircleAvatar(
-            radius: 17,
-            backgroundColor: AsmitaPalette.deepNavy,
-            child: Text(initials, style: textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+          GestureDetector(
+            onTap: onProfilePressed,
+            child: CircleAvatar(
+              radius: 17,
+              backgroundColor: AsmitaPalette.deepNavy,
+              child: Text(initials, style: textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+            ),
           ),
               ],
             ),
