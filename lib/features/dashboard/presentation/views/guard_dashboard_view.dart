@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
+import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../visitor_management/bloc/guard_gate_bloc.dart';
 import '../../../visitor_management/bloc/guard_gate_event.dart';
 import '../../../visitor_management/bloc/guard_gate_state.dart';
@@ -49,34 +50,49 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
   }
 
   void _showCheckInDialog(Map<String, dynamic> invite) {
-    showDialog(
+    AsmitaDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Verify Visitor'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Name: ${invite['visitor_name']}'),
-            Text('Type: ${invite['visitor_type'] ?? 'Guest'}'),
-            const SizedBox(height: 8),
-            const Text('Match the details with the visitor.', style: TextStyle(color: Colors.grey)),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+      title: 'Verify Visitor',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Name: ${(invite['visitor_name'] == null || invite['visitor_name'].toString().isEmpty) ? (invite['title'] ?? 'Unknown') : invite['visitor_name']}',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AsmitaPalette.textDark),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              context.read<GuardGateBloc>().add(CheckInPreApprovedVisitor(invite['id'].toString()));
-            },
-            child: const Text('Confirm Check-in'),
+          const SizedBox(height: 4),
+          Text(
+            'Type: ${invite['invite_type'] ?? 'Guest'}',
+            style: const TextStyle(fontSize: 14, color: AsmitaPalette.textGrey),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Match the details with the visitor.', 
+            style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
           ),
         ],
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            context.read<GuardGateBloc>().add(CheckInPreApprovedVisitor(invite['id'].toString()));
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AsmitaPalette.deepNavy,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          ),
+          child: const Text('Confirm Check-in'),
+        ),
+      ],
     );
   }
 
