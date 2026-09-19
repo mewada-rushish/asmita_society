@@ -89,16 +89,13 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
           AsmitaPrimaryHeader(
             subtitleOverride: 'Security Guard',
             allowPropertySwitching: false,
+            onProfilePressed: widget.onNavigateToMenu,
             trailingActions: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
                   icon: const Icon(Icons.history, color: AsmitaPalette.deepNavy),
                   onPressed: widget.onNavigateToHistory,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.menu, color: AsmitaPalette.deepNavy),
-                  onPressed: widget.onNavigateToMenu,
                 ),
               ],
             ),
