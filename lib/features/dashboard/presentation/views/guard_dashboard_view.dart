@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../visitor_management/bloc/guard_gate_bloc.dart';
 import '../../../visitor_management/bloc/guard_gate_event.dart';
 import '../../../visitor_management/bloc/guard_gate_state.dart';
@@ -83,22 +84,26 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AsmitaPalette.systemBG,
-      appBar: AppBar(
-        title: Text('Guard Dashboard', style: Theme.of(context).textTheme.titleLarge),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.history, color: AsmitaPalette.textDark),
-            onPressed: widget.onNavigateToHistory,
+      body: Column(
+        children: [
+          AsmitaPrimaryHeader(
+            subtitleOverride: 'Security Guard',
+            trailingActions: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.history, color: AsmitaPalette.deepNavy),
+                  onPressed: widget.onNavigateToHistory,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.menu, color: AsmitaPalette.deepNavy),
+                  onPressed: widget.onNavigateToMenu,
+                ),
+              ],
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.menu, color: AsmitaPalette.textDark),
-            onPressed: widget.onNavigateToMenu,
-          ),
-        ],
-      ),
-      body: BlocConsumer<GuardGateBloc, GuardGateState>(
+          Expanded(
+            child: BlocConsumer<GuardGateBloc, GuardGateState>(
         listener: (context, state) {
           if (state.status == GuardGateStatus.error && state.errorMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -136,6 +141,9 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
             ),
           );
         },
+      ),
+    ),
+        ],
       ),
     );
   }

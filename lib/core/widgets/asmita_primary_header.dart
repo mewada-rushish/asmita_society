@@ -15,6 +15,8 @@ class AsmitaPrimaryHeader extends StatelessWidget {
   final bool showBackButton;
   final Color? backgroundColor;
   final double bottomPadding;
+  final String? subtitleOverride;
+  final Widget? trailingActions;
 
   const AsmitaPrimaryHeader({
     super.key,
@@ -24,6 +26,8 @@ class AsmitaPrimaryHeader extends StatelessWidget {
     this.showBackButton = false,
     this.backgroundColor,
     this.bottomPadding = 12.0,
+    this.subtitleOverride,
+    this.trailingActions,
   });
 
   void _showPropertiesBottomSheet(BuildContext context, UserModel user) {
@@ -150,10 +154,18 @@ class AsmitaPrimaryHeader extends StatelessWidget {
           if (user.societyName != null && user.societyName!.isNotEmpty) {
             societyName = user.societyName!;
           }
-          if (user.flatMappings.isNotEmpty) {
+          if (subtitleOverride != null) {
+            flatDetails = subtitleOverride!;
+          } else if (user.flatMappings.isNotEmpty) {
             final mapping = user.flatMappings.first;
             flatDetails = '${mapping.towerName} - ${mapping.flatNumber}';
+          } else if (user.systemRole?.isNotEmpty == true || user.primaryRole.isNotEmpty) {
+            flatDetails = user.systemRole?.isNotEmpty == true ? user.systemRole! : user.primaryRole;
+            if (flatDetails.isNotEmpty) {
+              flatDetails = flatDetails.substring(0, 1).toUpperCase() + flatDetails.substring(1).toLowerCase();
+            }
           }
+          
           if (user.fullName.isNotEmpty) {
             final parts = user.fullName.split(' ').where((s) => s.isNotEmpty).toList();
             if (parts.length > 1) {
@@ -254,23 +266,27 @@ class AsmitaPrimaryHeader extends StatelessWidget {
               ],
             ),
           ),
-          InkWell(
-            onTap: onSearchPressed ?? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AsmitaSearchScreen())),
-            borderRadius: BorderRadius.circular(20),
-            child: const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Icon(Icons.search_rounded, color: AsmitaPalette.deepNavy, size: 24),
+          if (trailingActions != null) 
+            trailingActions!
+          else ...[
+            InkWell(
+              onTap: onSearchPressed ?? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AsmitaSearchScreen())),
+              borderRadius: BorderRadius.circular(20),
+              child: const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Icon(Icons.search_rounded, color: AsmitaPalette.deepNavy, size: 24),
+              ),
             ),
-          ),
-          const SizedBox(width: 4),
-          InkWell(
-            onTap: onChatPressed,
-            borderRadius: BorderRadius.circular(20),
-            child: const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Icon(Icons.chat_bubble_outline_rounded, color: AsmitaPalette.deepNavy, size: 24),
+            const SizedBox(width: 4),
+            InkWell(
+              onTap: onChatPressed,
+              borderRadius: BorderRadius.circular(20),
+              child: const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Icon(Icons.chat_bubble_outline_rounded, color: AsmitaPalette.deepNavy, size: 24),
+              ),
             ),
-          ),
+          ],
           const SizedBox(width: 12),
           CircleAvatar(
             radius: 17,
