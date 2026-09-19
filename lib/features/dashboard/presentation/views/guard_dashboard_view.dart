@@ -241,9 +241,9 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AsmitaPalette.deepNavy.withValues(alpha: 0.3)),
+          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
         ),
         child: Row(
           children: [
