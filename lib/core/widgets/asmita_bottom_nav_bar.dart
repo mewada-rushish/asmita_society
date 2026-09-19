@@ -5,11 +5,13 @@ import '../constants/design_system.dart';
 class AsmitaBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
+  final String? userRole;
 
   const AsmitaBottomNavBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
+    this.userRole,
   });
 
   @override
@@ -36,14 +38,21 @@ class AsmitaBottomNavBar extends StatelessWidget {
           padding: EdgeInsets.only(bottom: bottomPadding),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(5, (index) {
+            children: _getVisibleIndices().map((index) {
               final isSelected = currentIndex == index;
               return _buildNavigationItem(index, isSelected);
-            }),
+            }).toList(),
           ),
         ),
       ),
     );
+  }
+
+  List<int> _getVisibleIndices() {
+    if (userRole?.toLowerCase() == 'guard') {
+      return [0, 3, 4]; // Home, History, Menu
+    }
+    return [0, 1, 2, 3, 4]; // All tabs
   }
 
   Widget _buildNavigationItem(int index, bool isSelected) {
