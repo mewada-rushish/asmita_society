@@ -209,6 +209,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         // Clamps down indices greater than 4 so the "Services" icon (Index 1) 
         // remains active when viewing the deep ViewMore screen
         currentIndex: _currentIndex > 4 ? 1 : _currentIndex,
+        userRole: widget.userRole,
         onTap: (index) {
           setState(() => _currentIndex = index);
         },
