@@ -281,8 +281,13 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
               backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
               child: const Icon(Icons.person, color: AsmitaPalette.deepNavy),
             ),
-            title: Text(invite['visitor_name'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text('Type: ${invite['visitor_type'] ?? 'Guest'} • Valid Till: ${invite['valid_till'] ?? 'N/A'}'),
+            title: Text(
+              (invite['visitor_name'] == null || invite['visitor_name'].toString().isEmpty) 
+                  ? (invite['title'] ?? 'Unknown') 
+                  : invite['visitor_name'], 
+              style: const TextStyle(fontWeight: FontWeight.bold)
+            ),
+            subtitle: Text('Type: ${invite['invite_type'] ?? 'Guest'} • Valid Till: ${invite['valid_to']?.substring(0, 10) ?? 'N/A'}'),
             trailing: IconButton(
               icon: const Icon(Icons.check_circle, color: AsmitaPalette.deepNavy),
               onPressed: () {
