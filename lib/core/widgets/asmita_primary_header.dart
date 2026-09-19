@@ -17,6 +17,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
   final double bottomPadding;
   final String? subtitleOverride;
   final Widget? trailingActions;
+  final bool allowPropertySwitching;
 
   const AsmitaPrimaryHeader({
     super.key,
@@ -28,6 +29,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
     this.bottomPadding = 12.0,
     this.subtitleOverride,
     this.trailingActions,
+    this.allowPropertySwitching = true,
   });
 
   void _showPropertiesBottomSheet(BuildContext context, UserModel user) {
@@ -220,11 +222,11 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: InkWell(
-                    onTap: () {
+                    onTap: allowPropertySwitching ? () {
                       if (authState is AuthAuthenticated) {
                         _showPropertiesBottomSheet(context, authState.user);
                       }
-                    },
+                    } : null,
                     borderRadius: BorderRadius.circular(4),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,8 +246,10 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(width: 2),
-                            Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.deepNavy.withValues(alpha: 0.8), size: 18),
+                            if (allowPropertySwitching) ...[
+                              const SizedBox(width: 2),
+                              Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.deepNavy.withValues(alpha: 0.8), size: 18),
+                            ],
                           ],
                         ),
                         const SizedBox(height: 4),

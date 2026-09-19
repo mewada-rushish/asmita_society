@@ -88,6 +88,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
         children: [
           AsmitaPrimaryHeader(
             subtitleOverride: 'Security Guard',
+            allowPropertySwitching: false,
             trailingActions: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
