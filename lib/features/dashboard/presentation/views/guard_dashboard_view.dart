@@ -64,7 +64,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
           const SizedBox(height: 4),
           Text(
             'Type: ${invite['invite_type'] ?? 'Guest'}',
-            style: const TextStyle(fontSize: 14, color: AsmitaPalette.textGrey),
+            style: const TextStyle(fontSize: 14, color: AsmitaPalette.textLight),
           ),
           const SizedBox(height: 12),
           const Text(
