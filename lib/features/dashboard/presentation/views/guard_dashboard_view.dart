@@ -198,14 +198,17 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                   decoration: InputDecoration(
                     counterText: '',
                     hintText: 'e.g. 123456',
-                    prefixIcon: const Icon(Icons.numbers),
+                    hintStyle: TextStyle(color: AsmitaPalette.textLight.withValues(alpha: 0.6), fontSize: 14),
+                    prefixIcon: const Icon(Icons.numbers, color: AsmitaPalette.textLight, size: 20),
+                    filled: true,
+                    fillColor: AsmitaPalette.systemBG,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.grey),
+                      borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AsmitaPalette.deepNavy),
+                      borderSide: const BorderSide(color: AsmitaPalette.deepNavy, width: 1.5),
                     ),
                   ),
                 ),
