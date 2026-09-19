@@ -31,6 +31,10 @@ class AsmitaDioClient {
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+          final societyId = await secureStorage.getSocietyId();
+          if (societyId != null) {
+            options.headers['x-society-id'] = societyId.toString();
+          }
         }
         return handler.next(options);
       },
