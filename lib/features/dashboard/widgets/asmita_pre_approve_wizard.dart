@@ -444,6 +444,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
+                color: Colors.white,
                 border: Border.all(color: AsmitaPalette.borderGrey),
                 borderRadius: BorderRadius.circular(12),
               ),
