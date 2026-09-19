@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
+import '../../../../core/widgets/asmita_toast.dart';
 import '../../../visitor_management/bloc/guard_gate_bloc.dart';
 import '../../../visitor_management/bloc/guard_gate_event.dart';
 import '../../../visitor_management/bloc/guard_gate_state.dart';
@@ -42,10 +43,14 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
     final code = _codeController.text.trim();
     if (code.length == 6) {
       context.read<GuardGateBloc>().add(SearchInviteByCode(code));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a 6-digit access code')),
+    }
+    if (code.length != 6) {
+      AsmitaToast.show(
+        context,
+        message: 'Please enter a 6-digit access code',
+        type: AsmitaToastType.error,
       );
+      return;
     }
   }
 
@@ -66,6 +71,13 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
             'Type: ${invite['invite_type'] ?? 'Guest'}',
             style: const TextStyle(fontSize: 14, color: AsmitaPalette.textLight),
           ),
+          if (invite['tower_name'] != null && invite['flat_number'] != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Unit: ${invite['tower_name']} - ${invite['flat_number']}',
+              style: const TextStyle(fontSize: 14, color: AsmitaPalette.textDark, fontWeight: FontWeight.w500),
+            ),
+          ],
           const SizedBox(height: 12),
           const Text(
             'Match the details with the visitor.', 
@@ -120,14 +132,18 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
             child: BlocConsumer<GuardGateBloc, GuardGateState>(
         listener: (context, state) {
           if (state.status == GuardGateStatus.error && state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!)),
+            AsmitaToast.show(
+              context,
+              message: state.errorMessage!,
+              type: AsmitaToastType.error,
             );
           } else if (state.searchResult != null) {
             _showCheckInDialog(state.searchResult!);
           } else if (state.status == GuardGateStatus.success && state.searchResult == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Check-in successful!')),
+            AsmitaToast.show(
+              context,
+              message: 'Check-in successful!',
+              type: AsmitaToastType.success,
             );
             _codeController.clear();
           }
@@ -158,7 +174,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Expected Today', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 12),
                         _buildExpectedList(state),
                       ],
                     ),
@@ -323,17 +339,15 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
           ),
           child: ListTile(
             contentPadding: const EdgeInsets.all(16),
-            leading: CircleAvatar(
-              backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
-              child: const Icon(Icons.person, color: AsmitaPalette.deepNavy),
-            ),
+            leading: _buildInviteIcon(invite),
             title: Text(
-              (invite['visitor_name'] == null || invite['visitor_name'].toString().isEmpty) 
-                  ? (invite['title'] ?? 'Unknown') 
-                  : invite['visitor_name'], 
-              style: const TextStyle(fontWeight: FontWeight.bold)
+              _getInviteTitle(invite),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            subtitle: Text('Type: ${invite['invite_type'] ?? 'Guest'} • Valid Till: ${invite['valid_to']?.substring(0, 10) ?? 'N/A'}'),
+            subtitle: Text(
+              _getInviteSubtitle(invite),
+              style: const TextStyle(height: 1.4),
+            ),
             trailing: IconButton(
               icon: const Icon(Icons.check_circle, color: AsmitaPalette.deepNavy),
               onPressed: () {
@@ -344,5 +358,50 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
         );
       },
     );
+  }
+
+  Widget _buildInviteIcon(Map<String, dynamic> invite) {
+    final companyName = invite['company_name']?.toString();
+    final isDelivery = invite['invite_type']?.toString().toLowerCase() == 'delivery';
+
+    if (companyName != null && companyName.isNotEmpty) {
+      // Basic mapping to filename based on common keys
+      final fileName = companyName.toLowerCase().replaceAll(' ', (companyName.contains(' ') && !['amazon prime now', 'apollo 24-7', 'bharat gas', 'big basket', 'blue dart', 'country delight', 'india post', 'eat club', 'ecom express', 'fresh menu', 'fresh to home', 'hdfc bank', 'hp gas', 'milk basket', 'natures basket', 'pizza hut', 'professional courier', 'swiggy instamart', 'tata 1mg', 'tata play', 'urban company'].contains(companyName.toLowerCase())) ? '' : ' ');
+      // The frontend uses specific file names, but if it doesn't match, errorBuilder will catch it.
+      // E.g. "Zomato" -> "zomato.png"
+      return CircleAvatar(
+        backgroundColor: Colors.transparent,
+        child: Image.asset(
+          'assets/images/logos/$fileName.png',
+          errorBuilder: (context, error, stackTrace) => _defaultIcon(isDelivery),
+        ),
+      );
+    }
+    return _defaultIcon(isDelivery);
+  }
+
+  Widget _defaultIcon(bool isDelivery) {
+    return CircleAvatar(
+      backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+      child: Icon(isDelivery ? Icons.local_shipping : Icons.person, color: AsmitaPalette.deepNavy),
+    );
+  }
+
+  String _getInviteTitle(Map<String, dynamic> invite) {
+    if (invite['visitor_name'] != null && invite['visitor_name'].toString().isNotEmpty) {
+      return invite['visitor_name'];
+    }
+    if (invite['company_name'] != null && invite['company_name'].toString().isNotEmpty) {
+      return invite['company_name'];
+    }
+    return invite['title'] ?? 'Unknown';
+  }
+
+  String _getInviteSubtitle(Map<String, dynamic> invite) {
+    String sub = 'Type: ${invite['invite_type'] ?? 'Guest'} • Valid Till: ${invite['valid_to']?.substring(0, 10) ?? 'N/A'}';
+    if (invite['tower_name'] != null && invite['flat_number'] != null) {
+      sub += '\nUnit: ${invite['tower_name']} - ${invite['flat_number']}';
+    }
+    return sub;
   }
 }
