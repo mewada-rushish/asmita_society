@@ -9,6 +9,8 @@ abstract class GuardGateEvent extends Equatable {
 
 class LoadExpectedInvites extends GuardGateEvent {}
 
+class LoadGuardHistory extends GuardGateEvent {}
+
 class SearchInviteByCode extends GuardGateEvent {
   final String code;
 

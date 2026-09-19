@@ -1,9 +1,9 @@
+import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/menu/presentation/providers/support_provider.dart';
-import 'package:intl/intl.dart';
 
 class HelpSupportScreen extends ConsumerWidget {
   const HelpSupportScreen({super.key});
@@ -80,7 +80,7 @@ class HelpSupportScreen extends ConsumerWidget {
                                 if (t.createdAt != null) ...[
                                   const SizedBox(height: 12),
                                   Text(
-                                    'Raised on ${DateFormat('MMM dd, yyyy').format(t.createdAt!)}',
+                                    'Raised on ${AppDateFormatter.formatDate(t.createdAt!)}',
                                     style: textTheme.bodySmall?.copyWith(color: Colors.grey),
                                   )
                                 ]

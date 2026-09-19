@@ -81,6 +81,24 @@ class GuardGateRepository {
     }
   }
 
+  /// Fetches history of visitors checked in by the guard
+  Future<List<dynamic>> getGuardHistory() async {
+    try {
+      final response = await _dio.get(EnvConfig.guardVisitorEntries);
+      final data = response.data;
+      if (response.statusCode == 200) {
+        return (data['entries'] ?? data['data'] ?? []) as List<dynamic>;
+      } else {
+        throw Exception(data['message'] ?? 'Failed to fetch guard history');
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'Fetch Guard History');
+    } catch (e, stackTrace) {
+      FirebaseCrashlytics.instance.recordError(e, stackTrace, reason: 'Fetch Guard History Failure');
+      throw Exception('Unexpected error occurred');
+    }
+  }
+
   Exception _handleDioError(DioException e, String context) {
     String msg = 'Network error during $context';
     if (e.response?.data != null) {

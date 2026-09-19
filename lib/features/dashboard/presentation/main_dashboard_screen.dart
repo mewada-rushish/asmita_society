@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/design_system.dart';
-import '../../../core/widgets/asmita_primary_header.dart';
 import '../../../core/widgets/asmita_bottom_nav_bar.dart'; 
 import '../../../core/widgets/asmita_animated_indexed_stack.dart';
 import '../../menu/presentation/screens/menu_screen.dart'; 
@@ -12,6 +11,8 @@ import 'screens/view_more_screen.dart';
 import 'views/owner_dashboard_view.dart';
 import 'views/tenant_dashboard_view.dart';
 import 'views/guard_dashboard_view.dart';
+import 'screens/guard_history_screen.dart';
+import '../../visitor_management/presentation/screens/guard_qr_scanner_screen.dart';
 import 'package:asmita_society/features/services/presentation/screens/daily_help_screen.dart';
 import 'screens/search_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -118,6 +119,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
           setState(() => _currentIndex = index);
         },
       ),      // Index 4: Profile Settings
+      _resolveRoleBasedQrScanner(widget.userRole), // Index 5: QR Scanner
     ];
   }
 
@@ -182,26 +184,20 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
     }
   }
 
+
+  Widget _resolveRoleBasedQrScanner(String role) {
+    if (role.toLowerCase() == 'guard') {
+      return GuardQrScannerScreen(
+        isActive: _currentIndex == 5,
+        onScanComplete: () => setState(() => _currentIndex = 0),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
   Widget _resolveRoleBasedHistoryView(String role) {
     if (role.toLowerCase() == 'guard') {
-      return Scaffold(
-        backgroundColor: AsmitaPalette.systemBG,
-        body: Column(
-          children: [
-            AsmitaPrimaryHeader(
-              subtitleOverride: 'Security Guard',
-              allowPropertySwitching: false,
-              onProfilePressed: () => setState(() => _currentIndex = 4),
-              trailingActions: const SizedBox(),
-            ),
-            const Expanded(
-              child: Center(
-                child: Text('Guard Gate History (Coming Soon)'),
-              ),
-            ),
-          ],
-        ),
-      );
+      return const GuardHistoryScreen();
     }
     return VisitorHistoryScreen(onBack: () => setState(() => _currentIndex = 0));
   }
@@ -209,7 +205,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AsmitaPalette.systemBG,
       body: AsmitaAnimatedIndexedStack(
         index: _currentIndex,
         children: _buildScreens(),

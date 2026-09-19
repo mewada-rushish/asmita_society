@@ -1,3 +1,4 @@
+import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
@@ -64,7 +65,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
       if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
         return 'Today';
       }
-      return DateFormat('MMM dd, yyyy').format(dt);
+      return AppDateFormatter.formatDate(dt);
     } catch (_) {
       return dateStr.split('T')[0];
     }

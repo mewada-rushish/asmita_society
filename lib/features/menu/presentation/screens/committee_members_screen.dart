@@ -1,6 +1,6 @@
+import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
@@ -71,7 +71,7 @@ class CommitteeMembersScreen extends ConsumerWidget {
     if (member.createdAt != null && member.createdAt!.isNotEmpty) {
       try {
         final date = DateTime.parse(member.createdAt!);
-        formattedDate = DateFormat('dd MMM yyyy').format(date);
+        formattedDate = AppDateFormatter.formatDate(date);
       } catch (e) {
         formattedDate = member.createdAt!;
       }

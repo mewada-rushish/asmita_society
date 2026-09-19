@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/design_system.dart';
@@ -62,23 +63,48 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Name: ${(invite['visitor_name'] == null || invite['visitor_name'].toString().isEmpty) ? (invite['title'] ?? 'Unknown') : invite['visitor_name']}',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AsmitaPalette.textDark),
+          Row(
+            children: [
+              if (invite['company_name'] != null && invite['company_name'].toString().isNotEmpty) ...[
+                _buildInviteIcon(invite),
+                const SizedBox(width: 12),
+              ],
+              Expanded(
+                child: Text(
+                  '${(invite['visitor_name'] == null || invite['visitor_name'].toString().isEmpty) ? (invite['title'] ?? 'Unknown') : invite['visitor_name']}',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AsmitaPalette.textDark),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Type: ${invite['invite_type'] ?? 'Guest'}',
-            style: const TextStyle(fontSize: 14, color: AsmitaPalette.textLight),
+          const SizedBox(height: 16),
+          Builder(
+            builder: (context) {
+              final rows = <Widget>[];
+              if (invite['tower_name'] != null && invite['flat_number'] != null) {
+                rows.add(_buildDialogRow('Destination', '${invite['tower_name']} - ${invite['flat_number']}', highlight: true));
+              }
+              rows.add(_buildDialogRow('Type', (invite['invite_type']?.toString() ?? 'Guest').toUpperCase()));
+              rows.add(_buildDialogRow('Valid From', invite['valid_from'] != null ? AppDateFormatter.formatDate(invite['valid_from']) : 'N/A'));
+              rows.add(_buildDialogRow('Valid Till', invite['valid_to'] != null ? AppDateFormatter.formatDate(invite['valid_to']) : 'N/A'));
+
+              return Container(
+                clipBehavior: Clip.hardEdge,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: rows.length,
+                  separatorBuilder: (context, index) => const Divider(height: 1, color: Colors.black12),
+                  itemBuilder: (context, index) => rows[index],
+                ),
+              );
+            }
           ),
-          if (invite['tower_name'] != null && invite['flat_number'] != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              'Unit: ${invite['tower_name']} - ${invite['flat_number']}',
-              style: const TextStyle(fontSize: 14, color: AsmitaPalette.textDark, fontWeight: FontWeight.w500),
-            ),
-          ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           const Text(
             'Match the details with the visitor.', 
             style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
@@ -105,6 +131,26 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
           child: const Text('Confirm Check-in'),
         ),
       ],
+    );
+  }
+
+  Widget _buildDialogRow(String label, String value, {bool highlight = false}) {
+    return Container(
+      color: highlight ? AsmitaPalette.deepNavy.withValues(alpha: 0.05) : Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          Text(label, style: const TextStyle(color: AsmitaPalette.deepNavy, fontSize: 13, fontWeight: FontWeight.w600)),
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+              height: 1,
+              color: Colors.grey.shade300,
+            ),
+          ),
+          Text(value, style: TextStyle(fontWeight: highlight ? FontWeight.bold : FontWeight.w600, fontSize: highlight ? 15 : 13, color: highlight ? AsmitaPalette.deepNavy : AsmitaPalette.textDark)),
+        ],
+      ),
     );
   }
 
@@ -329,30 +375,62 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
       itemCount: validInvites.length,
       itemBuilder: (context, index) {
         final invite = validInvites[index];
-        return Card(
+        return Container(
           margin: const EdgeInsets.only(bottom: 12),
-          elevation: 0,
-          color: AsmitaPalette.systemBG,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.grey.shade200),
+          decoration: BoxDecoration(
+            color: AsmitaPalette.systemBG,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade300),
           ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(16),
-            leading: _buildInviteIcon(invite),
-            title: Text(
-              _getInviteTitle(invite),
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(
-              _getInviteSubtitle(invite),
-              style: const TextStyle(height: 1.4),
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.check_circle, color: AsmitaPalette.deepNavy),
-              onPressed: () {
-                _showCheckInDialog(invite);
-              },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _buildInviteIcon(invite),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              _getInviteTitle(invite),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AsmitaPalette.textDark),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              (invite['invite_type']?.toString() ?? 'Guest').toUpperCase(),
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AsmitaPalette.deepNavy),
+                            ),
+                          ),
+                        ],
+                      ),
+                      _buildInviteSubtitle(invite),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                IconButton(
+                  icon: const Icon(Icons.check_circle, color: AsmitaPalette.deepNavy, size: 28),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () {
+                    _showCheckInDialog(invite);
+                  },
+                ),
+              ],
             ),
           ),
         );
@@ -365,14 +443,19 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
     final isDelivery = invite['invite_type']?.toString().toLowerCase() == 'delivery';
 
     if (companyName != null && companyName.isNotEmpty) {
-      // Basic mapping to filename based on common keys
       final fileName = companyName.toLowerCase().replaceAll(' ', (companyName.contains(' ') && !['amazon prime now', 'apollo 24-7', 'bharat gas', 'big basket', 'blue dart', 'country delight', 'india post', 'eat club', 'ecom express', 'fresh menu', 'fresh to home', 'hdfc bank', 'hp gas', 'milk basket', 'natures basket', 'pizza hut', 'professional courier', 'swiggy instamart', 'tata 1mg', 'tata play', 'urban company'].contains(companyName.toLowerCase())) ? '' : ' ');
-      // The frontend uses specific file names, but if it doesn't match, errorBuilder will catch it.
-      // E.g. "Zomato" -> "zomato.png"
-      return CircleAvatar(
-        backgroundColor: Colors.transparent,
+      return Container(
+        width: 44,
+        height: 44,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade300, width: 0.5),
+        ),
         child: Image.asset(
           'assets/images/logos/$fileName.png',
+          fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) => _defaultIcon(isDelivery),
         ),
       );
@@ -381,8 +464,13 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
   }
 
   Widget _defaultIcon(bool isDelivery) {
-    return CircleAvatar(
-      backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: AsmitaPalette.deepNavy.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Icon(isDelivery ? Icons.local_shipping : Icons.person, color: AsmitaPalette.deepNavy),
     );
   }
@@ -397,11 +485,65 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
     return invite['title'] ?? 'Unknown';
   }
 
-  String _getInviteSubtitle(Map<String, dynamic> invite) {
-    String sub = 'Type: ${invite['invite_type'] ?? 'Guest'} • Valid Till: ${invite['valid_to']?.substring(0, 10) ?? 'N/A'}';
-    if (invite['tower_name'] != null && invite['flat_number'] != null) {
-      sub += '\nUnit: ${invite['tower_name']} - ${invite['flat_number']}';
+  String _formatTime(String dateStr) {
+    try {
+      final dt = DateTime.parse(dateStr).toLocal();
+      final hour = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
+      final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+      final minute = dt.minute.toString().padLeft(2, '0');
+      return '$hour:$minute $ampm';
+    } catch (_) {
+      return '';
     }
-    return sub;
+  }
+
+  Widget _buildInviteSubtitle(Map<String, dynamic> invite) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (invite['tower_name'] != null && invite['flat_number'] != null) ...[
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              const Icon(Icons.meeting_room, size: 16, color: AsmitaPalette.deepNavy),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  '${invite['tower_name']} - ${invite['flat_number']}',
+                  style: const TextStyle(
+                    fontSize: 13, 
+                    color: AsmitaPalette.deepNavy, 
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (invite['valid_to'] != null) ...[
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const Icon(Icons.watch_later, size: 14, color: AsmitaPalette.deepNavy),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  '${AppDateFormatter.formatDate(invite['valid_to'])} • ${_formatTime(invite['valid_to'])}',
+                  style: const TextStyle(
+                    fontSize: 12, 
+                    color: AsmitaPalette.deepNavy, 
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
   }
 }
