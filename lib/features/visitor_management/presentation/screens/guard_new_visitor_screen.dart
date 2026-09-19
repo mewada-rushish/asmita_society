@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../dashboard/widgets/asmita_pre_approve_wizard.dart';
 
-import '../../../core/widgets/asmita_sub_header.dart';
+import '../../../../core/widgets/asmita_sub_header.dart';
 
 class GuardNewVisitorScreen extends StatelessWidget {
   const GuardNewVisitorScreen({super.key});
