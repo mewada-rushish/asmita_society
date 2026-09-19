@@ -552,8 +552,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             );
           },
         ),
-        const SizedBox(height: 24),
-        Container(
+        if (!widget.isGuardMode) ...[
+          const SizedBox(height: 24),
+          Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: const Color(0xFFF3F0FF),
@@ -620,6 +621,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             ],
           ),
         ),
+        ],
       ],
     );
   }
