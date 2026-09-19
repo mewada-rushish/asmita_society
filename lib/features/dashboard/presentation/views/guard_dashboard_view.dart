@@ -248,7 +248,19 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
       return const Center(child: CircularProgressIndicator(color: AsmitaPalette.deepNavy));
     }
     
-    if (state.expectedInvites.isEmpty) {
+    final today = DateTime.now();
+    final startOfToday = DateTime(today.year, today.month, today.day);
+    final validInvites = state.expectedInvites.where((invite) {
+      if (invite['valid_to'] != null) {
+        try {
+          final validTo = DateTime.parse(invite['valid_to']);
+          if (validTo.isBefore(startOfToday)) return false;
+        } catch (_) {}
+      }
+      return true;
+    }).toList();
+
+    if (validInvites.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(24),
         alignment: Alignment.center,
@@ -265,9 +277,9 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: state.expectedInvites.length,
+      itemCount: validInvites.length,
       itemBuilder: (context, index) {
-        final invite = state.expectedInvites[index];
+        final invite = validInvites[index];
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           elevation: 0,
