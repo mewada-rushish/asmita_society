@@ -1,7 +1,7 @@
+import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
-import 'package:intl/intl.dart';
 import '../../data/models/invite_model.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -137,6 +137,6 @@ Please present this code at the gate.
     if (dateStr == null) return '--/--/----';
     final date = DateTime.tryParse(dateStr);
     if (date == null) return dateStr;
-    return DateFormat('MMM dd, yyyy').format(date);
+    return AppDateFormatter.formatDate(date);
   }
 }

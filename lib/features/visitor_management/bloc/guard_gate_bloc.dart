@@ -23,6 +23,22 @@ class GuardGateBloc extends Bloc<GuardGateEvent, GuardGateState> {
       }
     });
 
+    on<LoadGuardHistory>((event, emit) async {
+      emit(state.copyWith(status: GuardGateStatus.loading));
+      try {
+        final history = await repository.getGuardHistory();
+        emit(state.copyWith(
+          status: GuardGateStatus.loaded,
+          historyRecords: history,
+        ));
+      } catch (e) {
+        emit(state.copyWith(
+          status: GuardGateStatus.error,
+          errorMessage: e.toString(),
+        ));
+      }
+    });
+
     on<SearchInviteByCode>((event, emit) async {
       emit(state.copyWith(isSubmitting: true, searchResult: null));
       try {

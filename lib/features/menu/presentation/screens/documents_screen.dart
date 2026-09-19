@@ -1,9 +1,9 @@
+import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/menu/presentation/providers/society_provider.dart';
-import 'package:intl/intl.dart';
 
 class DocumentsScreen extends ConsumerWidget {
   const DocumentsScreen({super.key});
@@ -34,7 +34,7 @@ class DocumentsScreen extends ConsumerWidget {
                     itemBuilder: (context, index) {
                       final doc = docs[index];
                       final dateStr = doc.uploadedAt != null 
-                        ? DateFormat('dd MMM yyyy').format(doc.uploadedAt!)
+                        ? AppDateFormatter.formatDate(doc.uploadedAt!)
                         : 'Unknown Date';
                         
                       return Padding(

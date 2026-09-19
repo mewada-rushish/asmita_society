@@ -1,9 +1,9 @@
 import 'dart:convert';
+import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/features/community/data/models/community_post_model.dart';
-import 'package:intl/intl.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 
 class CommunityPostItem extends StatelessWidget {
@@ -66,7 +66,7 @@ class CommunityPostItem extends StatelessWidget {
                         child: Text(post.title, style: textTheme.titleLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700)),
                       ),
                       Text(
-                        DateFormat('MMM d, hh:mm a').format(post.createdAt),
+                        AppDateFormatter.formatDateTime(post.createdAt),
                         style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight),
                       ),
                     ],
@@ -127,7 +127,7 @@ class CommunityPostItem extends StatelessWidget {
                                         style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                                       ),
                                       Text(
-                                        DateFormat('MMMM d, yyyy • hh:mm a').format(post.createdAt),
+                                        AppDateFormatter.formatDateTime(post.createdAt),
                                         style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight, fontSize: 11),
                                       ),
                                     ],

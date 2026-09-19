@@ -1,10 +1,10 @@
+import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import '../../bloc/visitor_bloc.dart';
 import '../../bloc/visitor_event.dart';
 import '../../bloc/visitor_state.dart';
-import 'package:intl/intl.dart';
 import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_state.dart';
 
@@ -244,7 +244,7 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                             labelText: _inviteSubType == 'ONCE' ? 'Date' : 'Start Date',
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          child: Text(_validFrom == null ? 'Select' : DateFormat('MMM dd, yyyy').format(_validFrom!)),
+                          child: Text(_validFrom == null ? 'Select' : AppDateFormatter.formatDate(_validFrom!)),
                         ),
                       ),
                     ),
@@ -258,7 +258,7 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                               labelText: 'End Date',
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                             ),
-                            child: Text(_validTo == null ? 'Select' : DateFormat('MMM dd, yyyy').format(_validTo!)),
+                            child: Text(_validTo == null ? 'Select' : AppDateFormatter.formatDate(_validTo!)),
                           ),
                         ),
                       ),
