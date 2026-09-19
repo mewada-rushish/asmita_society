@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
@@ -126,8 +127,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                           const SliverFillRemaining(
                             hasScrollBody: false,
                             child: Center(
-                              child: CircularProgressIndicator(
+                              child: AsmitaLoadingIndicator(
                                 color: AsmitaPalette.deepNavy,
+                                size: 28,
                               ),
                             ),
                           )

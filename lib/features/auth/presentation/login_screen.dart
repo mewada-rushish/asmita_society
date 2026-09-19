@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/design_system.dart';
+import '../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../core/widgets/asmita_toast.dart'; // Added Toast Import
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -235,7 +236,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ? const SizedBox(
                                         height: 24, 
                                         width: 24, 
-                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5)
+                                        child: AsmitaLoadingIndicator(color: Colors.white, size: 24)
                                       )
                                     : Row(
                                         mainAxisAlignment: MainAxisAlignment.center,

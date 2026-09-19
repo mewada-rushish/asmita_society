@@ -6,6 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
+import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../data/models/amenity_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/amenities_bloc.dart';
@@ -1399,9 +1400,9 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
             ? const SizedBox(
                 width: 24,
                 height: 24,
-                child: CircularProgressIndicator(
+                child: AsmitaLoadingIndicator(
                   color: Colors.white,
-                  strokeWidth: 2.5,
+                  size: 24,
                 ),
               )
             : Text(label, style: const TextStyle(fontFamily: 'Montserrat', color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),

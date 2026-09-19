@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/community_provider.dart';
 
@@ -94,7 +95,7 @@ class _ContactPickerBottomSheetState extends ConsumerState<ContactPickerBottomSh
       return const SizedBox(
         height: 200,
         child: Center(
-          child: CircularProgressIndicator(color: AsmitaPalette.deepNavy),
+          child: AsmitaLoadingIndicator(color: AsmitaPalette.deepNavy, size: 28),
         ),
       );
     }

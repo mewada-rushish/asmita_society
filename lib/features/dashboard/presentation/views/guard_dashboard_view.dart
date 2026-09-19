@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/constants/design_system.dart';
+import '../../../../../core/constants/design_system.dart';
+import '../../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_toast.dart';
@@ -284,7 +285,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: isSubmitting
-                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    ? const SizedBox(width: 24, height: 24, child: AsmitaLoadingIndicator(color: Colors.white, size: 24))
                     : const Icon(Icons.search, color: Colors.white),
               ),
             ],
@@ -339,7 +340,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
 
   Widget _buildExpectedList(GuardGateState state) {
     if (state.status == GuardGateStatus.loading && state.expectedInvites.isEmpty) {
-      return const Center(child: CircularProgressIndicator(color: AsmitaPalette.deepNavy));
+      return const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.deepNavy, size: 28));
     }
     
     final today = DateTime.now();

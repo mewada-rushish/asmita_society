@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../visitor_management/bloc/guard_gate_bloc.dart';
@@ -75,7 +76,7 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
               builder: (context, state) {
                 if (state.status == GuardGateStatus.loading && state.historyRecords.isEmpty) {
                   return const Center(
-                    child: CircularProgressIndicator(color: AsmitaPalette.actionRed),
+                    child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28),
                   );
                 }
 

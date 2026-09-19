@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart'; 
 import '../../../../core/widgets/asmita_bottom_nav_bar.dart'; 
 import '../../../../core/widgets/asmita_text_field.dart';
@@ -363,9 +364,9 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                   Expanded(
                     child: BlocBuilder<DailyHelpBloc, DailyHelpState>(
                       builder: (context, state) {
-                        if (state.status == DailyHelpStatus.loading && state.dailyHelpList.isEmpty) {
-                          return const Center(child: CircularProgressIndicator(color: AsmitaPalette.deepNavy));
-                        } else if (state.status == DailyHelpStatus.error && state.dailyHelpList.isEmpty) {
+                          if (state.status == DailyHelpStatus.loading && state.dailyHelpList.isEmpty) {
+                            return const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.deepNavy, size: 28));
+                          } else if (state.status == DailyHelpStatus.error && state.dailyHelpList.isEmpty) {
                           return Center(child: Text("Error: ${state.errorMessage}", style: textTheme.bodyMedium));
                         }
 

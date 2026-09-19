@@ -1,6 +1,7 @@
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
@@ -476,11 +477,11 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
             child: BlocBuilder<VisitorBloc, VisitorState>(
               builder: (context, state) {
                 debugPrint('VisitorHistoryScreen BlocBuilder State: $state');
-                if (state is VisitorLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: AsmitaPalette.actionRed),
-                  );
-                }
+                  if (state is VisitorLoading) {
+                    return const Center(
+                      child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28),
+                    );
+                  }
 
                 if (state is VisitorError) {
                   return Center(

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../../core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/features/community/data/models/chat_message_model.dart';
 import 'package:gal/gal.dart';
 import 'package:dio/dio.dart';
@@ -217,9 +218,9 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                                   child: SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
+                                    child: AsmitaLoadingIndicator(
                                       color: Color(0xFF142E5C),
+                                      size: 20,
                                     ),
                                   ),
                                 )
@@ -290,9 +291,9 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
               child: SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(
+                child: AsmitaLoadingIndicator(
                   color: Colors.white,
-                  strokeWidth: 2,
+                  size: 20,
                 ),
               ),
             )
@@ -344,8 +345,9 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                             imageUrl: imagePath,
                             fit: BoxFit.contain,
                             placeholder: (context, url) => const Center(
-                              child: CircularProgressIndicator(
+                              child: AsmitaLoadingIndicator(
                                 color: Colors.white,
+                                size: 28,
                               ),
                             ),
                             errorWidget: (context, url, error) => const Center(

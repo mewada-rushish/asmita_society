@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/design_system.dart';
+import '../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../core/widgets/asmita_toast.dart';
 import '../../../core/widgets/asmita_bottom_sheet.dart';
 import '../data/models/property_models.dart';
@@ -314,7 +315,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                       child: SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AsmitaPalette.deepNavy),
+                        child: AsmitaLoadingIndicator(color: AsmitaPalette.deepNavy, size: 16),
                       ),
                     ),
                   )
@@ -552,7 +553,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                           ? const SizedBox(
                               height: 24,
                               width: 24,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              child: AsmitaLoadingIndicator(color: Colors.white, size: 24),
                             )
                           : const Text(
                               'Submit Request',

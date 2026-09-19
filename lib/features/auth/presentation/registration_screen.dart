@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/design_system.dart';
+import '../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../core/widgets/asmita_toast.dart';
 import '../../../core/widgets/asmita_bottom_sheet.dart';
 import '../bloc/auth_bloc.dart';
@@ -678,7 +679,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               child: SizedBox(
                                 height: 16,
                                 width: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE21F26)),
+                                child: AsmitaLoadingIndicator(color: Color(0xFFE21F26), size: 16),
                               ),
                             )
                           : Text(
@@ -939,7 +940,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (isLoading)
-                          const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          const SizedBox(height: 20, width: 20, child: AsmitaLoadingIndicator(color: Colors.white, size: 20))
                         else ...[
                           Text(
                             _currentStep == 0 ? 'Next' : 'Complete',

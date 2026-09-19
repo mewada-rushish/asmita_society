@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
@@ -99,7 +100,7 @@ class FamilyMembersScreen extends ConsumerWidget {
                     ],
                   );
                 },
-                loading: () => const Center(child: CupertinoActivityIndicator()),
+                loading: () => const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28)),
                 error: (error, _) => Center(
                   child: Text('Error: $error', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
                 ),
@@ -516,10 +517,10 @@ class FamilyMembersScreen extends ConsumerWidget {
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2.5,
-                              ),
+                              child: AsmitaLoadingIndicator(
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
                             )
                           : Text(member == null ? 'Save Member' : 'Update Member', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                     ),
