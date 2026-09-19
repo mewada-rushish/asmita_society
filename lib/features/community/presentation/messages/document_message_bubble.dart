@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 
 class DocumentMessageBubble extends StatefulWidget {
@@ -116,7 +117,7 @@ class _DocumentMessageBubbleState extends State<DocumentMessageBubble> {
                 ? SizedBox(
                     width: 32,
                     height: 32,
-                    child: CircularProgressIndicator(strokeWidth: 3, color: widget.isMe ? AsmitaPalette.deepNavy : AsmitaPalette.actionRed),
+                    child: AsmitaLoadingIndicator(color: widget.isMe ? AsmitaPalette.deepNavy : AsmitaPalette.actionRed, size: 28),
                   )
                 : Icon(fileIcon, color: iconColor, size: 32),
             const SizedBox(width: 12),

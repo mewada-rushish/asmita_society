@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/features/community/bloc/community_post_bloc.dart';
 import 'package:asmita_society/features/community/bloc/community_post_event.dart';
 import 'package:asmita_society/features/community/bloc/community_post_state.dart';
@@ -264,7 +265,7 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: state.isSubmitting 
-                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    ? const SizedBox(width: 24, height: 24, child: AsmitaLoadingIndicator(color: Colors.white, size: 24))
                     : const Text('Post', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                 );
               },

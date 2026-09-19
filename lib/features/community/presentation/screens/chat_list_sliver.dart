@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../data/models/chat_message_model.dart';
 import '../messages/message_bubble_factory.dart';
 import '../messages/image_grid_bubble.dart';
@@ -87,11 +88,11 @@ class ChatListSliver extends ConsumerWidget {
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Center(
                 child: SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AsmitaPalette.deepNavy,
+                    height: 24,
+                    width: 24,
+                    child: AsmitaLoadingIndicator(
+                      color: AsmitaPalette.deepNavy,
+                      size: 24,
                   ),
                 ),
               ),

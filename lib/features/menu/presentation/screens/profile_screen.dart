@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_event.dart';
@@ -277,7 +278,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           elevation: 0,
         ),
         child: isLoading
-            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+            ? const SizedBox(height: 20, width: 20, child: AsmitaLoadingIndicator(color: Colors.white, size: 20))
             : Text('Save Profile', style: textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
       ),
     );

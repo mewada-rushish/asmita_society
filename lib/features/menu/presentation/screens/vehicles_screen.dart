@@ -7,6 +7,7 @@ import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/features/menu/presentation/providers/vehicles_provider.dart';
 import 'package:asmita_society/features/menu/data/models/vehicle_model.dart';
 import 'package:asmita_society/features/menu/presentation/screens/widgets/add_edit_vehicle_sheet.dart';
@@ -92,7 +93,7 @@ class VehiclesScreen extends ConsumerWidget {
                     ],
                   );
                 },
-                loading: () => const Center(child: CupertinoActivityIndicator()),
+                loading: () => const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28)),
                 error: (error, _) => Center(
                   child: Text('Error: ', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
                 ),

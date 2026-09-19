@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/design_system.dart';
+import '../../../core/widgets/asmita_loading_indicator.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -148,9 +149,9 @@ class ApprovalPendingScreen extends StatelessWidget {
                                       ? const SizedBox(
                                           height: 24,
                                           width: 24,
-                                          child: CircularProgressIndicator(
+                                          child: AsmitaLoadingIndicator(
                                             color: Colors.white,
-                                            strokeWidth: 2,
+                                            size: 24,
                                           ),
                                         )
                                       : const Text(

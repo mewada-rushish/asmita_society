@@ -2,6 +2,7 @@ import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import '../../bloc/visitor_bloc.dart';
 import '../../bloc/visitor_event.dart';
 import '../../bloc/visitor_state.dart';
@@ -308,7 +309,7 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       child: state is VisitorLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
+                          ? const AsmitaLoadingIndicator(color: Colors.white, size: 24)
                           : Text(
                               'Generate Pass',
                               style: textTheme.bodyLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),

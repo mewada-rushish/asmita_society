@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/features/community/bloc/community_post_bloc.dart';
 import 'package:asmita_society/features/community/bloc/community_post_state.dart';
@@ -82,7 +83,7 @@ class _AllNoticesScreenState extends State<AllNoticesScreen> {
             child: BlocBuilder<CommunityPostBloc, CommunityPostState>(
               builder: (context, state) {
                 if (state.status == CommunityPostStatus.loading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28));
                 }
                 if (state.status == CommunityPostStatus.loaded) {
                   final activePosts = state.activePosts;

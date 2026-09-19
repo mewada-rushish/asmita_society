@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../constants/design_system.dart';
+import 'asmita_loading_indicator.dart';
 
 /// A premium, globally reusable animated pull-to-refresh sliver.
 /// Utilizes native Cupertino physics for a buttery-smooth inline stretch effect.
@@ -36,11 +37,11 @@ class AsmitaAnimatedRefresh extends StatelessWidget {
                   ),
                 ),
               
-              // 2. Loading State: Clean, native activity spinner
+              // 2. Loading State: Branded spinning indicator
               if (refreshState == RefreshIndicatorMode.refresh || refreshState == RefreshIndicatorMode.done)
-                const CupertinoActivityIndicator(
+                const AsmitaLoadingIndicator(
                   color: AsmitaPalette.actionRed,
-                  radius: 14,
+                  size: 28,
                 ),
             ],
           ),

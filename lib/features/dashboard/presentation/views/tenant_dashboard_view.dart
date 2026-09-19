@@ -3,6 +3,7 @@ import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/utils/dashboard_scroll_physics.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_raise_alert_wizard.dart';
@@ -427,7 +428,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
               }
                 return const Padding(
                   padding: EdgeInsets.all(8.0),
-                  child: CircularProgressIndicator(),
+                  child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28),
                 );
               },
             ),
@@ -441,7 +442,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
     return BlocBuilder<CommunityPostBloc, CommunityPostState>(
       builder: (context, state) {
         if (state.status == CommunityPostStatus.loading && state.posts.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28));
         }
 
         final activePosts = state.posts.where((p) {
@@ -552,7 +553,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
     return BlocBuilder<AmenitiesBloc, AmenitiesState>(
       builder: (context, state) {
         if (state.status == AmenitiesStatus.loading && state.amenities.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28));
         }
 
         // Count booking frequency by amenity ID
