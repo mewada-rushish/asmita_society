@@ -158,7 +158,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Expected Today', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
                         _buildExpectedList(state),
                       ],
                     ),
@@ -312,6 +312,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           elevation: 0,
+          color: AsmitaPalette.systemBG,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(color: Colors.grey.shade200),
