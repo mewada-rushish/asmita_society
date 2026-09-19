@@ -109,7 +109,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         onNavigateToSearch: _navigateToSearch,
         onNavigateToCommunity: () => setState(() => _currentIndex = 2),
       ),
-      VisitorHistoryScreen(onBack: () => setState(() => _currentIndex = 0)),               // Index 3: Gate Records (History)
+      _resolveRoleBasedHistoryView(widget.userRole),               // Index 3: Gate Records (History)
       MenuScreen(
         userRole: widget.userRole,
         onNavigateToTab: (index) {
@@ -178,6 +178,23 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       default:
         return Center(child: Text('Role Architecture: $role'));
     }
+  }
+
+  Widget _resolveRoleBasedHistoryView(String role) {
+    if (role.toLowerCase() == 'guard') {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          title: const Text('Gate History', style: TextStyle(color: Colors.black)),
+          backgroundColor: Colors.white,
+          elevation: 0,
+        ),
+        body: const Center(
+          child: Text('Guard Gate History (Coming Soon)'),
+        ),
+      );
+    }
+    return VisitorHistoryScreen(onBack: () => setState(() => _currentIndex = 0));
   }
 
   @override
