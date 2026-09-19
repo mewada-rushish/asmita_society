@@ -158,7 +158,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Expected Today', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 4),
                         _buildExpectedList(state),
                       ],
                     ),
@@ -306,6 +306,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       itemCount: validInvites.length,
       itemBuilder: (context, index) {
         final invite = validInvites[index];
