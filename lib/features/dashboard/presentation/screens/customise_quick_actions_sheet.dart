@@ -79,7 +79,7 @@ class _CustomiseQuickActionsSheetState extends State<CustomiseQuickActionsSheet>
                           itemBuilder: (context, index) {
                             final type = _selectedActions[index];
                             final meta = QuickActionRegistry.allActions[type]!;
-                            return _buildActionTile(meta, true, Key(type.toString()));
+                            return _buildActionTile(meta, true, index, Key(type.toString()));
                           },
                           onReorderItem: (oldIndex, newIndex) {
                             setState(() {
@@ -102,7 +102,7 @@ class _CustomiseQuickActionsSheetState extends State<CustomiseQuickActionsSheet>
                             (context, index) {
                               final type = _unselectedActions[index];
                               final meta = QuickActionRegistry.allActions[type]!;
-                              return _buildActionTile(meta, false, Key(type.toString()));
+                              return _buildActionTile(meta, false, null, Key(type.toString()));
                             },
                             childCount: _unselectedActions.length,
                           ),
@@ -125,7 +125,7 @@ class _CustomiseQuickActionsSheetState extends State<CustomiseQuickActionsSheet>
     );
   }
 
-  Widget _buildActionTile(QuickActionMetadata meta, bool isSelected, Key key) {
+  Widget _buildActionTile(QuickActionMetadata meta, bool isSelected, int? index, Key key) {
     return Container(
       key: key,
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
@@ -165,7 +165,11 @@ class _CustomiseQuickActionsSheetState extends State<CustomiseQuickActionsSheet>
             ),
             onPressed: () => _toggleSelection(meta.type),
           ),
-          if (isSelected) const Icon(Icons.drag_handle, color: Colors.grey),
+          if (isSelected && index != null) 
+            ReorderableDragStartListener(
+              index: index,
+              child: const Icon(Icons.drag_handle, color: Colors.grey),
+            ),
         ],
       ),
       ),
