@@ -195,20 +195,24 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                                 Expanded(
-                                  child: TextField(
-                                    controller: _phoneController,
-                                    keyboardType: TextInputType.phone,
-                                    scrollPadding: const EdgeInsets.only(bottom: 120),
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                      LengthLimitingTextInputFormatter(10),
-                                    ],
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      color: Colors.black87,
-                                    ),
-                                    decoration: const InputDecoration(
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.symmetric(vertical: 16),
+                                  child: Semantics(
+                                    label: 'Phone number input field',
+                                    hint: 'Enter your 10-digit mobile number',
+                                    child: TextField(
+                                      controller: _phoneController,
+                                      keyboardType: TextInputType.phone,
+                                      scrollPadding: const EdgeInsets.only(bottom: 120),
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                        LengthLimitingTextInputFormatter(10),
+                                      ],
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        color: Colors.black87,
+                                      ),
+                                      decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.symmetric(vertical: 16),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -220,39 +224,44 @@ class _LoginScreenState extends State<LoginScreen> {
                             builder: (context, state) {
                               final isLoading = state is AuthLoading;
                               final buttonActive = _isDirty; // Active color once typing starts
-                              return SizedBox(
-                                width: double.infinity,
-                                height: 56,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: buttonActive ? AsmitaPalette.actionRed : Colors.grey.shade300,
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                  ),
-                                  onPressed: isLoading ? null : _submitPhone,
-                                  child: isLoading 
-                                    ? const SizedBox(
-                                        height: 24, 
-                                        width: 24, 
-                                        child: AsmitaLoadingIndicator(color: Colors.white, size: 24)
-                                      )
-                                    : Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            'Login',
-                                            style: TextStyle(
-                                              color: buttonActive ? Colors.white : Colors.grey.shade500,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Icon(Icons.arrow_forward_rounded, color: buttonActive ? Colors.white : Colors.grey.shade500, size: 20),
-                                        ],
+                              return Semantics(
+                                button: true,
+                                label: 'Login Button',
+                                hint: isLoading ? 'Logging in' : (buttonActive ? 'Tap to login' : 'Enter a valid phone number to login'),
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  height: 56,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: buttonActive ? AsmitaPalette.actionRed : Colors.grey.shade300,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
                                       ),
+                                    ),
+                                    onPressed: isLoading ? null : _submitPhone,
+                                    child: isLoading 
+                                      ? const SizedBox(
+                                          height: 24, 
+                                          width: 24, 
+                                          child: AsmitaLoadingIndicator(color: Colors.white, size: 24)
+                                        )
+                                      : Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              'Login',
+                                              style: TextStyle(
+                                                color: buttonActive ? Colors.white : Colors.grey.shade500,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Icon(Icons.arrow_forward_rounded, color: buttonActive ? Colors.white : Colors.grey.shade500, size: 20),
+                                          ],
+                                        ),
+                                  ),
                                 ),
                               );
                             },

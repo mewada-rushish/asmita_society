@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'core/security/secure_storage_service.dart';
 
 import 'firebase_options.dart';
 import 'core/constants/design_system.dart';
@@ -29,39 +31,60 @@ import 'features/auth/presentation/unsafe_device_screen.dart';
 import 'core/observers/crashlytics_navigation_observer.dart';
 
 Future<void> main() async {
-  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  runZonedGuarded(() async {
+    WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+    FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+    // Parallelize independent initializations
+    await Future.wait([
+      Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
+      Hive.initFlutter(),
+    ]);
 
-  await Hive.initFlutter();
-  await Hive.openBox('community_chat');
-  await Hive.openBox('app_cache');
+    // Setup global error handling for Flutter framework
+    FlutterError.onError = (details) => FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
 
-  await di.init();
-  await di.sl<FirebaseMessagingService>().initialize();
+    // Hive Encryption setup
+    final secureStorage = SecureStorageService();
+    final encryptionKey = await secureStorage.getHiveKey();
 
-  FlutterError.onError = (details) => FirebaseCrashlytics.instance.recordFlutterFatalError(details);
-  PlatformDispatcher.instance.onError = (error, stack) {
+    Future<void> openEncryptedBox(String name) async {
+      try {
+        await Hive.openBox(name, encryptionCipher: HiveAesCipher(encryptionKey));
+      } catch (e) {
+        // If opening fails (e.g., trying to read an unencrypted box with a cipher), clear and recreate
+        await Hive.deleteBoxFromDisk(name);
+        await Hive.openBox(name, encryptionCipher: HiveAesCipher(encryptionKey));
+      }
+    }
+
+    await openEncryptedBox('community_chat');
+    await openEncryptedBox('app_cache');
+
+    await di.init();
+    await di.sl<FirebaseMessagingService>().initialize();
+
+    bool isDeviceSafe = true;
+    try {
+      bool isJailBroken = await SafeDevice.isJailBroken;
+      isDeviceSafe = !isJailBroken;
+    } catch (e) {
+      isDeviceSafe = false;
+    }
+
+    runApp(ProviderScope(
+      child: AsmitaApp(
+        isDeviceSafe: isDeviceSafe,
+      ),
+    ));
+  }, (error, stack) {
+    // Catch unhandled async errors outside the Flutter framework
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    return true;
-  };
-
-  bool isDeviceSafe = true;
-  try {
-    bool isJailBroken = await SafeDevice.isJailBroken;
-    isDeviceSafe = !isJailBroken;
-  } catch (e) {
-    isDeviceSafe = false;
-  }
-
-  runApp(ProviderScope(
-    child: AsmitaApp(
-      isDeviceSafe: isDeviceSafe,
-    ),
-  ));
+  });
 }
 
 class AsmitaApp extends StatelessWidget {

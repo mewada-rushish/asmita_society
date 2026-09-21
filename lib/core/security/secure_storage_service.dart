@@ -1,5 +1,6 @@
+import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
+import 'package:hive_flutter/hive_flutter.dart';
 /// Provides hardware-backed secure storage for sensitive credentials.
 class SecureStorageService {
   final FlutterSecureStorage _storage;
@@ -74,5 +75,17 @@ class SecureStorageService {
   /// Writes a generic string value to the secure keystore.
   Future<void> write({required String key, required String value}) async {
     await _storage.write(key: key, value: value);
+  }
+
+  /// Retrieves or generates a 256-bit encryption key for Hive.
+  Future<List<int>> getHiveKey() async {
+    const key = 'hive_encryption_key';
+    String? storedKey = await _storage.read(key: key);
+    if (storedKey == null) {
+      final newKey = Hive.generateSecureKey();
+      await _storage.write(key: key, value: base64UrlEncode(newKey));
+      return newKey;
+    }
+    return base64Url.decode(storedKey);
   }
 }
