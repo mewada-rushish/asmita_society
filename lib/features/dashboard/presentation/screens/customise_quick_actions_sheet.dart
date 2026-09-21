@@ -141,37 +141,40 @@ class _CustomiseQuickActionsSheetState extends State<CustomiseQuickActionsSheet>
           ),
         ],
       ),
-      child: ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: meta.isUtilityButton ? meta.iconColor : AsmitaPalette.systemBG,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          meta.icon,
-          color: meta.isUtilityButton ? Colors.white : meta.iconColor,
-          size: 20,
-        ),
-      ),
-      title: Text(meta.label),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: Icon(
-              isSelected ? Icons.remove_circle_outline : Icons.add_circle_outline,
-              color: isSelected ? AsmitaPalette.actionRed : Colors.green,
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: meta.isUtilityButton ? meta.iconColor : AsmitaPalette.systemBG,
+              shape: BoxShape.circle,
             ),
-            onPressed: () => _toggleSelection(meta.type),
+            child: Icon(
+              meta.icon,
+              color: meta.isUtilityButton ? Colors.white : meta.iconColor,
+              size: 20,
+            ),
           ),
-          if (isSelected && index != null) 
-            ReorderableDragStartListener(
-              index: index,
-              child: const Icon(Icons.drag_handle, color: Colors.grey),
-            ),
-        ],
-      ),
+          title: Text(meta.label),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(
+                  isSelected ? Icons.remove_circle_outline : Icons.add_circle_outline,
+                  color: isSelected ? AsmitaPalette.actionRed : Colors.green,
+                ),
+                onPressed: () => _toggleSelection(meta.type),
+              ),
+              if (isSelected && index != null) 
+                ReorderableDragStartListener(
+                  index: index,
+                  child: const Icon(Icons.drag_handle, color: Colors.grey),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
