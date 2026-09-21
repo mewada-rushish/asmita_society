@@ -42,6 +42,8 @@ class AuthRegistrationRequired extends AuthState {
 
 class AuthPendingApproval extends AuthState {}
 
+class AuthApprovedNeedsLogin extends AuthState {}
+
 class AuthError extends AuthState {
   final String message;
   const AuthError({required this.message});

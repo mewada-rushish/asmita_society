@@ -8,9 +8,47 @@ import '../bloc/auth_state.dart';
 import '../../../core/widgets/asmita_toast.dart';
 import 'login_screen.dart';
 
-class ApprovalPendingScreen extends StatelessWidget {
+import 'dart:async';
+
+class ApprovalPendingScreen extends StatefulWidget {
   final String mobile;
   const ApprovalPendingScreen({super.key, required this.mobile});
+
+  @override
+  State<ApprovalPendingScreen> createState() => _ApprovalPendingScreenState();
+}
+
+class _ApprovalPendingScreenState extends State<ApprovalPendingScreen> {
+  bool _canRefresh = true;
+  Timer? _cooldownTimer;
+  int _cooldownSeconds = 0;
+
+  @override
+  void dispose() {
+    _cooldownTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startCooldown() {
+    setState(() {
+      _canRefresh = false;
+      _cooldownSeconds = 30;
+    });
+    
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_cooldownSeconds > 1) {
+        setState(() {
+          _cooldownSeconds--;
+        });
+      } else {
+        setState(() {
+          _canRefresh = true;
+          _cooldownSeconds = 0;
+        });
+        timer.cancel();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,18 +59,7 @@ class ApprovalPendingScreen extends StatelessWidget {
       backgroundColor: AsmitaPalette.deepNavy,
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthUnauthenticated) {
-            AsmitaToast.show(
-              context,
-              message: 'Account approved! Please log in.',
-              type: AsmitaToastType.success,
-            );
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (_) => const LoginScreen()),
-              (route) => false,
-            );
-          } else if (state is AuthError) {
+          if (state is AuthError) {
             AsmitaToast.show(
               context,
               message: state.message,
@@ -44,10 +71,17 @@ class ApprovalPendingScreen extends StatelessWidget {
               message: 'Your account is still pending approval.',
               type: AsmitaToastType.info,
             );
+          } else if (state is AuthApprovedNeedsLogin) {
+            AsmitaToast.show(
+              context,
+              message: 'Account approved!',
+              type: AsmitaToastType.success,
+            );
           }
         },
         builder: (context, state) {
           final isLoading = state is AuthLoading;
+          final isApproved = state is AuthApprovedNeedsLogin;
 
           return CustomScrollView(
             physics: const ClampingScrollPhysics(),
@@ -68,12 +102,14 @@ class ApprovalPendingScreen extends StatelessWidget {
                                 width: 180,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.white.withValues(alpha: 0.1),
+                                  color: isApproved 
+                                      ? Colors.green.withValues(alpha: 0.1) 
+                                      : Colors.white.withValues(alpha: 0.1),
                                 ),
                               ),
-                              const Icon(
-                                Icons.hourglass_empty_rounded,
-                                color: Colors.white,
+                              Icon(
+                                isApproved ? Icons.check_circle_outline_rounded : Icons.hourglass_empty_rounded,
+                                color: isApproved ? Colors.greenAccent : Colors.white,
                                 size: 100,
                               ),
                             ],
@@ -112,7 +148,7 @@ class ApprovalPendingScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Approval Pending',
+                                isApproved ? 'Approval Accepted' : 'Approval Pending',
                                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                                       color: Colors.black,
                                       fontWeight: FontWeight.w800,
@@ -120,50 +156,83 @@ class ApprovalPendingScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'Your account is currently under review by the society admin. You will be able to access the app features once your request is approved.',
+                                isApproved 
+                                    ? 'Your account has been approved by the society admin! Please login to access the app features.'
+                                    : 'Your account is currently under review by the society admin. You will be able to access the app features once your request is approved.',
                                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                       color: Colors.grey.shade600,
                                       height: 1.5,
                                     ),
                               ),
                               const SizedBox(height: 48),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 56,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AsmitaPalette.deepNavy,
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
+                              if (isApproved)
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 56,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AsmitaPalette.successGreen,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.pushAndRemoveUntil(
+                                        context,
+                                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                                        (route) => false,
+                                      );
+                                    },
+                                    child: const Text(
+                                      'Login Now',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ),
-                                  onPressed: isLoading
-                                      ? null
-                                      : () {
-                                          context.read<AuthBloc>().add(
-                                                AuthCheckStatusRequested(mobile: mobile),
-                                              );
-                                        },
-                                  child: isLoading
-                                      ? const SizedBox(
-                                          height: 24,
-                                          width: 24,
-                                          child: AsmitaLoadingIndicator(
-                                            color: Colors.white,
-                                            size: 24,
+                                )
+                              else
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 56,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AsmitaPalette.deepNavy,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    onPressed: (isLoading || !_canRefresh)
+                                        ? null
+                                        : () {
+                                            _startCooldown();
+                                            context.read<AuthBloc>().add(
+                                                  AuthCheckStatusRequested(mobile: widget.mobile),
+                                                );
+                                          },
+                                    child: isLoading
+                                        ? const SizedBox(
+                                            height: 24,
+                                            width: 24,
+                                            child: AsmitaLoadingIndicator(
+                                              color: Colors.white,
+                                              size: 24,
+                                            ),
+                                          )
+                                        : Text(
+                                            _canRefresh ? 'Refresh Status' : 'Refresh Status ($_cooldownSeconds)',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                           ),
-                                        )
-                                      : const Text(
-                                          'Refresh Status',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
+                                  ),
                                 ),
-                              ),
                               const SizedBox(height: 16),
                               SizedBox(
                                 width: double.infinity,

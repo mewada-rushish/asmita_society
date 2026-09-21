@@ -73,7 +73,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final status = await authRepository.checkStatus(event.mobile);
       if (status == 'APPROVED') {
-        emit(AuthUnauthenticated());
+        emit(AuthApprovedNeedsLogin());
       } else {
         emit(AuthPendingApproval());
       }
