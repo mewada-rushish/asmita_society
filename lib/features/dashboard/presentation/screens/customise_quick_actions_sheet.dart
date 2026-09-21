@@ -4,6 +4,7 @@ import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/features/dashboard/data/models/quick_action_registry.dart';
 import 'package:asmita_society/features/dashboard/bloc/quick_actions/quick_actions_bloc.dart';
 import 'package:asmita_society/features/dashboard/bloc/quick_actions/quick_actions_state.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 
 class CustomiseQuickActionsSheet extends StatefulWidget {
   const CustomiseQuickActionsSheet({super.key});
@@ -34,6 +35,7 @@ class _CustomiseQuickActionsSheetState extends State<CustomiseQuickActionsSheet>
   void _save() {
     context.read<QuickActionsBloc>().add(SaveQuickActions(_selectedActions));
     Navigator.pop(context);
+    AsmitaToast.show(context, message: 'Customization saved successfully', type: AsmitaToastType.success);
   }
 
   void _toggleSelection(QuickActionType type) {
