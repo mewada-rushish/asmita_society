@@ -26,6 +26,10 @@ class VisitorHistoryScreen extends StatefulWidget {
 }
 
 class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
+  String? _selectedStatus;
+  DateTime? _startDate;
+  DateTime? _endDate;
+
   @override
   void initState() {
     super.initState();
@@ -38,7 +42,13 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
     if (authState is AuthAuthenticated) {
       residentId = authState.user.userId;
     }
-    context.read<VisitorBloc>().add(LoadMyHistory(residentId: residentId, isRefresh: isRefresh));
+    context.read<VisitorBloc>().add(LoadMyHistory(
+      residentId: residentId, 
+      isRefresh: isRefresh,
+      status: _selectedStatus,
+      startDate: _startDate,
+      endDate: _endDate,
+    ));
   }
 
   String _formatTime(String? dateStr, String? timeStr) {
@@ -325,17 +335,36 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Text(
-              label,
-              style: textTheme.bodyMedium?.copyWith(
-                fontFamily: 'Poppins',
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: AsmitaPalette.textLight,
-              ),
+          Text(
+            label,
+            style: textTheme.bodyMedium?.copyWith(
+              fontFamily: 'Poppins',
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AsmitaPalette.deepNavy,
             ),
           ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return Flex(
+                  direction: Axis.horizontal,
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(
+                    (constraints.constrainWidth() / 6).floor(), 
+                    (index) => const SizedBox(
+                      width: 3, 
+                      height: 1, 
+                      child: DecoratedBox(decoration: BoxDecoration(color: AsmitaPalette.borderGrey)),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
           if (isStatus)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -427,6 +456,170 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
   }
 
 
+  void _showFilterModal() {
+    String? tempStatus = _selectedStatus;
+    DateTime? tempStartDate = _startDate;
+    DateTime? tempEndDate = _endDate;
+
+    showAsmitaBottomSheet(
+      context: context,
+      customHeader: const Center(
+        child: Text(
+          'Filter History',
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: AsmitaPalette.deepNavy,
+          ),
+        ),
+      ),
+      child: StatefulBuilder(
+        builder: (context, setModalState) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Status',
+                style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: ['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'CHECKED_IN', 'CHECKED_OUT']
+                    .map((s) => ChoiceChip(
+                          label: Text(s),
+                          selected: tempStatus == s || (s == 'ALL' && tempStatus == null),
+                          onSelected: (selected) {
+                            if (selected) {
+                              setModalState(() => tempStatus = s == 'ALL' ? null : s);
+                            }
+                          },
+                          selectedColor: AsmitaPalette.actionRed.withValues(alpha: 0.1),
+                          labelStyle: TextStyle(
+                            fontFamily: 'Poppins',
+                            color: (tempStatus == s || (s == 'ALL' && tempStatus == null)) ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ))
+                    .toList(),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Date Range',
+                style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: tempStartDate ?? DateTime.now(),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null) {
+                          setModalState(() => tempStartDate = picked);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AsmitaPalette.borderGrey),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          tempStartDate != null ? DateFormat('dd-MM-yyyy').format(tempStartDate!) : 'Start Date',
+                          style: TextStyle(fontFamily: 'Poppins', color: tempStartDate != null ? AsmitaPalette.deepNavy : AsmitaPalette.textLight),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: tempEndDate ?? DateTime.now(),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null) {
+                          setModalState(() => tempEndDate = picked);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AsmitaPalette.borderGrey),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          tempEndDate != null ? DateFormat('dd-MM-yyyy').format(tempEndDate!) : 'End Date',
+                          style: TextStyle(fontFamily: 'Poppins', color: tempEndDate != null ? AsmitaPalette.deepNavy : AsmitaPalette.textLight),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedStatus = null;
+                          _startDate = null;
+                          _endDate = null;
+                        });
+                        Navigator.pop(context);
+                        _loadHistory();
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AsmitaPalette.borderGrey),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('Clear', style: TextStyle(color: AsmitaPalette.deepNavy, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedStatus = tempStatus;
+                          _startDate = tempStartDate;
+                          _endDate = tempEndDate;
+                        });
+                        Navigator.pop(context);
+                        _loadHistory();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AsmitaPalette.actionRed,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('Apply Filters', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -469,10 +662,49 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                       style: TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy),
                     ),
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.filter_list_rounded, color: AsmitaPalette.deepNavy),
+                    onPressed: _showFilterModal,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
                 ],
               ),
             ),
             
+          // Active filters chip area (optional, to show applied filters)
+          if (_selectedStatus != null || _startDate != null || _endDate != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 4.0),
+              child: Row(
+                children: [
+                  const Icon(Icons.filter_alt, size: 14, color: AsmitaPalette.textLight),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      'Filters applied: ${_selectedStatus ?? ''} '
+                      '${_startDate != null ? DateFormat('dd/MM').format(_startDate!) : ''} '
+                      '${_endDate != null ? '- ${DateFormat('dd/MM').format(_endDate!)}' : ''}',
+                      style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textLight),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedStatus = null;
+                        _startDate = null;
+                        _endDate = null;
+                      });
+                      _loadHistory();
+                    },
+                    child: const Text('Clear', style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.actionRed, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
+
           Expanded(
             child: BlocBuilder<VisitorBloc, VisitorState>(
               builder: (context, state) {
@@ -485,12 +717,30 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
 
                 if (state is VisitorError) {
                   return Center(
-                    child: Text(
-                      state.message,
-                      style: const TextStyle(
-                        fontFamily: 'Montserrat',
-                        color: AsmitaPalette.actionRed,
-                      ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          state.message,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontFamily: 'Montserrat',
+                            color: AsmitaPalette.actionRed,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            _loadHistory(isRefresh: true);
+                          },
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AsmitaPalette.actionRed,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 }

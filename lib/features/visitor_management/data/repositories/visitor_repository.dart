@@ -40,12 +40,26 @@ class VisitorRepository {
   }
 
   /// Fetches resident's pre-approved invites and on-the-spot visitor requests
-  Future<List<dynamic>> getMyHistory(int residentId) async {
+  Future<List<dynamic>> getMyHistory({
+    required int residentId,
+    String? status,
+    DateTime? startDate,
+    DateTime? endDate,
+    int? visitorTypeId,
+  }) async {
     try {
+      final queryParams = <String, dynamic>{
+        'user_id': residentId,
+      };
+      if (status != null && status != 'ALL') queryParams['status'] = status;
+      if (startDate != null) queryParams['start_date'] = startDate.toIso8601String();
+      if (endDate != null) queryParams['end_date'] = endDate.toIso8601String();
+      if (visitorTypeId != null) queryParams['visitor_type_id'] = visitorTypeId;
+
       // Fetch both simultaneously
       final responses = await Future.wait([
-        _dio.get(EnvConfig.myPreApprovedInvites),
-        _dio.get(EnvConfig.residentVisitorRequests, queryParameters: {'user_id': residentId}),
+        _dio.get(EnvConfig.myPreApprovedInvites, queryParameters: queryParams),
+        _dio.get(EnvConfig.residentVisitorRequests, queryParameters: queryParams),
       ]);
 
       final invitesResp = responses[0];
@@ -58,27 +72,44 @@ class VisitorRepository {
 
       if (invitesResp.statusCode == 200) {
         final data = invitesResp.data;
-        // The backend might not have 'success': true
-        final invitesList = (data['invites'] ?? data['entries'] ?? data['data'] ?? (data is List ? data : [])) as List<dynamic>;
-        mergedHistory.addAll(invitesList.map((e) => {
-          ...e,
-          'record_type': 'PRE_APPROVED'
-        }));
+        if (data is Map) {
+          final invitesList = (data['invites'] ?? data['entries'] ?? data['data'] ?? []) as List<dynamic>;
+          mergedHistory.addAll(invitesList.map((e) => {
+            ...e,
+            'record_type': 'PRE_APPROVED'
+          }));
+        } else if (data is List) {
+          mergedHistory.addAll(data.map((e) => {
+            ...e,
+            'record_type': 'PRE_APPROVED'
+          }));
+        } else {
+          debugPrint('Unexpected invites response format: ${data.runtimeType}');
+        }
       }
 
       if (requestsResp.statusCode == 200) {
         final data = requestsResp.data;
-        final requestsList = (data['requests'] ?? data['entries'] ?? data['data'] ?? (data is List ? data : [])) as List<dynamic>;
-        mergedHistory.addAll(requestsList.map((e) => {
-          ...e,
-          'record_type': 'WALK_IN'
-        }));
+        if (data is Map) {
+          final requestsList = (data['requests'] ?? data['entries'] ?? data['data'] ?? []) as List<dynamic>;
+          mergedHistory.addAll(requestsList.map((e) => {
+            ...e,
+            'record_type': 'WALK_IN'
+          }));
+        } else if (data is List) {
+          mergedHistory.addAll(data.map((e) => {
+            ...e,
+            'record_type': 'WALK_IN'
+          }));
+        } else {
+          debugPrint('Unexpected requests response format: ${data.runtimeType}');
+        }
       }
 
-      // Sort by created_at or valid_from descending
+      // Sort by created_at or valid_from descending (falling back to requested_at if needed)
       mergedHistory.sort((a, b) {
-        final dateA = DateTime.tryParse(a['created_at']?.toString() ?? a['valid_from']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
-        final dateB = DateTime.tryParse(b['created_at']?.toString() ?? b['valid_from']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final dateA = DateTime.tryParse(a['created_at']?.toString() ?? a['requested_at']?.toString() ?? a['valid_from']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final dateB = DateTime.tryParse(b['created_at']?.toString() ?? b['requested_at']?.toString() ?? b['valid_from']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
         return dateB.compareTo(dateA);
       });
 

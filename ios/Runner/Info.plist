@@ -49,6 +49,12 @@
 		</dict>
 		<key>NSContactsUsageDescription</key>
 		<string>This app requires contacts access to share them in the community chat.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>This app requires camera access to take profile pictures and scan QR codes.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>This app requires photo library access to upload profile pictures and share images in the community.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>This app requires microphone access to record audio messages.</string>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>UILaunchStoryboardName</key>

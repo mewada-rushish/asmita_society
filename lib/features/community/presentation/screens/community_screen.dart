@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -30,7 +29,6 @@ class CommunityScreen extends ConsumerStatefulWidget {
 
 class _CommunityScreenState extends ConsumerState<CommunityScreen> {
   final ScrollController _scrollController = ScrollController();
-  Timer? _pollingTimer;
 
   @override
   void initState() {
@@ -50,21 +48,16 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
           .loadMessages(currentUserId: userId, currentUserName: userName);
     });
 
-    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (!mounted) return;
-
-      bool isAtBottom = true;
-      if (_scrollController.hasClients) {
-        // minScrollExtent (0) is the BOTTOM of the physical screen
-        isAtBottom =
-            (_scrollController.position.pixels <=
-            _scrollController.position.minScrollExtent + 150);
-      }
-
-      if (isAtBottom) {
-        ref.read(communityProvider.notifier).pollNewMessages();
-      }
-    });
+    ref.read(communityProvider.notifier).startPolling(
+      isAtBottom: () {
+        if (!mounted) return false;
+        if (_scrollController.hasClients) {
+          return _scrollController.position.pixels <=
+                 _scrollController.position.minScrollExtent + 150;
+        }
+        return true;
+      },
+    );
   }
 
   void _onScroll() {
@@ -84,8 +77,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
 
   @override
   void dispose() {
-    _pollingTimer?.cancel();
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    ref.read(communityProvider.notifier).stopPolling();
     super.dispose();
   }
 
@@ -138,11 +132,39 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                             child: RotatedBox(
                               quarterTurns: 2,
                               child: Center(
-                                child: Text(
-                                  state.error,
-                                  style: const TextStyle(
-                                    color: AsmitaPalette.actionRed,
-                                  ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      state.error,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: AsmitaPalette.actionRed,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ElevatedButton.icon(
+                                      onPressed: () {
+                                        final authState = context.read<AuthBloc>().state;
+                                        int? currentUserId;
+                                        String? currentUserName;
+                                        if (authState is AuthAuthenticated) {
+                                          currentUserId = authState.user.userId;
+                                          currentUserName = authState.user.fullName;
+                                        }
+                                        ref.read(communityProvider.notifier).loadMessages(
+                                          currentUserId: currentUserId,
+                                          currentUserName: currentUserName,
+                                        );
+                                      },
+                                      icon: const Icon(Icons.refresh),
+                                      label: const Text('Retry'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AsmitaPalette.actionRed,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),

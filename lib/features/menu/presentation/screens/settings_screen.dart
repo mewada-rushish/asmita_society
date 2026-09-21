@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
+import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/features/menu/presentation/providers/preferences_provider.dart';
+import 'package:asmita_society/features/menu/presentation/screens/privacy_policy_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -14,7 +16,7 @@ class SettingsScreen extends ConsumerWidget {
     final prefsState = ref.watch(preferencesProvider);
 
     return Scaffold(
-      backgroundColor: AsmitaPalette.systemBG,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -30,6 +32,7 @@ class SettingsScreen extends ConsumerWidget {
                       _buildSectionTitle(textTheme, 'Notifications'),
                       const SizedBox(height: 12),
                       _buildSettingsCard(
+                        context,
                         children: [
                           _buildToggleRow(
                             textTheme, 
@@ -54,6 +57,7 @@ class SettingsScreen extends ConsumerWidget {
                       _buildSectionTitle(textTheme, 'Preferences'),
                       const SizedBox(height: 12),
                       _buildSettingsCard(
+                        context,
                         children: [
                           _buildActionRow(textTheme, Icons.language_rounded, 'Language', prefs.language, true, () {}),
                           _buildActionRow(textTheme, Icons.dark_mode_rounded, 'App Theme', prefs.appTheme, false, () {}),
@@ -64,6 +68,7 @@ class SettingsScreen extends ConsumerWidget {
                       _buildSectionTitle(textTheme, 'Security'),
                       const SizedBox(height: 12),
                       _buildSettingsCard(
+                        context,
                         children: [
                           _buildActionRow(textTheme, Icons.lock_rounded, 'Change Password', '', true, () {}),
                           _buildToggleRow(
@@ -76,6 +81,25 @@ class SettingsScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 24),
+                      
+                      _buildSectionTitle(textTheme, 'Legal & Compliance'),
+                      const SizedBox(height: 12),
+                      _buildSettingsCard(
+                        context,
+                        children: [
+                          _buildActionRow(textTheme, Icons.privacy_tip_rounded, 'Privacy Policy', '', true, () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()),
+                            );
+                          }),
+                          _buildActionRow(textTheme, Icons.delete_forever_rounded, 'Delete Account', '', false, () {
+                            _showDeleteAccountDialog(context);
+                          }, textColor: AsmitaPalette.actionRed, iconColor: AsmitaPalette.actionRed),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
                     ],
                   );
                 },
@@ -103,10 +127,10 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSettingsCard({required List<Widget> children}) {
+  Widget _buildSettingsCard(BuildContext context, {required List<Widget> children}) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
         boxShadow: [
@@ -144,7 +168,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionRow(TextTheme textTheme, IconData icon, String title, String trailingText, bool showBorder, VoidCallback onTap) {
+  Widget _buildActionRow(TextTheme textTheme, IconData icon, String title, String trailingText, bool showBorder, VoidCallback onTap, {Color? textColor, Color? iconColor}) {
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -154,16 +178,56 @@ class SettingsScreen extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: AsmitaPalette.textLight, size: 22),
+            Icon(icon, color: iconColor ?? AsmitaPalette.textLight, size: 22),
             const SizedBox(width: 16),
             Expanded(
-              child: Text(title, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+              child: Text(title, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: textColor)),
             ),
             if (trailingText.isNotEmpty) ...[
               Text(trailingText, style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.textLight)),
               const SizedBox(width: 8),
             ],
-            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AsmitaPalette.textLight),
+            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: iconColor ?? AsmitaPalette.textLight),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AsmitaDialog(
+        title: 'Delete Account',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Are you sure you want to delete your account? This action cannot be undone and will permanently remove your data.',
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel', style: TextStyle(color: AsmitaPalette.deepNavy)),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    // Add actual delete account logic here
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Account deletion requested. Support will contact you shortly.')),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: AsmitaPalette.actionRed),
+                  child: const Text('Delete', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
           ],
         ),
       ),

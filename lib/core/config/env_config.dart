@@ -5,7 +5,6 @@ enum AppEnvironment { development, production }
 class EnvConfig {
   static AppEnvironment get currentEnvironment => AppEnvironment.production;
 
-  static const String _prodBaseUrl = 'https://admin.myasmita.com';
 
   /// Resolves the base URL based on the current environment and platform.
   /// Resolves the base URL using dart-define with a fallback to production.
@@ -14,7 +13,8 @@ class EnvConfig {
     if (envUrl.isNotEmpty) {
       return envUrl;
     }
-    return _prodBaseUrl;
+    // Default fallback to production backend
+    return 'https://admin.myasmita.com';
   }
 
   /// Endpoint for initiating OTP dispatch.

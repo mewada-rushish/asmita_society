@@ -219,7 +219,15 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                     labelText: _inviteType == 'Guest' ? 'Visitor Name' : 'Company/Driver Name',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Required';
+                    }
+                    if (value.trim().length < 3) {
+                      return 'Must be at least 3 characters';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
                 
@@ -230,6 +238,14 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    if (value != null && value.trim().isNotEmpty) {
+                      if (!RegExp(r'^\d{10}$').hasMatch(value.trim())) {
+                        return 'Please enter a valid 10-digit mobile number';
+                      }
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 24),
                 

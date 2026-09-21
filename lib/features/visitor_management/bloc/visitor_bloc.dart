@@ -16,7 +16,13 @@ class VisitorBloc extends Bloc<VisitorEvent, VisitorState> {
       emit(VisitorLoading());
     }
     try {
-      final history = await visitorRepository.getMyHistory(event.residentId);
+      final history = await visitorRepository.getMyHistory(
+        residentId: event.residentId,
+        status: event.status,
+        startDate: event.startDate,
+        endDate: event.endDate,
+        visitorTypeId: event.visitorTypeId,
+      );
       emit(VisitorHistoryLoaded(history: history));
     } catch (e) {
       emit(VisitorError(message: e.toString().replaceAll('Exception: ', '')));

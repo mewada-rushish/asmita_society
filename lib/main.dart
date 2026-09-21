@@ -14,6 +14,7 @@ import 'features/auth/presentation/root_screen.dart';
 import 'features/community/bloc/community_post_bloc.dart';
 import 'features/visitor_management/bloc/guard_gate_bloc.dart';
 import 'core/di/injection_container.dart' as di;
+import 'core/services/firebase_messaging_service.dart';
 import 'features/visitor_management/bloc/visitor_bloc.dart';
 import 'features/services/bloc/amenities_bloc.dart';
 import 'features/services/bloc/amenities_event.dart';
@@ -25,6 +26,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart' show FlutterQuillLocalizations;
 import 'package:safe_device/safe_device.dart';
 import 'features/auth/presentation/unsafe_device_screen.dart';
+import 'core/observers/crashlytics_navigation_observer.dart';
 
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +41,7 @@ Future<void> main() async {
   await Hive.openBox('app_cache');
 
   await di.init();
+  await di.sl<FirebaseMessagingService>().initialize();
 
   FlutterError.onError = (details) => FirebaseCrashlytics.instance.recordFlutterFatalError(details);
   PlatformDispatcher.instance.onError = (error, stack) {
@@ -125,6 +128,9 @@ class AsmitaApp extends StatelessWidget {
         ],
         supportedLocales: const [
           Locale('en', 'US'),
+        ],
+        navigatorObservers: [
+          CrashlyticsNavigationObserver(),
         ],
         home: isDeviceSafe ? const RootScreen() : const UnsafeDeviceScreen(),
       ),

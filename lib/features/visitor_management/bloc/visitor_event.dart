@@ -9,10 +9,22 @@ abstract class VisitorEvent extends Equatable {
 class LoadMyHistory extends VisitorEvent {
   final int residentId;
   final bool isRefresh;
-  const LoadMyHistory({required this.residentId, this.isRefresh = false});
+  final String? status;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final int? visitorTypeId;
+
+  const LoadMyHistory({
+    required this.residentId, 
+    this.isRefresh = false,
+    this.status,
+    this.startDate,
+    this.endDate,
+    this.visitorTypeId,
+  });
 
   @override
-  List<Object?> get props => [residentId, isRefresh];
+  List<Object?> get props => [residentId, isRefresh, status, startDate, endDate, visitorTypeId];
 }
 
 class CreatePreApprovedInviteEvent extends VisitorEvent {

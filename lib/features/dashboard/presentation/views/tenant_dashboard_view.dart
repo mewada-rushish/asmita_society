@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
@@ -732,15 +733,22 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
 
   Widget _buildGridItem(BuildContext context, IconData icon, String label, {String? badgeLabel, int? notificationCount, Color containerColor = AsmitaPalette.deepNavy, Color iconColor = Colors.white, bool isUtilityButton = false, bool hasBorder = false, Color? borderColor, VoidCallback? onTap}) {
     final textTheme = Theme.of(context).textTheme;
-    return SizedBox(
-      width: 78,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    return Semantics(
+      label: label,
+      button: true,
+      hint: onTap != null ? 'Double tap to open $label' : null,
+      child: SizedBox(
+        width: 78,
+        child: InkWell(
+          onTap: onTap != null ? () {
+            if (isUtilityButton) HapticFeedback.vibrate();
+            onTap();
+          } : null,
+          borderRadius: BorderRadius.circular(16),
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
           children: [
             Stack(
               clipBehavior: Clip.none,
@@ -769,6 +777,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -776,8 +785,11 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
 
   Widget _buildCircularActionHook(BuildContext context, IconData icon, String label, {bool hasBadge = false, Color iconColor = AsmitaPalette.deepNavy}) {
     final textTheme = Theme.of(context).textTheme;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    return Semantics(
+      label: label,
+      button: true,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
       children: [
         Stack(
           clipBehavior: Clip.none,
@@ -795,6 +807,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
         const SizedBox(height: 6),
         Text(label, style: textTheme.bodyMedium?.copyWith(fontSize: 10, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
       ],
+    ),
     );
   }
 }
