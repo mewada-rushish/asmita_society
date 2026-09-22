@@ -29,11 +29,13 @@ class CommunityScreen extends ConsumerStatefulWidget {
 
 class _CommunityScreenState extends ConsumerState<CommunityScreen> {
   final ScrollController _scrollController = ScrollController();
+  CommunityNotifier? _notifier;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _notifier = ref.read(communityProvider.notifier);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authState = context.read<AuthBloc>().state;
@@ -43,12 +45,10 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
         userId = authState.user.userId;
         userName = authState.user.fullName;
       }
-      ref
-          .read(communityProvider.notifier)
-          .loadMessages(currentUserId: userId, currentUserName: userName);
+      _notifier?.loadMessages(currentUserId: userId, currentUserName: userName);
     });
 
-    ref.read(communityProvider.notifier).startPolling(
+    _notifier?.startPolling(
       isAtBottom: () {
         if (!mounted) return false;
         if (_scrollController.hasClients) {
@@ -69,7 +69,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
         if (state is CommunityLoaded &&
             !state.hasReachedMax &&
             !state.isLoadingMore) {
-          ref.read(communityProvider.notifier).loadMoreMessages();
+          _notifier?.loadMoreMessages();
         }
       }
     }
@@ -79,7 +79,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
-    ref.read(communityProvider.notifier).stopPolling();
+    _notifier?.stopPolling();
     super.dispose();
   }
 

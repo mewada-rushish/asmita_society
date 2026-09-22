@@ -3,7 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_event.dart';
+import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
+import 'package:asmita_society/core/widgets/asmita_dialog.dart';
+import 'package:asmita_society/features/visitor_management/bloc/visitor_bloc.dart';
+import 'package:asmita_society/features/visitor_management/bloc/visitor_event.dart';
 
 import 'committee_members_screen.dart';
 import 'documents_screen.dart';
@@ -99,10 +103,6 @@ class MenuScreen extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     return InkWell(
       onTap: () {
-        // We'll import the profile screen later, but since it's already in the same directory, we can navigate
-        Navigator.pop(context); // Close the tab
-        if (onNavigateToTab != null) onNavigateToTab!(4); // Dummy index just to trigger rebuild or we can navigate directly
-        // Wait, navigating from a tab means we just push on top of it.
         Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(onNavigateToTab: onNavigateToTab)));
       },
       borderRadius: BorderRadius.circular(20),
@@ -120,37 +120,63 @@ class MenuScreen extends StatelessWidget {
           ],
         ),
       padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: AsmitaPalette.deepNavy,
-            child: Text(
-              'RM', 
-              style: textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 18)
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Rushish Mewada', style: textTheme.titleLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 4),
-                Text(
-                  userRole.toLowerCase() == 'guard'
-                      ? userRole.toUpperCase()
-                      : 'Flat A-402 • ${userRole.toUpperCase()}',
-                  style: textTheme.bodyMedium?.copyWith(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AsmitaPalette.actionRed),
+      child: BlocBuilder<AuthBloc, AuthState>(
+        builder: (context, authState) {
+          String name = 'Loading...';
+          String initials = '--';
+          String roleText = userRole.toUpperCase();
+
+          if (authState is AuthAuthenticated) {
+            final user = authState.user;
+            name = user.fullName.isNotEmpty ? user.fullName : 'User';
+            
+            final parts = name.split(' ').where((s) => s.isNotEmpty).toList();
+            if (parts.length > 1) {
+              initials = '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+            } else if (parts.isNotEmpty) {
+              initials = parts[0][0].toUpperCase();
+            }
+            
+            if (userRole.toLowerCase() != 'guard') {
+              if (user.flatMappings.isNotEmpty) {
+                final flat = user.flatMappings.first;
+                final tower = flat.towerName.isNotEmpty ? '${flat.towerName}-' : '';
+                roleText = 'Flat $tower${flat.flatNumber} • ${userRole.toUpperCase()}';
+              }
+            }
+          }
+
+          return Row(
+            children: [
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: AsmitaPalette.deepNavy,
+                child: Text(
+                  initials, 
+                  style: textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 18)
                 ),
-              ],
-            ),
-          ),
-          const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AsmitaPalette.textLight),
-        ],
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name, style: textTheme.titleLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 4),
+                    Text(
+                      roleText,
+                      style: textTheme.bodyMedium?.copyWith(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AsmitaPalette.actionRed),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AsmitaPalette.textLight),
+            ],
+          );
+        },
       ),
       ),
     );
@@ -186,7 +212,37 @@ class MenuScreen extends StatelessWidget {
     return InkWell(
       onTap: () {
         if (isDestructive && title == 'Logout') {
-          context.read<AuthBloc>().add(AuthLogoutRequested());
+          AsmitaDialog.show(
+            context: context,
+            title: 'Logout',
+            content: const Text(
+              'Are you sure you want to logout? You will need to sign in again to access society features.',
+              style: TextStyle(fontFamily: 'Poppins', fontSize: 14, color: AsmitaPalette.textDark),
+            ),
+            actions: [
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AsmitaPalette.borderGrey),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Cancel', style: TextStyle(color: AsmitaPalette.deepNavy, fontWeight: FontWeight.w600)),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  context.read<VisitorBloc>().add(ClearVisitorHistory());
+                  context.read<AuthBloc>().add(AuthLogoutRequested());
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AsmitaPalette.actionRed,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Logout', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              ),
+            ],
+          );
           return;
         }
         

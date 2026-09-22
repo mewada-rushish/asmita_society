@@ -44,12 +44,7 @@ class _RootScreenState extends State<RootScreen> {
       },
       builder: (context, state) {
         if (state is AuthAuthenticated) {
-          String effectiveRole = state.user.primaryRole;
-          if (state.user.systemRole != null && state.user.systemRole!.isNotEmpty) {
-            effectiveRole = state.user.systemRole!;
-          } else if (state.user.secondaryRole != null && state.user.secondaryRole!.isNotEmpty) {
-            effectiveRole = state.user.secondaryRole!;
-          }
+          String effectiveRole = state.sessionRole;
           if (effectiveRole.trim().isEmpty) {
             effectiveRole = 'resident';
           }

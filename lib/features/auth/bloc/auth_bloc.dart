@@ -34,12 +34,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       
       if (token != null && token.isNotEmpty) {
         final profileJsonStr = await secureStorage.read(key: 'user_profile');
+        final cachedRole = await secureStorage.getUserRole() ?? 'resident';
         UserModel sessionUser;
         if (profileJsonStr != null) {
           final profileJson = jsonDecode(profileJsonStr);
           sessionUser = UserModel.fromJson(profileJson);
         } else {
-          final cachedRole = await secureStorage.getUserRole() ?? 'resident';
           final cachedUserId = await secureStorage.getUserId() ?? 0;
           final cachedUserName = await secureStorage.getUserName() ?? 'AsmitA User';
           
@@ -51,7 +51,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           );
         }
         
-        emit(AuthAuthenticated(user: sessionUser));
+        emit(AuthAuthenticated(user: sessionUser, sessionRole: cachedRole));
       } else {
         final hasOnboarded = await secureStorage.read(key: 'has_seen_onboarding') == 'true';
         if (hasOnboarded) {
@@ -214,7 +214,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         await secureStorage.saveSocietyId(response.data!.societyId!);
       }
       await secureStorage.write(key: 'user_profile', value: jsonEncode(response.data!.toJson()));
-      emit(AuthAuthenticated(user: response.data!));
+      emit(AuthAuthenticated(user: response.data!, sessionRole: response.role));
     } else {
       emit(const AuthError(message: 'Invalid session payload.'));
     }

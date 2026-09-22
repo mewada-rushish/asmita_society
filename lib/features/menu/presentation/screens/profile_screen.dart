@@ -113,7 +113,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 AsmitaSubHeader(
                   title: 'Profile',
                   onBackPressed: () {
-                    widget.onNavigateToTab?.call(4);
                     Navigator.pop(context);
                   },
                   trailing: GestureDetector(
@@ -190,16 +189,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 16),
           Text(user.fullName, style: textTheme.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 4),
-          Text((user.systemRole ?? user.primaryRole).toUpperCase(), style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.textLight)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: AsmitaPalette.actionRed.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Text(user.accountType.toUpperCase(), style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.actionRed, fontWeight: FontWeight.w700)),
+            child: Text((user.systemRole ?? user.primaryRole).toUpperCase(), style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.actionRed, fontWeight: FontWeight.w700)),
           ),
         ],
       ),

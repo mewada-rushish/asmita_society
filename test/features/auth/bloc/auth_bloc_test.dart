@@ -502,6 +502,7 @@ void main() {
           primaryRole: 'owner',
           accountType: 'app',
         ),
+        sessionRole: 'owner',
       ),
       act: (bloc) => bloc.add(
         const AuthUpdateProfileRequested(
@@ -544,6 +545,7 @@ void main() {
           primaryRole: 'owner',
           accountType: 'app',
         ),
+        sessionRole: 'owner',
       ),
       act: (bloc) => bloc.add(
         const AuthUpdateProfileRequested(
@@ -585,6 +587,7 @@ void main() {
           primaryRole: 'owner',
           accountType: 'app',
         ),
+        sessionRole: 'owner',
       ),
       act: (bloc) => bloc.add(
         const AuthUpdateProfileRequested(

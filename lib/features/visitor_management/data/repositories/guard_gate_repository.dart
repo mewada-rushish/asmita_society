@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../../core/config/env_config.dart';
 
@@ -84,13 +85,64 @@ class GuardGateRepository {
   /// Fetches history of visitors checked in by the guard
   Future<List<dynamic>> getGuardHistory() async {
     try {
-      final response = await _dio.get(EnvConfig.guardVisitorEntries);
-      final data = response.data;
-      if (response.statusCode == 200) {
-        return (data['entries'] ?? data['data'] ?? []) as List<dynamic>;
-      } else {
-        throw Exception(data['message'] ?? 'Failed to fetch guard history');
+      Response walkInsResp;
+      try {
+        walkInsResp = await _dio.get(EnvConfig.guardVisitorEntries);
+      } catch (e) {
+        throw Exception('Failed to fetch guard history walk-ins: $e');
       }
+
+      Response? gateLogsResp;
+      try {
+        gateLogsResp = await _dio.get(EnvConfig.gateLogs);
+      } catch (e) {
+        debugPrint('Warning: Failed to fetch gateLogs (endpoint might not be deployed yet): $e');
+      }
+
+      final List<dynamic> mergedHistory = [];
+
+      if (walkInsResp.statusCode == 200) {
+        final data = walkInsResp.data;
+        if (data is Map) {
+          final entries = (data['entries'] ?? data['data'] ?? []) as List<dynamic>;
+          mergedHistory.addAll(entries.map((e) => {
+            ...e as Map<String, dynamic>,
+            'record_type': 'WALK_IN',
+          }));
+        } else if (data is List) {
+          mergedHistory.addAll(data.map((e) => {
+            ...e as Map<String, dynamic>,
+            'record_type': 'WALK_IN',
+          }));
+        }
+      }
+
+      if (gateLogsResp != null && gateLogsResp.statusCode == 200) {
+        final data = gateLogsResp.data;
+        if (data is Map) {
+          final entries = (data['entries'] ?? data['data'] ?? []) as List<dynamic>;
+          mergedHistory.addAll(entries.map((e) => {
+            ...e as Map<String, dynamic>,
+            'record_type': 'PRE_APPROVED',
+          }));
+        } else if (data is List) {
+          mergedHistory.addAll(data.map((e) => {
+            ...e as Map<String, dynamic>,
+            'record_type': 'PRE_APPROVED',
+          }));
+        } else {
+          debugPrint('Warning: gateLogs returned non-JSON 200 response: $data');
+        }
+      }
+
+      // Sort descending by date
+      mergedHistory.sort((a, b) {
+        final dateA = DateTime.tryParse(a['created_at']?.toString() ?? a['requested_at']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final dateB = DateTime.tryParse(b['created_at']?.toString() ?? b['requested_at']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return dateB.compareTo(dateA);
+      });
+
+      return mergedHistory;
     } on DioException catch (e) {
       throw _handleDioError(e, 'Fetch Guard History');
     } catch (e, stackTrace) {

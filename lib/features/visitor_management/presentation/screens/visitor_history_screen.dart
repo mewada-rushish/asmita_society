@@ -88,7 +88,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
 
     final name = item['visitor_name'] ?? item['title'] ?? 'Unknown';
     final company = item['company_name'] ?? item['purpose'] ?? 'Visitor';
-    final category = isPreApproved ? (item['invite_type'] ?? 'Invite') : 'Walk-in';
+    final category = isPreApproved ? (item['invite_type'] ?? 'Invite') : (item['visitor_type_name'] ?? 'Walk-in');
     
     final entryTimeStr = item['checkin_at'] ?? item['start_time'];
     final exitTimeStr = item['checkout_at'] ?? item['end_time'];
@@ -914,6 +914,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null, // Fixes Hero overlay bug in IndexedStack
         onPressed: () {
           showDialog(
             context: context,

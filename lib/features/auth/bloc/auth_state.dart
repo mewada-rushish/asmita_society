@@ -26,10 +26,12 @@ class AuthOtpSent extends AuthState {
 
 class AuthAuthenticated extends AuthState {
   final UserModel user;
-  const AuthAuthenticated({required this.user});
+  final String sessionRole;
+  
+  const AuthAuthenticated({required this.user, required this.sessionRole});
 
   @override
-  List<Object?> get props => [user];
+  List<Object?> get props => [user, sessionRole];
 }
 
 class AuthRegistrationRequired extends AuthState {

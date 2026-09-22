@@ -9,6 +9,7 @@ class VisitorBloc extends Bloc<VisitorEvent, VisitorState> {
   VisitorBloc({required this.visitorRepository}) : super(VisitorInitial()) {
     on<LoadMyHistory>(_onLoadMyHistory);
     on<CreatePreApprovedInviteEvent>(_onCreatePreApprovedInvite);
+    on<ClearVisitorHistory>((event, emit) => emit(VisitorInitial()));
   }
 
   Future<void> _onLoadMyHistory(LoadMyHistory event, Emitter<VisitorState> emit) async {

@@ -6,6 +6,8 @@ abstract class VisitorEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class ClearVisitorHistory extends VisitorEvent {}
+
 class LoadMyHistory extends VisitorEvent {
   final int residentId;
   final bool isRefresh;
