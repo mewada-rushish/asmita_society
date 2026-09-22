@@ -32,16 +32,24 @@ class CommunityPostItem extends StatelessWidget {
 
     final plainText = doc.toPlainText().trim();
     final isLong = plainText.length > 100 || plainText.split('\n').length > 3;
+    final semanticLabel = 'Community Post. Title: ${post.title}. '
+        'Posted on ${AppDateFormatter.formatDateTime(post.createdAt)} by ${post.authorName}. '
+        'Content: $plainText';
 
-    return Align(
-      alignment: Alignment.topCenter,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
-        ),
+    return Semantics(
+      container: true,
+      label: semanticLabel,
+      button: isLong, // if it's long, it has a 'Know More' tap target
+      child: ExcludeSemantics(
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+            ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -166,6 +174,8 @@ class CommunityPostItem extends StatelessWidget {
             ),
           ],
         ),
+      ),
+      ),
       ),
     );
   }

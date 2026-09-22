@@ -460,7 +460,10 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                   if (todayEntries.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.only(top: 12.0),
-                      child: Text('You have no new updates', style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.textLight)),
+                      child: Semantics(
+                        label: 'You have no new updates for today.',
+                        child: Text('You have no new updates', style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.textLight)),
+                      ),
                     );
                   }
 
@@ -574,7 +577,12 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
               ),
-              child: const Center(child: Text("No community posts yet.")),
+              child: Center(
+                child: Semantics(
+                  label: 'No community posts available.',
+                  child: const Text("No community posts yet."),
+                ),
+              ),
             ),
           );
         }

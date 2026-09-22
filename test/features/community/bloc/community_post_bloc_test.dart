@@ -101,5 +101,37 @@ void main() {
         CommunityPostState(status: CommunityPostStatus.loaded, posts: tPostList), // Revert
       ],
     );
+
+    test('state props are correct', () {
+      expect(const CommunityPostState().props, [CommunityPostStatus.initial, [], null, false]);
+    });
+
+    test('event props are correct', () {
+      expect(LoadCommunityPosts().props, []);
+      expect(AddCommunityPost(tPost).props, [tPost]);
+      expect(const DeleteCommunityPost('1').props, ['1']);
+    });
+
+    test('activePosts filters correctly', () {
+      final now = DateTime.now();
+      final approved = CommunityPostModel(
+        id: '1', title: 'T', contentJson: '{}', authorName: 'A', status: 'approved', createdAt: now,
+      );
+      final pending = CommunityPostModel(
+        id: '2', title: 'T', contentJson: '{}', authorName: 'A', status: 'pending', createdAt: now,
+      );
+      final futureStart = CommunityPostModel(
+        id: '3', title: 'T', contentJson: '{}', authorName: 'A', status: 'approved', createdAt: now,
+        startDate: now.add(const Duration(days: 2)),
+      );
+      final pastEnd = CommunityPostModel(
+        id: '4', title: 'T', contentJson: '{}', authorName: 'A', status: 'approved', createdAt: now,
+        endDate: now.subtract(const Duration(days: 2)),
+      );
+
+      final state = CommunityPostState(posts: [approved, pending, futureStart, pastEnd]);
+      expect(state.activePosts.length, 1);
+      expect(state.activePosts.first.id, '1');
+    });
   });
 }

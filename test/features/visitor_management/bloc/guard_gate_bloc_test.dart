@@ -61,5 +61,96 @@ void main() {
         const GuardGateState(status: GuardGateStatus.loaded, expectedInvites: [], isSubmitting: false, searchResult: null),
       ],
     );
+
+    blocTest<GuardGateBloc, GuardGateState>(
+      'emits [isSubmitting, error] when CheckInPreApprovedVisitor fails',
+      build: () {
+        when(() => mockRepository.checkInPreApproved('123')).thenThrow(Exception('Check in failed'));
+        return GuardGateBloc(repository: mockRepository);
+      },
+      act: (bloc) => bloc.add(const CheckInPreApprovedVisitor('123')),
+      expect: () => [
+        const GuardGateState(isSubmitting: true),
+        const GuardGateState(status: GuardGateStatus.error, isSubmitting: false, errorMessage: 'Exception: Check in failed'),
+      ],
+    );
+
+    blocTest<GuardGateBloc, GuardGateState>(
+      'emits [loading, loaded] when LoadGuardHistory is successful',
+      build: () {
+        when(() => mockRepository.getGuardHistory()).thenAnswer((_) async => [{'id': 1}]);
+        return GuardGateBloc(repository: mockRepository);
+      },
+      act: (bloc) => bloc.add(LoadGuardHistory()),
+      expect: () => [
+        const GuardGateState(status: GuardGateStatus.loading),
+        const GuardGateState(status: GuardGateStatus.loaded, historyRecords: [{'id': 1}]),
+      ],
+    );
+
+    blocTest<GuardGateBloc, GuardGateState>(
+      'emits [loading, error] when LoadGuardHistory fails',
+      build: () {
+        when(() => mockRepository.getGuardHistory()).thenThrow(Exception('History failed'));
+        return GuardGateBloc(repository: mockRepository);
+      },
+      act: (bloc) => bloc.add(LoadGuardHistory()),
+      expect: () => [
+        const GuardGateState(status: GuardGateStatus.loading),
+        const GuardGateState(status: GuardGateStatus.error, errorMessage: 'Exception: History failed'),
+      ],
+    );
+
+    blocTest<GuardGateBloc, GuardGateState>(
+      'emits [isSubmitting, success] when SearchInviteByCode is successful',
+      build: () {
+        when(() => mockRepository.searchInvite('123456')).thenAnswer((_) async => {'id': 1});
+        return GuardGateBloc(repository: mockRepository);
+      },
+      act: (bloc) => bloc.add(const SearchInviteByCode('123456')),
+      expect: () => [
+        const GuardGateState(isSubmitting: true, searchResult: null),
+        const GuardGateState(status: GuardGateStatus.success, isSubmitting: false, searchResult: {'id': 1}),
+      ],
+    );
+
+    blocTest<GuardGateBloc, GuardGateState>(
+      'emits [isSubmitting, error] when SearchInviteByCode fails',
+      build: () {
+        when(() => mockRepository.searchInvite('123456')).thenThrow(Exception('Search failed'));
+        return GuardGateBloc(repository: mockRepository);
+      },
+      act: (bloc) => bloc.add(const SearchInviteByCode('123456')),
+      expect: () => [
+        const GuardGateState(isSubmitting: true, searchResult: null),
+        const GuardGateState(status: GuardGateStatus.error, isSubmitting: false, errorMessage: 'Exception: Search failed'),
+      ],
+    );
+
+    blocTest<GuardGateBloc, GuardGateState>(
+      'emits [isSubmitting, success] when SubmitWalkInVisitor is successful',
+      build: () {
+        when(() => mockRepository.submitWalkInVisitor(any())).thenAnswer((_) async => {'id': 1});
+        return GuardGateBloc(repository: mockRepository);
+      },
+      act: (bloc) => bloc.add(const SubmitWalkInVisitor({'name': 'John'})),
+      expect: () => [
+        const GuardGateState(isSubmitting: true),
+        const GuardGateState(status: GuardGateStatus.success, isSubmitting: false),
+      ],
+    );
+
+    blocTest<GuardGateBloc, GuardGateState>(
+      'emits [isSubmitting, error] when SubmitWalkInVisitor fails',
+      build: () {
+        when(() => mockRepository.submitWalkInVisitor(any())).thenThrow(Exception('Submit failed'));
+        return GuardGateBloc(repository: mockRepository);
+      },
+      act: (bloc) => bloc.add(const SubmitWalkInVisitor({'name': 'John'})),
+      expect: () => [
+        const GuardGateState(isSubmitting: true),
+        const GuardGateState(status: GuardGateStatus.error, isSubmitting: false, errorMessage: 'Exception: Submit failed'),
+      ],
+    );
   });
 }

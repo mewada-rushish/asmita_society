@@ -98,8 +98,13 @@ class _AllNoticesScreenState extends State<AllNoticesScreen> {
                         },
                       ),
                       if (activePosts.isEmpty)
-                        const SliverFillRemaining(
-                          child: Center(child: Text("No active notices right now.")),
+                        SliverFillRemaining(
+                          child: Center(
+                            child: Semantics(
+                              label: 'No active notices are currently available.',
+                              child: const Text("No active notices right now."),
+                            ),
+                          ),
                         )
                       else
                         SliverPadding(
@@ -155,7 +160,12 @@ class _AllNoticesScreenState extends State<AllNoticesScreen> {
                     ],
                   );
                 }
-                return const Center(child: Text('Failed to load notices.'));
+                return Center(
+                  child: Semantics(
+                    label: 'Failed to load notices.',
+                    child: const Text('Failed to load notices.'),
+                  ),
+                );
               },
             ),
           ),
