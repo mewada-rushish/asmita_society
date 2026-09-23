@@ -90,7 +90,7 @@ class GuardGateBloc extends Bloc<GuardGateEvent, GuardGateState> {
     on<CheckOutVisitor>((event, emit) async {
       emit(state.copyWith(isSubmitting: true, submittingVisitorId: event.id, clearMessages: true));
       try {
-        await repository.checkOutVisitor(event.id, isPreApproved: event.isPreApproved);
+        await repository.checkOutVisitor(event.id, isPreApproved: event.isPreApproved, inviteGuestId: event.inviteGuestId);
         emit(state.copyWith(
           status: GuardGateStatus.success,
           isSubmitting: false,

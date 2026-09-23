@@ -101,10 +101,11 @@ class GuardGateRepository {
   }
 
   /// Checks out a visitor
-  Future<void> checkOutVisitor(String id, {required bool isPreApproved}) async {
+  Future<void> checkOutVisitor(String id, {required bool isPreApproved, String? inviteGuestId}) async {
     try {
       final url = isPreApproved ? EnvConfig.gateCheckOutInvite(id) : EnvConfig.guardVisitorCheckOut(id);
-      final response = isPreApproved ? await _dio.post(url) : await _dio.patch(url);
+      final body = isPreApproved && inviteGuestId != null ? {'invite_guest_id': inviteGuestId} : null;
+      final response = isPreApproved ? await _dio.post(url, data: body) : await _dio.patch(url);
       if (response.statusCode != 200 && response.statusCode != 201 && response.statusCode != 204) {
         final data = response.data;
         throw Exception(data['message'] ?? 'Failed to check out');

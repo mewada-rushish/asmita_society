@@ -67,9 +67,15 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
         ElevatedButton(
           onPressed: () {
             Navigator.of(context).pop();
-            final id = item['id'].toString();
             final isPreApproved = item['record_type'] == 'PRE_APPROVED';
-            context.read<GuardGateBloc>().add(CheckOutVisitor(id: id, isPreApproved: isPreApproved));
+            final inviteId = item['invite_id']?.toString();
+            final id = isPreApproved ? (inviteId ?? item['id'].toString()) : item['id'].toString();
+            final inviteGuestId = item['invite_guest_id']?.toString();
+            context.read<GuardGateBloc>().add(CheckOutVisitor(
+              id: id, 
+              isPreApproved: isPreApproved,
+              inviteGuestId: inviteGuestId,
+            ));
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: AsmitaPalette.actionRed,
