@@ -15,11 +15,13 @@ import '../../../visitor_management/presentation/screens/guard_new_visitor_scree
 class GuardDashboardView extends StatefulWidget {
   final VoidCallback onNavigateToMenu;
   final VoidCallback onNavigateToHistory;
+  final VoidCallback onNavigateToScanner;
 
   const GuardDashboardView({
     super.key,
     required this.onNavigateToMenu,
     required this.onNavigateToHistory,
+    required this.onNavigateToScanner,
   });
 
   @override
@@ -278,7 +280,18 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: widget.onNavigateToScanner,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                  elevation: 0,
+                  padding: const EdgeInsets.all(16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Icon(Icons.qr_code_scanner, color: AsmitaPalette.deepNavy),
+              ),
+              const SizedBox(width: 8),
               ElevatedButton(
                 onPressed: isSubmitting ? null : _searchCode,
                 style: ElevatedButton.styleFrom(

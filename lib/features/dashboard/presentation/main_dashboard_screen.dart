@@ -191,6 +191,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         return GuardDashboardView(
           onNavigateToMenu: () => setState(() => _currentIndex = 4),
           onNavigateToHistory: () => setState(() => _currentIndex = 3),
+          onNavigateToScanner: () => setState(() => _currentIndex = 5),
         );
       default:
         return Center(child: Text('Role Architecture: $role'));
