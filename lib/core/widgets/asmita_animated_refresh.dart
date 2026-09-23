@@ -20,10 +20,7 @@ class AsmitaAnimatedRefresh extends StatelessWidget {
         // Calculate the pull percentage to drive the custom animations
         final double percentageComplete = (pulledExtent / refreshTriggerPullDistance).clamp(0.0, 1.0);
 
-        return Container(
-          width: double.infinity,
-          color: AsmitaPalette.systemBG, // Locks the top overscroll color seamlessly
-          alignment: Alignment.center,
+        return Center(
           child: Stack(
             alignment: Alignment.center,
             children: [
