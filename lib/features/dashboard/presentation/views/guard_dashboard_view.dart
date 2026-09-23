@@ -423,14 +423,22 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                IconButton(
-                  icon: const Icon(Icons.check_circle, color: AsmitaPalette.deepNavy, size: 28),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: () {
-                    _showCheckInDialog(invite);
-                  },
-                ),
+                state.isSubmitting && state.submittingVisitorId == invite['id'].toString()
+                    ? const SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: Center(
+                          child: AsmitaLoadingIndicator(color: AsmitaPalette.deepNavy, size: 20),
+                        ),
+                      )
+                    : IconButton(
+                        icon: const Icon(Icons.check_circle, color: AsmitaPalette.deepNavy, size: 28),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () {
+                          _showCheckInDialog(invite);
+                        },
+                      ),
               ],
             ),
           ),

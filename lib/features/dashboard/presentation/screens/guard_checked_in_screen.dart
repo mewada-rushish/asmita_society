@@ -7,6 +7,7 @@ import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
+import '../../../../core/widgets/asmita_toast.dart';
 import '../../../visitor_management/bloc/guard_gate_bloc.dart';
 import '../../../visitor_management/bloc/guard_gate_event.dart';
 import '../../../visitor_management/bloc/guard_gate_state.dart';
@@ -100,7 +101,22 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
             trailingActions: const SizedBox(),
           ),
           Expanded(
-            child: BlocBuilder<GuardGateBloc, GuardGateState>(
+            child: BlocConsumer<GuardGateBloc, GuardGateState>(
+              listener: (context, state) {
+                if (state.status == GuardGateStatus.error && state.errorMessage != null) {
+                  AsmitaToast.show(
+                    context,
+                    message: state.errorMessage!,
+                    type: AsmitaToastType.error,
+                  );
+                } else if (state.status == GuardGateStatus.success && state.successMessage != null) {
+                  AsmitaToast.show(
+                    context,
+                    message: state.successMessage!,
+                    type: AsmitaToastType.success,
+                  );
+                }
+              },
               builder: (context, state) {
                 if (state.status == GuardGateStatus.loading && state.checkedInVisitors.isEmpty) {
                   return const Center(
