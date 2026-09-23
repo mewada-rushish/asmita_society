@@ -12,6 +12,7 @@ import 'views/owner_dashboard_view.dart';
 import 'views/tenant_dashboard_view.dart';
 import 'views/guard_dashboard_view.dart';
 import 'screens/guard_history_screen.dart';
+import 'screens/guard_checked_in_screen.dart';
 import '../../visitor_management/presentation/screens/guard_qr_scanner_screen.dart';
 import 'package:asmita_society/features/services/presentation/screens/daily_help_screen.dart';
 import 'screens/search_screen.dart';
@@ -104,14 +105,18 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   List<Widget> _buildScreens() {
     return [
       _resolveRoleBasedHomeView(widget.userRole), // Index 0: Home view
-      ServicesScreen( // Index 1: Services Grid
-        onNavigateToSearch: _navigateToSearch,
-        onNavigateToCommunity: () => setState(() => _currentIndex = 2),
-      ),
-      CommunityScreen( // Index 2: Society Chat
-        onNavigateToSearch: _navigateToSearch,
-        onNavigateToCommunity: () => setState(() => _currentIndex = 2),
-      ),
+      widget.userRole.toLowerCase() == 'guard'
+          ? const SizedBox.shrink()
+          : ServicesScreen( // Index 1: Services Grid
+              onNavigateToSearch: _navigateToSearch,
+              onNavigateToCommunity: () => setState(() => _currentIndex = 2),
+            ),
+      widget.userRole.toLowerCase() == 'guard'
+          ? const SizedBox.shrink()
+          : CommunityScreen( // Index 2: Society Chat
+              onNavigateToSearch: _navigateToSearch,
+              onNavigateToCommunity: () => setState(() => _currentIndex = 2),
+            ),
       _resolveRoleBasedHistoryView(widget.userRole),               // Index 3: Gate Records (History)
       MenuScreen(
         userRole: widget.userRole,
@@ -120,7 +125,15 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         },
       ),      // Index 4: Profile Settings
       _resolveRoleBasedQrScanner(widget.userRole), // Index 5: QR Scanner
+      _resolveRoleBasedCheckedInView(widget.userRole), // Index 6: Checked In (Guard only)
     ];
+  }
+
+  Widget _resolveRoleBasedCheckedInView(String role) {
+    if (role.toLowerCase() == 'guard') {
+      return const GuardCheckedInScreen();
+    }
+    return const SizedBox.shrink();
   }
 
 
@@ -211,9 +224,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         children: _buildScreens(),
       ),
       bottomNavigationBar: AsmitaBottomNavBar(
-        // Clamps down indices greater than 4 so the "Services" icon (Index 1) 
-        // remains active when viewing the deep ViewMore screen
-        currentIndex: _currentIndex > 4 ? 1 : _currentIndex,
+        currentIndex: _currentIndex,
         userRole: widget.userRole,
         onTap: (index) {
           setState(() => _currentIndex = index);

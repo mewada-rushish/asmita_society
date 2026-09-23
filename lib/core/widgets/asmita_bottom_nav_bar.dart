@@ -50,7 +50,7 @@ class AsmitaBottomNavBar extends StatelessWidget {
 
   List<int> _getVisibleIndices() {
     if (userRole?.toLowerCase() == 'guard') {
-      return [0, 3, 5, 4]; // Home, History, Scan, Menu
+      return [0, 6, 3, 5, 4]; // Home, Checked In, History, Scan, Menu
     }
     return [0, 1, 2, 3, 4]; // All tabs
   }
@@ -106,6 +106,8 @@ class AsmitaBottomNavBar extends StatelessWidget {
         return SvgPicture.asset('assets/icons/history.svg', width: 32, height: 32);
       case 5:
         return const Icon(Icons.qr_code_scanner_rounded, size: 30, color: Colors.white);
+      case 6:
+        return const Icon(Icons.how_to_reg, size: 30, color: Colors.white);
       case 4:
       default:
         return const Icon(Icons.more_horiz_rounded, size: 32, color: Colors.white);

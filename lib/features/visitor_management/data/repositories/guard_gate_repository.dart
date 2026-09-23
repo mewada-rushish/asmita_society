@@ -82,6 +82,41 @@ class GuardGateRepository {
     }
   }
 
+  /// Fetches currently checked-in visitors
+  Future<List<dynamic>> getCheckedInVisitors() async {
+    try {
+      final response = await _dio.get(EnvConfig.gateCheckedInLogs);
+      final data = response.data;
+      if (response.statusCode == 200) {
+        return (data['entries'] ?? data['data'] ?? []) as List<dynamic>;
+      } else {
+        throw Exception(data['message'] ?? 'Failed to fetch checked-in visitors');
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'Fetch Checked-in Visitors');
+    } catch (e, stackTrace) {
+      FirebaseCrashlytics.instance.recordError(e, stackTrace, reason: 'Fetch Checked-in Visitors Failure');
+      throw Exception('Unexpected error occurred');
+    }
+  }
+
+  /// Checks out a visitor
+  Future<void> checkOutVisitor(String id, {required bool isPreApproved}) async {
+    try {
+      final url = isPreApproved ? EnvConfig.gateCheckOutInvite(id) : EnvConfig.guardVisitorCheckOut(id);
+      final response = isPreApproved ? await _dio.post(url) : await _dio.patch(url);
+      if (response.statusCode != 200 && response.statusCode != 201 && response.statusCode != 204) {
+        final data = response.data;
+        throw Exception(data['message'] ?? 'Failed to check out');
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'Check-out Visitor');
+    } catch (e, stackTrace) {
+      FirebaseCrashlytics.instance.recordError(e, stackTrace, reason: 'Check-out Visitor Failure');
+      throw Exception('Unexpected error occurred');
+    }
+  }
+
   /// Fetches history of visitors checked in by the guard
   Future<List<dynamic>> getGuardHistory() async {
     try {

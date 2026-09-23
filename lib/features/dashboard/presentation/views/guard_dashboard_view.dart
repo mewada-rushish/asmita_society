@@ -186,10 +186,10 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
             );
           } else if (state.searchResult != null) {
             _showCheckInDialog(state.searchResult!);
-          } else if (state.status == GuardGateStatus.success && state.searchResult == null) {
+          } else if (state.status == GuardGateStatus.success && state.successMessage != null) {
             AsmitaToast.show(
               context,
-              message: 'Check-in successful!',
+              message: state.successMessage!,
               type: AsmitaToastType.success,
             );
             _codeController.clear();
