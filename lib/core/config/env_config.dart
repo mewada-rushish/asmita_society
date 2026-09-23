@@ -49,7 +49,7 @@ class EnvConfig {
   static String gateCheckInInvite(String id) => '$baseUrl/app-api/gate/pre-approved-invites/$id/check-in';
   static String gateCheckOutInvite(String id) => '$baseUrl/app-api/gate/pre-approved-invites/$id/check-out';
   static String get guardVisitorEntries => '$baseUrl/app-api/guard/visitor-entries';
-  static String guardVisitorCheckOut(String id) => '$baseUrl/app-api/guard/visitor-entries/$id/check-out';
+  static String guardVisitorCheckOut(String id) => '$baseUrl/app-api/visitor-entries/$id/check-out';
   static String get createVisitorEntry => '$baseUrl/app-api/visitor-entries';
 
   /// Global Search
