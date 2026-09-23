@@ -6,6 +6,7 @@ import '../../../../../core/constants/design_system.dart';
 import '../../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
+import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../visitor_management/bloc/guard_gate_bloc.dart';
 import '../../../visitor_management/bloc/guard_gate_event.dart';
@@ -198,47 +199,51 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
           }
         },
         builder: (context, state) {
-          return RefreshIndicator(
-            onRefresh: () async {
-              final bloc = context.read<GuardGateBloc>();
-              bloc.add(LoadExpectedInvites());
-              
-              // Ensure minimum animation time to prevent instant collapse tilt,
-              // while also waiting for the actual data to finish loading.
-              await Future.wait([
-                Future.delayed(const Duration(milliseconds: 800)),
-                bloc.stream.firstWhere((state) => !state.isLoadingExpected).catchError((_) => const GuardGateState()),
-              ]);
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSearchSection(state.isSubmitting),
-                  const SizedBox(height: 24),
-                  _buildNewVisitorAction(context),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Expected Today', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 12),
-                        _buildExpectedList(state),
-                      ],
-                    ),
-                  ),
-                ],
+          return CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            slivers: [
+              AsmitaAnimatedRefresh(
+                onRefresh: () async {
+                  final bloc = context.read<GuardGateBloc>();
+                  bloc.add(LoadExpectedInvites());
+                  
+                  await Future.wait([
+                    Future.delayed(const Duration(milliseconds: 800)),
+                    bloc.stream.firstWhere((state) => !state.isLoadingExpected).catchError((_) => const GuardGateState()),
+                  ]);
+                },
               ),
-            ),
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSearchSection(state.isSubmitting),
+                      const SizedBox(height: 24),
+                      _buildNewVisitorAction(context),
+                      const SizedBox(height: 24),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Expected Today', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 12),
+                            _buildExpectedList(state),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
