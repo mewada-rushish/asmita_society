@@ -202,7 +202,13 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
             onRefresh: () async {
               final bloc = context.read<GuardGateBloc>();
               bloc.add(LoadExpectedInvites());
-              await bloc.stream.firstWhere((state) => !state.isLoadingExpected);
+              
+              // Ensure minimum animation time to prevent instant collapse tilt,
+              // while also waiting for the actual data to finish loading.
+              await Future.wait([
+                Future.delayed(const Duration(milliseconds: 800)),
+                bloc.stream.firstWhere((state) => !state.isLoadingExpected).catchError((_) => const GuardGateState()),
+              ]);
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
