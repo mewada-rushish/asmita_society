@@ -10,7 +10,6 @@ import '../../../../core/widgets/asmita_toast.dart';
 import '../../../visitor_management/bloc/guard_gate_bloc.dart';
 import '../../../visitor_management/bloc/guard_gate_event.dart';
 import '../../../visitor_management/bloc/guard_gate_state.dart';
-import '../../../visitor_management/presentation/screens/guard_new_visitor_screen.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
 
 class GuardDashboardView extends StatefulWidget {
