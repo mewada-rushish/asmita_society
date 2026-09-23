@@ -11,6 +11,7 @@ import '../../../visitor_management/bloc/guard_gate_bloc.dart';
 import '../../../visitor_management/bloc/guard_gate_event.dart';
 import '../../../visitor_management/bloc/guard_gate_state.dart';
 import '../../../visitor_management/presentation/screens/guard_new_visitor_screen.dart';
+import '../../widgets/asmita_pre_approve_wizard.dart';
 
 class GuardDashboardView extends StatefulWidget {
   final VoidCallback onNavigateToMenu;
@@ -310,13 +311,20 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
     );
   }
 
+  void _showNewVisitorModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const AsmitaDialog(
+        title: 'New Walk-in Visitor',
+        content: AsmitaPreApproveWizard(isGuardMode: true),
+      ),
+    );
+  }
+
   Widget _buildNewVisitorAction(BuildContext context) {
     return InkWell(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const GuardNewVisitorScreen()),
-        );
+        _showNewVisitorModal(context);
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
