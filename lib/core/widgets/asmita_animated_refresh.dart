@@ -21,6 +21,7 @@ class AsmitaAnimatedRefresh extends StatelessWidget {
         final double percentageComplete = (pulledExtent / refreshTriggerPullDistance).clamp(0.0, 1.0);
 
         return Container(
+          width: double.infinity,
           color: AsmitaPalette.systemBG, // Locks the top overscroll color seamlessly
           alignment: Alignment.center,
           child: Stack(
