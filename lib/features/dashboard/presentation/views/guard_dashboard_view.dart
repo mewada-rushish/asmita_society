@@ -198,7 +198,9 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
         builder: (context, state) {
           return RefreshIndicator(
             onRefresh: () async {
-              context.read<GuardGateBloc>().add(LoadExpectedInvites());
+              final bloc = context.read<GuardGateBloc>();
+              bloc.add(LoadExpectedInvites());
+              await bloc.stream.firstWhere((state) => !state.isLoadingExpected);
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
