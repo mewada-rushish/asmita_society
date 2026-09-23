@@ -339,7 +339,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
   }
 
   Widget _buildExpectedList(GuardGateState state) {
-    if ((state.status == GuardGateStatus.initial || state.status == GuardGateStatus.loading) && state.expectedInvites.isEmpty) {
+    if ((state.status == GuardGateStatus.initial || state.isLoadingExpected) && state.expectedInvites.isEmpty) {
       return const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.deepNavy, size: 28));
     }
     

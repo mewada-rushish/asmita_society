@@ -12,6 +12,7 @@ class GuardGateState extends Equatable {
   final String? successMessage;
   final bool isSubmitting;
   final String? submittingVisitorId;
+  final bool isLoadingExpected;
 
   const GuardGateState({
     this.status = GuardGateStatus.initial,
@@ -23,6 +24,7 @@ class GuardGateState extends Equatable {
     this.successMessage,
     this.isSubmitting = false,
     this.submittingVisitorId,
+    this.isLoadingExpected = false,
   });
 
   GuardGateState copyWith({
@@ -35,6 +37,7 @@ class GuardGateState extends Equatable {
     String? successMessage,
     bool? isSubmitting,
     String? submittingVisitorId,
+    bool? isLoadingExpected,
     bool clearMessages = false,
   }) {
     return GuardGateState(
@@ -47,6 +50,7 @@ class GuardGateState extends Equatable {
       successMessage: clearMessages && successMessage == null ? null : (successMessage ?? this.successMessage),
       isSubmitting: isSubmitting ?? this.isSubmitting,
       submittingVisitorId: clearMessages && submittingVisitorId == null ? null : (submittingVisitorId ?? this.submittingVisitorId),
+      isLoadingExpected: isLoadingExpected ?? this.isLoadingExpected,
     );
   }
 
@@ -61,5 +65,6 @@ class GuardGateState extends Equatable {
         successMessage,
         isSubmitting,
         submittingVisitorId,
+        isLoadingExpected,
       ];
 }

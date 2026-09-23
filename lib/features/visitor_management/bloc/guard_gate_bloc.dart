@@ -8,7 +8,7 @@ class GuardGateBloc extends Bloc<GuardGateEvent, GuardGateState> {
 
   GuardGateBloc({required this.repository}) : super(const GuardGateState()) {
     on<LoadExpectedInvites>((event, emit) async {
-      emit(state.copyWith(status: GuardGateStatus.loading));
+      emit(state.copyWith(status: GuardGateStatus.loading, isLoadingExpected: true));
       try {
         final expected = await repository.getExpectedInvites();
         final history = await repository.getGuardHistory();
@@ -35,12 +35,14 @@ class GuardGateBloc extends Bloc<GuardGateEvent, GuardGateState> {
         emit(state.copyWith(
           status: GuardGateStatus.loaded,
           expectedInvites: uniqueExpected.values.toList(),
+          isLoadingExpected: false,
         ));
       } catch (e) {
         emit(state.copyWith(
           status: GuardGateStatus.error,
           errorMessage: e.toString(),
           clearMessages: true,
+          isLoadingExpected: false,
         ));
       }
     });
