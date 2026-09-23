@@ -67,8 +67,9 @@ class GuardGateBloc extends Bloc<GuardGateEvent, GuardGateState> {
           // Clear search result on successful check-in
           searchResult: null,
         ));
-        // Reload expected invites
+        // Reload expected invites and history
         add(LoadExpectedInvites());
+        add(LoadGuardHistory());
       } catch (e) {
         emit(state.copyWith(
           status: GuardGateStatus.error,
