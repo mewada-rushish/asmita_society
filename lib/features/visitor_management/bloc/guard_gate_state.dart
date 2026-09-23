@@ -42,11 +42,11 @@ class GuardGateState extends Equatable {
       expectedInvites: expectedInvites ?? this.expectedInvites,
       historyRecords: historyRecords ?? this.historyRecords,
       checkedInVisitors: checkedInVisitors ?? this.checkedInVisitors,
-      searchResult: clearMessages ? null : (searchResult ?? this.searchResult),
-      errorMessage: clearMessages ? null : (errorMessage ?? this.errorMessage),
-      successMessage: clearMessages ? null : (successMessage ?? this.successMessage),
+      searchResult: clearMessages && searchResult == null ? null : (searchResult ?? this.searchResult),
+      errorMessage: clearMessages && errorMessage == null ? null : (errorMessage ?? this.errorMessage),
+      successMessage: clearMessages && successMessage == null ? null : (successMessage ?? this.successMessage),
       isSubmitting: isSubmitting ?? this.isSubmitting,
-      submittingVisitorId: clearMessages ? null : (submittingVisitorId ?? this.submittingVisitorId),
+      submittingVisitorId: clearMessages && submittingVisitorId == null ? null : (submittingVisitorId ?? this.submittingVisitorId),
     );
   }
 
