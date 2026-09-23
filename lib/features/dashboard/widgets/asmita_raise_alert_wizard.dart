@@ -58,16 +58,18 @@ class _AsmitaRaiseAlertWizardState extends State<AsmitaRaiseAlertWizard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: _alertOptions.map((option) {
-              return _buildEmergencyCircularButton(
-                context,
-                label: option['label'],
-                icon: option['icon'],
-                onTap: () {
-                  setState(() {
-                    _selectedEmergencyType = option['label'];
-                    _isConfirmed = true; // Switch view within the dialog box
-                  });
-                },
+              return Expanded(
+                child: _buildEmergencyCircularButton(
+                  context,
+                  label: option['label'],
+                  icon: option['icon'],
+                  onTap: () {
+                    setState(() {
+                      _selectedEmergencyType = option['label'];
+                      _isConfirmed = true; // Switch view within the dialog box
+                    });
+                  },
+                ),
               );
             }).toList(),
           ),
@@ -85,12 +87,10 @@ class _AsmitaRaiseAlertWizardState extends State<AsmitaRaiseAlertWizard> {
   }) {
     final textTheme = Theme.of(context).textTheme;
 
-    return SizedBox(
-      width: 76,
-      child: InkWell(
-        onTap: onTap,
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
+    return InkWell(
+      onTap: onTap,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -135,7 +135,6 @@ class _AsmitaRaiseAlertWizardState extends State<AsmitaRaiseAlertWizard> {
             ),
           ],
         ),
-      ),
     );
   }
 
