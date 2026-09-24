@@ -133,7 +133,7 @@ void main() {
         when(() => mockRepository.submitWalkInVisitor(any())).thenAnswer((_) async => {'id': 1});
         return GuardGateBloc(repository: mockRepository);
       },
-      act: (bloc) => bloc.add(const SubmitWalkInVisitor([{'name': 'John'}])),
+      act: (bloc) => bloc.add(SubmitWalkInVisitor(const [{'name': 'John'}])),
       expect: () => [
         const GuardGateState(isSubmitting: true),
         const GuardGateState(status: GuardGateStatus.success, isSubmitting: false),
@@ -146,7 +146,7 @@ void main() {
         when(() => mockRepository.submitWalkInVisitor(any())).thenThrow(Exception('Submit failed'));
         return GuardGateBloc(repository: mockRepository);
       },
-      act: (bloc) => bloc.add(const SubmitWalkInVisitor([{'name': 'John'}])),
+      act: (bloc) => bloc.add(SubmitWalkInVisitor(const [{'name': 'John'}])),
       expect: () => [
         const GuardGateState(isSubmitting: true),
         const GuardGateState(status: GuardGateStatus.error, isSubmitting: false, errorMessage: 'Exception: Submit failed'),
