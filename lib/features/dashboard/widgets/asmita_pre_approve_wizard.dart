@@ -114,8 +114,10 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           '${EnvConfig.baseUrl}/app-api/flats/society/$societyId',
           options: Options(headers: {'Authorization': 'Bearer $token'}),
         );
-        if (response.statusCode == 200 && response.data['flats'] != null) {
-          final List<dynamic> flatsJson = response.data['flats'];
+        if (response.statusCode == 200) {
+          final data = response.data;
+          final List<dynamic> flatsJson = data is List ? data : (data['flats'] ?? []);
+          
           setState(() {
             _societyFlats = flatsJson
                 .map(
