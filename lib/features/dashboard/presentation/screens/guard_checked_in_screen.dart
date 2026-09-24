@@ -34,7 +34,9 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
     if (dateStr == null && timeStr == null) return '--:--';
     try {
       DateTime dt;
-      if (dateStr != null && timeStr == null) {
+      if (timeStr != null && (timeStr.contains('T') || timeStr.contains(' '))) {
+        dt = DateTime.parse(timeStr).toLocal();
+      } else if (dateStr != null && timeStr == null) {
         dt = DateTime.parse(dateStr).toLocal();
       } else if (dateStr != null && timeStr != null) {
         dt = DateTime.parse('${dateStr.split('T')[0]}T$timeStr').toLocal();
