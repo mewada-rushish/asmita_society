@@ -155,6 +155,8 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                           
                           final date = _formatDate(dateStr);
                           final entryTime = _formatTime(dateStr, entryTimeStr);
+                          final exitTimeStr = item['checkout_at'];
+                          final exitTime = exitTimeStr != null ? _formatTime(dateStr, exitTimeStr) : '--:--';
 
                           IconData iconData = Icons.person;
                           Color brandColor = AsmitaPalette.deepNavy;
@@ -243,7 +245,7 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
-                                            status,
+                                            '$status • $date',
                                             style: TextStyle(
                                               fontFamily: 'Poppins',
                                               fontSize: 12,
@@ -259,24 +261,38 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    Text(
-                                      entryTime,
-                                      style: const TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: AsmitaPalette.deepNavy,
-                                      ),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.login, size: 12, color: AsmitaPalette.deepNavy),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          entryTime,
+                                          style: const TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: AsmitaPalette.deepNavy,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                     const SizedBox(height: 4),
-                                    Text(
-                                      date,
-                                      style: const TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: AsmitaPalette.actionRed,
-                                      ),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.logout, size: 12, color: AsmitaPalette.actionRed),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          exitTime,
+                                          style: const TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: AsmitaPalette.actionRed,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
