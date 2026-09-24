@@ -80,6 +80,7 @@ class _GuardQrScannerScreenState extends State<GuardQrScannerScreen> {
         children: [
           MobileScanner(
             controller: _scannerController,
+            fit: BoxFit.cover,
             onDetect: _onDetect,
           ),
           _buildScannerOverlay(),
