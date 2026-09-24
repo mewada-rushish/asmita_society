@@ -69,10 +69,11 @@ class GuardGateRepository {
     try {
       final response = await _dio.post(EnvConfig.createVisitorEntry, data: payload);
       final data = response.data;
-      if (response.statusCode == 201 && data['success'] == true) {
-        return data['entry'] ?? {};
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return (data is Map<String, dynamic>) ? data : {};
       } else {
-        throw Exception(data['message'] ?? 'Failed to create walk-in visitor');
+        final errorMsg = data is Map ? (data['message'] ?? data['error']) : null;
+        throw Exception(errorMsg ?? 'Failed to create walk-in visitor');
       }
     } on DioException catch (e) {
       throw _handleDioError(e, 'Submit Walk-in Visitor');
