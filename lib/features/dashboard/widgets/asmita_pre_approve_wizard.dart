@@ -514,7 +514,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                           Expanded(
                             child: Text(
                               _selectedTowerId != null
-                                  ? _getTowers().firstWhere((t) => t['id'] == _selectedTowerId, orElse: () => {'name': 'Tower'})['name']
+                                  ? _getTowers().firstWhere((t) => t['id'] == _selectedTowerId, orElse: () => <String, dynamic>{'name': 'Tower'})['name']
                                   : 'Tower',
                               style: TextStyle(
                                 fontFamily: 'Poppins',
