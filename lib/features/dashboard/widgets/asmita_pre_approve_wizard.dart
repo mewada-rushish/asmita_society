@@ -36,8 +36,21 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   final ScrollController _scrollController = ScrollController();
 
   FlatMapping? _selectedFlatMapping;
+  int? _selectedTowerId;
   List<FlatMapping> _societyFlats = [];
   bool _isLoadingFlats = false;
+
+  List<Map<String, dynamic>> _getTowers() {
+    final towers = <int, String>{};
+    for (final flat in _societyFlats) {
+      towers[flat.towerId] = flat.towerName;
+    }
+    return towers.entries.map((e) => {'id': e.key, 'name': e.value}).toList();
+  }
+
+  List<FlatMapping> _getFlatsForTower(int towerId) {
+    return _societyFlats.where((f) => f.towerId == towerId).toList();
+  }
 
   final TextEditingController _visitorNameController = TextEditingController();
   final TextEditingController _mobileNumberController = TextEditingController();
@@ -435,7 +448,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       children: [
         if (widget.isGuardMode) ...[
           const Text(
-            'Select Flat',
+            'Select Tower & Flat',
             style: TextStyle(
               fontFamily: 'Montserrat',
               fontSize: 13,
@@ -455,39 +468,95 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               ),
             )
           else
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: AsmitaPalette.borderGrey),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<FlatMapping>(
-                  value: _selectedFlatMapping,
-                  hint: const Text('Search and select flat'),
-                  isExpanded: true,
-                  icon: const Icon(
-                    Icons.arrow_drop_down_rounded,
-                    color: AsmitaPalette.deepNavy,
-                  ),
-                  items: _societyFlats.map((flat) {
-                    return DropdownMenuItem(
-                      value: flat,
-                      child: Text(
-                        '${flat.towerName} - ${flat.flatNumber}',
-                        style: const TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 14,
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: AsmitaPalette.borderGrey),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        value: _selectedTowerId,
+                        hint: const Text('Tower'),
+                        isExpanded: true,
+                        icon: const Icon(
+                          Icons.arrow_drop_down_rounded,
+                          color: AsmitaPalette.deepNavy,
                         ),
+                        items: _getTowers().map((tower) {
+                          return DropdownMenuItem<int>(
+                            value: tower['id'],
+                            child: Text(
+                              tower['name'],
+                              style: const TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 14,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() {
+                              _selectedTowerId = val;
+                              _selectedFlatMapping = null;
+                            });
+                          }
+                        },
                       ),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    if (val != null) setState(() => _selectedFlatMapping = val);
-                  },
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: AsmitaPalette.borderGrey),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<FlatMapping>(
+                        value: _selectedFlatMapping,
+                        hint: const Text('Flat'),
+                        isExpanded: true,
+                        icon: const Icon(
+                          Icons.arrow_drop_down_rounded,
+                          color: AsmitaPalette.deepNavy,
+                        ),
+                        items: _selectedTowerId == null
+                            ? []
+                            : _getFlatsForTower(_selectedTowerId!).map((flat) {
+                                return DropdownMenuItem(
+                                  value: flat,
+                                  child: Text(
+                                    flat.flatNumber,
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                        onChanged: _selectedTowerId == null
+                            ? null
+                            : (val) {
+                                if (val != null) {
+                                  setState(() => _selectedFlatMapping = val);
+                                }
+                              },
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           const SizedBox(height: 16),
         ],
