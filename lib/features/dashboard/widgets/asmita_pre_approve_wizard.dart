@@ -18,7 +18,7 @@ import '../../visitor_management/bloc/guard_gate_event.dart';
 import '../../visitor_management/bloc/guard_gate_state.dart';
 import '../../visitor_management/presentation/screens/invite_pass_screen.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
-
+import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 class AsmitaPreApproveWizard extends StatefulWidget {
   final bool isGuardMode;
 
@@ -729,79 +729,55 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     final towers = _getTowers();
     if (towers.isEmpty) return;
 
-    showModalBottomSheet(
+    showAsmitaBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext context) {
-        return Padding(
-          padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 20.0, bottom: 24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Select Tower',
+      title: 'Select Tower',
+      child: GridView.builder(
+        shrinkWrap: true,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          childAspectRatio: 2.2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        itemCount: towers.length,
+        itemBuilder: (context, index) {
+          final tower = towers[index];
+          final isSelected = _selectedTowerId == tower['id'];
+          return InkWell(
+            onTap: () {
+              Navigator.pop(context);
+              setState(() {
+                _selectedTowerId = tower['id'];
+                _selectedFlatMapping = null;
+              });
+              Future.delayed(const Duration(milliseconds: 200), () {
+                if (mounted) _showFlatPicker();
+              });
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isSelected ? AsmitaPalette.actionRed : Colors.white,
+                border: Border.all(
+                  color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                tower['name'],
                 style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AsmitaPalette.deepNavy,
+                  fontFamily: 'Poppins',
+                  fontSize: 14,
+                  color: isSelected ? Colors.white : AsmitaPalette.textDark,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 ),
               ),
-              const SizedBox(height: 20),
-              Flexible(
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    childAspectRatio: 2.2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                  ),
-                  itemCount: towers.length,
-                  itemBuilder: (context, index) {
-                    final tower = towers[index];
-                    final isSelected = _selectedTowerId == tower['id'];
-                    return InkWell(
-                      onTap: () {
-                        Navigator.pop(context);
-                        setState(() {
-                          _selectedTowerId = tower['id'];
-                          _selectedFlatMapping = null;
-                        });
-                        Future.delayed(const Duration(milliseconds: 200), () {
-                          if (mounted) _showFlatPicker();
-                        });
-                      },
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isSelected ? AsmitaPalette.actionRed : Colors.white,
-                          border: Border.all(
-                            color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          tower['name'],
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 14,
-                            color: isSelected ? Colors.white : AsmitaPalette.textDark,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -811,75 +787,51 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     final flats = _getFlatsForTower(_selectedTowerId!);
     if (flats.isEmpty) return;
 
-    showModalBottomSheet(
+    showAsmitaBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext context) {
-        return Padding(
-          padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 20.0, bottom: 24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Select Flat',
+      title: 'Select Flat',
+      child: GridView.builder(
+        shrinkWrap: true,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          childAspectRatio: 2.0,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 12,
+        ),
+        itemCount: flats.length,
+        itemBuilder: (context, index) {
+          final flat = flats[index];
+          final isSelected = _selectedFlatMapping?.flatId == flat.flatId;
+          return InkWell(
+            onTap: () {
+              Navigator.pop(context);
+              setState(() {
+                _selectedFlatMapping = flat;
+              });
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isSelected ? AsmitaPalette.actionRed : Colors.white,
+                border: Border.all(
+                  color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                flat.flatNumber,
                 style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AsmitaPalette.deepNavy,
+                  fontFamily: 'Poppins',
+                  fontSize: 14,
+                  color: isSelected ? Colors.white : AsmitaPalette.textDark,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 ),
               ),
-              const SizedBox(height: 20),
-              Flexible(
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    childAspectRatio: 2.0,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 12,
-                  ),
-                  itemCount: flats.length,
-                  itemBuilder: (context, index) {
-                    final flat = flats[index];
-                    final isSelected = _selectedFlatMapping?.flatId == flat.flatId;
-                    return InkWell(
-                      onTap: () {
-                        Navigator.pop(context);
-                        setState(() {
-                          _selectedFlatMapping = flat;
-                        });
-                      },
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isSelected ? AsmitaPalette.actionRed : Colors.white,
-                          border: Border.all(
-                            color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          flat.flatNumber,
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 14,
-                            color: isSelected ? Colors.white : AsmitaPalette.textDark,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+            ),
+          );
+        },
+      ),
     );
   }
 
