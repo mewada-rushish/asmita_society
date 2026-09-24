@@ -174,7 +174,9 @@ class GuardGateBloc extends Bloc<GuardGateEvent, GuardGateState> {
     on<SubmitWalkInVisitor>((event, emit) async {
       emit(state.copyWith(isSubmitting: true, clearMessages: true));
       try {
-        await repository.submitWalkInVisitor(event.payload);
+        for (final p in event.payloads) {
+          await repository.submitWalkInVisitor(p);
+        }
         emit(state.copyWith(
           status: GuardGateStatus.success,
           isSubmitting: false,

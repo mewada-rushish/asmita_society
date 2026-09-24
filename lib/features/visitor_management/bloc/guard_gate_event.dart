@@ -43,10 +43,10 @@ class CheckInPreApprovedVisitor extends GuardGateEvent {
 }
 
 class SubmitWalkInVisitor extends GuardGateEvent {
-  final Map<String, dynamic> payload;
+  final List<Map<String, dynamic>> payloads;
 
-  const SubmitWalkInVisitor(this.payload);
+  const SubmitWalkInVisitor(this.payloads);
 
   @override
-  List<Object?> get props => [payload];
+  List<Object?> get props => [payloads];
 }

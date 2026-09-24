@@ -37,7 +37,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   late TabController _tabController;
   final ScrollController _scrollController = ScrollController();
 
-  FlatMapping? _selectedFlatMapping;
+  List<FlatMapping> _selectedFlatMappings = [];
   int? _selectedTowerId;
   List<FlatMapping> _societyFlats = [];
   bool _isLoadingFlats = false;
@@ -83,11 +83,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_selectedFlatMapping == null) {
+    if (_selectedFlatMappings.isEmpty) {
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated &&
           authState.user.flatMappings.isNotEmpty) {
-        _selectedFlatMapping = authState.user.flatMappings.first;
+        _selectedFlatMappings = [authState.user.flatMappings.first];
       }
     }
   }
@@ -183,18 +183,18 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     if (authState is! AuthAuthenticated) return;
 
     final user = authState.user;
-    FlatMapping? flat = _selectedFlatMapping;
+    List<FlatMapping> selectedFlats = List.from(_selectedFlatMappings);
 
-    if (flat == null && user.flatMappings.isNotEmpty && !widget.isGuardMode) {
+    if (selectedFlats.isEmpty && user.flatMappings.isNotEmpty && !widget.isGuardMode) {
       if (user.flatMappings.length == 1) {
-        flat = user.flatMappings.first;
+        selectedFlats = [user.flatMappings.first];
       }
     }
 
-    if (flat == null) {
+    if (selectedFlats.isEmpty) {
       AsmitaToast.show(
         context,
-        message: 'Please select a flat.',
+        message: 'Please select at least one flat.',
         type: AsmitaToastType.error,
       );
       return;
@@ -210,7 +210,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         );
         return;
       }
-      final payload = {
+      final payloads = selectedFlats.map((flat) => {
         'society_id': user.societyId,
         'tower_id': flat.towerId,
         'unit_id': flat.flatId,
@@ -224,8 +224,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             : (_selectedCategory == 'Cab' ? 'Cab' : _selectedCompany),
         'vehicle_number': _cabNoController.text.trim(),
         'no_of_visitors': _selectedCategory == 'Guest' ? _guestCount : 1,
-      };
-      context.read<GuardGateBloc>().add(SubmitWalkInVisitor(payload));
+      }).toList();
+      context.read<GuardGateBloc>().add(SubmitWalkInVisitor(payloads));
       return;
     }
 
@@ -269,6 +269,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}:00';
     final endTimeStr =
         '${_selectedEndTime.hour.toString().padLeft(2, '0')}:${_selectedEndTime.minute.toString().padLeft(2, '0')}:00';
+
+    final flat = selectedFlats.first;
 
     final payload = {
       'society_id': user.societyId,
@@ -549,11 +551,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                         children: [
                           Expanded(
                             child: Text(
-                              _selectedFlatMapping?.flatNumber ?? 'Flat',
+                              _selectedFlatMappings.isNotEmpty ? _selectedFlatMappings.map((e) => e.flatNumber).join(', ') : 'Flat',
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 14,
-                                color: _selectedFlatMapping != null ? AsmitaPalette.textDark : Colors.grey.shade600,
+                                color: _selectedFlatMappings.isNotEmpty ? AsmitaPalette.textDark : Colors.grey.shade600,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -749,7 +751,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               Navigator.pop(context);
               setState(() {
                 _selectedTowerId = tower['id'];
-                _selectedFlatMapping = null;
+                _selectedFlatMappings.clear();
               });
               Future.delayed(const Duration(milliseconds: 200), () {
                 if (mounted) _showFlatPicker();
@@ -789,46 +791,126 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
     showAsmitaBottomSheet(
       context: context,
-      title: 'Select Flat',
-      child: GridView.builder(
-        shrinkWrap: true,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          childAspectRatio: 2.0,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 12,
-        ),
-        itemCount: flats.length,
-        itemBuilder: (context, index) {
-          final flat = flats[index];
-          final isSelected = _selectedFlatMapping?.flatId == flat.flatId;
-          return InkWell(
-            onTap: () {
-              Navigator.pop(context);
-              setState(() {
-                _selectedFlatMapping = flat;
-              });
-            },
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              decoration: BoxDecoration(
-                color: isSelected ? AsmitaPalette.actionRed : Colors.white,
-                border: Border.all(
-                  color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
+      title: widget.isGuardMode ? 'Select Flats' : 'Select Flat',
+      child: StatefulBuilder(
+        builder: (context, setModalState) {
+          String searchQuery = '';
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search flats...',
+                  hintStyle: TextStyle(
+                    fontFamily: 'Poppins',
+                    color: Colors.grey.shade500,
+                  ),
+                  prefixIcon: const Icon(Icons.search, color: AsmitaPalette.deepNavy),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(8),
+                onChanged: (val) {
+                  setModalState(() {
+                    searchQuery = val.toLowerCase();
+                  });
+                },
               ),
-              alignment: Alignment.center,
-              child: Text(
-                flat.flatNumber,
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 14,
-                  color: isSelected ? Colors.white : AsmitaPalette.textDark,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              const SizedBox(height: 16),
+              Flexible(
+                child: Builder(
+                  builder: (context) {
+                    final filteredFlats = flats.where((f) => f.flatNumber.toLowerCase().contains(searchQuery)).toList();
+                    
+                    if (filteredFlats.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.all(24.0),
+                        child: Text(
+                          'No flats found.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontFamily: 'Poppins', color: Colors.grey),
+                        ),
+                      );
+                    }
+                    
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                        childAspectRatio: 2.0,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 12,
+                      ),
+                      itemCount: filteredFlats.length,
+                      itemBuilder: (context, index) {
+                        final flat = filteredFlats[index];
+                        final isSelected = _selectedFlatMappings.any((f) => f.flatId == flat.flatId);
+                        return InkWell(
+                          onTap: () {
+                            if (widget.isGuardMode) {
+                              setModalState(() {
+                                if (isSelected) {
+                                  _selectedFlatMappings.removeWhere((f) => f.flatId == flat.flatId);
+                                } else {
+                                  _selectedFlatMappings.add(flat);
+                                }
+                              });
+                              setState(() {}); // Update main UI
+                            } else {
+                              setState(() {
+                                _selectedFlatMappings = [flat];
+                              });
+                              Navigator.pop(context);
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: isSelected ? AsmitaPalette.actionRed : Colors.white,
+                              border: Border.all(
+                                color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              flat.flatNumber,
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 14,
+                                color: isSelected ? Colors.white : AsmitaPalette.textDark,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
-            ),
+              if (widget.isGuardMode) ...[
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AsmitaPalette.deepNavy,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ],
           );
         },
       ),
