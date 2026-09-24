@@ -153,7 +153,6 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                           final rawCompany = item['company_name']?.toString().trim();
                           final purpose = (rawPurpose != null && rawPurpose.isNotEmpty) ? rawPurpose : ((rawCompany != null && rawCompany.isNotEmpty) ? rawCompany : category.toString());
                           
-                          final status = item['status'] ?? 'Pending';
                           final dateStr = item['created_at'] ?? item['valid_from'];
                           final entryTimeStr = item['checkin_at'] ?? item['start_time'];
                           
