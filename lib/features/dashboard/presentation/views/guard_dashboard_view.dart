@@ -612,6 +612,7 @@ class _PendingOrCheckInButton extends StatefulWidget {
 
 class _PendingOrCheckInButtonState extends State<_PendingOrCheckInButton> {
   bool _canCheckIn = false;
+  int _remainingSeconds = 0;
   Timer? _timer;
 
   @override
@@ -638,12 +639,20 @@ class _PendingOrCheckInButtonState extends State<_PendingOrCheckInButton> {
       _canCheckIn = true;
     } else {
       _canCheckIn = false;
-      _timer = Timer(Duration(seconds: 30 - diff), () {
-        if (mounted) {
-          setState(() {
-            _canCheckIn = true;
-          });
+      _remainingSeconds = 30 - diff;
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
         }
+        setState(() {
+          if (_remainingSeconds > 0) {
+            _remainingSeconds--;
+          } else {
+            _canCheckIn = true;
+            timer.cancel();
+          }
+        });
       });
     }
   }
@@ -672,9 +681,9 @@ class _PendingOrCheckInButtonState extends State<_PendingOrCheckInButton> {
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
       ),
-      child: const Text(
-        'PENDING',
-        style: TextStyle(
+      child: Text(
+        'PENDING (${_remainingSeconds}s)',
+        style: const TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.bold,
           color: Colors.orange,
