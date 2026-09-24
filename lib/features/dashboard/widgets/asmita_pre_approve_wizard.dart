@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/config/env_config.dart';
+import '../../../../core/security/secure_storage_service.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import 'package:flutter/material.dart';
@@ -106,8 +107,12 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
         final societyId = authState.user.societyId;
+        final secureStorage = SecureStorageService();
+        final token = await secureStorage.getToken();
+        
         final response = await Dio().get(
           '${EnvConfig.baseUrl}/app-api/flats/society/$societyId',
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
         );
         if (response.statusCode == 200 && response.data['flats'] != null) {
           final List<dynamic> flatsJson = response.data['flats'];
@@ -116,10 +121,10 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 .map(
                   (f) => FlatMapping(
                     mappingId: 0,
-                    flatId: f['id'] as int,
-                    flatNumber: f['unit_number'] as String,
-                    towerId: f['tower_id'] as int,
-                    towerName: f['tower_name'] ?? 'Tower',
+                    flatId: f['id'] is int ? f['id'] : int.tryParse(f['id']?.toString() ?? '0') ?? 0,
+                    flatNumber: f['unit_number']?.toString() ?? '',
+                    towerId: f['tower_id'] is int ? f['tower_id'] : int.tryParse(f['tower_id']?.toString() ?? '0') ?? 0,
+                    towerName: f['tower_name']?.toString() ?? 'Tower',
                     ownershipType: 'tenant', // Dummy value
                   ),
                 )
