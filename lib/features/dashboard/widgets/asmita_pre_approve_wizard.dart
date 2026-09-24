@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/security/secure_storage_service.dart';
@@ -115,7 +116,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           options: Options(headers: {'Authorization': 'Bearer $token'}),
         );
         if (response.statusCode == 200) {
-          final data = response.data;
+          dynamic data = response.data;
+          if (data is String) {
+            data = jsonDecode(data);
+          }
+          
           final List<dynamic> flatsJson = data is List ? data : (data['flats'] ?? []);
           
           setState(() {
