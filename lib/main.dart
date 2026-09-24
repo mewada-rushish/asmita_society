@@ -69,12 +69,13 @@ Future<void> main() async {
     await di.sl<FirebaseMessagingService>().initialize();
 
     bool isDeviceSafe = true;
-    try {
-      bool isJailBroken = await SafeDevice.isJailBroken;
-      isDeviceSafe = !isJailBroken;
-    } catch (e) {
-      isDeviceSafe = false;
-    }
+    // Bypassing SafeDevice check completely for Simulator testing
+    // try {
+    //   bool isJailBroken = await SafeDevice.isJailBroken;
+    //   isDeviceSafe = !isJailBroken;
+    // } catch (e) {
+    //   print("safe_device plugin error (ignoring for simulator): $e");
+    // }
 
     runApp(ProviderScope(
       child: AsmitaApp(

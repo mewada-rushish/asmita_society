@@ -20,7 +20,7 @@ class AsmitaDioClient {
         final client = HttpClient(context: SecurityContext(withTrustedRoots: false));
         client.badCertificateCallback = (X509Certificate cert, String host, int port) {
           if (host == 'admin.myasmita.com') {
-            const expectedHash = 'ee5f7abd6981bb0255632cd8f49283451b4b18844d12040b44ee00f07b8fe2c6';
+            const expectedHash = '8214e3b5f14e0e56df8ca5f49513ca3ff4c4de07b48c4b13756502f4f121ed45';
             final actualHash = sha256.convert(cert.der).toString();
             debugPrint('Certificate Pinning: Expected: $expectedHash, Actual: $actualHash');
             return actualHash == expectedHash;

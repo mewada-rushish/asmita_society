@@ -66,7 +66,12 @@ class FirebaseMessagingService {
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
     
     // Get and save FCM token
-    final token = await _firebaseMessaging.getToken();
+    String? token;
+    try {
+      token = await _firebaseMessaging.getToken();
+    } catch (e) {
+      debugPrint("Failed to get Firebase token: $e");
+    }
     if (token != null) {
       debugPrint("FCM Token: $token");
       await _secureStorage.write(key: 'fcm_token', value: token);
