@@ -213,14 +213,45 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                       const SizedBox(height: 4),
-                                      Text(
-                                        '$purpose • $status',
-                                        style: TextStyle(
-                                          fontFamily: 'Poppins',
-                                          fontSize: 12,
-                                          color: AsmitaPalette.textLight,
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                      Row(
+                                        children: [
+                                          Flexible(
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: brandColor.withValues(alpha: 0.1),
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                purpose,
+                                                style: TextStyle(
+                                                  fontFamily: 'Poppins',
+                                                  fontSize: 10,
+                                                  color: brandColor,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Icon(
+                                            status.toLowerCase() == 'checked_out' ? Icons.logout : Icons.login, 
+                                            size: 12, 
+                                            color: Colors.grey,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            status,
+                                            style: TextStyle(
+                                              fontFamily: 'Poppins',
+                                              fontSize: 12,
+                                              color: AsmitaPalette.textLight,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
