@@ -602,10 +602,10 @@ class _PendingOrCheckInButton extends StatefulWidget {
   final VoidCallback onCheckIn;
 
   const _PendingOrCheckInButton({
-    Key? key,
+    super.key,
     required this.invite,
     required this.onCheckIn,
-  }) : super(key: key);
+  });
 
   @override
   _PendingOrCheckInButtonState createState() => _PendingOrCheckInButtonState();
