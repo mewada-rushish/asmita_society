@@ -26,6 +26,7 @@ class _GuardQrScannerScreenState extends State<GuardQrScannerScreen> {
   late final MobileScannerController _scannerController = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
     returnImage: false,
+    facing: CameraFacing.back,
     autoStart: widget.isActive,
   );
 
