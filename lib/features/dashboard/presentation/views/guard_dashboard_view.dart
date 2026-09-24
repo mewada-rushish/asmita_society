@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -124,7 +125,8 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
         ElevatedButton(
           onPressed: () {
             Navigator.pop(context);
-            context.read<GuardGateBloc>().add(CheckInPreApprovedVisitor(invite['id'].toString()));
+            final isPreApproved = invite['record_type'] == null || invite['record_type'] == 'PRE_APPROVED';
+            context.read<GuardGateBloc>().add(CheckInPreApprovedVisitor(invite['id'].toString(), isPreApproved: isPreApproved));
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: AsmitaPalette.deepNavy,
@@ -464,14 +466,19 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                           child: AsmitaLoadingIndicator(color: AsmitaPalette.deepNavy, size: 20),
                         ),
                       )
-                    : IconButton(
-                        icon: const Icon(Icons.check_circle, color: AsmitaPalette.deepNavy, size: 28),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () {
-                          _showCheckInDialog(invite);
-                        },
-                      ),
+                    : (invite['status']?.toString().toUpperCase() == 'PENDING' || invite['action']?.toString().toUpperCase() == 'PENDING')
+                        ? _PendingOrCheckInButton(
+                            invite: invite,
+                            onCheckIn: () => _showCheckInDialog(invite),
+                          )
+                        : IconButton(
+                            icon: const Icon(Icons.check_circle, color: AsmitaPalette.deepNavy, size: 28),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              _showCheckInDialog(invite);
+                            },
+                          ),
               ],
             ),
           ),
@@ -586,6 +593,94 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _PendingOrCheckInButton extends StatefulWidget {
+  final Map<String, dynamic> invite;
+  final VoidCallback onCheckIn;
+
+  const _PendingOrCheckInButton({
+    Key? key,
+    required this.invite,
+    required this.onCheckIn,
+  }) : super(key: key);
+
+  @override
+  _PendingOrCheckInButtonState createState() => _PendingOrCheckInButtonState();
+}
+
+class _PendingOrCheckInButtonState extends State<_PendingOrCheckInButton> {
+  bool _canCheckIn = false;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkStatus();
+  }
+
+  void _checkStatus() {
+    final createdAtStr = widget.invite['created_at']?.toString() ?? widget.invite['requested_at']?.toString();
+    if (createdAtStr == null) {
+      _canCheckIn = true;
+      return;
+    }
+
+    final createdAt = DateTime.tryParse(createdAtStr)?.toLocal();
+    if (createdAt == null) {
+      _canCheckIn = true;
+      return;
+    }
+
+    final diff = DateTime.now().difference(createdAt).inSeconds;
+    if (diff >= 30) {
+      _canCheckIn = true;
+    } else {
+      _canCheckIn = false;
+      _timer = Timer(Duration(seconds: 30 - diff), () {
+        if (mounted) {
+          setState(() {
+            _canCheckIn = true;
+          });
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_canCheckIn) {
+      return IconButton(
+        icon: const Icon(Icons.check_circle, color: AsmitaPalette.deepNavy, size: 28),
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        onPressed: widget.onCheckIn,
+      );
+    }
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
+      ),
+      child: const Text(
+        'PENDING',
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: Colors.orange,
+        ),
+      ),
     );
   }
 }

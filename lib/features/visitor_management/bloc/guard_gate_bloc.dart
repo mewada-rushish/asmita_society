@@ -8,42 +8,70 @@ class GuardGateBloc extends Bloc<GuardGateEvent, GuardGateState> {
 
   GuardGateBloc({required this.repository}) : super(const GuardGateState()) {
     on<LoadExpectedInvites>((event, emit) async {
-      emit(state.copyWith(status: GuardGateStatus.loading, isLoadingExpected: true));
+      emit(
+        state.copyWith(
+          status: GuardGateStatus.loading,
+          isLoadingExpected: true,
+        ),
+      );
       try {
         final expected = await repository.getExpectedInvites();
         final history = await repository.getGuardHistory();
-        
+
         final Set<String> checkedInInviteIds = {};
         for (var log in history) {
           if (log['record_type'] == 'PRE_APPROVED') {
-            final inviteId = log['invite_id']?.toString() ?? log['pre_approved_invite_id']?.toString();
+            final inviteId =
+                log['invite_id']?.toString() ??
+                log['pre_approved_invite_id']?.toString();
             if (inviteId != null) checkedInInviteIds.add(inviteId);
           }
         }
-        
+
         final Map<String, dynamic> uniqueExpected = {};
         for (var item in expected) {
           if (item is Map<String, dynamic>) {
             final status = item['status']?.toString().toUpperCase();
             final id = item['id']?.toString() ?? item.hashCode.toString();
-            if (status != 'CHECKED_IN' && status != 'CANCELLED' && status != 'REJECTED' && !checkedInInviteIds.contains(id)) {
+            if (status != 'CHECKED_IN' &&
+                status != 'CANCELLED' &&
+                status != 'REJECTED' &&
+                !checkedInInviteIds.contains(id)) {
               uniqueExpected[id] = item;
             }
           }
         }
-        
-        emit(state.copyWith(
-          status: GuardGateStatus.loaded,
-          expectedInvites: uniqueExpected.values.toList(),
-          isLoadingExpected: false,
-        ));
+
+        for (var log in history) {
+          if (log is Map<String, dynamic>) {
+            final recordType = log['record_type']?.toString();
+            // In case record_type is not present, we can guess it's a walk-in if it lacks invite-specific fields
+            if (recordType == 'WALK_IN' || (recordType == null && log['pre_approved_invite_id'] == null)) {
+              final status = log['status']?.toString().toUpperCase() ?? log['action']?.toString().toUpperCase();
+              if (status == 'PENDING' || status == 'APPROVED') {
+                final id = log['id']?.toString() ?? log.hashCode.toString();
+                uniqueExpected[id] = log;
+              }
+            }
+          }
+        }
+
+        emit(
+          state.copyWith(
+            status: GuardGateStatus.loaded,
+            expectedInvites: uniqueExpected.values.toList(),
+            isLoadingExpected: false,
+          ),
+        );
       } catch (e) {
-        emit(state.copyWith(
-          status: GuardGateStatus.error,
-          errorMessage: e.toString(),
-          clearMessages: true,
-          isLoadingExpected: false,
-        ));
+        emit(
+          state.copyWith(
+            status: GuardGateStatus.error,
+            errorMessage: e.toString(),
+            clearMessages: true,
+            isLoadingExpected: false,
+          ),
+        );
       }
     });
 
@@ -52,62 +80,99 @@ class GuardGateBloc extends Bloc<GuardGateEvent, GuardGateState> {
       try {
         final history = await repository.getGuardHistory();
         final Map<String, dynamic> activeVisitors = {};
-        
+
         for (var record in history) {
           final isPreApproved = record['record_type'] == 'PRE_APPROVED';
           final id = record['id']?.toString();
-          final inviteId = record['invite_id']?.toString() ?? record['pre_approved_invite_id']?.toString();
-          
+          final inviteId =
+              record['invite_id']?.toString() ??
+              record['pre_approved_invite_id']?.toString();
+
           final identifier = isPreApproved ? (inviteId ?? id) : id;
           if (identifier == null) continue;
-          
-          final checkoutAt = record['checkout_at'] ?? record['checked_out_at'] ?? record['check_out_time'] ?? record['exit_time'];
-          final action = record['action']?.toString().toUpperCase() ?? record['status']?.toString().toUpperCase() ?? record['entry_status']?.toString().toUpperCase();
-          final isCheckedOut = checkoutAt != null || action == 'CHECK_OUT' || action == 'CHECKED_OUT' || action == 'EXIT';
-          
+
+          final checkoutAt =
+              record['checkout_at'] ??
+              record['checked_out_at'] ??
+              record['check_out_time'] ??
+              record['exit_time'];
+          final action =
+              record['action']?.toString().toUpperCase() ??
+              record['status']?.toString().toUpperCase() ??
+              record['entry_status']?.toString().toUpperCase();
+          final isCheckedOut =
+              checkoutAt != null ||
+              action == 'CHECK_OUT' ||
+              action == 'CHECKED_OUT' ||
+              action == 'EXIT';
+          final isCheckedIn =
+              action == 'CHECK_IN' ||
+              action == 'CHECKED_IN' ||
+              action == 'ENTRY';
+
           if (!activeVisitors.containsKey(identifier)) {
-            if (!isCheckedOut) {
+            if (isCheckedIn && !isCheckedOut) {
               activeVisitors[identifier] = record;
-            } else {
-              activeVisitors[identifier] = null; // Mark as resolved (checked out)
+            } else if (isCheckedOut) {
+              activeVisitors[identifier] = null;
             }
           }
         }
-        
-        final checkedIn = activeVisitors.values.where((v) => v != null).toList();
-        
-        emit(state.copyWith(
-          status: GuardGateStatus.loaded,
-          checkedInVisitors: checkedIn,
-        ));
+
+        final checkedIn = activeVisitors.values
+            .where((v) => v != null)
+            .toList();
+
+        emit(
+          state.copyWith(
+            status: GuardGateStatus.loaded,
+            checkedInVisitors: checkedIn,
+          ),
+        );
       } catch (e) {
-        emit(state.copyWith(
-          status: GuardGateStatus.error,
-          errorMessage: e.toString(),
-          clearMessages: true,
-        ));
+        emit(
+          state.copyWith(
+            status: GuardGateStatus.error,
+            errorMessage: e.toString(),
+            clearMessages: true,
+          ),
+        );
       }
     });
 
     on<CheckOutVisitor>((event, emit) async {
-      emit(state.copyWith(isSubmitting: true, submittingVisitorId: event.id, clearMessages: true));
+      emit(
+        state.copyWith(
+          isSubmitting: true,
+          submittingVisitorId: event.id,
+          clearMessages: true,
+        ),
+      );
       try {
-        await repository.checkOutVisitor(event.id, isPreApproved: event.isPreApproved, inviteGuestId: event.inviteGuestId);
-        emit(state.copyWith(
-          status: GuardGateStatus.success,
-          isSubmitting: false,
-          successMessage: 'Check-out successful!',
-        ));
+        await repository.checkOutVisitor(
+          event.id,
+          isPreApproved: event.isPreApproved,
+          inviteGuestId: event.inviteGuestId,
+        );
+        emit(
+          state.copyWith(
+            status: GuardGateStatus.success,
+            isSubmitting: false,
+            successMessage: 'Check-out successful!',
+          ),
+        );
         // Reload lists
         add(LoadCheckedInVisitors());
         add(LoadGuardHistory());
       } catch (e) {
-        emit(state.copyWith(
-          status: GuardGateStatus.error,
-          isSubmitting: false,
-          errorMessage: e.toString(),
-          clearMessages: true,
-        ));
+        emit(
+          state.copyWith(
+            status: GuardGateStatus.error,
+            isSubmitting: false,
+            errorMessage: e.toString(),
+            clearMessages: true,
+          ),
+        );
       }
     });
 
@@ -115,16 +180,20 @@ class GuardGateBloc extends Bloc<GuardGateEvent, GuardGateState> {
       emit(state.copyWith(status: GuardGateStatus.loading));
       try {
         final history = await repository.getGuardHistory();
-        emit(state.copyWith(
-          status: GuardGateStatus.loaded,
-          historyRecords: history,
-        ));
+        emit(
+          state.copyWith(
+            status: GuardGateStatus.loaded,
+            historyRecords: history,
+          ),
+        );
       } catch (e) {
-        emit(state.copyWith(
-          status: GuardGateStatus.error,
-          errorMessage: e.toString(),
-          clearMessages: true,
-        ));
+        emit(
+          state.copyWith(
+            status: GuardGateStatus.error,
+            errorMessage: e.toString(),
+            clearMessages: true,
+          ),
+        );
       }
     });
 
@@ -132,42 +201,56 @@ class GuardGateBloc extends Bloc<GuardGateEvent, GuardGateState> {
       emit(state.copyWith(isSubmitting: true, clearMessages: true));
       try {
         final result = await repository.searchInvite(event.code);
-        emit(state.copyWith(
-          status: GuardGateStatus.success,
-          isSubmitting: false,
-          searchResult: result,
-        ));
+        emit(
+          state.copyWith(
+            status: GuardGateStatus.success,
+            isSubmitting: false,
+            searchResult: result,
+          ),
+        );
       } catch (e) {
-        emit(state.copyWith(
-          status: GuardGateStatus.error,
-          isSubmitting: false,
-          errorMessage: e.toString(),
-          clearMessages: true,
-        ));
+        emit(
+          state.copyWith(
+            status: GuardGateStatus.error,
+            isSubmitting: false,
+            errorMessage: e.toString(),
+            clearMessages: true,
+          ),
+        );
       }
     });
 
     on<CheckInPreApprovedVisitor>((event, emit) async {
-      emit(state.copyWith(isSubmitting: true, submittingVisitorId: event.inviteId, clearMessages: true));
+      emit(
+        state.copyWith(
+          isSubmitting: true,
+          submittingVisitorId: event.inviteId,
+          clearMessages: true,
+        ),
+      );
       try {
-        await repository.checkInPreApproved(event.inviteId);
-        emit(state.copyWith(
-          status: GuardGateStatus.success,
-          isSubmitting: false,
-          successMessage: 'Check-in successful!',
-          clearMessages: true, // clear searchResult
-        ));
+        await repository.checkInPreApproved(event.inviteId, isPreApproved: event.isPreApproved);
+        emit(
+          state.copyWith(
+            status: GuardGateStatus.success,
+            isSubmitting: false,
+            successMessage: 'Check-in successful!',
+            clearMessages: true, // clear searchResult
+          ),
+        );
         // Reload expected invites and history
         add(LoadExpectedInvites());
         add(LoadGuardHistory());
         add(LoadCheckedInVisitors());
       } catch (e) {
-        emit(state.copyWith(
-          status: GuardGateStatus.error,
-          isSubmitting: false,
-          errorMessage: e.toString(),
-          clearMessages: true,
-        ));
+        emit(
+          state.copyWith(
+            status: GuardGateStatus.error,
+            isSubmitting: false,
+            errorMessage: e.toString(),
+            clearMessages: true,
+          ),
+        );
       }
     });
 
@@ -177,21 +260,25 @@ class GuardGateBloc extends Bloc<GuardGateEvent, GuardGateState> {
         for (final p in event.payloads) {
           await repository.submitWalkInVisitor(p);
         }
-        emit(state.copyWith(
-          status: GuardGateStatus.success,
-          isSubmitting: false,
-          successMessage: 'Walk-in visitor logged successfully!',
-        ));
+        emit(
+          state.copyWith(
+            status: GuardGateStatus.success,
+            isSubmitting: false,
+            successMessage: 'Walk-in visitor logged successfully!',
+          ),
+        );
         // Reload history and expected lists
         add(LoadGuardHistory());
         add(LoadCheckedInVisitors());
       } catch (e) {
-        emit(state.copyWith(
-          status: GuardGateStatus.error,
-          isSubmitting: false,
-          errorMessage: e.toString(),
-          clearMessages: true,
-        ));
+        emit(
+          state.copyWith(
+            status: GuardGateStatus.error,
+            isSubmitting: false,
+            errorMessage: e.toString(),
+            clearMessages: true,
+          ),
+        );
       }
     });
   }

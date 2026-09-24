@@ -35,11 +35,12 @@ class SearchInviteByCode extends GuardGateEvent {
 
 class CheckInPreApprovedVisitor extends GuardGateEvent {
   final String inviteId;
+  final bool isPreApproved;
 
-  const CheckInPreApprovedVisitor(this.inviteId);
+  const CheckInPreApprovedVisitor(this.inviteId, {this.isPreApproved = true});
 
   @override
-  List<Object?> get props => [inviteId];
+  List<Object?> get props => [inviteId, isPreApproved];
 }
 
 class SubmitWalkInVisitor extends GuardGateEvent {

@@ -50,6 +50,7 @@ class EnvConfig {
   static String gateCheckOutInvite(String id) => '$baseUrl/app-api/gate/pre-approved-invites/$id/check-out';
   static String get guardVisitorEntries => '$baseUrl/app-api/guard/visitor-entries';
   static String guardVisitorCheckOut(String id) => '$baseUrl/app-api/visitor-entries/$id/check-out';
+  static String guardVisitorCheckIn(String id) => '$baseUrl/app-api/visitor-entries/$id/check-in';
   static String get createVisitorEntry => '$baseUrl/app-api/visitor-entries';
 
   /// Global Search

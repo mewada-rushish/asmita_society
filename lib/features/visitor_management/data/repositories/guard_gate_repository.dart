@@ -48,10 +48,17 @@ class GuardGateRepository {
     }
   }
 
-  /// Checks in a pre-approved visitor
-  Future<void> checkInPreApproved(String inviteId) async {
+  /// Checks in a visitor (pre-approved or walk-in)
+  Future<void> checkInPreApproved(String id, {bool isPreApproved = true}) async {
     try {
-      final response = await _dio.post(EnvConfig.gateCheckInInvite(inviteId));
+      final url = isPreApproved
+          ? EnvConfig.gateCheckInInvite(id)
+          : EnvConfig.guardVisitorCheckIn(id);
+      
+      final response = isPreApproved 
+          ? await _dio.post(url)
+          : await _dio.patch(url);
+          
       if (response.statusCode != 200 && response.statusCode != 201) {
         final data = response.data;
         throw Exception(data['message'] ?? 'Failed to check in');
