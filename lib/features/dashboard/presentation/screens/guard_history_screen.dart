@@ -147,8 +147,12 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                           
                           final isPreApproved = item['record_type'] == 'PRE_APPROVED';
                           final name = item['visitor_name'] ?? item['title'] ?? 'Unknown';
-                          final purpose = item['purpose'] ?? item['company_name'] ?? 'Visitor';
                           final category = isPreApproved ? (item['invite_type'] ?? 'Invite') : 'Walk-in';
+                          
+                          final rawPurpose = item['purpose']?.toString().trim();
+                          final rawCompany = item['company_name']?.toString().trim();
+                          final purpose = (rawPurpose != null && rawPurpose.isNotEmpty) ? rawPurpose : ((rawCompany != null && rawCompany.isNotEmpty) ? rawCompany : category.toString());
+                          
                           final status = item['status'] ?? 'Pending';
                           final dateStr = item['created_at'] ?? item['valid_from'];
                           final entryTimeStr = item['checkin_at'] ?? item['start_time'];
@@ -238,14 +242,10 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                                             ),
                                           ),
                                           const SizedBox(width: 8),
-                                          Icon(
-                                            status.toLowerCase() == 'checked_out' ? Icons.logout : Icons.login, 
-                                            size: 12, 
-                                            color: AsmitaPalette.deepNavy,
-                                          ),
-                                          const SizedBox(width: 4),
+                                          const Icon(Icons.circle, size: 4, color: Colors.grey),
+                                          const SizedBox(width: 8),
                                           Text(
-                                            '$status • $date',
+                                            date,
                                             style: TextStyle(
                                               fontFamily: 'Poppins',
                                               fontSize: 12,

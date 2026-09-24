@@ -191,8 +191,11 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                           
                           final isPreApproved = item['record_type'] == 'PRE_APPROVED';
                           final name = item['visitor_name'] ?? item['title'] ?? 'Unknown';
-                          final purpose = item['purpose'] ?? item['company_name'] ?? 'Visitor';
                           final category = isPreApproved ? (item['invite_type'] ?? 'Invite') : 'Walk-in';
+                          
+                          final rawPurpose = item['purpose']?.toString().trim();
+                          final rawCompany = item['company_name']?.toString().trim();
+                          final purpose = (rawPurpose != null && rawPurpose.isNotEmpty) ? rawPurpose : ((rawCompany != null && rawCompany.isNotEmpty) ? rawCompany : category.toString());
                           
                           final dateStr = item['created_at'] ?? item['valid_from'];
                           final entryTimeStr = item['checkin_at'] ?? item['start_time'];
