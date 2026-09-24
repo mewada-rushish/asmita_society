@@ -20,12 +20,13 @@ void main() {
       'emits [loading, loaded] when LoadExpectedInvites is successful',
       build: () {
         when(() => mockRepository.getExpectedInvites()).thenAnswer((_) async => []);
+        when(() => mockRepository.getGuardHistory()).thenAnswer((_) async => []);
         return GuardGateBloc(repository: mockRepository);
       },
       act: (bloc) => bloc.add(LoadExpectedInvites()),
       expect: () => [
-        const GuardGateState(status: GuardGateStatus.loading),
-        const GuardGateState(status: GuardGateStatus.loaded, expectedInvites: []),
+        const GuardGateState(status: GuardGateStatus.loading, isLoadingExpected: true),
+        const GuardGateState(status: GuardGateStatus.loaded, expectedInvites: [], isLoadingExpected: false),
       ],
       verify: (_) {
         verify(() => mockRepository.getExpectedInvites()).called(1);
@@ -40,8 +41,8 @@ void main() {
       },
       act: (bloc) => bloc.add(LoadExpectedInvites()),
       expect: () => [
-        const GuardGateState(status: GuardGateStatus.loading),
-        const GuardGateState(status: GuardGateStatus.error, errorMessage: 'Exception: API error'),
+        const GuardGateState(status: GuardGateStatus.loading, isLoadingExpected: true),
+        const GuardGateState(status: GuardGateStatus.error, errorMessage: 'Exception: API error', isLoadingExpected: false),
       ],
     );
 
@@ -51,14 +52,20 @@ void main() {
         when(() => mockRepository.checkInPreApproved('123')).thenAnswer((_) async {});
         // Also mock the follow-up call to LoadExpectedInvites
         when(() => mockRepository.getExpectedInvites()).thenAnswer((_) async => []);
+        when(() => mockRepository.getGuardHistory()).thenAnswer((_) async => []);
+        when(() => mockRepository.getCheckedInVisitors()).thenAnswer((_) async => []);
         return GuardGateBloc(repository: mockRepository);
       },
       act: (bloc) => bloc.add(const CheckInPreApprovedVisitor('123')),
       expect: () => [
-        const GuardGateState(isSubmitting: true),
-        const GuardGateState(status: GuardGateStatus.success, isSubmitting: false, searchResult: null),
-        const GuardGateState(status: GuardGateStatus.loading, isSubmitting: false, searchResult: null),
-        const GuardGateState(status: GuardGateStatus.loaded, expectedInvites: [], isSubmitting: false, searchResult: null),
+        const GuardGateState(isSubmitting: true, submittingVisitorId: '123'),
+        const GuardGateState(status: GuardGateStatus.success, isSubmitting: false, successMessage: 'Check-in successful!'),
+        const GuardGateState(status: GuardGateStatus.loading, isSubmitting: false, successMessage: 'Check-in successful!', isLoadingExpected: true),
+        const GuardGateState(status: GuardGateStatus.loaded, expectedInvites: [], isSubmitting: false, successMessage: 'Check-in successful!', isLoadingExpected: false),
+        const GuardGateState(status: GuardGateStatus.loading, expectedInvites: [], isSubmitting: false, successMessage: 'Check-in successful!', isLoadingExpected: false),
+        const GuardGateState(status: GuardGateStatus.loaded, expectedInvites: [], historyRecords: [], isSubmitting: false, successMessage: 'Check-in successful!', isLoadingExpected: false),
+        const GuardGateState(status: GuardGateStatus.loading, expectedInvites: [], historyRecords: [], isSubmitting: false, successMessage: 'Check-in successful!', isLoadingExpected: false),
+        const GuardGateState(status: GuardGateStatus.loaded, expectedInvites: [], historyRecords: [], checkedInVisitors: [], isSubmitting: false, successMessage: 'Check-in successful!', isLoadingExpected: false),
       ],
     );
 
@@ -70,7 +77,7 @@ void main() {
       },
       act: (bloc) => bloc.add(const CheckInPreApprovedVisitor('123')),
       expect: () => [
-        const GuardGateState(isSubmitting: true),
+        const GuardGateState(isSubmitting: true, submittingVisitorId: '123'),
         const GuardGateState(status: GuardGateStatus.error, isSubmitting: false, errorMessage: 'Exception: Check in failed'),
       ],
     );
@@ -131,12 +138,18 @@ void main() {
       'emits [isSubmitting, success] when SubmitWalkInVisitor is successful',
       build: () {
         when(() => mockRepository.submitWalkInVisitor(any())).thenAnswer((_) async => {'id': 1});
+        when(() => mockRepository.getGuardHistory()).thenAnswer((_) async => []);
+        when(() => mockRepository.getCheckedInVisitors()).thenAnswer((_) async => []);
         return GuardGateBloc(repository: mockRepository);
       },
       act: (bloc) => bloc.add(SubmitWalkInVisitor(const [{'name': 'John'}])),
       expect: () => [
         const GuardGateState(isSubmitting: true),
-        const GuardGateState(status: GuardGateStatus.success, isSubmitting: false),
+        const GuardGateState(status: GuardGateStatus.success, isSubmitting: false, successMessage: 'Walk-in visitor logged successfully!'),
+        const GuardGateState(status: GuardGateStatus.loading, isSubmitting: false, successMessage: 'Walk-in visitor logged successfully!'),
+        const GuardGateState(status: GuardGateStatus.loaded, isSubmitting: false, successMessage: 'Walk-in visitor logged successfully!', historyRecords: []),
+        const GuardGateState(status: GuardGateStatus.loading, isSubmitting: false, successMessage: 'Walk-in visitor logged successfully!', historyRecords: []),
+        const GuardGateState(status: GuardGateStatus.loaded, isSubmitting: false, successMessage: 'Walk-in visitor logged successfully!', historyRecords: [], checkedInVisitors: []),
       ],
     );
 

@@ -789,12 +789,13 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     final flats = _getFlatsForTower(_selectedTowerId!);
     if (flats.isEmpty) return;
 
+    String searchQuery = '';
+
     showAsmitaBottomSheet(
       context: context,
       title: widget.isGuardMode ? 'Select Flats' : 'Select Flat',
       child: StatefulBuilder(
         builder: (context, setModalState) {
-          String searchQuery = '';
           return Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
