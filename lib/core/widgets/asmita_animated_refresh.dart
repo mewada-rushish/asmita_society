@@ -36,7 +36,7 @@ class AsmitaAnimatedRefresh extends StatelessWidget {
                 ),
               
               // 2. Loading State: Branded spinning indicator
-              if (refreshState == RefreshIndicatorMode.refresh || refreshState == RefreshIndicatorMode.done)
+              if (refreshState == RefreshIndicatorMode.refresh)
                 const AsmitaLoadingIndicator(
                   color: AsmitaPalette.actionRed,
                   size: 28,
