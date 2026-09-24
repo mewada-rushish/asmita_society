@@ -191,7 +191,7 @@ class GuardGateRepository {
     String msg = 'Network error during $context';
     if (e.response?.data != null) {
       if (e.response!.data is Map) {
-        msg = e.response!.data['message'] ?? msg;
+        msg = e.response!.data['message'] ?? e.response!.data['error'] ?? msg;
       } else {
         msg = 'Server Error: ${e.response!.statusCode}';
       }

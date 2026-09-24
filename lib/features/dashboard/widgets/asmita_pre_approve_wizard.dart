@@ -210,6 +210,17 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         );
         return;
       }
+      
+      final phone = _mobileNumberController.text.trim();
+      if (phone.length != 10 || int.tryParse(phone) == null) {
+        AsmitaToast.show(
+          context,
+          message: 'Please enter a valid 10-digit mobile number.',
+          type: AsmitaToastType.error,
+        );
+        return;
+      }
+      
       final payloads = selectedFlats.map((flat) => {
         'society_id': user.societyId,
         'tower_id': flat.towerId,
