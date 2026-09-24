@@ -47,7 +47,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     for (final flat in _societyFlats) {
       towers[flat.towerId] = flat.towerName;
     }
-    return towers.entries.map((e) => {'id': e.key, 'name': e.value}).toList();
+    return towers.entries
+        .map<Map<String, dynamic>>((e) => <String, dynamic>{'id': e.key, 'name': e.value})
+        .toList();
   }
 
   List<FlatMapping> _getFlatsForTower(int towerId) {
