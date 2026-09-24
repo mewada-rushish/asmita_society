@@ -279,7 +279,7 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                                             ),
                                           ),
                                           const SizedBox(width: 8),
-                                          const Icon(Icons.login, size: 12, color: Colors.grey),
+                                          const Icon(Icons.login, size: 12, color: AsmitaPalette.deepNavy),
                                           const SizedBox(width: 4),
                                           Text(
                                             entryTime,

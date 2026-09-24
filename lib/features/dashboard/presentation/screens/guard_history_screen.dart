@@ -239,7 +239,7 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                                           Icon(
                                             status.toLowerCase() == 'checked_out' ? Icons.logout : Icons.login, 
                                             size: 12, 
-                                            color: Colors.grey,
+                                            color: AsmitaPalette.deepNavy,
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
