@@ -499,42 +499,33 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               children: [
                 Expanded(
                   flex: 2,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: AsmitaPalette.borderGrey),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<int>(
-                        value: _selectedTowerId,
-                        hint: const Text('Tower'),
-                        isExpanded: true,
-                        icon: const Icon(
-                          Icons.arrow_drop_down_rounded,
-                          color: AsmitaPalette.deepNavy,
-                        ),
-                        items: _getTowers().map((tower) {
-                          return DropdownMenuItem<int>(
-                            value: tower['id'],
+                  child: GestureDetector(
+                    onTap: _showTowerPicker,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: AsmitaPalette.borderGrey),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
                             child: Text(
-                              tower['name'],
-                              style: const TextStyle(
+                              _selectedTowerId != null
+                                  ? _getTowers().firstWhere((t) => t['id'] == _selectedTowerId, orElse: () => {'name': 'Tower'})['name']
+                                  : 'Tower',
+                              style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 14,
+                                color: _selectedTowerId != null ? AsmitaPalette.textDark : Colors.grey.shade600,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() {
-                              _selectedTowerId = val;
-                              _selectedFlatMapping = null;
-                            });
-                          }
-                        },
+                          ),
+                          const Icon(Icons.arrow_drop_down_rounded, color: AsmitaPalette.deepNavy),
+                        ],
                       ),
                     ),
                   ),
@@ -542,43 +533,34 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 const SizedBox(width: 8),
                 Expanded(
                   flex: 3,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: AsmitaPalette.borderGrey),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<FlatMapping>(
-                        value: _selectedFlatMapping,
-                        hint: const Text('Flat'),
-                        isExpanded: true,
-                        icon: const Icon(
-                          Icons.arrow_drop_down_rounded,
-                          color: AsmitaPalette.deepNavy,
-                        ),
-                        items: _selectedTowerId == null
-                            ? []
-                            : _getFlatsForTower(_selectedTowerId!).map((flat) {
-                                return DropdownMenuItem(
-                                  value: flat,
-                                  child: Text(
-                                    flat.flatNumber,
-                                    style: const TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                        onChanged: _selectedTowerId == null
-                            ? null
-                            : (val) {
-                                if (val != null) {
-                                  setState(() => _selectedFlatMapping = val);
-                                }
-                              },
+                  child: GestureDetector(
+                    onTap: _selectedTowerId == null ? null : _showFlatPicker,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: _selectedTowerId == null ? Colors.grey.shade100 : Colors.white,
+                        border: Border.all(color: AsmitaPalette.borderGrey),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _selectedFlatMapping?.flatNumber ?? 'Flat',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 14,
+                                color: _selectedFlatMapping != null ? AsmitaPalette.textDark : Colors.grey.shade600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_drop_down_rounded, 
+                            color: _selectedTowerId == null ? Colors.grey : AsmitaPalette.deepNavy,
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -738,6 +720,164 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           ),
         ],
       ],
+    );
+  }
+
+  void _showTowerPicker() {
+    final towers = _getTowers();
+    if (towers.isEmpty) return;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 20.0, bottom: 24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Select Tower',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AsmitaPalette.deepNavy,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Flexible(
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 2.2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemCount: towers.length,
+                  itemBuilder: (context, index) {
+                    final tower = towers[index];
+                    final isSelected = _selectedTowerId == tower['id'];
+                    return InkWell(
+                      onTap: () {
+                        Navigator.pop(context);
+                        setState(() {
+                          _selectedTowerId = tower['id'];
+                          _selectedFlatMapping = null;
+                        });
+                        Future.delayed(const Duration(milliseconds: 200), () {
+                          if (mounted) _showFlatPicker();
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isSelected ? AsmitaPalette.actionRed : Colors.white,
+                          border: Border.all(
+                            color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          tower['name'],
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 14,
+                            color: isSelected ? Colors.white : AsmitaPalette.textDark,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showFlatPicker() {
+    if (_selectedTowerId == null) return;
+    
+    final flats = _getFlatsForTower(_selectedTowerId!);
+    if (flats.isEmpty) return;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 20.0, bottom: 24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Select Flat',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AsmitaPalette.deepNavy,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Flexible(
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    childAspectRatio: 2.0,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemCount: flats.length,
+                  itemBuilder: (context, index) {
+                    final flat = flats[index];
+                    final isSelected = _selectedFlatMapping?.flatId == flat.flatId;
+                    return InkWell(
+                      onTap: () {
+                        Navigator.pop(context);
+                        setState(() {
+                          _selectedFlatMapping = flat;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isSelected ? AsmitaPalette.actionRed : Colors.white,
+                          border: Border.all(
+                            color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          flat.flatNumber,
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 14,
+                            color: isSelected ? Colors.white : AsmitaPalette.textDark,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
