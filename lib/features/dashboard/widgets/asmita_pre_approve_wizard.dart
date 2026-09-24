@@ -111,8 +111,22 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         final secureStorage = SecureStorageService();
         final token = await secureStorage.getToken();
         
+        // Fetch towers first to map tower_name
+        final towersResponse = await Dio().get(
+          '${EnvConfig.towers}?society_id=$societyId',
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+        final Map<int, String> towerNames = {};
+        if (towersResponse.statusCode == 200 && towersResponse.data['success'] == true) {
+          final List<dynamic> towersJson = towersResponse.data['data'];
+          for (var t in towersJson) {
+            final tId = t['tower_id'] is int ? t['tower_id'] : int.tryParse(t['tower_id'].toString()) ?? 0;
+            towerNames[tId] = t['tower_name']?.toString() ?? 'Tower $tId';
+          }
+        }
+
         final response = await Dio().get(
-          '${EnvConfig.baseUrl}/app-api/flats/society/$societyId',
+          '${EnvConfig.baseUrl}/api/flats/society/$societyId',
           options: Options(headers: {'Authorization': 'Bearer $token'}),
         );
         if (response.statusCode == 200) {
@@ -125,16 +139,17 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           
           setState(() {
             _societyFlats = flatsJson
-                .map(
-                  (f) => FlatMapping(
+                .map((f) {
+                  final tId = f['tower_id'] is int ? f['tower_id'] : int.tryParse(f['tower_id']?.toString() ?? '0') ?? 0;
+                  return FlatMapping(
                     mappingId: 0,
-                    flatId: f['id'] is int ? f['id'] : int.tryParse(f['id']?.toString() ?? '0') ?? 0,
-                    flatNumber: f['unit_number']?.toString() ?? '',
-                    towerId: f['tower_id'] is int ? f['tower_id'] : int.tryParse(f['tower_id']?.toString() ?? '0') ?? 0,
-                    towerName: f['tower_name']?.toString() ?? 'Tower',
+                    flatId: f['flat_id'] is int ? f['flat_id'] : int.tryParse(f['flat_id']?.toString() ?? '0') ?? 0,
+                    flatNumber: f['flat_number']?.toString() ?? '',
+                    towerId: tId,
+                    towerName: towerNames[tId] ?? 'Tower $tId',
                     ownershipType: 'tenant', // Dummy value
-                  ),
-                )
+                  );
+                })
                 .toList();
           });
         }
