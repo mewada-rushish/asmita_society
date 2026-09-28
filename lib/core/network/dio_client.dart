@@ -2,6 +2,13 @@ import 'package:dio/dio.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import '../security/secure_storage_service.dart';
 import '../config/env_config.dart';
+<<<<<<< HEAD
+=======
+import 'package:flutter/foundation.dart';
+import 'dart:io';
+import 'package:dio/io.dart';
+import 'package:crypto/crypto.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 
 class AsmitaDioClient {
   final Dio dio;
@@ -11,6 +18,24 @@ class AsmitaDioClient {
     dio.options.baseUrl = EnvConfig.baseUrl;
     dio.options.connectTimeout = const Duration(seconds: 30);
     dio.options.receiveTimeout = const Duration(seconds: 30);
+<<<<<<< HEAD
+=======
+    dio.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () {
+        final client = HttpClient(context: SecurityContext(withTrustedRoots: false));
+        client.badCertificateCallback = (X509Certificate cert, String host, int port) {
+          if (host == 'admin.myasmita.com') {
+            const expectedHash = '8214e3b5f14e0e56df8ca5f49513ca3ff4c4de07b48c4b13756502f4f121ed45';
+            final actualHash = sha256.convert(cert.der).toString();
+            debugPrint('Certificate Pinning: Expected: $expectedHash, Actual: $actualHash');
+            return actualHash == expectedHash;
+          }
+          return false;
+        };
+        return client;
+      },
+    );
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
     
     dio.options.headers = {
       'Content-Type': 'application/json',
@@ -31,10 +56,36 @@ class AsmitaDioClient {
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+<<<<<<< HEAD
         }
         return handler.next(options);
       },
       onError: (DioException e, handler) {
+=======
+          final societyId = await secureStorage.getSocietyId();
+          if (societyId != null) {
+            options.headers['x-society-id'] = societyId.toString();
+          }
+        }
+        return handler.next(options);
+      },
+      onError: (DioException e, handler) async {
+        if (e.response?.statusCode == 401) {
+          // Clear session on 401 Unauthorized
+          await secureStorage.clearSession();
+          // Optionally, a global event bus or navigator key could redirect to login here.
+          // For now, modifying the error message so the UI can prompt the user to log in again.
+          final customError = DioException(
+            requestOptions: e.requestOptions,
+            response: e.response,
+            type: e.type,
+            error: e.error,
+            message: 'Session expired. Please log in again.',
+          );
+          return handler.next(customError);
+        }
+
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         if (e.type != DioExceptionType.connectionTimeout && 
             e.type != DioExceptionType.receiveTimeout && 
             e.type != DioExceptionType.sendTimeout &&

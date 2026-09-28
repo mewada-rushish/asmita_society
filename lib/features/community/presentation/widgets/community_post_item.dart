@@ -1,9 +1,16 @@
 import 'dart:convert';
+<<<<<<< HEAD
+=======
+import 'package:asmita_society/core/utils/date_formatter.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/features/community/data/models/community_post_model.dart';
+<<<<<<< HEAD
 import 'package:intl/intl.dart';
+=======
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 
 class CommunityPostItem extends StatelessWidget {
@@ -32,6 +39,7 @@ class CommunityPostItem extends StatelessWidget {
 
     final plainText = doc.toPlainText().trim();
     final isLong = plainText.length > 100 || plainText.split('\n').length > 3;
+<<<<<<< HEAD
 
     return Align(
       alignment: Alignment.topCenter,
@@ -42,6 +50,26 @@ class CommunityPostItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
         ),
+=======
+    final semanticLabel = 'Community Post. Title: ${post.title}. '
+        'Posted on ${AppDateFormatter.formatDateTime(post.createdAt)} by ${post.authorName}. '
+        'Content: $plainText';
+
+    return Semantics(
+      container: true,
+      label: semanticLabel,
+      button: isLong, // if it's long, it has a 'Know More' tap target
+      child: ExcludeSemantics(
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+            ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -66,7 +94,11 @@ class CommunityPostItem extends StatelessWidget {
                         child: Text(post.title, style: textTheme.titleLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700)),
                       ),
                       Text(
+<<<<<<< HEAD
                         DateFormat('MMM d, hh:mm a').format(post.createdAt),
+=======
+                        AppDateFormatter.formatDateTime(post.createdAt),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                         style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight),
                       ),
                     ],
@@ -127,7 +159,11 @@ class CommunityPostItem extends StatelessWidget {
                                         style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                                       ),
                                       Text(
+<<<<<<< HEAD
                                         DateFormat('MMMM d, yyyy • hh:mm a').format(post.createdAt),
+=======
+                                        AppDateFormatter.formatDateTime(post.createdAt),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                                         style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight, fontSize: 11),
                                       ),
                                     ],
@@ -167,6 +203,11 @@ class CommunityPostItem extends StatelessWidget {
           ],
         ),
       ),
+<<<<<<< HEAD
+=======
+      ),
+      ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
     );
   }
 }

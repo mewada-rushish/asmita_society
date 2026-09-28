@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
+=======
+import 'package:flutter/services.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
+<<<<<<< HEAD
+=======
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import 'package:asmita_society/core/utils/dashboard_scroll_physics.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_security_wizard.dart';
@@ -390,7 +398,14 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                   if (todayEntries.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.only(top: 12.0),
+<<<<<<< HEAD
                       child: Text('You have no new updates', style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.textLight)),
+=======
+                      child: Semantics(
+                        label: 'You have no new updates for today.',
+                        child: Text('You have no new updates', style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.textLight)),
+                      ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                     );
                   }
 
@@ -459,7 +474,11 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
               }
                 return const Padding(
                   padding: EdgeInsets.all(8.0),
+<<<<<<< HEAD
                   child: CircularProgressIndicator(),
+=======
+                  child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                 );
               },
             ),
@@ -473,7 +492,11 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
     return BlocBuilder<CommunityPostBloc, CommunityPostState>(
       builder: (context, state) {
         if (state.status == CommunityPostStatus.loading && state.posts.isEmpty) {
+<<<<<<< HEAD
           return const Center(child: CircularProgressIndicator());
+=======
+          return const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28));
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         }
 
         final activePosts = state.posts.where((p) {
@@ -504,7 +527,16 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
               ),
+<<<<<<< HEAD
               child: const Center(child: Text("No community posts yet.")),
+=======
+              child: Center(
+                child: Semantics(
+                  label: 'No community posts available.',
+                  child: const Text("No community posts yet."),
+                ),
+              ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
             ),
           );
         }
@@ -616,7 +648,11 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
     return BlocBuilder<AmenitiesBloc, AmenitiesState>(
       builder: (context, state) {
         if (state.status == AmenitiesStatus.loading && state.amenities.isEmpty) {
+<<<<<<< HEAD
           return const Center(child: CircularProgressIndicator());
+=======
+          return const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28));
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         }
 
         // Count booking frequency by amenity ID
@@ -695,6 +731,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
 
   Widget _buildGridItem(BuildContext context, IconData icon, String label, {String? badgeLabel, int? notificationCount, Color containerColor = AsmitaPalette.deepNavy, Color iconColor = Colors.white, Color? borderColor, bool isUtilityButton = false, bool hasBorder = false, VoidCallback? onTap}) {
     final textTheme = Theme.of(context).textTheme;
+<<<<<<< HEAD
     return SizedBox(
       width: 78,
       child: InkWell(
@@ -704,6 +741,24 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
         highlightColor: Colors.transparent,
         child: Column(
           mainAxisSize: MainAxisSize.min,
+=======
+    return Semantics(
+      label: label,
+      button: true,
+      hint: onTap != null ? 'Double tap to open $label' : null,
+      child: SizedBox(
+        width: 78,
+        child: InkWell(
+          onTap: onTap != null ? () {
+            if (isUtilityButton) HapticFeedback.vibrate();
+            onTap();
+          } : null,
+          borderRadius: BorderRadius.circular(16),
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
           children: [
             Stack(
               clipBehavior: Clip.none,
@@ -730,6 +785,10 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
           ],
         ),
       ),
+<<<<<<< HEAD
+=======
+    ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
     );
   }
 
@@ -737,8 +796,16 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
 
   Widget _buildCircularActionHook(BuildContext context, IconData icon, String label, {bool hasBadge = false, Color iconColor = AsmitaPalette.deepNavy}) {
     final textTheme = Theme.of(context).textTheme;
+<<<<<<< HEAD
     return Column(
       mainAxisSize: MainAxisSize.min,
+=======
+    return Semantics(
+      label: label,
+      button: true,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
       children: [
         Stack(
           clipBehavior: Clip.none,
@@ -756,6 +823,10 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
         const SizedBox(height: 6),
         Text(label, style: textTheme.bodyMedium?.copyWith(fontSize: 10, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
       ],
+<<<<<<< HEAD
+=======
+    ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
     );
   }
 }

@@ -1,6 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+<<<<<<< HEAD
+=======
+import '../../../../core/widgets/asmita_loading_indicator.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import 'package:asmita_society/features/community/data/models/chat_message_model.dart';
 import 'package:gal/gal.dart';
 import 'package:dio/dio.dart';
@@ -217,9 +221,15 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                                   child: SizedBox(
                                     width: 20,
                                     height: 20,
+<<<<<<< HEAD
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                       color: Color(0xFF142E5C),
+=======
+                                    child: AsmitaLoadingIndicator(
+                                      color: Color(0xFF142E5C),
+                                      size: 20,
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                                     ),
                                   ),
                                 )
@@ -290,9 +300,15 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
               child: SizedBox(
                 width: 20,
                 height: 20,
+<<<<<<< HEAD
                 child: CircularProgressIndicator(
                   color: Colors.white,
                   strokeWidth: 2,
+=======
+                child: AsmitaLoadingIndicator(
+                  color: Colors.white,
+                  size: 20,
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                 ),
               ),
             )
@@ -344,8 +360,14 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                             imageUrl: imagePath,
                             fit: BoxFit.contain,
                             placeholder: (context, url) => const Center(
+<<<<<<< HEAD
                               child: CircularProgressIndicator(
                                 color: Colors.white,
+=======
+                              child: AsmitaLoadingIndicator(
+                                color: Colors.white,
+                                size: 28,
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                               ),
                             ),
                             errorWidget: (context, url, error) => const Center(

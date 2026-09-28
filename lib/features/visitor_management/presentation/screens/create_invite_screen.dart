@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
@@ -5,6 +6,16 @@ import '../../bloc/visitor_bloc.dart';
 import '../../bloc/visitor_event.dart';
 import '../../bloc/visitor_state.dart';
 import 'package:intl/intl.dart';
+=======
+import 'package:asmita_society/core/utils/date_formatter.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import '../../bloc/visitor_bloc.dart';
+import '../../bloc/visitor_event.dart';
+import '../../bloc/visitor_state.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_state.dart';
 
@@ -212,6 +223,7 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                 ),
                 const SizedBox(height: 24),
                 
+<<<<<<< HEAD
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
@@ -229,6 +241,48 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   keyboardType: TextInputType.phone,
+=======
+                Semantics(
+                  label: _inviteType == 'Guest' ? 'Visitor Name Input' : 'Company or Driver Name Input',
+                  child: TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: _inviteType == 'Guest' ? 'Visitor Name' : 'Company/Driver Name',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Required';
+                      }
+                      if (value.trim().length < 3) {
+                        return 'Must be at least 3 characters';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                Semantics(
+                  label: 'Visitor Mobile Number Input',
+                  hint: 'Optional 10-digit mobile number',
+                  child: TextFormField(
+                    controller: _mobileController,
+                    decoration: InputDecoration(
+                      labelText: 'Mobile Number (Optional)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    keyboardType: TextInputType.phone,
+                    validator: (value) {
+                      if (value != null && value.trim().isNotEmpty) {
+                        if (!RegExp(r'^\d{10}$').hasMatch(value.trim())) {
+                          return 'Please enter a valid 10-digit mobile number';
+                        }
+                      }
+                      return null;
+                    },
+                  ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                 ),
                 const SizedBox(height: 24),
                 
@@ -244,7 +298,11 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                             labelText: _inviteSubType == 'ONCE' ? 'Date' : 'Start Date',
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                           ),
+<<<<<<< HEAD
                           child: Text(_validFrom == null ? 'Select' : DateFormat('MMM dd, yyyy').format(_validFrom!)),
+=======
+                          child: Text(_validFrom == null ? 'Select' : AppDateFormatter.formatDate(_validFrom!)),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                         ),
                       ),
                     ),
@@ -258,7 +316,11 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                               labelText: 'End Date',
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                             ),
+<<<<<<< HEAD
                             child: Text(_validTo == null ? 'Select' : DateFormat('MMM dd, yyyy').format(_validTo!)),
+=======
+                            child: Text(_validTo == null ? 'Select' : AppDateFormatter.formatDate(_validTo!)),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                           ),
                         ),
                       ),
@@ -300,6 +362,7 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                 const SizedBox(height: 40),
                 BlocBuilder<VisitorBloc, VisitorState>(
                   builder: (context, state) {
+<<<<<<< HEAD
                     return ElevatedButton(
                       onPressed: state is VisitorLoading ? null : _submit,
                       style: ElevatedButton.styleFrom(
@@ -313,6 +376,25 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                               'Generate Pass',
                               style: textTheme.bodyLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
                             ),
+=======
+                    return Semantics(
+                      button: true,
+                      label: 'Generate Pass Button',
+                      child: ElevatedButton(
+                        onPressed: state is VisitorLoading ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AsmitaPalette.deepNavy,
+                          minimumSize: const Size(double.infinity, 54),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        child: state is VisitorLoading
+                            ? const AsmitaLoadingIndicator(color: Colors.white, size: 24)
+                            : Text(
+                                'Generate Pass',
+                                style: textTheme.bodyLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
+                              ),
+                      ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                     );
                   },
                 ),

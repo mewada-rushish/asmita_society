@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+<<<<<<< HEAD
+=======
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/features/community/bloc/community_post_bloc.dart';
 import 'package:asmita_society/features/community/bloc/community_post_state.dart';
@@ -82,7 +86,11 @@ class _AllNoticesScreenState extends State<AllNoticesScreen> {
             child: BlocBuilder<CommunityPostBloc, CommunityPostState>(
               builder: (context, state) {
                 if (state.status == CommunityPostStatus.loading) {
+<<<<<<< HEAD
                   return const Center(child: CircularProgressIndicator());
+=======
+                  return const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28));
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                 }
                 if (state.status == CommunityPostStatus.loaded) {
                   final activePosts = state.activePosts;
@@ -97,8 +105,18 @@ class _AllNoticesScreenState extends State<AllNoticesScreen> {
                         },
                       ),
                       if (activePosts.isEmpty)
+<<<<<<< HEAD
                         const SliverFillRemaining(
                           child: Center(child: Text("No active notices right now.")),
+=======
+                        SliverFillRemaining(
+                          child: Center(
+                            child: Semantics(
+                              label: 'No active notices are currently available.',
+                              child: const Text("No active notices right now."),
+                            ),
+                          ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                         )
                       else
                         SliverPadding(
@@ -154,7 +172,16 @@ class _AllNoticesScreenState extends State<AllNoticesScreen> {
                     ],
                   );
                 }
+<<<<<<< HEAD
                 return const Center(child: Text('Failed to load notices.'));
+=======
+                return Center(
+                  child: Semantics(
+                    label: 'Failed to load notices.',
+                    child: const Text('Failed to load notices.'),
+                  ),
+                );
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
               },
             ),
           ),

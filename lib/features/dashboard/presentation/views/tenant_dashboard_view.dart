@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
+=======
+import 'package:flutter/services.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
+<<<<<<< HEAD
 import 'package:asmita_society/core/utils/dashboard_scroll_physics.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_raise_alert_wizard.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
+=======
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/utils/dashboard_scroll_physics.dart';
+import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
+import 'package:asmita_society/features/dashboard/widgets/asmita_raise_alert_wizard.dart';
+import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_bloc.dart';
@@ -20,6 +32,16 @@ import 'package:asmita_society/features/services/presentation/widgets/asmita_fac
 import 'package:asmita_society/features/community/presentation/widgets/community_post_item.dart';
 import 'package:asmita_society/features/community/bloc/community_post_bloc.dart';
 import 'package:asmita_society/features/community/bloc/community_post_state.dart';
+<<<<<<< HEAD
+=======
+import 'package:asmita_society/features/dashboard/bloc/quick_actions/quick_actions_bloc.dart';
+import 'package:asmita_society/features/dashboard/bloc/quick_actions/quick_actions_state.dart';
+import 'package:asmita_society/features/dashboard/data/models/quick_action_registry.dart';
+import 'package:asmita_society/features/dashboard/presentation/screens/customise_quick_actions_sheet.dart';
+import 'package:asmita_society/features/menu/presentation/screens/vehicles_screen.dart';
+import 'package:asmita_society/features/community/presentation/attachments/create_poll_dialog.dart';
+import 'package:asmita_society/features/dashboard/widgets/asmita_security_wizard.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 
 class TenantDashboardView extends StatefulWidget {
   final VoidCallback? onNavigateToCommunity; 
@@ -82,9 +104,26 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
     showDialog(
       context: context,
       builder: (context) => const AsmitaDialog(
+<<<<<<< HEAD
         content: AsmitaRaiseAlertWizard(),
       ),
     );
+=======
+        title: 'Raise an Alert',
+        content: AsmitaRaiseAlertWizard(),
+      ),
+    );
+  }
+
+  void _showSecurityModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const AsmitaDialog(
+        title: 'Security Alert',
+        content: AsmitaSecurityWizard(),
+      ),
+    );
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
   } 
 
   @override
@@ -268,6 +307,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+<<<<<<< HEAD
               Text('Quick Actions', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 15, fontWeight: FontWeight.w700)),
               Row(
                 children: [
@@ -288,12 +328,31 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                   children: [
                     Text('View All', style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.actionRed, fontSize: 13, fontWeight: FontWeight.w600)),
                     const Icon(Icons.chevron_right_rounded, color: AsmitaPalette.actionRed, size: 16),
+=======
+              Text('Quick Actions', style: textTheme.titleLarge?.copyWith(fontSize: 15, fontWeight: FontWeight.w700)),
+              InkWell(
+                onTap: () {
+                  showAsmitaBottomSheet(
+                    context: context,
+                    title: 'Customise Quick Actions',
+                    subtitle: 'Select and hold to reorder up to 7 actions for your dashboard.',
+                    isScrollControlled: true,
+                    child: const CustomiseQuickActionsSheet(),
+                  );
+                },
+                child: Row(
+                  children: [
+                    const Icon(Icons.tune_rounded, size: 14, color: AsmitaPalette.textLight),
+                    const SizedBox(width: 4),
+                    Text('Customise', style: textTheme.bodyMedium?.copyWith(fontSize: 12, fontWeight: FontWeight.w600)),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
+<<<<<<< HEAD
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,12 +366,116 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
               }),
               _buildGridItem(context, Icons.person_add_alt_1_rounded, 'Pre-Approve', badgeLabel: 'Safe mode', onTap: () => _showPreApproveModal(context)),
             ],
+=======
+          BlocBuilder<QuickActionsBloc, QuickActionsState>(
+            builder: (context, state) {
+              final selectedActions = state is QuickActionsLoaded 
+                  ? state.selectedActions 
+                  : QuickActionRegistry.defaultActions;
+                  
+              return GridView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 0.8,
+                ),
+                itemCount: selectedActions.length + 1, // +1 for View More
+                itemBuilder: (context, index) {
+                  if (index == selectedActions.length) {
+                    return _buildGridItem(
+                      context, 
+                      Icons.add_rounded, 
+                      'View More', 
+                      iconColor: AsmitaPalette.deepNavy,
+                      containerColor: Colors.white,
+                      hasBorder: true,
+                      borderColor: AsmitaPalette.deepNavy,
+                      onTap: widget.onNavigateToViewMore,
+                    );
+                  }
+                  
+                  final type = selectedActions[index];
+                  final meta = QuickActionRegistry.allActions[type]!;
+                  
+                  if (type == QuickActionType.posts) {
+                    return BlocBuilder<CommunityPostBloc, CommunityPostState>(
+                      builder: (context, postState) {
+                        return _buildGridItem(
+                          context, 
+                          meta.icon, 
+                          meta.label, 
+                          iconColor: meta.iconColor,
+                          containerColor: meta.containerColor,
+                          isUtilityButton: meta.isUtilityButton,
+                          notificationCount: postState.activePosts.isNotEmpty ? postState.activePosts.length : null,
+                          onTap: widget.onNavigateToAllNotices,
+                        );
+                      },
+                    );
+                  }
+                  
+                  String? badgeLabel;
+                  if (type == QuickActionType.preApprove) badgeLabel = 'Safe mode';
+                  
+                  return _buildGridItem(
+                    context, 
+                    meta.icon, 
+                    meta.label,
+                    iconColor: meta.iconColor,
+                    containerColor: meta.containerColor,
+                    isUtilityButton: meta.isUtilityButton,
+                    badgeLabel: badgeLabel,
+                    onTap: _getOnTapForAction(type, context),
+                  );
+                },
+              );
+            },
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
           ),
         ],
       ),
     );
   }
 
+<<<<<<< HEAD
+=======
+  VoidCallback? _getOnTapForAction(QuickActionType type, BuildContext context) {
+    switch (type) {
+      case QuickActionType.preApprove: return () => _showPreApproveModal(context);
+      case QuickActionType.security: return () => _showSecurityModal(context);
+      case QuickActionType.askSociety: return widget.onNavigateToCommunity;
+      case QuickActionType.posts: return widget.onNavigateToAllNotices;
+      case QuickActionType.maintenance: return widget.onNavigateToServices;
+      case QuickActionType.dailyHelp: return widget.onNavigateToDailyHelp;
+      case QuickActionType.raiseAlert: return () => _showRaiseAlertModal(context);
+      case QuickActionType.myVehicles: 
+        return () {
+           Navigator.push(context, MaterialPageRoute(builder: (context) => const VehiclesScreen()));
+        };
+      case QuickActionType.opinionPoll:
+        return () {
+           showAsmitaBottomSheet(
+             context: context, 
+             title: 'Create Opinion Poll',
+             isScrollControlled: true,
+             child: const CreatePollDialog()
+           );
+        };
+      case QuickActionType.deliveries:
+      case QuickActionType.complaints:
+      case QuickActionType.management:
+      case QuickActionType.utilityPay:
+      case QuickActionType.amenities:
+      case QuickActionType.emergency:
+        return widget.onNavigateToViewMore;
+    }
+  }
+
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
   Widget _buildGateSyncModule(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Padding(
@@ -358,7 +521,14 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                   if (todayEntries.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.only(top: 12.0),
+<<<<<<< HEAD
                       child: Text('You have no new updates', style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.textLight)),
+=======
+                      child: Semantics(
+                        label: 'You have no new updates for today.',
+                        child: Text('You have no new updates', style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.textLight)),
+                      ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                     );
                   }
 
@@ -427,7 +597,11 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
               }
                 return const Padding(
                   padding: EdgeInsets.all(8.0),
+<<<<<<< HEAD
                   child: CircularProgressIndicator(),
+=======
+                  child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                 );
               },
             ),
@@ -441,7 +615,11 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
     return BlocBuilder<CommunityPostBloc, CommunityPostState>(
       builder: (context, state) {
         if (state.status == CommunityPostStatus.loading && state.posts.isEmpty) {
+<<<<<<< HEAD
           return const Center(child: CircularProgressIndicator());
+=======
+          return const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28));
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         }
 
         final activePosts = state.posts.where((p) {
@@ -472,7 +650,16 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
               ),
+<<<<<<< HEAD
               child: const Center(child: Text("No community posts yet.")),
+=======
+              child: Center(
+                child: Semantics(
+                  label: 'No community posts available.',
+                  child: const Text("No community posts yet."),
+                ),
+              ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
             ),
           );
         }
@@ -552,7 +739,11 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
     return BlocBuilder<AmenitiesBloc, AmenitiesState>(
       builder: (context, state) {
         if (state.status == AmenitiesStatus.loading && state.amenities.isEmpty) {
+<<<<<<< HEAD
           return const Center(child: CircularProgressIndicator());
+=======
+          return const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28));
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         }
 
         // Count booking frequency by amenity ID
@@ -629,6 +820,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
     );
   }
 
+<<<<<<< HEAD
   Widget _buildGridItem(BuildContext context, IconData icon, String label, {String? badgeLabel, int? notificationCount, Color containerColor = AsmitaPalette.deepNavy, Color iconColor = Colors.white, bool isUtilityButton = false, VoidCallback? onTap}) {
     final textTheme = Theme.of(context).textTheme;
     return SizedBox(
@@ -640,6 +832,26 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
         highlightColor: Colors.transparent,
         child: Column(
           mainAxisSize: MainAxisSize.min,
+=======
+  Widget _buildGridItem(BuildContext context, IconData icon, String label, {String? badgeLabel, int? notificationCount, Color containerColor = AsmitaPalette.deepNavy, Color iconColor = Colors.white, bool isUtilityButton = false, bool hasBorder = false, Color? borderColor, VoidCallback? onTap}) {
+    final textTheme = Theme.of(context).textTheme;
+    return Semantics(
+      label: label,
+      button: true,
+      hint: onTap != null ? 'Double tap to open $label' : null,
+      child: SizedBox(
+        width: 78,
+        child: InkWell(
+          onTap: onTap != null ? () {
+            if (isUtilityButton) HapticFeedback.vibrate();
+            onTap();
+          } : null,
+          borderRadius: BorderRadius.circular(16),
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
           children: [
             Stack(
               clipBehavior: Clip.none,
@@ -650,7 +862,13 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                   decoration: BoxDecoration(
                     color: containerColor,
                     borderRadius: BorderRadius.circular(16),
+<<<<<<< HEAD
                     border: isUtilityButton ? Border.all(color: AsmitaPalette.borderGrey, width: 1.5) : null,
+=======
+                    border: hasBorder 
+                        ? Border.all(color: borderColor ?? AsmitaPalette.borderGrey, width: 1.5)
+                        : (isUtilityButton ? Border.all(color: AsmitaPalette.borderGrey, width: 1.5) : null),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                     boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
                   ),
                   child: Icon(icon, color: isUtilityButton ? AsmitaPalette.actionRed : iconColor, size: 24),
@@ -666,6 +884,10 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
           ],
         ),
       ),
+<<<<<<< HEAD
+=======
+    ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
     );
   }
 
@@ -673,8 +895,16 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
 
   Widget _buildCircularActionHook(BuildContext context, IconData icon, String label, {bool hasBadge = false, Color iconColor = AsmitaPalette.deepNavy}) {
     final textTheme = Theme.of(context).textTheme;
+<<<<<<< HEAD
     return Column(
       mainAxisSize: MainAxisSize.min,
+=======
+    return Semantics(
+      label: label,
+      button: true,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
       children: [
         Stack(
           clipBehavior: Clip.none,
@@ -692,6 +922,10 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
         const SizedBox(height: 6),
         Text(label, style: textTheme.bodyMedium?.copyWith(fontSize: 10, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
       ],
+<<<<<<< HEAD
+=======
+    ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
     );
   }
 }

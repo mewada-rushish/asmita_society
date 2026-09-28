@@ -7,6 +7,10 @@ import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/auth/data/models/user_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+<<<<<<< HEAD
+=======
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/features/menu/data/models/vehicle_model.dart';
 import 'package:asmita_society/features/menu/presentation/providers/vehicles_provider.dart';
@@ -240,7 +244,11 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
           Text('PARKING SLOT (OPTIONAL)', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AsmitaPalette.textLight, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
           const SizedBox(height: 8),
           if (isLoadingSlots)
+<<<<<<< HEAD
             const Center(child: CupertinoActivityIndicator())
+=======
+            const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28))
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
           else if (parkingSlots.isEmpty)
             const Text("No parking slots available")
           else
@@ -282,7 +290,11 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
               padding: const EdgeInsets.symmetric(vertical: 16),
               onPressed: _saveVehicle,
               child: isSaving 
+<<<<<<< HEAD
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+=======
+                  ? const SizedBox(width: 20, height: 20, child: AsmitaLoadingIndicator(color: Colors.white, size: 20))
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                   : Text(widget.vehicle == null ? 'Save Vehicle' : 'Update Vehicle', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
             ),
           ),

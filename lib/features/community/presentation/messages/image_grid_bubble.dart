@@ -2,6 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+<<<<<<< HEAD
+=======
+import '../../../../../core/widgets/asmita_loading_indicator.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import '../../data/models/chat_message_model.dart';
 import '../providers/community_provider.dart';
 import '../screens/full_screen_image_viewer.dart';
@@ -211,9 +215,15 @@ class ImageGridBubble extends ConsumerWidget {
                                 const SizedBox(
                                   height: 10,
                                   width: 10,
+<<<<<<< HEAD
                                   child: CircularProgressIndicator(
                                     strokeWidth: 1.5,
                                     color: Colors.white,
+=======
+                                  child: AsmitaLoadingIndicator(
+                                    color: Colors.white,
+                                    size: 10,
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                                   ),
                                 )
                               else

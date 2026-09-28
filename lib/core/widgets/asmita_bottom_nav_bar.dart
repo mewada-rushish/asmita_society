@@ -5,11 +5,19 @@ import '../constants/design_system.dart';
 class AsmitaBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
+<<<<<<< HEAD
+=======
+  final String? userRole;
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 
   const AsmitaBottomNavBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
+<<<<<<< HEAD
+=======
+    this.userRole,
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
   });
 
   @override
@@ -36,16 +44,33 @@ class AsmitaBottomNavBar extends StatelessWidget {
           padding: EdgeInsets.only(bottom: bottomPadding),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
+<<<<<<< HEAD
             children: List.generate(5, (index) {
               final isSelected = currentIndex == index;
               return _buildNavigationItem(index, isSelected);
             }),
+=======
+            children: _getVisibleIndices().map((index) {
+              final isSelected = currentIndex == index;
+              return _buildNavigationItem(index, isSelected);
+            }).toList(),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
           ),
         ),
       ),
     );
   }
 
+<<<<<<< HEAD
+=======
+  List<int> _getVisibleIndices() {
+    if (userRole?.toLowerCase() == 'guard') {
+      return [0, 6, 3, 5, 4]; // Home, Checked In, History, Scan, Menu
+    }
+    return [0, 1, 2, 3, 4]; // All tabs
+  }
+
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
   Widget _buildNavigationItem(int index, bool isSelected) {
     return InkWell(
       onTap: () => onTap(index),
@@ -95,6 +120,13 @@ class AsmitaBottomNavBar extends StatelessWidget {
         return SvgPicture.asset('assets/icons/community.svg', width: 32, height: 32);
       case 3:
         return SvgPicture.asset('assets/icons/history.svg', width: 32, height: 32);
+<<<<<<< HEAD
+=======
+      case 5:
+        return const Icon(Icons.qr_code_scanner_rounded, size: 30, color: Colors.white);
+      case 6:
+        return const Icon(Icons.how_to_reg, size: 30, color: Colors.white);
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
       case 4:
       default:
         return const Icon(Icons.more_horiz_rounded, size: 32, color: Colors.white);

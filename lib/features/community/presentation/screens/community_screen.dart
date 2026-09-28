@@ -1,8 +1,15 @@
+<<<<<<< HEAD
 import 'dart:async';
+=======
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:asmita_society/core/constants/design_system.dart';
+<<<<<<< HEAD
+=======
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
@@ -29,12 +36,20 @@ class CommunityScreen extends ConsumerStatefulWidget {
 
 class _CommunityScreenState extends ConsumerState<CommunityScreen> {
   final ScrollController _scrollController = ScrollController();
+<<<<<<< HEAD
   Timer? _pollingTimer;
+=======
+  CommunityNotifier? _notifier;
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+<<<<<<< HEAD
+=======
+    _notifier = ref.read(communityProvider.notifier);
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authState = context.read<AuthBloc>().state;
@@ -44,6 +59,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
         userId = authState.user.userId;
         userName = authState.user.fullName;
       }
+<<<<<<< HEAD
       ref
           .read(communityProvider.notifier)
           .loadMessages(currentUserId: userId, currentUserName: userName);
@@ -64,6 +80,21 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
         ref.read(communityProvider.notifier).pollNewMessages();
       }
     });
+=======
+      _notifier?.loadMessages(currentUserId: userId, currentUserName: userName);
+    });
+
+    _notifier?.startPolling(
+      isAtBottom: () {
+        if (!mounted) return false;
+        if (_scrollController.hasClients) {
+          return _scrollController.position.pixels <=
+                 _scrollController.position.minScrollExtent + 150;
+        }
+        return true;
+      },
+    );
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
   }
 
   void _onScroll() {
@@ -75,7 +106,11 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
         if (state is CommunityLoaded &&
             !state.hasReachedMax &&
             !state.isLoadingMore) {
+<<<<<<< HEAD
           ref.read(communityProvider.notifier).loadMoreMessages();
+=======
+          _notifier?.loadMoreMessages();
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         }
       }
     }
@@ -83,8 +118,14 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
 
   @override
   void dispose() {
+<<<<<<< HEAD
     _pollingTimer?.cancel();
     _scrollController.dispose();
+=======
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _notifier?.stopPolling();
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
     super.dispose();
   }
 
@@ -126,8 +167,14 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                           const SliverFillRemaining(
                             hasScrollBody: false,
                             child: Center(
+<<<<<<< HEAD
                               child: CircularProgressIndicator(
                                 color: AsmitaPalette.deepNavy,
+=======
+                              child: AsmitaLoadingIndicator(
+                                color: AsmitaPalette.deepNavy,
+                                size: 28,
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                               ),
                             ),
                           )
@@ -136,11 +183,47 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                             child: RotatedBox(
                               quarterTurns: 2,
                               child: Center(
+<<<<<<< HEAD
                                 child: Text(
                                   state.error,
                                   style: const TextStyle(
                                     color: AsmitaPalette.actionRed,
                                   ),
+=======
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      state.error,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: AsmitaPalette.actionRed,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ElevatedButton.icon(
+                                      onPressed: () {
+                                        final authState = context.read<AuthBloc>().state;
+                                        int? currentUserId;
+                                        String? currentUserName;
+                                        if (authState is AuthAuthenticated) {
+                                          currentUserId = authState.user.userId;
+                                          currentUserName = authState.user.fullName;
+                                        }
+                                        ref.read(communityProvider.notifier).loadMessages(
+                                          currentUserId: currentUserId,
+                                          currentUserName: currentUserName,
+                                        );
+                                      },
+                                      icon: const Icon(Icons.refresh),
+                                      label: const Text('Retry'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AsmitaPalette.actionRed,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                                 ),
                               ),
                             ),

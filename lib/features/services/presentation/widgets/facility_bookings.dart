@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+<<<<<<< HEAD
+=======
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import 'asmita_facility_booking_wizard.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
@@ -44,7 +48,11 @@ class FacilityBookings extends StatelessWidget {
     return BlocBuilder<AmenitiesBloc, AmenitiesState>(
       builder: (context, state) {
         if (state.status == AmenitiesStatus.loading && state.amenities.isEmpty) {
+<<<<<<< HEAD
           return const Center(child: CircularProgressIndicator());
+=======
+          return const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28));
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         }
         
         final amenities = state.amenities;

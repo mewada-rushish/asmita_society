@@ -9,6 +9,10 @@ class VisitorBloc extends Bloc<VisitorEvent, VisitorState> {
   VisitorBloc({required this.visitorRepository}) : super(VisitorInitial()) {
     on<LoadMyHistory>(_onLoadMyHistory);
     on<CreatePreApprovedInviteEvent>(_onCreatePreApprovedInvite);
+<<<<<<< HEAD
+=======
+    on<ClearVisitorHistory>((event, emit) => emit(VisitorInitial()));
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
   }
 
   Future<void> _onLoadMyHistory(LoadMyHistory event, Emitter<VisitorState> emit) async {
@@ -16,7 +20,17 @@ class VisitorBloc extends Bloc<VisitorEvent, VisitorState> {
       emit(VisitorLoading());
     }
     try {
+<<<<<<< HEAD
       final history = await visitorRepository.getMyHistory(event.residentId);
+=======
+      final history = await visitorRepository.getMyHistory(
+        residentId: event.residentId,
+        status: event.status,
+        startDate: event.startDate,
+        endDate: event.endDate,
+        visitorTypeId: event.visitorTypeId,
+      );
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
       emit(VisitorHistoryLoaded(history: history));
     } catch (e) {
       emit(VisitorError(message: e.toString().replaceAll('Exception: ', '')));

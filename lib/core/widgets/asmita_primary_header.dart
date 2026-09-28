@@ -15,6 +15,13 @@ class AsmitaPrimaryHeader extends StatelessWidget {
   final bool showBackButton;
   final Color? backgroundColor;
   final double bottomPadding;
+<<<<<<< HEAD
+=======
+  final String? subtitleOverride;
+  final Widget? trailingActions;
+  final bool allowPropertySwitching;
+  final VoidCallback? onProfilePressed;
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 
   const AsmitaPrimaryHeader({
     super.key,
@@ -24,6 +31,13 @@ class AsmitaPrimaryHeader extends StatelessWidget {
     this.showBackButton = false,
     this.backgroundColor,
     this.bottomPadding = 12.0,
+<<<<<<< HEAD
+=======
+    this.subtitleOverride,
+    this.trailingActions,
+    this.allowPropertySwitching = true,
+    this.onProfilePressed,
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
   });
 
   void _showPropertiesBottomSheet(BuildContext context, UserModel user) {
@@ -150,10 +164,25 @@ class AsmitaPrimaryHeader extends StatelessWidget {
           if (user.societyName != null && user.societyName!.isNotEmpty) {
             societyName = user.societyName!;
           }
+<<<<<<< HEAD
           if (user.flatMappings.isNotEmpty) {
             final mapping = user.flatMappings.first;
             flatDetails = '${mapping.towerName} - ${mapping.flatNumber}';
           }
+=======
+          if (subtitleOverride != null) {
+            flatDetails = subtitleOverride!;
+          } else if (user.flatMappings.isNotEmpty) {
+            final mapping = user.flatMappings.first;
+            flatDetails = '${mapping.towerName} - ${mapping.flatNumber}';
+          } else if (user.systemRole?.isNotEmpty == true || user.primaryRole.isNotEmpty) {
+            flatDetails = user.systemRole?.isNotEmpty == true ? user.systemRole! : user.primaryRole;
+            if (flatDetails.isNotEmpty) {
+              flatDetails = flatDetails.substring(0, 1).toUpperCase() + flatDetails.substring(1).toLowerCase();
+            }
+          }
+          
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
           if (user.fullName.isNotEmpty) {
             final parts = user.fullName.split(' ').where((s) => s.isNotEmpty).toList();
             if (parts.length > 1) {
@@ -208,11 +237,19 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: InkWell(
+<<<<<<< HEAD
                     onTap: () {
                       if (authState is AuthAuthenticated) {
                         _showPropertiesBottomSheet(context, authState.user);
                       }
                     },
+=======
+                    onTap: allowPropertySwitching ? () {
+                      if (authState is AuthAuthenticated) {
+                        _showPropertiesBottomSheet(context, authState.user);
+                      }
+                    } : null,
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                     borderRadius: BorderRadius.circular(4),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,8 +269,15 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
+<<<<<<< HEAD
                             const SizedBox(width: 2),
                             Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.deepNavy.withValues(alpha: 0.8), size: 18),
+=======
+                            if (allowPropertySwitching) ...[
+                              const SizedBox(width: 2),
+                              Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.deepNavy.withValues(alpha: 0.8), size: 18),
+                            ],
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -254,6 +298,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
               ],
             ),
           ),
+<<<<<<< HEAD
           InkWell(
             onTap: onSearchPressed ?? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AsmitaSearchScreen())),
             borderRadius: BorderRadius.circular(20),
@@ -276,6 +321,37 @@ class AsmitaPrimaryHeader extends StatelessWidget {
             radius: 17,
             backgroundColor: AsmitaPalette.deepNavy,
             child: Text(initials, style: textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+=======
+          if (trailingActions != null) 
+            trailingActions!
+          else ...[
+            InkWell(
+              onTap: onSearchPressed ?? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AsmitaSearchScreen())),
+              borderRadius: BorderRadius.circular(20),
+              child: const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Icon(Icons.search_rounded, color: AsmitaPalette.deepNavy, size: 24),
+              ),
+            ),
+            const SizedBox(width: 4),
+            InkWell(
+              onTap: onChatPressed,
+              borderRadius: BorderRadius.circular(20),
+              child: const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Icon(Icons.chat_bubble_outline_rounded, color: AsmitaPalette.deepNavy, size: 24),
+              ),
+            ),
+          ],
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: onProfilePressed,
+            child: CircleAvatar(
+              radius: 17,
+              backgroundColor: AsmitaPalette.deepNavy,
+              child: Text(initials, style: textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+            ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
           ),
               ],
             ),

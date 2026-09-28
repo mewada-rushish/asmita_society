@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+import 'package:asmita_society/core/utils/date_formatter.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/design_system.dart';
@@ -29,7 +33,11 @@ class VisitorUtils {
       if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
         return 'Today';
       }
+<<<<<<< HEAD
       return DateFormat('MMM dd, yyyy').format(dt);
+=======
+      return AppDateFormatter.formatDate(dt);
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
     } catch (_) {
       return dateStr.split('T')[0];
     }

@@ -3,7 +3,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_event.dart';
+<<<<<<< HEAD
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
+=======
+import 'package:asmita_society/features/auth/bloc/auth_state.dart';
+import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
+import 'package:asmita_society/core/widgets/asmita_dialog.dart';
+import 'package:asmita_society/features/visitor_management/bloc/visitor_bloc.dart';
+import 'package:asmita_society/features/visitor_management/bloc/visitor_event.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 
 import 'committee_members_screen.dart';
 import 'documents_screen.dart';
@@ -54,6 +62,7 @@ class MenuScreen extends StatelessWidget {
                 children: [
             _buildProfileCard(context),
             const SizedBox(height: 24),
+<<<<<<< HEAD
             _buildMenuSection(
               context,
               title: 'My Household',
@@ -74,6 +83,30 @@ class MenuScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
+=======
+            if (userRole.toLowerCase() != 'guard') ...[
+              _buildMenuSection(
+                context,
+                title: 'My Household',
+                items: [
+                  _buildMenuItem(context, Icons.people_outline_rounded, 'Family Members'),
+                  _buildMenuItem(context, Icons.directions_car_filled_outlined, 'Vehicles'),
+                  _buildMenuItem(context, Icons.pets_rounded, 'Pets'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildMenuSection(
+                context,
+                title: 'Society Info',
+                items: [
+                  _buildMenuItem(context, Icons.contact_page_outlined, 'Committee Members'),
+                  _buildMenuItem(context, Icons.gavel_rounded, 'Rules & Regulations'),
+                  _buildMenuItem(context, Icons.description_outlined, 'Important Documents'),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
             _buildMenuSection(
               context,
               title: 'Application',
@@ -97,10 +130,13 @@ class MenuScreen extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     return InkWell(
       onTap: () {
+<<<<<<< HEAD
         // We'll import the profile screen later, but since it's already in the same directory, we can navigate
         Navigator.pop(context); // Close the tab
         if (onNavigateToTab != null) onNavigateToTab!(4); // Dummy index just to trigger rebuild or we can navigate directly
         // Wait, navigating from a tab means we just push on top of it.
+=======
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(onNavigateToTab: onNavigateToTab)));
       },
       borderRadius: BorderRadius.circular(20),
@@ -118,6 +154,7 @@ class MenuScreen extends StatelessWidget {
           ],
         ),
       padding: const EdgeInsets.all(16),
+<<<<<<< HEAD
       child: Row(
         children: [
           CircleAvatar(
@@ -141,6 +178,65 @@ class MenuScreen extends StatelessWidget {
           ),
           const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AsmitaPalette.textLight),
         ],
+=======
+      child: BlocBuilder<AuthBloc, AuthState>(
+        builder: (context, authState) {
+          String name = 'Loading...';
+          String initials = '--';
+          String roleText = userRole.toUpperCase();
+
+          if (authState is AuthAuthenticated) {
+            final user = authState.user;
+            name = user.fullName.isNotEmpty ? user.fullName : 'User';
+            
+            final parts = name.split(' ').where((s) => s.isNotEmpty).toList();
+            if (parts.length > 1) {
+              initials = '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+            } else if (parts.isNotEmpty) {
+              initials = parts[0][0].toUpperCase();
+            }
+            
+            if (userRole.toLowerCase() != 'guard') {
+              if (user.flatMappings.isNotEmpty) {
+                final flat = user.flatMappings.first;
+                final tower = flat.towerName.isNotEmpty ? '${flat.towerName}-' : '';
+                roleText = 'Flat $tower${flat.flatNumber} • ${userRole.toUpperCase()}';
+              }
+            }
+          }
+
+          return Row(
+            children: [
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: AsmitaPalette.deepNavy,
+                child: Text(
+                  initials, 
+                  style: textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 18)
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name, style: textTheme.titleLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 4),
+                    Text(
+                      roleText,
+                      style: textTheme.bodyMedium?.copyWith(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AsmitaPalette.actionRed),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AsmitaPalette.textLight),
+            ],
+          );
+        },
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
       ),
       ),
     );
@@ -176,7 +272,41 @@ class MenuScreen extends StatelessWidget {
     return InkWell(
       onTap: () {
         if (isDestructive && title == 'Logout') {
+<<<<<<< HEAD
           context.read<AuthBloc>().add(AuthLogoutRequested());
+=======
+          AsmitaDialog.show(
+            context: context,
+            title: 'Logout',
+            content: const Text(
+              'Are you sure you want to logout? You will need to sign in again to access society features.',
+              style: TextStyle(fontFamily: 'Poppins', fontSize: 14, color: AsmitaPalette.textDark),
+            ),
+            actions: [
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AsmitaPalette.borderGrey),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Cancel', style: TextStyle(color: AsmitaPalette.deepNavy, fontWeight: FontWeight.w600)),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  context.read<VisitorBloc>().add(ClearVisitorHistory());
+                  context.read<AuthBloc>().add(AuthLogoutRequested());
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AsmitaPalette.actionRed,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Logout', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              ),
+            ],
+          );
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
           return;
         }
         

@@ -21,8 +21,13 @@ plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
     id("com.android.application") version "9.0.1" apply false
     // START: FlutterFire Configuration
+<<<<<<< HEAD
     id("com.google.gms.google-services") version("4.3.15") apply false
     id("com.google.firebase.crashlytics") version("2.8.1") apply false
+=======
+    id("com.google.gms.google-services") version("4.4.2") apply false
+    id("com.google.firebase.crashlytics") version("3.0.2") apply false
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
     // END: FlutterFire Configuration
     id("org.jetbrains.kotlin.android") version "2.3.20" apply false
 }

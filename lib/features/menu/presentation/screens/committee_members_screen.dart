@@ -1,7 +1,15 @@
+<<<<<<< HEAD
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+=======
+import 'package:asmita_society/core/utils/date_formatter.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/features/menu/presentation/providers/society_provider.dart';
@@ -56,7 +64,11 @@ class CommitteeMembersScreen extends ConsumerWidget {
                     ],
                   );
                 },
+<<<<<<< HEAD
                 loading: () => const Center(child: CircularProgressIndicator()),
+=======
+                loading: () => const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28)),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                 error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
               ),
             ),
@@ -71,7 +83,11 @@ class CommitteeMembersScreen extends ConsumerWidget {
     if (member.createdAt != null && member.createdAt!.isNotEmpty) {
       try {
         final date = DateTime.parse(member.createdAt!);
+<<<<<<< HEAD
         formattedDate = DateFormat('dd MMM yyyy').format(date);
+=======
+        formattedDate = AppDateFormatter.formatDate(date);
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
       } catch (e) {
         formattedDate = member.createdAt!;
       }

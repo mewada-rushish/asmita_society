@@ -5,7 +5,10 @@ enum AppEnvironment { development, production }
 class EnvConfig {
   static AppEnvironment get currentEnvironment => AppEnvironment.production;
 
+<<<<<<< HEAD
   static const String _prodBaseUrl = 'https://admin.myasmita.com';
+=======
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 
   /// Resolves the base URL based on the current environment and platform.
   /// Resolves the base URL using dart-define with a fallback to production.
@@ -14,7 +17,12 @@ class EnvConfig {
     if (envUrl.isNotEmpty) {
       return envUrl;
     }
+<<<<<<< HEAD
     return _prodBaseUrl;
+=======
+    // Default fallback to production backend
+    return 'https://admin.myasmita.com';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
   }
 
   /// Endpoint for initiating OTP dispatch.
@@ -44,8 +52,18 @@ class EnvConfig {
   /// Guard Endpoints
   static String get gateSearchInvite => '$baseUrl/app-api/gate/pre-approved-invites/search';
   static String get gateExpectedInvites => '$baseUrl/app-api/gate/pre-approved-invites/expected';
+<<<<<<< HEAD
   static String gateCheckInInvite(String id) => '$baseUrl/app-api/gate/pre-approved-invites/$id/check-in';
   static String get guardVisitorEntries => '$baseUrl/app-api/guard/visitor-entries';
+=======
+  static String get gateLogs => '$baseUrl/app-api/gate/logs';
+  static String get gateCheckedInLogs => '$baseUrl/app-api/gate/logs';
+  static String gateCheckInInvite(String id) => '$baseUrl/app-api/gate/pre-approved-invites/$id/check-in';
+  static String gateCheckOutInvite(String id) => '$baseUrl/app-api/gate/pre-approved-invites/$id/check-out';
+  static String get guardVisitorEntries => '$baseUrl/app-api/guard/visitor-entries';
+  static String guardVisitorCheckOut(String id) => '$baseUrl/app-api/visitor-entries/$id/check-out';
+  static String guardVisitorCheckIn(String id) => '$baseUrl/app-api/visitor-entries/$id/check-in';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
   static String get createVisitorEntry => '$baseUrl/app-api/visitor-entries';
 
   /// Global Search

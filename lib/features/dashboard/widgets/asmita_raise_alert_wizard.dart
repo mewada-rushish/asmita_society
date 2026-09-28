@@ -58,6 +58,7 @@ class _AsmitaRaiseAlertWizardState extends State<AsmitaRaiseAlertWizard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: _alertOptions.map((option) {
+<<<<<<< HEAD
               return _buildEmergencyCircularButton(
                 context,
                 label: option['label'],
@@ -68,6 +69,20 @@ class _AsmitaRaiseAlertWizardState extends State<AsmitaRaiseAlertWizard> {
                     _isConfirmed = true; // Switch view within the dialog box
                   });
                 },
+=======
+              return Expanded(
+                child: _buildEmergencyCircularButton(
+                  context,
+                  label: option['label'],
+                  icon: option['icon'],
+                  onTap: () {
+                    setState(() {
+                      _selectedEmergencyType = option['label'];
+                      _isConfirmed = true; // Switch view within the dialog box
+                    });
+                  },
+                ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
               );
             }).toList(),
           ),
@@ -85,12 +100,19 @@ class _AsmitaRaiseAlertWizardState extends State<AsmitaRaiseAlertWizard> {
   }) {
     final textTheme = Theme.of(context).textTheme;
 
+<<<<<<< HEAD
     return SizedBox(
       width: 76,
       child: InkWell(
         onTap: onTap,
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
+=======
+    return InkWell(
+      onTap: onTap,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -135,7 +157,10 @@ class _AsmitaRaiseAlertWizardState extends State<AsmitaRaiseAlertWizard> {
             ),
           ],
         ),
+<<<<<<< HEAD
       ),
+=======
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
     );
   }
 

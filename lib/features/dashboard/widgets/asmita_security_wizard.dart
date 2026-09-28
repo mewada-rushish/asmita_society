@@ -131,8 +131,12 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
             final icon = item['icon'] as IconData;
             final selected = _selectedAction == label;
 
+<<<<<<< HEAD
             return SizedBox(
               width: 76,
+=======
+            return Expanded(
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
               child: InkWell(
                 onTap: () {
                   setState(() => _selectedAction = label);
@@ -220,8 +224,12 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
             final icon = item['icon'] as IconData;
             final selected = _selectedEmergencyType == label;
 
+<<<<<<< HEAD
             return SizedBox(
               width: 76,
+=======
+            return Expanded(
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
               child: InkWell(
                 onTap: () {
                   setState(() {

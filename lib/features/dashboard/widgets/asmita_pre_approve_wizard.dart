@@ -1,9 +1,21 @@
+<<<<<<< HEAD
 import 'package:dio/dio.dart';
 import '../../../../core/config/env_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+=======
+import 'dart:convert';
+import 'package:dio/dio.dart';
+import '../../../../core/config/env_config.dart';
+import '../../../../core/security/secure_storage_service.dart';
+import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/asmita_loading_indicator.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_state.dart';
 import '../../auth/data/models/user_model.dart';
@@ -15,6 +27,7 @@ import '../../visitor_management/bloc/guard_gate_event.dart';
 import '../../visitor_management/bloc/guard_gate_state.dart';
 import '../../visitor_management/presentation/screens/invite_pass_screen.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
+<<<<<<< HEAD
 
 class AsmitaPreApproveWizard extends StatefulWidget {
   final bool isGuardMode;
@@ -23,6 +36,13 @@ class AsmitaPreApproveWizard extends StatefulWidget {
     super.key,
     this.isGuardMode = false,
   });
+=======
+import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
+class AsmitaPreApproveWizard extends StatefulWidget {
+  final bool isGuardMode;
+
+  const AsmitaPreApproveWizard({super.key, this.isGuardMode = false});
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 
   @override
   State<AsmitaPreApproveWizard> createState() => _AsmitaPreApproveWizardState();
@@ -37,10 +57,32 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   late TabController _tabController;
   final ScrollController _scrollController = ScrollController();
 
+<<<<<<< HEAD
   FlatMapping? _selectedFlatMapping;
   List<FlatMapping> _societyFlats = [];
   bool _isLoadingFlats = false;
 
+=======
+  List<FlatMapping> _selectedFlatMappings = [];
+  int? _selectedTowerId;
+  List<FlatMapping> _societyFlats = [];
+  bool _isLoadingFlats = false;
+
+  List<Map<String, dynamic>> _getTowers() {
+    final towers = <int, String>{};
+    for (final flat in _societyFlats) {
+      towers[flat.towerId] = flat.towerName;
+    }
+    return towers.entries
+        .map<Map<String, dynamic>>((e) => <String, dynamic>{'id': e.key, 'name': e.value})
+        .toList();
+  }
+
+  List<FlatMapping> _getFlatsForTower(int towerId) {
+    return _societyFlats.where((f) => f.towerId == towerId).toList();
+  }
+
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
   final TextEditingController _visitorNameController = TextEditingController();
   final TextEditingController _mobileNumberController = TextEditingController();
 
@@ -68,11 +110,19 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+<<<<<<< HEAD
     if (_selectedFlatMapping == null) {
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated &&
           authState.user.flatMappings.isNotEmpty) {
         _selectedFlatMapping = authState.user.flatMappings.first;
+=======
+    if (_selectedFlatMappings.isEmpty) {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AuthAuthenticated &&
+          authState.user.flatMappings.isNotEmpty) {
+        _selectedFlatMappings = [authState.user.flatMappings.first];
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
       }
     }
   }
@@ -95,6 +145,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
         final societyId = authState.user.societyId;
+<<<<<<< HEAD
         final response = await Dio().get(
           '${EnvConfig.baseUrl}/app-api/flats/society/$societyId',
         );
@@ -109,6 +160,51 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               towerName: f['tower_name'] ?? 'Tower',
               ownershipType: 'tenant', // Dummy value
             )).toList();
+=======
+        final secureStorage = SecureStorageService();
+        final token = await secureStorage.getToken();
+        
+        // Fetch towers first to map tower_name
+        final towersResponse = await Dio().get(
+          '${EnvConfig.towers}?society_id=$societyId',
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+        final Map<int, String> towerNames = {};
+        if (towersResponse.statusCode == 200 && towersResponse.data['success'] == true) {
+          final List<dynamic> towersJson = towersResponse.data['data'];
+          for (var t in towersJson) {
+            final tId = t['tower_id'] is int ? t['tower_id'] : int.tryParse(t['tower_id'].toString()) ?? 0;
+            towerNames[tId] = t['tower_name']?.toString() ?? 'Tower $tId';
+          }
+        }
+
+        final response = await Dio().get(
+          '${EnvConfig.baseUrl}/api/flats/society/$societyId',
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+        if (response.statusCode == 200) {
+          dynamic data = response.data;
+          if (data is String) {
+            data = jsonDecode(data);
+          }
+          
+          final List<dynamic> flatsJson = data is List ? data : (data['flats'] ?? []);
+          
+          setState(() {
+            _societyFlats = flatsJson
+                .map((f) {
+                  final tId = f['tower_id'] is int ? f['tower_id'] : int.tryParse(f['tower_id']?.toString() ?? '0') ?? 0;
+                  return FlatMapping(
+                    mappingId: 0,
+                    flatId: f['flat_id'] is int ? f['flat_id'] : int.tryParse(f['flat_id']?.toString() ?? '0') ?? 0,
+                    flatNumber: f['flat_number']?.toString() ?? '',
+                    towerId: tId,
+                    towerName: towerNames[tId] ?? 'Tower $tId',
+                    ownershipType: 'tenant', // Dummy value
+                  );
+                })
+                .toList();
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
           });
         }
       }
@@ -139,6 +235,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     if (authState is! AuthAuthenticated) return;
 
     final user = authState.user;
+<<<<<<< HEAD
     FlatMapping? flat = _selectedFlatMapping;
 
     if (flat == null && user.flatMappings.isNotEmpty && !widget.isGuardMode) {
@@ -151,13 +248,32 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       AsmitaToast.show(
         context,
         message: 'Please select a flat.',
+=======
+    List<FlatMapping> selectedFlats = List.from(_selectedFlatMappings);
+
+    if (selectedFlats.isEmpty && user.flatMappings.isNotEmpty && !widget.isGuardMode) {
+      if (user.flatMappings.length == 1) {
+        selectedFlats = [user.flatMappings.first];
+      }
+    }
+
+    if (selectedFlats.isEmpty) {
+      AsmitaToast.show(
+        context,
+        message: 'Please select at least one flat.',
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         type: AsmitaToastType.error,
       );
       return;
     }
 
     if (widget.isGuardMode) {
+<<<<<<< HEAD
       if (_visitorNameController.text.trim().isEmpty || _mobileNumberController.text.trim().isEmpty) {
+=======
+      if (_visitorNameController.text.trim().isEmpty ||
+          _mobileNumberController.text.trim().isEmpty) {
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         AsmitaToast.show(
           context,
           message: 'Please enter visitor name and mobile number.',
@@ -165,22 +281,48 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         );
         return;
       }
+<<<<<<< HEAD
       final payload = {
+=======
+      
+      final phone = _mobileNumberController.text.trim();
+      if (phone.length != 10 || int.tryParse(phone) == null) {
+        AsmitaToast.show(
+          context,
+          message: 'Please enter a valid 10-digit mobile number.',
+          type: AsmitaToastType.error,
+        );
+        return;
+      }
+      
+      final payloads = selectedFlats.map((flat) => {
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         'society_id': user.societyId,
         'tower_id': flat.towerId,
         'unit_id': flat.flatId,
         'visitor_name': _visitorNameController.text.trim(),
         'visitor_phone': _mobileNumberController.text.trim(),
+<<<<<<< HEAD
         'purpose': _selectedCategory == 'Visiting Help' ? 'Help' : _selectedCategory,
+=======
+        'purpose': _selectedCategory == 'Visiting Help'
+            ? 'Help'
+            : _selectedCategory,
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         'company_name': _selectedCategory == 'Guest'
             ? 'Guest'
             : (_selectedCategory == 'Cab' ? 'Cab' : _selectedCompany),
         'vehicle_number': _cabNoController.text.trim(),
         'no_of_visitors': _selectedCategory == 'Guest' ? _guestCount : 1,
+<<<<<<< HEAD
       };
       context.read<GuardGateBloc>().add(
         SubmitWalkInVisitor(payload),
       );
+=======
+      }).toList();
+      context.read<GuardGateBloc>().add(SubmitWalkInVisitor(payloads));
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
       return;
     }
 
@@ -225,6 +367,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     final endTimeStr =
         '${_selectedEndTime.hour.toString().padLeft(2, '0')}:${_selectedEndTime.minute.toString().padLeft(2, '0')}:00';
 
+<<<<<<< HEAD
+=======
+    final flat = selectedFlats.first;
+
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
     final payload = {
       'society_id': user.societyId,
       'tower_id': flat.towerId,
@@ -349,7 +496,14 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           }
         },
         builder: (context, state) {
+<<<<<<< HEAD
           final isGuardSubmitting = context.watch<GuardGateBloc>().state.isSubmitting;
+=======
+          final isGuardSubmitting = context
+              .watch<GuardGateBloc>()
+              .state
+              .isSubmitting;
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
           return Stack(
             children: [
               AnimatedSize(
@@ -384,7 +538,16 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 Positioned.fill(
                   child: Container(
                     color: Colors.white.withValues(alpha: 0.7),
+<<<<<<< HEAD
                     child: const Center(child: CircularProgressIndicator()),
+=======
+                    child: const Center(
+                      child: AsmitaLoadingIndicator(
+                        color: AsmitaPalette.actionRed,
+                        size: 28,
+                      ),
+                    ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                   ),
                 ),
             ],
@@ -418,15 +581,22 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       {'label': 'Visiting Help', 'icon': Icons.build_outlined},
     ];
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (widget.isGuardMode) ...[
           const Text(
+<<<<<<< HEAD
             'Select Flat',
+=======
+            'Select Tower & Flat',
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
             style: TextStyle(
               fontFamily: 'Montserrat',
               fontSize: 13,
@@ -438,6 +608,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           if (_isLoadingFlats)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8.0),
+<<<<<<< HEAD
               child: Center(child: CircularProgressIndicator()),
             )
           else
@@ -473,11 +644,98 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   },
                 ),
               ),
+=======
+              child: Center(
+                child: AsmitaLoadingIndicator(
+                  color: AsmitaPalette.actionRed,
+                  size: 28,
+                ),
+              ),
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: GestureDetector(
+                    onTap: _showTowerPicker,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: AsmitaPalette.borderGrey),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _selectedTowerId != null
+                                  ? _getTowers().firstWhere((t) => t['id'] == _selectedTowerId, orElse: () => <String, dynamic>{'name': 'Tower'})['name']
+                                  : 'Tower',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 14,
+                                color: _selectedTowerId != null ? AsmitaPalette.textDark : Colors.grey.shade600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const Icon(Icons.arrow_drop_down_rounded, color: AsmitaPalette.deepNavy),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 3,
+                  child: GestureDetector(
+                    onTap: _selectedTowerId == null ? null : _showFlatPicker,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: _selectedTowerId == null ? Colors.grey.shade100 : Colors.white,
+                        border: Border.all(color: AsmitaPalette.borderGrey),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _selectedFlatMappings.isNotEmpty ? _selectedFlatMappings.map((e) => e.flatNumber).join(', ') : 'Flat',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 14,
+                                color: _selectedFlatMappings.isNotEmpty ? AsmitaPalette.textDark : Colors.grey.shade600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_drop_down_rounded, 
+                            color: _selectedTowerId == null ? Colors.grey : AsmitaPalette.deepNavy,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
             ),
           const SizedBox(height: 16),
         ],
         Text(
+<<<<<<< HEAD
           widget.isGuardMode ? 'Select Visitor Category' : 'Allow Future Entries',
+=======
+          widget.isGuardMode
+              ? 'Select Visitor Category'
+              : 'Allow Future Entries',
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
           style: const TextStyle(
             fontFamily: 'Montserrat',
             fontSize: 18,
@@ -503,7 +761,13 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 setState(() {
                   _selectedCategory = cat['label'] as String;
                   _selectedDurationHours = 1;
+<<<<<<< HEAD
                   _selectedCompany = _selectedCategory == 'Cab' ? 'Uber' : 'Amazon';
+=======
+                  _selectedCompany = _selectedCategory == 'Cab'
+                      ? 'Uber'
+                      : 'Amazon';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                 });
                 _nextStep();
               },
@@ -552,6 +816,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             );
           },
         ),
+<<<<<<< HEAD
         const SizedBox(height: 24),
         Container(
           padding: const EdgeInsets.all(16),
@@ -621,6 +886,270 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           ),
         ),
       ],
+=======
+        if (!widget.isGuardMode) ...[
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F0FF),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Safe Pickup Mode',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF4A3498),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E88E5),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'NEW',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'No need to share flat details with the cab driver or guard. Know more »',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 11,
+                          color: Color(0xFF6B5DA8),
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Icon(
+                  Icons.shield_rounded,
+                  color: Color(0xFFB39DDB),
+                  size: 36,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  void _showTowerPicker() {
+    final towers = _getTowers();
+    if (towers.isEmpty) return;
+
+    showAsmitaBottomSheet(
+      context: context,
+      title: 'Select Tower',
+      child: GridView.builder(
+        shrinkWrap: true,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          childAspectRatio: 2.2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        itemCount: towers.length,
+        itemBuilder: (context, index) {
+          final tower = towers[index];
+          final isSelected = _selectedTowerId == tower['id'];
+          return InkWell(
+            onTap: () {
+              Navigator.pop(context);
+              setState(() {
+                _selectedTowerId = tower['id'];
+                _selectedFlatMappings.clear();
+              });
+              Future.delayed(const Duration(milliseconds: 200), () {
+                if (mounted) _showFlatPicker();
+              });
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isSelected ? AsmitaPalette.actionRed : Colors.white,
+                border: Border.all(
+                  color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                tower['name'],
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 14,
+                  color: isSelected ? Colors.white : AsmitaPalette.textDark,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showFlatPicker() {
+    if (_selectedTowerId == null) return;
+    
+    final flats = _getFlatsForTower(_selectedTowerId!);
+    if (flats.isEmpty) return;
+
+    String searchQuery = '';
+
+    showAsmitaBottomSheet(
+      context: context,
+      title: widget.isGuardMode ? 'Select Flats' : 'Select Flat',
+      child: StatefulBuilder(
+        builder: (context, setModalState) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search flats...',
+                  hintStyle: TextStyle(
+                    fontFamily: 'Poppins',
+                    color: Colors.grey.shade500,
+                  ),
+                  prefixIcon: const Icon(Icons.search, color: AsmitaPalette.deepNavy),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onChanged: (val) {
+                  setModalState(() {
+                    searchQuery = val.toLowerCase();
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              Flexible(
+                child: Builder(
+                  builder: (context) {
+                    final filteredFlats = flats.where((f) => f.flatNumber.toLowerCase().contains(searchQuery)).toList();
+                    
+                    if (filteredFlats.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.all(24.0),
+                        child: Text(
+                          'No flats found.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontFamily: 'Poppins', color: Colors.grey),
+                        ),
+                      );
+                    }
+                    
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                        childAspectRatio: 2.0,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 12,
+                      ),
+                      itemCount: filteredFlats.length,
+                      itemBuilder: (context, index) {
+                        final flat = filteredFlats[index];
+                        final isSelected = _selectedFlatMappings.any((f) => f.flatId == flat.flatId);
+                        return InkWell(
+                          onTap: () {
+                            if (widget.isGuardMode) {
+                              setModalState(() {
+                                if (isSelected) {
+                                  _selectedFlatMappings.removeWhere((f) => f.flatId == flat.flatId);
+                                } else {
+                                  _selectedFlatMappings.add(flat);
+                                }
+                              });
+                              setState(() {}); // Update main UI
+                            } else {
+                              setState(() {
+                                _selectedFlatMappings = [flat];
+                              });
+                              Navigator.pop(context);
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: isSelected ? AsmitaPalette.actionRed : Colors.white,
+                              border: Border.all(
+                                color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              flat.flatNumber,
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 14,
+                                color: isSelected ? Colors.white : AsmitaPalette.textDark,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              if (widget.isGuardMode) ...[
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AsmitaPalette.deepNavy,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ],
+          );
+        },
+      ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
     );
   }
 
@@ -2059,11 +2588,22 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
           final cabCompanies = ['Uber', 'Ola', 'Rapido', 'Other'];
           final List<String> companies;
+<<<<<<< HEAD
           
           if (_selectedCategory == 'Cab') {
             companies = cabCompanies;
           } else {
             companies = [...companyLogos.keys.where((c) => !cabCompanies.contains(c)), 'Other'];
+=======
+
+          if (_selectedCategory == 'Cab') {
+            companies = cabCompanies;
+          } else {
+            companies = [
+              ...companyLogos.keys.where((c) => !cabCompanies.contains(c)),
+              'Other',
+            ];
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
           }
           return Padding(
             padding: EdgeInsets.only(

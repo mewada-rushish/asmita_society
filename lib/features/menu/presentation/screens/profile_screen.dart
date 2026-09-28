@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+<<<<<<< HEAD
+=======
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_event.dart';
@@ -112,7 +116,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 AsmitaSubHeader(
                   title: 'Profile',
                   onBackPressed: () {
+<<<<<<< HEAD
                     widget.onNavigateToTab?.call(4);
+=======
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                     Navigator.pop(context);
                   },
                   trailing: GestureDetector(
@@ -189,16 +196,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 16),
           Text(user.fullName, style: textTheme.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.w700)),
+<<<<<<< HEAD
           const SizedBox(height: 4),
           Text((user.systemRole ?? user.primaryRole).toUpperCase(), style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.textLight)),
           const SizedBox(height: 12),
+=======
+          const SizedBox(height: 8),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: AsmitaPalette.actionRed.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
+<<<<<<< HEAD
             child: Text(user.accountType.toUpperCase(), style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.actionRed, fontWeight: FontWeight.w700)),
+=======
+            child: Text((user.systemRole ?? user.primaryRole).toUpperCase(), style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.actionRed, fontWeight: FontWeight.w700)),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
           ),
         ],
       ),
@@ -277,7 +292,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           elevation: 0,
         ),
         child: isLoading
+<<<<<<< HEAD
             ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+=======
+            ? const SizedBox(height: 20, width: 20, child: AsmitaLoadingIndicator(color: Colors.white, size: 20))
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
             : Text('Save Profile', style: textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
       ),
     );

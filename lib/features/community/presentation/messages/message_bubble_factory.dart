@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+<<<<<<< HEAD
+=======
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import 'package:asmita_society/features/community/data/models/chat_message_model.dart';
 import '../widgets/swipe_to_reply.dart';
 import 'text_message_bubble.dart';
@@ -254,9 +258,15 @@ class MessageBubbleFactory extends StatelessWidget {
                                   const SizedBox(
                                     height: 12,
                                     width: 12,
+<<<<<<< HEAD
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                       color: AsmitaPalette.deepNavy,
+=======
+                                    child: AsmitaLoadingIndicator(
+                                        color: AsmitaPalette.deepNavy,
+                                        size: 12,
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                                     ),
                                   )
                                 else

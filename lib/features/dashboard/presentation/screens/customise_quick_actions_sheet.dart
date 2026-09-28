@@ -4,6 +4,10 @@ import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/features/dashboard/data/models/quick_action_registry.dart';
 import 'package:asmita_society/features/dashboard/bloc/quick_actions/quick_actions_bloc.dart';
 import 'package:asmita_society/features/dashboard/bloc/quick_actions/quick_actions_state.dart';
+<<<<<<< HEAD
+=======
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 
 class CustomiseQuickActionsSheet extends StatefulWidget {
   const CustomiseQuickActionsSheet({super.key});
@@ -34,6 +38,10 @@ class _CustomiseQuickActionsSheetState extends State<CustomiseQuickActionsSheet>
   void _save() {
     context.read<QuickActionsBloc>().add(SaveQuickActions(_selectedActions));
     Navigator.pop(context);
+<<<<<<< HEAD
+=======
+    AsmitaToast.show(context, message: 'Customization saved successfully', type: AsmitaToastType.success);
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
   }
 
   void _toggleSelection(QuickActionType type) {
@@ -79,7 +87,11 @@ class _CustomiseQuickActionsSheetState extends State<CustomiseQuickActionsSheet>
                           itemBuilder: (context, index) {
                             final type = _selectedActions[index];
                             final meta = QuickActionRegistry.allActions[type]!;
+<<<<<<< HEAD
                             return _buildActionTile(meta, true, Key(type.toString()));
+=======
+                            return _buildActionTile(meta, true, index, Key(type.toString()));
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                           },
                           onReorderItem: (oldIndex, newIndex) {
                             setState(() {
@@ -102,7 +114,11 @@ class _CustomiseQuickActionsSheetState extends State<CustomiseQuickActionsSheet>
                             (context, index) {
                               final type = _unselectedActions[index];
                               final meta = QuickActionRegistry.allActions[type]!;
+<<<<<<< HEAD
                               return _buildActionTile(meta, false, Key(type.toString()));
+=======
+                              return _buildActionTile(meta, false, null, Key(type.toString()));
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                             },
                             childCount: _unselectedActions.length,
                           ),
@@ -125,7 +141,11 @@ class _CustomiseQuickActionsSheetState extends State<CustomiseQuickActionsSheet>
     );
   }
 
+<<<<<<< HEAD
   Widget _buildActionTile(QuickActionMetadata meta, bool isSelected, Key key) {
+=======
+  Widget _buildActionTile(QuickActionMetadata meta, bool isSelected, int? index, Key key) {
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
     return Container(
       key: key,
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
@@ -141,6 +161,7 @@ class _CustomiseQuickActionsSheetState extends State<CustomiseQuickActionsSheet>
           ),
         ],
       ),
+<<<<<<< HEAD
       child: ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
@@ -168,6 +189,42 @@ class _CustomiseQuickActionsSheetState extends State<CustomiseQuickActionsSheet>
           if (isSelected) const Icon(Icons.drag_handle, color: Colors.grey),
         ],
       ),
+=======
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: meta.isUtilityButton ? meta.iconColor : AsmitaPalette.systemBG,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              meta.icon,
+              color: meta.isUtilityButton ? Colors.white : meta.iconColor,
+              size: 20,
+            ),
+          ),
+          title: Text(meta.label),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(
+                  isSelected ? Icons.remove_circle_outline : Icons.add_circle_outline,
+                  color: isSelected ? AsmitaPalette.actionRed : Colors.green,
+                ),
+                onPressed: () => _toggleSelection(meta.type),
+              ),
+              if (isSelected && index != null) 
+                ReorderableDragStartListener(
+                  index: index,
+                  child: const Icon(Icons.drag_handle, color: Colors.grey),
+                ),
+            ],
+          ),
+        ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
       ),
     );
   }

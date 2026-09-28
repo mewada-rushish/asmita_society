@@ -7,14 +7,18 @@ import '../models/auth_response.dart';
 /// Repository responsible for authentication, OTP verification, and user onboarding.
 /// Communicates with the backend API via a secure Dio instance.
 class AuthRepository {
-  final Dio _dio;
+  final Dio dio;
 
+<<<<<<< HEAD
   AuthRepository({Dio? dio}) : _dio = dio ?? Dio();
+=======
+  AuthRepository({required this.dio});
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 
   /// Initiates an OTP login request.
   Future<bool> initiateLogin(String mobile) async {
     try {
-      final response = await _dio.post(
+      final response = await dio.post(
         EnvConfig.loginInitiate,
         data: {'mobile': mobile},
       );
@@ -30,7 +34,7 @@ class AuthRepository {
   /// Intercepts 401 errors to check for 'REGISTRATION_REQUIRED' business signals.
   Future<AuthResponse> verifyOtp(String mobile, String otp) async {
     try {
-      final response = await _dio.post(
+      final response = await dio.post(
         EnvConfig.loginVerify,
         data: {'mobile': mobile, 'otp': otp},
       );
@@ -64,7 +68,11 @@ class AuthRepository {
   /// Checks the user's approval status
   Future<String> checkStatus(String mobile) async {
     try {
+<<<<<<< HEAD
       final response = await _dio.post(
+=======
+      final response = await dio.post(
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         EnvConfig.loginStatus,
         data: {'mobile': mobile},
       );
@@ -126,7 +134,11 @@ class AuthRepository {
         }
       }
 
+<<<<<<< HEAD
       final response = await _dio.post(
+=======
+      final response = await dio.post(
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         EnvConfig.register,
         data: formData,
       );
@@ -159,7 +171,11 @@ class AuthRepository {
           ? Options(headers: {'Authorization': 'Bearer $token'}) 
           : null;
 
+<<<<<<< HEAD
       final response = await _dio.post(
+=======
+      final response = await dio.post(
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         '${EnvConfig.baseUrl}/app-api/users/upload-profile-picture',
         data: formData,
         options: options,
@@ -188,7 +204,11 @@ class AuthRepository {
           ? Options(headers: {'Authorization': 'Bearer $token'}) 
           : null;
 
+<<<<<<< HEAD
       final response = await _dio.put(
+=======
+      final response = await dio.put(
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         '${EnvConfig.baseUrl}/app-api/users/me/update',
         data: {
           'full_name': fullName,
@@ -217,7 +237,11 @@ class AuthRepository {
   /// Inform the backend that the session is terminating
   Future<void> logout(int? userId, String? systemRole, String? primaryRole) async {
     try {
+<<<<<<< HEAD
       await _dio.post(
+=======
+      await dio.post(
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         EnvConfig.logout,
         data: {
           'user_id': userId,

@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/menu/presentation/providers/support_provider.dart';
 import 'package:intl/intl.dart';
+=======
+import 'package:asmita_society/core/utils/date_formatter.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
+import 'package:asmita_society/features/menu/presentation/providers/support_provider.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 
 class HelpSupportScreen extends ConsumerWidget {
   const HelpSupportScreen({super.key});
@@ -80,7 +90,11 @@ class HelpSupportScreen extends ConsumerWidget {
                                 if (t.createdAt != null) ...[
                                   const SizedBox(height: 12),
                                   Text(
+<<<<<<< HEAD
                                     'Raised on ${DateFormat('MMM dd, yyyy').format(t.createdAt!)}',
+=======
+                                    'Raised on ${AppDateFormatter.formatDate(t.createdAt!)}',
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                                     style: textTheme.bodySmall?.copyWith(color: Colors.grey),
                                   )
                                 ]
@@ -91,7 +105,11 @@ class HelpSupportScreen extends ConsumerWidget {
                         ],
                       );
                     },
+<<<<<<< HEAD
                     loading: () => const Center(child: CircularProgressIndicator()),
+=======
+                    loading: () => const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28)),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                     error: (err, _) => Text('Error: $err'),
                   ),
                   _buildFAQSection(textTheme),

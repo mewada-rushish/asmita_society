@@ -21,7 +21,6 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   local_auth: ^2.1.8
   safe_device: ^1.3.10
-  pointycastle: ^3.9.1
   google_fonts: ^6.1.0
   flutter_svg: ^2.0.10
   flutter_native_splash: ^2.4.7
@@ -50,9 +49,16 @@ dependencies:
   flutter_quill: ^11.5.1
   flutter_localizations:
     sdk: flutter
+<<<<<<< HEAD
   encrypt: ^5.0.3
   rsa_encrypt: ^2.0.0
   share_plus: ^12.0.2
+=======
+  share_plus: ^12.0.2
+  mobile_scanner: ^7.4.2
+  flutter_local_notifications: ^22.3.1
+  crypto: ^3.0.7
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 
 dev_dependencies:
   flutter_test:
@@ -60,6 +66,7 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   bloc_test: ^9.1.5
   flutter_launcher_icons: ^0.13.1
+  mocktail: ^1.0.5
 flutter:
   uses-material-design: true
 

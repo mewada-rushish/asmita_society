@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/design_system.dart';
+<<<<<<< HEAD
+=======
+import '../../../../core/widgets/asmita_loading_indicator.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import '../../../../core/widgets/asmita_bottom_sheet.dart'; 
 import '../../../../core/widgets/asmita_bottom_nav_bar.dart'; 
 import '../../../../core/widgets/asmita_text_field.dart';
@@ -363,9 +367,15 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                   Expanded(
                     child: BlocBuilder<DailyHelpBloc, DailyHelpState>(
                       builder: (context, state) {
+<<<<<<< HEAD
                         if (state.status == DailyHelpStatus.loading && state.dailyHelpList.isEmpty) {
                           return const Center(child: CircularProgressIndicator(color: AsmitaPalette.deepNavy));
                         } else if (state.status == DailyHelpStatus.error && state.dailyHelpList.isEmpty) {
+=======
+                          if (state.status == DailyHelpStatus.loading && state.dailyHelpList.isEmpty) {
+                            return const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.deepNavy, size: 28));
+                          } else if (state.status == DailyHelpStatus.error && state.dailyHelpList.isEmpty) {
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                           return Center(child: Text("Error: ${state.errorMessage}", style: textTheme.bodyMedium));
                         }
 

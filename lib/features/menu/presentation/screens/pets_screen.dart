@@ -3,6 +3,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+<<<<<<< HEAD
+=======
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
@@ -93,7 +97,11 @@ class PetsScreen extends ConsumerWidget {
                     ],
                   );
                 },
+<<<<<<< HEAD
                 loading: () => const Center(child: CupertinoActivityIndicator()),
+=======
+                loading: () => const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28)),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                 error: (error, _) => Center(
                   child: Text('Error: ', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
                 ),
@@ -427,10 +435,17 @@ class PetsScreen extends ConsumerWidget {
                           ? const SizedBox(
                               width: 20,
                               height: 20,
+<<<<<<< HEAD
                               child: CircularProgressIndicator(
                                 color: Colors.white,
                                 strokeWidth: 2.5,
                               ),
+=======
+                              child: AsmitaLoadingIndicator(
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                             )
                           : Text(pet == null ? 'Save Pet' : 'Update Pet', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                     ),

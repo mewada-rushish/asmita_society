@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/design_system.dart';
+<<<<<<< HEAD
+=======
+import '../../../core/widgets/asmita_loading_indicator.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import '../../../core/widgets/asmita_toast.dart';
 import '../../dashboard/presentation/main_dashboard_screen.dart'; // Added dashboard routing import
 import '../bloc/auth_bloc.dart';
@@ -89,7 +93,11 @@ class _OtpScreenState extends State<OtpScreen> {
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
+<<<<<<< HEAD
                 builder: (_) => MainDashboardScreen(userRole: state.user.systemRole ?? state.user.primaryRole), // Fixed placeholder navigation to match architecture roles
+=======
+                builder: (_) => MainDashboardScreen(userRole: state.user.systemRole ?? state.user.secondaryRole ?? state.user.primaryRole), // Fixed placeholder navigation to match architecture roles
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
               ),
               (route) => false,
             );
@@ -245,7 +253,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                   style: ElevatedButton.styleFrom(backgroundColor: isComplete ? AsmitaPalette.actionRed : Colors.grey.shade300, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                                   onPressed: isLoading || !isComplete ? null : _verifyOtp,
                                   child: isLoading 
-                                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                                    ? const SizedBox(height: 24, width: 24, child: AsmitaLoadingIndicator(color: Colors.white, size: 24))
                                     : Text('Verify Secure Code', style: TextStyle(color: isComplete ? Colors.white : Colors.grey.shade500, fontSize: 16, fontWeight: FontWeight.w600)),
                                 ),
                               );

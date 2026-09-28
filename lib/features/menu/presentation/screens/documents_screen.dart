@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/menu/presentation/providers/society_provider.dart';
 import 'package:intl/intl.dart';
+=======
+import 'package:asmita_society/core/utils/date_formatter.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
+import 'package:asmita_society/features/menu/presentation/providers/society_provider.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 
 class DocumentsScreen extends ConsumerWidget {
   const DocumentsScreen({super.key});
@@ -34,7 +44,11 @@ class DocumentsScreen extends ConsumerWidget {
                     itemBuilder: (context, index) {
                       final doc = docs[index];
                       final dateStr = doc.uploadedAt != null 
+<<<<<<< HEAD
                         ? DateFormat('dd MMM yyyy').format(doc.uploadedAt!)
+=======
+                        ? AppDateFormatter.formatDate(doc.uploadedAt!)
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                         : 'Unknown Date';
                         
                       return Padding(
@@ -44,7 +58,11 @@ class DocumentsScreen extends ConsumerWidget {
                     },
                   );
                 },
+<<<<<<< HEAD
                 loading: () => const Center(child: CircularProgressIndicator()),
+=======
+                loading: () => const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28)),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
                 error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
               ),
             ),

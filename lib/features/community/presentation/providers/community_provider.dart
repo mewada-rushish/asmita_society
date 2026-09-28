@@ -55,6 +55,7 @@ class CommunityNotifier extends Notifier<CommunityState> {
     }
   }
 
+<<<<<<< HEAD
   Future<void> pollNewMessages() async {
     final currentState = state;
     if (currentState is! CommunityLoaded || _isFetching) return;
@@ -62,6 +63,62 @@ class CommunityNotifier extends Notifier<CommunityState> {
       await _fetchAndMergeLatestMessages(currentState);
     } catch (e) {
       // Silently fail polling so it doesn't disrupt user
+=======
+  bool _isPollingActive = false;
+  int _pollingFailures = 0;
+  bool Function()? _isAtBottomCallback;
+
+  void startPolling({bool Function()? isAtBottom}) {
+    if (_isPollingActive) return;
+    _isAtBottomCallback = isAtBottom;
+    _isPollingActive = true;
+    _pollingFailures = 0;
+    _pollLoop();
+  }
+
+  void stopPolling() {
+    _isPollingActive = false;
+  }
+
+  Future<void> _pollLoop() async {
+    while (_isPollingActive) {
+      final backoffSeconds = _calculateBackoff(_pollingFailures);
+      await Future.delayed(Duration(seconds: backoffSeconds));
+      if (!_isPollingActive) break;
+
+      final isAtBottom = _isAtBottomCallback?.call() ?? true;
+      if (!isAtBottom) {
+        // Skip polling this round if not at bottom, but don't count as failure
+        continue;
+      }
+
+      final result = await _pollNewMessages();
+      if (result == true) {
+        _pollingFailures = 0;
+      } else if (result == false) {
+        _pollingFailures++;
+      }
+    }
+  }
+
+  int _calculateBackoff(int failures) {
+    if (failures == 0) return 3;
+    int backoff = 3;
+    for (int i = 0; i < failures; i++) {
+      backoff *= 2;
+    }
+    return backoff > 60 ? 60 : backoff;
+  }
+
+  Future<bool?> _pollNewMessages() async {
+    final currentState = state;
+    if (currentState is! CommunityLoaded || _isFetching) return null;
+    try {
+      await _fetchAndMergeLatestMessages(currentState);
+      return true;
+    } catch (e) {
+      return false;
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
     }
   }
 
@@ -178,7 +235,11 @@ class CommunityNotifier extends Notifier<CommunityState> {
     if (currentState is! CommunityLoaded) return;
 
     try {
+<<<<<<< HEAD
       final encryptedMsg = ChatMessageModel.createMessage(
+=======
+      final message = ChatMessageModel.createMessage(
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         sender: 'You',
         isMe: true,
@@ -189,7 +250,11 @@ class CommunityNotifier extends Notifier<CommunityState> {
         replyToContent: replyToContent,
       );
 
+<<<<<<< HEAD
       await repository.sendMessage(encryptedMsg, senderId: _currentUserId);
+=======
+      await repository.sendMessage(message, senderId: _currentUserId);
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
       await _fetchAndMergeLatestMessages(currentState);
     } catch (e) {
       state = currentState;
@@ -201,7 +266,11 @@ class CommunityNotifier extends Notifier<CommunityState> {
     if (currentState is! CommunityLoaded) return;
 
     try {
+<<<<<<< HEAD
       final encryptedMsg = ChatMessageModel.createMessage(
+=======
+      final message = ChatMessageModel.createMessage(
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         sender: 'You',
         isMe: true,
@@ -210,7 +279,11 @@ class CommunityNotifier extends Notifier<CommunityState> {
         content: '$name|$phone',
       );
 
+<<<<<<< HEAD
       await repository.sendMessage(encryptedMsg, senderId: _currentUserId);
+=======
+      await repository.sendMessage(message, senderId: _currentUserId);
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
       await _fetchAndMergeLatestMessages(currentState);
     } catch (e) {
       state = currentState;
@@ -239,7 +312,11 @@ class CommunityNotifier extends Notifier<CommunityState> {
       
       final content = '$uploadedUrl|$duration';
 
+<<<<<<< HEAD
       final encryptedMsg = ChatMessageModel.createMessage(
+=======
+      final message = ChatMessageModel.createMessage(
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         sender: 'You',
         isMe: true,
@@ -248,11 +325,19 @@ class CommunityNotifier extends Notifier<CommunityState> {
         content: content,
       );
 
+<<<<<<< HEAD
       await repository.sendMessage(encryptedMsg, senderId: _currentUserId);
       
       if (state is CommunityLoaded) {
         final currentList = (state as CommunityLoaded).messages;
         final updatedList = currentList.map((m) => m.id == tempId ? encryptedMsg : m).toList();
+=======
+      await repository.sendMessage(message, senderId: _currentUserId);
+      
+      if (state is CommunityLoaded) {
+        final currentList = (state as CommunityLoaded).messages;
+        final updatedList = currentList.map((m) => m.id == tempId ? message : m).toList();
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         state = (state as CommunityLoaded).copyWith(messages: updatedList);
       }
       
@@ -272,7 +357,11 @@ class CommunityNotifier extends Notifier<CommunityState> {
     if (currentState is! CommunityLoaded) return;
 
     try {
+<<<<<<< HEAD
       final encryptedMsg = ChatMessageModel.createMessage(
+=======
+      final message = ChatMessageModel.createMessage(
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         sender: 'You',
         isMe: true,
@@ -283,7 +372,11 @@ class CommunityNotifier extends Notifier<CommunityState> {
         allowMultipleAnswers: allowMultipleAnswers,
       );
 
+<<<<<<< HEAD
       await repository.sendMessage(encryptedMsg, senderId: _currentUserId);
+=======
+      await repository.sendMessage(message, senderId: _currentUserId);
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
       await _fetchAndMergeLatestMessages(currentState);
     } catch (e) {
       state = currentState;
@@ -310,7 +403,11 @@ class CommunityNotifier extends Notifier<CommunityState> {
       final String? uploadedUrl = await repository.uploadFile(imagePath);
       if (uploadedUrl == null) throw Exception('Upload failed');
       
+<<<<<<< HEAD
       final encryptedMsg = ChatMessageModel.createMessage(
+=======
+      final message = ChatMessageModel.createMessage(
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         sender: 'You',
         isMe: true,
@@ -319,11 +416,19 @@ class CommunityNotifier extends Notifier<CommunityState> {
         content: uploadedUrl,
       );
 
+<<<<<<< HEAD
       await repository.sendMessage(encryptedMsg, senderId: _currentUserId);
       
       if (state is CommunityLoaded) {
         final currentList = (state as CommunityLoaded).messages;
         final updatedList = currentList.map((m) => m.id == tempId ? encryptedMsg : m).toList();
+=======
+      await repository.sendMessage(message, senderId: _currentUserId);
+      
+      if (state is CommunityLoaded) {
+        final currentList = (state as CommunityLoaded).messages;
+        final updatedList = currentList.map((m) => m.id == tempId ? message : m).toList();
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         state = (state as CommunityLoaded).copyWith(messages: updatedList);
       }
       
@@ -358,7 +463,11 @@ class CommunityNotifier extends Notifier<CommunityState> {
       final String? uploadedUrl = await repository.uploadFile(documentPath);
       if (uploadedUrl == null) throw Exception('Upload failed');
       
+<<<<<<< HEAD
       final encryptedMsg = ChatMessageModel.createMessage(
+=======
+      final message = ChatMessageModel.createMessage(
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         sender: 'You',
         isMe: true,
@@ -367,11 +476,19 @@ class CommunityNotifier extends Notifier<CommunityState> {
         content: '$uploadedUrl|$fileName|$fileSize',
       );
 
+<<<<<<< HEAD
       await repository.sendMessage(encryptedMsg, senderId: _currentUserId);
       
       if (state is CommunityLoaded) {
         final currentList = (state as CommunityLoaded).messages;
         final updatedList = currentList.map((m) => m.id == tempId ? encryptedMsg : m).toList();
+=======
+      await repository.sendMessage(message, senderId: _currentUserId);
+      
+      if (state is CommunityLoaded) {
+        final currentList = (state as CommunityLoaded).messages;
+        final updatedList = currentList.map((m) => m.id == tempId ? message : m).toList();
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
         state = (state as CommunityLoaded).copyWith(messages: updatedList);
       }
       

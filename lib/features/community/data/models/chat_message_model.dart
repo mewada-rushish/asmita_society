@@ -2,8 +2,13 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 
 /// Represents a message model for community chat.
+<<<<<<< HEAD
 /// Content is stored in plaintext on the client side, and encrypted
 /// on the backend API before database storage.
+=======
+/// Content is stored in plaintext on the client side and 
+/// encrypted on the backend API before database storage.
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 class ChatMessageModel {
   final String id;
   final String sender;

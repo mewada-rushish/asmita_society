@@ -9,6 +9,24 @@ abstract class GuardGateEvent extends Equatable {
 
 class LoadExpectedInvites extends GuardGateEvent {}
 
+<<<<<<< HEAD
+=======
+class LoadGuardHistory extends GuardGateEvent {}
+
+class LoadCheckedInVisitors extends GuardGateEvent {}
+
+class CheckOutVisitor extends GuardGateEvent {
+  final String id;
+  final bool isPreApproved;
+  final String? inviteGuestId;
+
+  const CheckOutVisitor({required this.id, required this.isPreApproved, this.inviteGuestId});
+
+  @override
+  List<Object?> get props => [id, isPreApproved, inviteGuestId];
+}
+
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 class SearchInviteByCode extends GuardGateEvent {
   final String code;
 
@@ -20,6 +38,7 @@ class SearchInviteByCode extends GuardGateEvent {
 
 class CheckInPreApprovedVisitor extends GuardGateEvent {
   final String inviteId;
+<<<<<<< HEAD
 
   const CheckInPreApprovedVisitor(this.inviteId);
 
@@ -34,4 +53,21 @@ class SubmitWalkInVisitor extends GuardGateEvent {
 
   @override
   List<Object?> get props => [payload];
+=======
+  final bool isPreApproved;
+
+  const CheckInPreApprovedVisitor(this.inviteId, {this.isPreApproved = true});
+
+  @override
+  List<Object?> get props => [inviteId, isPreApproved];
+}
+
+class SubmitWalkInVisitor extends GuardGateEvent {
+  final List<Map<String, dynamic>> payloads;
+
+  const SubmitWalkInVisitor(this.payloads);
+
+  @override
+  List<Object?> get props => [payloads];
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 }

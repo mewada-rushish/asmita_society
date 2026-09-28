@@ -77,6 +77,7 @@ class ApiCommunityRepository implements CommunityRepository {
         queryParameters: {'society_id': societyId, 'page': page, 'limit': 20},
       );
       if (response.statusCode == 200 && response.data != null) {
+<<<<<<< HEAD
         final List<dynamic> rawMessages = response.data['messages'] ?? [];
         final parsedMessages = _parseMessages(
           rawMessages,
@@ -88,6 +89,24 @@ class ApiCommunityRepository implements CommunityRepository {
           await box.put('messages_page_1', rawMessages);
         }
         return parsedMessages.reversed.toList();
+=======
+        final data = response.data;
+        if (data is Map) {
+          final List<dynamic> rawMessages = data['messages'] ?? [];
+          final parsedMessages = _parseMessages(
+            rawMessages,
+            currentUserId,
+            currentUserName,
+          );
+
+          if (page == 1) {
+            await box.put('messages_page_1', rawMessages);
+          }
+          return parsedMessages.reversed.toList();
+        } else {
+          debugPrint('Unexpected messages response format: ${data.runtimeType}');
+        }
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
       }
 
       // If we got a weird status code on page 1, try falling back to cache

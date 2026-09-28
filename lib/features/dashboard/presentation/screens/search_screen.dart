@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/design_system.dart';
+<<<<<<< HEAD
+=======
+import '../../../../core/widgets/asmita_loading_indicator.dart';
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
 import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_state.dart';
 import '../../bloc/search/search_bloc.dart';
@@ -237,7 +241,11 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
       builder: (context, state) {
         if (state is SearchLoading) {
           return const Center(
+<<<<<<< HEAD
             child: CircularProgressIndicator(color: AsmitaPalette.actionRed),
+=======
+            child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28),
+>>>>>>> 8e14b7ab5ec9ba6ee223925910b776c044e433df
           );
         }
 
