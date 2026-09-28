@@ -19,7 +19,7 @@ Future<void> init() async {
   sl.registerLazySingleton<SecureStorageService>(() => SecureStorageService());
   
   sl.registerLazySingleton<FirebaseMessagingService>(
-    () => FirebaseMessagingService(sl<SecureStorageService>()),
+    () => FirebaseMessagingService(sl<SecureStorageService>(), sl<AuthRepository>()),
   );
   
   sl.registerLazySingleton<AsmitaDioClient>(

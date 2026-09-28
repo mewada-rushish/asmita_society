@@ -230,6 +230,20 @@ class AuthRepository {
     }
   }
 
+  /// Updates the FCM token for push notifications
+  Future<void> updateFcmToken(String fcmToken) async {
+    try {
+      await dio.put(
+        '${EnvConfig.baseUrl}/app-api/users/me/fcm-token',
+        data: {
+          'fcm_token': fcmToken,
+        },
+      );
+    } catch (e) {
+      // Ignore network errors for token update to not block app flow
+    }
+  }
+
   /// Safely converts response data into a Map, even if it arrived as a String or List.
   Map<String, dynamic> _ensureMap(dynamic data) {
     if (data == null) return {};
