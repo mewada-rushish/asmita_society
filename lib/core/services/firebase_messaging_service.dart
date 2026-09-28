@@ -55,7 +55,7 @@ class FirebaseMessagingService {
       description: 'Used for visitor entry approvals.', // description
       importance: Importance.max,
       playSound: true,
-      // sound: RawResourceAndroidNotificationSound('approval_tone'), // Add later
+      sound: RawResourceAndroidNotificationSound('asmita_alert_1'),
     );
 
     const AndroidNotificationChannel campaignChannel = AndroidNotificationChannel(
@@ -64,7 +64,7 @@ class FirebaseMessagingService {
       description: 'Used for society announcements and campaigns.', // description
       importance: Importance.defaultImportance,
       playSound: true,
-      // sound: RawResourceAndroidNotificationSound('campaign_tone'), // Add later
+      sound: RawResourceAndroidNotificationSound('asmita_notification_1'),
     );
 
     await _localNotifications
@@ -145,9 +145,11 @@ class FirebaseMessagingService {
               importance: isApproval ? Importance.max : Importance.defaultImportance,
               priority: isApproval ? Priority.high : Priority.defaultPriority,
               icon: '@mipmap/ic_launcher',
-              // sound: RawResourceAndroidNotificationSound(isApproval ? 'approval_tone' : 'campaign_tone'),
+              sound: RawResourceAndroidNotificationSound(isApproval ? 'asmita_alert_1' : 'asmita_notification_1'),
             ),
-            iOS: const DarwinNotificationDetails(),
+            iOS: DarwinNotificationDetails(
+              sound: isApproval ? 'asmita_alert_1.wav' : 'asmita_notification_1.wav',
+            ),
           ),
         );
       }
