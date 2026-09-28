@@ -25,91 +25,91 @@ import 'features/dashboard/bloc/search/search_bloc.dart';
 import 'features/community/bloc/community_post_event.dart';
 import 'features/dashboard/bloc/quick_actions/quick_actions_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_quill/flutter_quill.dart' show FlutterQuillLocalizations;
-import 'package:safe_device/safe_device.dart';
+import 'package:flutter_quill/flutter_quill.dart'
+    show FlutterQuillLocalizations;
+// import 'package:safe_device/safe_device.dart';
 import 'features/auth/presentation/unsafe_device_screen.dart';
 import 'core/observers/crashlytics_navigation_observer.dart';
 
 Future<void> main() async {
-  runZonedGuarded(() async {
-    WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-    FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  runZonedGuarded(
+    () async {
+      WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+      FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-    // Parallelize independent initializations
-    await Future.wait([
-      Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
-      Hive.initFlutter(),
-    ]);
+      // Parallelize independent initializations
+      await Future.wait([
+        Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
+        Hive.initFlutter(),
+      ]);
 
-    // Setup global error handling for Flutter framework
-    FlutterError.onError = (details) => FirebaseCrashlytics.instance.recordFlutterFatalError(details);
-    PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      return true;
-    };
+      // Setup global error handling for Flutter framework
+      FlutterError.onError = (details) =>
+          FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
 
-    // Hive Encryption setup
-    final secureStorage = SecureStorageService();
-    final encryptionKey = await secureStorage.getHiveKey();
+      // Hive Encryption setup
+      final secureStorage = SecureStorageService();
+      final encryptionKey = await secureStorage.getHiveKey();
 
-    Future<void> openEncryptedBox(String name) async {
-      try {
-        await Hive.openBox(name, encryptionCipher: HiveAesCipher(encryptionKey));
-      } catch (e) {
-        // If opening fails (e.g., trying to read an unencrypted box with a cipher), clear and recreate
-        await Hive.deleteBoxFromDisk(name);
-        await Hive.openBox(name, encryptionCipher: HiveAesCipher(encryptionKey));
+      Future<void> openEncryptedBox(String name) async {
+        try {
+          await Hive.openBox(
+            name,
+            encryptionCipher: HiveAesCipher(encryptionKey),
+          );
+        } catch (e) {
+          // If opening fails (e.g., trying to read an unencrypted box with a cipher), clear and recreate
+          await Hive.deleteBoxFromDisk(name);
+          await Hive.openBox(
+            name,
+            encryptionCipher: HiveAesCipher(encryptionKey),
+          );
+        }
       }
-    }
 
-    await openEncryptedBox('community_chat');
-    await openEncryptedBox('app_cache');
+      await openEncryptedBox('community_chat');
+      await openEncryptedBox('app_cache');
 
-    await di.init();
-    await di.sl<FirebaseMessagingService>().initialize();
+      await di.init();
+      await di.sl<FirebaseMessagingService>().initialize();
 
-    bool isDeviceSafe = true;
-    // Bypassing SafeDevice check completely for Simulator testing
-    // try {
-    //   bool isJailBroken = await SafeDevice.isJailBroken;
-    //   isDeviceSafe = !isJailBroken;
-    // } catch (e) {
-    //   print("safe_device plugin error (ignoring for simulator): $e");
-    // }
+      bool isDeviceSafe = true;
+      // Bypassing SafeDevice check completely for Simulator testing
+      // try {
+      //   bool isJailBroken = await SafeDevice.isJailBroken;
+      //   isDeviceSafe = !isJailBroken;
+      // } catch (e) {
+      //   print("safe_device plugin error (ignoring for simulator): $e");
+      // }
 
-    runApp(ProviderScope(
-      child: AsmitaApp(
-        isDeviceSafe: isDeviceSafe,
-      ),
-    ));
-  }, (error, stack) {
-    // Catch unhandled async errors outside the Flutter framework
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-  });
+      runApp(ProviderScope(child: AsmitaApp(isDeviceSafe: isDeviceSafe)));
+    },
+    (error, stack) {
+      // Catch unhandled async errors outside the Flutter framework
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    },
+  );
 }
 
 class AsmitaApp extends StatelessWidget {
   final bool isDeviceSafe;
 
-  const AsmitaApp({
-    super.key,
-    required this.isDeviceSafe,
-  });
+  const AsmitaApp({super.key, required this.isDeviceSafe});
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
-          create: (context) => AuthBloc(
-            authRepository: di.sl(),
-            secureStorage: di.sl(),
-          ),
+          create: (context) =>
+              AuthBloc(authRepository: di.sl(), secureStorage: di.sl()),
         ),
         BlocProvider<VisitorBloc>(
-          create: (context) => VisitorBloc(
-            visitorRepository: di.sl(),
-          ),
+          create: (context) => VisitorBloc(visitorRepository: di.sl()),
         ),
         BlocProvider<GuardGateBloc>(
           create: (context) => GuardGateBloc(repository: di.sl()),
@@ -127,14 +127,11 @@ class AsmitaApp extends StatelessWidget {
           ),
         ),
         BlocProvider<SearchBloc>(
-          create: (context) => SearchBloc(
-            searchRepository: di.sl(),
-          ),
+          create: (context) => SearchBloc(searchRepository: di.sl()),
         ),
         BlocProvider<CommunityPostBloc>(
-          create: (context) => CommunityPostBloc(
-            repository: di.sl(),
-          )..add(LoadCommunityPosts()),
+          create: (context) =>
+              CommunityPostBloc(repository: di.sl())..add(LoadCommunityPosts()),
         ),
         BlocProvider<QuickActionsBloc>(
           create: (context) => QuickActionsBloc()..add(LoadQuickActions()),
@@ -150,12 +147,8 @@ class AsmitaApp extends StatelessWidget {
           GlobalCupertinoLocalizations.delegate,
           FlutterQuillLocalizations.delegate,
         ],
-        supportedLocales: const [
-          Locale('en', 'US'),
-        ],
-        navigatorObservers: [
-          CrashlyticsNavigationObserver(),
-        ],
+        supportedLocales: const [Locale('en', 'US')],
+        navigatorObservers: [CrashlyticsNavigationObserver()],
         home: isDeviceSafe ? const RootScreen() : const UnsafeDeviceScreen(),
       ),
     );
