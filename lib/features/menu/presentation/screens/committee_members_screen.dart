@@ -42,14 +42,17 @@ class CommitteeMembersScreen extends ConsumerWidget {
                       ),
                       SliverPadding(
                         padding: const EdgeInsets.all(16),
-                        sliver: SliverList(
+                        sliver: SliverGrid(
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            mainAxisExtent: 200,
+                          ),
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
                               final member = members[index];
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 16),
-                                child: _buildMemberCard(textTheme, member),
-                              );
+                              return _buildMemberCard(textTheme, member);
                             },
                             childCount: members.length,
                           ),
@@ -100,62 +103,25 @@ class CommitteeMembersScreen extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: AsmitaPalette.deepNavy,
-                child: Text(
-                  name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?', 
-                  style: textTheme.titleLarge?.copyWith(color: Colors.white)
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(name, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 4),
-                    Text(role, style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.actionRed, fontWeight: FontWeight.w600)),
-                    if (formattedDate.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.calendar_today_outlined, size: 14, color: AsmitaPalette.textLight),
-                          const SizedBox(width: 4),
-                          Expanded(child: Text('Joined $formattedDate', style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                        ],
-                      ),
-                    ],
-                    if (phone.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.call_outlined, size: 14, color: AsmitaPalette.textLight),
-                          const SizedBox(width: 4),
-                          Expanded(child: Text(phone, style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                        ],
-                      ),
-                    ],
-                    if (email.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.email_outlined, size: 14, color: AsmitaPalette.textLight),
-                          const SizedBox(width: 4),
-                          Expanded(child: Text(email, style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: AsmitaPalette.deepNavy,
+            child: Text(
+              name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?', 
+              style: textTheme.titleLarge?.copyWith(color: Colors.white)
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          Text(name, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, fontSize: 14), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 4),
+          Text(role, style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.actionRed, fontWeight: FontWeight.w600, fontSize: 12), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+          if (formattedDate.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text('Joined $formattedDate', style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight, fontSize: 10), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ],
+          const Spacer(),
           const Divider(height: 1, color: AsmitaPalette.borderGrey),
-          const SizedBox(height: 16),
+          const Spacer(),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -171,13 +137,6 @@ class CommitteeMembersScreen extends ConsumerWidget {
                 Icons.email_rounded, 
                 'Email',
                 () => _launchUrl('mailto:$email'),
-              ),
-              Container(width: 1, height: 24, color: AsmitaPalette.borderGrey),
-              _buildActionButton(
-                textTheme, 
-                Icons.message_rounded, 
-                'Chat',
-                () => _launchUrl('sms:$phone'),
               ),
             ],
           ),
