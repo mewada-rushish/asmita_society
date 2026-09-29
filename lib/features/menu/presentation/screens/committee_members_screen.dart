@@ -88,7 +88,6 @@ class CommitteeMembersScreen extends ConsumerWidget {
     final email = member.email ?? '';
 
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -103,38 +102,54 @@ class CommitteeMembersScreen extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: AsmitaPalette.deepNavy,
-            child: Text(
-              name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?', 
-              style: textTheme.titleLarge?.copyWith(color: Colors.white)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: AsmitaPalette.deepNavy,
+                  child: Text(
+                    name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?', 
+                    style: textTheme.titleLarge?.copyWith(color: Colors.white)
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(name, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, fontSize: 14), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 4),
+                Text(role, style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.actionRed, fontWeight: FontWeight.w600, fontSize: 12), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+                if (formattedDate.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text('Joined $formattedDate', style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight, fontSize: 10), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+                ],
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-          Text(name, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, fontSize: 14), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 4),
-          Text(role, style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.actionRed, fontWeight: FontWeight.w600, fontSize: 12), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
-          if (formattedDate.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text('Joined $formattedDate', style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight, fontSize: 10), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
-          ],
           const Spacer(),
-          const Divider(height: 1, color: AsmitaPalette.borderGrey),
-          const Spacer(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildActionButton(
-                Icons.call_rounded, 
-                () => _launchUrl('tel:$phone'),
+          Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8F9FC),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(18),
+                bottomRight: Radius.circular(18),
               ),
-              Container(width: 1, height: 24, color: AsmitaPalette.borderGrey),
-              _buildActionButton(
-                Icons.email_rounded, 
-                () => _launchUrl('mailto:$email'),
-              ),
-            ],
+              border: Border(top: BorderSide(color: AsmitaPalette.borderGrey)),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildActionButton(
+                  Icons.call_rounded, 
+                  () => _launchUrl('tel:$phone'),
+                ),
+                Container(width: 1, height: 24, color: AsmitaPalette.borderGrey),
+                _buildActionButton(
+                  Icons.email_rounded, 
+                  () => _launchUrl('mailto:$email'),
+                ),
+              ],
+            ),
           ),
         ],
       ),
