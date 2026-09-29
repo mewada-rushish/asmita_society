@@ -72,9 +72,9 @@ class EnvConfig {
   static String get userVehicles => '$baseUrl/app-api/vehicles';
   static String get userPets => '$baseUrl/app-api/pets';
   static String get parkingSlots => '$baseUrl/app-api/parking-slots';
-  static String get committeeMembers => '$baseUrl/app-api/committee-members';
-  static String get societyRules => '$baseUrl/app-api/rules';
-  static String get societyDocuments => '$baseUrl/app-api/documents';
+  static String get committeeMembers => '$baseUrl/app-api/society/committee-members';
+  static String get societyRules => '$baseUrl/app-api/society/rules';
+  static String get societyDocuments => '$baseUrl/app-api/society/documents';
   static String get supportTickets => '$baseUrl/app-api/support-tickets';
   static String get userPreferences => '$baseUrl/app-api/user-preferences';
 }
