@@ -47,7 +47,7 @@ class CommitteeMembersScreen extends ConsumerWidget {
                             crossAxisCount: 2,
                             crossAxisSpacing: 16,
                             mainAxisSpacing: 16,
-                            mainAxisExtent: 200,
+                            mainAxisExtent: 220,
                           ),
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
