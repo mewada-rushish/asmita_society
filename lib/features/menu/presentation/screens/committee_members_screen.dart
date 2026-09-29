@@ -47,7 +47,7 @@ class CommitteeMembersScreen extends ConsumerWidget {
                             crossAxisCount: 2,
                             crossAxisSpacing: 16,
                             mainAxisSpacing: 16,
-                            mainAxisExtent: 220,
+                            mainAxisExtent: 205,
                           ),
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
@@ -145,7 +145,7 @@ class CommitteeMembersScreen extends ConsumerWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
         child: Icon(icon, size: 22, color: AsmitaPalette.textLight),
       ),
     );
