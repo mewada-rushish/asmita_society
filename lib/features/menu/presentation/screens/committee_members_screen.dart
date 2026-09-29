@@ -1,3 +1,4 @@
+import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -158,11 +159,26 @@ class CommitteeMembersScreen extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildActionButton(textTheme, Icons.call_rounded, 'Call'),
+              _buildActionButton(
+                textTheme, 
+                Icons.call_rounded, 
+                'Call',
+                () => _launchUrl('tel:$phone'),
+              ),
               Container(width: 1, height: 24, color: AsmitaPalette.borderGrey),
-              _buildActionButton(textTheme, Icons.email_rounded, 'Email'),
+              _buildActionButton(
+                textTheme, 
+                Icons.email_rounded, 
+                'Email',
+                () => _launchUrl('mailto:$email'),
+              ),
               Container(width: 1, height: 24, color: AsmitaPalette.borderGrey),
-              _buildActionButton(textTheme, Icons.message_rounded, 'Chat'),
+              _buildActionButton(
+                textTheme, 
+                Icons.message_rounded, 
+                'Chat',
+                () => _launchUrl('sms:$phone'),
+              ),
             ],
           ),
         ],
@@ -170,9 +186,9 @@ class CommitteeMembersScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionButton(TextTheme textTheme, IconData icon, String label) {
+  Widget _buildActionButton(TextTheme textTheme, IconData icon, String label, VoidCallback onTap) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap,
       child: Row(
         children: [
           Icon(icon, size: 18, color: AsmitaPalette.textLight),
@@ -181,5 +197,14 @@ class CommitteeMembersScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _launchUrl(String urlString) async {
+    final Uri uri = Uri.parse(urlString);
+    try {
+      await url_launcher.launchUrl(uri);
+    } catch (e) {
+      debugPrint('Could not launch $urlString: $e');
+    }
   }
 }

@@ -14,6 +14,7 @@ import '../../../../core/network/dio_client.dart';
 import '../../../../core/security/secure_storage_service.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
+import 'package:share_plus/share_plus.dart';
 
 enum FieldType { text, number, dropdown, checkbox, checkboxGroup, repeater }
 
@@ -997,26 +998,92 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
             textAlign: TextAlign.center, 
             style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.textLight)
           ),
-          if ((_isBookingType && _expectedGuests > 0) || (!_isBookingType && (_outsideQty > 0 || _internalQty > 1))) ...[
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: AsmitaPalette.borderGrey),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                children: [
-                  const Text('Share with Guests', style: TextStyle(fontFamily: 'Montserrat', fontSize: 14, fontWeight: FontWeight.w700, color: AsmitaPalette.deepNavy)),
-                  const SizedBox(height: 8),
-                  const Icon(Icons.qr_code_2_rounded, size: 80, color: AsmitaPalette.deepNavy),
-                  const SizedBox(height: 8),
-                  const Text('Scan for Guest Entry Pass', style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textLight)),
-                ],
-              ),
+          const SizedBox(height: 24),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
             ),
-          ],
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                const Text(
+                  'FACILITY BOOKING PASS',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    color: AsmitaPalette.actionRed,
+                    letterSpacing: 2,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _selectedFacility,
+                  style: const TextStyle(fontFamily: 'Montserrat', fontSize: 20, fontWeight: FontWeight.w700, color: AsmitaPalette.deepNavy),
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: AsmitaPalette.systemBG,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AsmitaPalette.borderGrey),
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.qr_code_2_rounded, size: 140, color: AsmitaPalette.deepNavy),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Divider(color: AsmitaPalette.borderGrey, thickness: 1.5),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Date', style: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w500, color: AsmitaPalette.textLight)),
+                    Text(_bookingDate != null ? _formatDate(_bookingDate!) : 'N/A', style: const TextStyle(fontFamily: 'Poppins', fontSize: 14, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Time', style: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w500, color: AsmitaPalette.textLight)),
+                    Text(_selectedTimeSlot ?? 'N/A', style: const TextStyle(fontFamily: 'Poppins', fontSize: 14, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () {
+              final details = '''
+🎉 Facility Booking Details 🎉
+Facility: $_selectedFacility
+Date: ${_bookingDate != null ? _formatDate(_bookingDate!) : 'N/A'}
+Time: ${_selectedTimeSlot ?? 'N/A'}
+
+Show this at the gate for entry.
+''';
+              // ignore: deprecated_member_use
+              Share.share(details);
+            },
+            icon: const Icon(Icons.share_rounded, color: Colors.white, size: 18),
+            label: const Text(
+              'Share Booking Pass',
+              style: TextStyle(fontFamily: 'Montserrat', color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AsmitaPalette.deepNavy,
+              minimumSize: const Size(double.infinity, 54),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: 0,
+            ),
+          ),
           const SizedBox(height: 32),
           _buildPrimaryButton(label: 'Done', onPressed: () {
             // This check prevents a race condition where the widget might be disposed

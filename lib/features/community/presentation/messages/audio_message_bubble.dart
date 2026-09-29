@@ -51,14 +51,15 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
     });
 
     _positionSubscription = _audioPlayer.onPositionChanged.listen((newPosition) {
-      if (mounted) {
+      if (mounted && (_isPlaying || newPosition == Duration.zero)) {
         setState(() {
           _position = newPosition;
         });
       }
     });
 
-    _playerCompleteSubscription = _audioPlayer.onPlayerComplete.listen((_) {
+    _playerCompleteSubscription = _audioPlayer.onPlayerComplete.listen((_) async {
+      await _audioPlayer.stop();
       if (mounted) {
         setState(() {
           _isPlaying = false;

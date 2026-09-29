@@ -258,21 +258,21 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       _selectedEndTime.minute,
     );
 
-    String? allowedDays;
+    List<String>? allowedDays;
     if (!isOnce) {
       if (_selectedDaysOfWeek == 'All days of Week') {
-        allowedDays = 'Mon,Tue,Wed,Thu,Fri,Sat,Sun';
+        allowedDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       } else if (_selectedDaysOfWeek == 'Weekdays (Mon-Fri)') {
-        allowedDays = 'Mon,Tue,Wed,Thu,Fri';
+        allowedDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
       } else if (_selectedDaysOfWeek == 'Weekends (Sat-Sun)') {
-        allowedDays = 'Sat,Sun';
+        allowedDays = ['Sat', 'Sun'];
       } else {
         final daysList = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         List<String> selected = [];
         for (int i = 0; i < 7; i++) {
           if (_customDaysSelected[i]) selected.add(daysList[i]);
         }
-        allowedDays = selected.join(',');
+        allowedDays = selected.isNotEmpty ? selected : null;
       }
     }
 

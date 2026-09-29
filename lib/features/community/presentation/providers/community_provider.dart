@@ -93,8 +93,8 @@ class CommunityNotifier extends Notifier<CommunityState> {
   }
 
   int _calculateBackoff(int failures) {
-    if (failures == 0) return 3;
-    int backoff = 3;
+    if (failures == 0) return 10;
+    int backoff = 10;
     for (int i = 0; i < failures; i++) {
       backoff *= 2;
     }
@@ -452,6 +452,7 @@ class CommunityNotifier extends Notifier<CommunityState> {
       );
     } catch (e) {
       debugPrint('Failed to fetch latest messages during polling: $e');
+      rethrow;
     }
   }
 
