@@ -69,6 +69,7 @@ class EnvConfig {
 
   /// Endpoints for Menu Sub-Pages
   static String get familyMembers => '$baseUrl/app-api/family-members';
+  static String get tenants => '$baseUrl/app-api/tenants';
   static String get userVehicles => '$baseUrl/app-api/vehicles';
   static String get userPets => '$baseUrl/app-api/pets';
   static String get parkingSlots => '$baseUrl/app-api/parking-slots';

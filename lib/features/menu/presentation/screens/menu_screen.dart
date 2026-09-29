@@ -12,6 +12,7 @@ import 'package:asmita_society/features/visitor_management/bloc/visitor_event.da
 import 'committee_members_screen.dart';
 import 'documents_screen.dart';
 import 'family_members_screen.dart';
+import 'tenants_screen.dart';
 import 'help_support_screen.dart';
 import 'pets_screen.dart';
 import 'profile_screen.dart';
@@ -64,6 +65,8 @@ class MenuScreen extends StatelessWidget {
                 title: 'My Household',
                 items: [
                   _buildMenuItem(context, Icons.people_outline_rounded, 'Family Members'),
+                  if (userRole.toLowerCase() != 'tenant')
+                    _buildMenuItem(context, Icons.group_add_outlined, 'Tenants'),
                   _buildMenuItem(context, Icons.directions_car_filled_outlined, 'Vehicles'),
                   _buildMenuItem(context, Icons.pets_rounded, 'Pets'),
                 ],
@@ -252,6 +255,7 @@ class MenuScreen extends StatelessWidget {
           case 'Rules & Regulations': screen = const RulesScreen(); break;
           case 'Important Documents': screen = const DocumentsScreen(); break;
           case 'Family Members': screen = FamilyMembersScreen(onNavigateToTab: onNavigateToTab); break;
+          case 'Tenants': screen = TenantsScreen(onNavigateToTab: onNavigateToTab); break;
           case 'Vehicles': screen = VehiclesScreen(onNavigateToTab: onNavigateToTab); break;
           case 'Pets': screen = PetsScreen(onNavigateToTab: onNavigateToTab); break;
           case 'Settings': screen = const SettingsScreen(); break;
