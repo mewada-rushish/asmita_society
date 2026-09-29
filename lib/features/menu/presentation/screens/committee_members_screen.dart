@@ -5,12 +5,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
+import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
+import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/features/menu/presentation/providers/society_provider.dart';
 import 'package:asmita_society/features/menu/data/models/committee_member_model.dart';
 
 class CommitteeMembersScreen extends ConsumerWidget {
-  const CommitteeMembersScreen({super.key});
+  final ValueChanged<int>? onNavigateToTab;
+  final VoidCallback? onNavigateToCommunity;
+  final VoidCallback? onNavigateToSearch;
+
+  const CommitteeMembersScreen({
+    super.key,
+    this.onNavigateToTab,
+    this.onNavigateToCommunity,
+    this.onNavigateToSearch,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -19,9 +30,26 @@ class CommitteeMembersScreen extends ConsumerWidget {
     
     return Scaffold(
       backgroundColor: AsmitaPalette.systemBG,
+      bottomNavigationBar: AsmitaBottomNavBar(
+        currentIndex: -1,
+        onTap: (index) {
+          Navigator.pop(context);
+          if (onNavigateToTab != null) {
+            onNavigateToTab!(index);
+          }
+        },
+      ),
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
+            AsmitaPrimaryHeader(
+              showBackButton: false,
+              backgroundColor: AsmitaPalette.systemBG,
+              bottomPadding: 0.0,
+              onSearchPressed: onNavigateToSearch,
+              onChatPressed: onNavigateToCommunity,
+            ),
             const AsmitaSubHeader(title: 'Committee Members'),
             Expanded(
               child: committeeState.when(
