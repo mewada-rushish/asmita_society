@@ -126,16 +126,12 @@ class CommitteeMembersScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildActionButton(
-                textTheme, 
                 Icons.call_rounded, 
-                'Call',
                 () => _launchUrl('tel:$phone'),
               ),
               Container(width: 1, height: 24, color: AsmitaPalette.borderGrey),
               _buildActionButton(
-                textTheme, 
                 Icons.email_rounded, 
-                'Email',
                 () => _launchUrl('mailto:$email'),
               ),
             ],
@@ -145,15 +141,12 @@ class CommitteeMembersScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionButton(TextTheme textTheme, IconData icon, String label, VoidCallback onTap) {
+  Widget _buildActionButton(IconData icon, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: AsmitaPalette.textLight),
-          const SizedBox(width: 8),
-          Text(label, style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.textLight, fontWeight: FontWeight.w600)),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Icon(icon, size: 22, color: AsmitaPalette.textLight),
       ),
     );
   }
