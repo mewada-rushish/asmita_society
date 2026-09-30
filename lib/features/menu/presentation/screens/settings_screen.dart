@@ -5,8 +5,9 @@ import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/features/menu/presentation/providers/preferences_provider.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/features/menu/presentation/screens/privacy_policy_screen.dart';
-
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -59,8 +60,12 @@ class SettingsScreen extends ConsumerWidget {
                       _buildSettingsCard(
                         context,
                         children: [
-                          _buildActionRow(textTheme, Icons.language_rounded, 'Language', prefs.language, true, () {}),
-                          _buildActionRow(textTheme, Icons.dark_mode_rounded, 'App Theme', prefs.appTheme, false, () {}),
+                          _buildActionRow(textTheme, Icons.language_rounded, 'Language', prefs.language, true, () {
+                            _showLanguagePicker(context, ref, prefs.language);
+                          }),
+                          _buildActionRow(textTheme, Icons.dark_mode_rounded, 'App Theme', prefs.appTheme, false, () {
+                            _showThemePicker(context, ref, prefs.appTheme);
+                          }),
                         ],
                       ),
                       const SizedBox(height: 24),
@@ -70,7 +75,9 @@ class SettingsScreen extends ConsumerWidget {
                       _buildSettingsCard(
                         context,
                         children: [
-                          _buildActionRow(textTheme, Icons.lock_rounded, 'Change Password', '', true, () {}),
+                          _buildActionRow(textTheme, Icons.lock_rounded, 'Change Password', '', true, () {
+                            _showChangePasswordDialog(context);
+                          }),
                           _buildToggleRow(
                             textTheme, 
                             Icons.fingerprint_rounded, 
@@ -218,13 +225,130 @@ class SettingsScreen extends ConsumerWidget {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    // Add actual delete account logic here
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Account deletion requested. Support will contact you shortly.')),
-                    );
+                    AsmitaToast.show(context, message: 'Account deletion requested. Support will contact you shortly.', type: AsmitaToastType.info);
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: AsmitaPalette.actionRed),
                   child: const Text('Delete', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLanguagePicker(BuildContext context, WidgetRef ref, String currentLanguage) {
+    final languages = ['English', 'Hindi', 'Marathi', 'Gujarati'];
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => SafeArea(
+        child: CupertinoActionSheet(
+          title: const Text('Select Language'),
+          actions: languages.map((lang) {
+            return CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                if (lang != currentLanguage) {
+                  ref.read(preferencesProvider.notifier).updatePreference(language: lang);
+                  AsmitaToast.show(context, message: 'Language changed to $lang', type: AsmitaToastType.success);
+                }
+              },
+              child: Text(
+                lang,
+                style: TextStyle(
+                  color: lang == currentLanguage ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy,
+                  fontWeight: lang == currentLanguage ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+            );
+          }).toList(),
+          cancelButton: CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(context),
+            isDestructiveAction: true,
+            child: const Text('Cancel'),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showThemePicker(BuildContext context, WidgetRef ref, String currentTheme) {
+    final themes = ['System', 'Light', 'Dark'];
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => SafeArea(
+        child: CupertinoActionSheet(
+          title: const Text('Select App Theme'),
+          actions: themes.map((theme) {
+            return CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                if (theme != currentTheme) {
+                  ref.read(preferencesProvider.notifier).updatePreference(appTheme: theme);
+                  AsmitaToast.show(context, message: 'Theme changed to $theme', type: AsmitaToastType.success);
+                }
+              },
+              child: Text(
+                theme,
+                style: TextStyle(
+                  color: theme == currentTheme ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy,
+                  fontWeight: theme == currentTheme ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+            );
+          }).toList(),
+          cancelButton: CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(context),
+            isDestructiveAction: true,
+            child: const Text('Cancel'),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showChangePasswordDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AsmitaDialog(
+        title: 'Change Password',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CupertinoTextField(
+              placeholder: 'Current Password',
+              obscureText: true,
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            const SizedBox(height: 12),
+            const CupertinoTextField(
+              placeholder: 'New Password',
+              obscureText: true,
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            const SizedBox(height: 12),
+            const CupertinoTextField(
+              placeholder: 'Confirm New Password',
+              obscureText: true,
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel', style: TextStyle(color: AsmitaPalette.deepNavy)),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    AsmitaToast.show(context, message: 'Password changed successfully', type: AsmitaToastType.success);
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: AsmitaPalette.deepNavy),
+                  child: const Text('Save', style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
