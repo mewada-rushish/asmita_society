@@ -347,11 +347,12 @@ class TenantsScreen extends ConsumerWidget {
                 color: AsmitaPalette.systemBG,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(member == null ? 'Add Tenant' : 'Edit Member', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
@@ -588,7 +589,8 @@ class TenantsScreen extends ConsumerWidget {
                           : Text(member == null ? 'Save Member' : 'Update Member', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                     ),
                   ),
-                ],
+                  ),
+                ),
               ),
             );
           }
