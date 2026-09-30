@@ -102,4 +102,17 @@ class TenantRepository {
       return false;
     }
   }
+
+  Future<bool> requestHistoryAccess(int tenantId) async {
+    try {
+      final response = await dio.post(
+        '${EnvConfig.tenants}/history-requests',
+        data: {'tenant_id': tenantId},
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error requesting history access: $e');
+      return false;
+    }
+  }
 }

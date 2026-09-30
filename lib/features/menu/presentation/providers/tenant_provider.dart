@@ -142,4 +142,27 @@ class TenantNotifier extends AsyncNotifier<List<TenantModel>> {
     }
     return success;
   }
+
+  Future<bool> requestHistoryAccess(int id) async {
+    final success = await _repository.requestHistoryAccess(id);
+    if (success && state.value != null) {
+      final updatedList = state.value!.map((m) {
+        if (m.id == id) {
+          return TenantModel(
+            id: m.id,
+            name: m.name,
+            relationship: m.relationship,
+            contactNumber: m.contactNumber,
+            isEmergencyContact: m.isEmergencyContact,
+            avatarUrl: m.avatarUrl,
+            historyRequestStatus: 'PENDING',
+          );
+        }
+        return m;
+      }).toList();
+      state = AsyncValue.data(updatedList);
+      _repository.saveToCache(updatedList);
+    }
+    return success;
+  }
 }

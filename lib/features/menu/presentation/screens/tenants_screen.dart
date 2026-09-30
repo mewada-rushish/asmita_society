@@ -115,17 +115,19 @@ class TenantsScreen extends ConsumerWidget {
   Widget _buildTenantGridCard(BuildContext context, WidgetRef ref, TextTheme textTheme, TenantModel member) {
     final isPrimary = member.id == -1 || member.relationship == 'Primary';
 
-    return GestureDetector(
-      onTap: () {
-        if (isPrimary) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Primary member profile can be edited from the Profile section')),
-          );
-        } else {
-          _showMemberOptions(context, ref, member);
-        }
-      },
-      child: Container(
+    return Stack(
+      children: [
+        GestureDetector(
+          onTap: () {
+            if (isPrimary) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Primary member profile can be edited from the Profile section')),
+              );
+            } else {
+              _showMemberOptions(context, ref, member);
+            }
+          },
+          child: Container(
         decoration: BoxDecoration(
           color: isPrimary ? AsmitaPalette.deepNavy.withValues(alpha: 0.03) : Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -190,6 +192,75 @@ class TenantsScreen extends ConsumerWidget {
               ),
             ],
           ],
+        ),
+      ),
+    ),
+    _buildHistoryActionButton(context, ref, member),
+    ],
+    );
+  }
+
+  Widget _buildHistoryActionButton(BuildContext context, WidgetRef ref, TenantModel member) {
+    if (member.id == -1 || member.relationship == 'Primary') return const SizedBox.shrink();
+
+    IconData icon;
+    Color color;
+    String tooltip;
+    VoidCallback? onTap;
+
+    if (member.historyRequestStatus == null) {
+      icon = Icons.history_edu;
+      color = AsmitaPalette.deepNavy;
+      tooltip = 'Request Visitor History';
+      onTap = () {
+        ref.read(tenantProvider.notifier).requestHistoryAccess(member.id);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Request sent to tenant')));
+      };
+    } else if (member.historyRequestStatus == 'PENDING') {
+      icon = Icons.access_time;
+      color = Colors.orange;
+      tooltip = 'Request Pending';
+    } else {
+      icon = Icons.check_circle;
+      color = Colors.green;
+      tooltip = 'History Access Approved';
+      onTap = () {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('History Access'),
+            content: const Text('Access to visitor history is currently approved. Request a new time range?'),
+            actions: [
+              CupertinoDialogAction(child: const Text('Cancel'), onPressed: () => Navigator.pop(context)),
+              CupertinoDialogAction(
+                child: const Text('Request Again'), 
+                onPressed: () {
+                  Navigator.pop(context);
+                  ref.read(tenantProvider.notifier).requestHistoryAccess(member.id);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('New request sent')));
+                }
+              ),
+            ]
+          )
+        );
+      };
+    }
+
+    return Positioned(
+      top: 8,
+      right: 8,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Tooltip(
+            message: tooltip,
+            child: Icon(icon, size: 20, color: color),
+          ),
         ),
       ),
     );

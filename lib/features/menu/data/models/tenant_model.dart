@@ -5,6 +5,7 @@ class TenantModel {
   final String? contactNumber;
   final bool isEmergencyContact;
   final String? avatarUrl;
+  final String? historyRequestStatus;
 
   TenantModel({
     required this.id,
@@ -13,6 +14,7 @@ class TenantModel {
     this.contactNumber,
     this.isEmergencyContact = false,
     this.avatarUrl,
+    this.historyRequestStatus,
   });
 
   factory TenantModel.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class TenantModel {
       contactNumber: json['contact_number'] as String?,
       isEmergencyContact: json['is_emergency_contact'] == 1 || json['is_emergency_contact'] == true,
       avatarUrl: json['avatar_url'] as String?,
+      historyRequestStatus: json['history_request'] != null ? json['history_request']['status'] as String? : null,
     );
   }
 
@@ -34,6 +37,8 @@ class TenantModel {
       'contact_number': contactNumber,
       'is_emergency_contact': isEmergencyContact ? 1 : 0,
       'avatar_url': avatarUrl,
+      if (historyRequestStatus != null)
+        'history_request': {'status': historyRequestStatus},
     };
   }
 }
