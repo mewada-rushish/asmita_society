@@ -320,11 +320,11 @@ class TenantsScreen extends ConsumerWidget {
   void _showAddEditSheet(BuildContext context, WidgetRef ref, {TenantModel? member}) {
     final nameCtrl = TextEditingController(text: member?.name ?? '');
     final contactCtrl = TextEditingController(text: member?.contactNumber ?? '');
-    String selectedRel = member?.relationship ?? 'Spouse';
+    String selectedRel = member?.relationship ?? 'Primary Tenant';
     bool isEmergency = member?.isEmergencyContact ?? false;
     bool isLoading = false;
     
-    final relationships = ['Spouse', 'Son', 'Daughter', 'Father', 'Mother', 'Brother', 'Sister', 'Other'];
+    final relationships = ['Primary Tenant', 'Co-Tenant', 'Roommate', 'Family of Tenant', 'Other'];
     if (!relationships.contains(selectedRel)) {
       selectedRel = 'Other';
     }
@@ -355,7 +355,7 @@ class TenantsScreen extends ConsumerWidget {
                     Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(member == null ? 'Add Tenant' : 'Edit Member', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                      Text(member == null ? 'Add Tenant' : 'Edit Tenant', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: Container(
@@ -586,7 +586,7 @@ class TenantsScreen extends ConsumerWidget {
                                   size: 20,
                                 ),
                             )
-                          : Text(member == null ? 'Save Member' : 'Update Member', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                          : Text(member == null ? 'Save Tenant' : 'Update Tenant', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                     ),
                   ),
                 ],
