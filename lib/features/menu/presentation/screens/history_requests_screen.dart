@@ -15,7 +15,7 @@ class HistoryRequestsScreen extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: AsmitaPalette.backgroundBase,
+      backgroundColor: AsmitaPalette.systemBG,
       appBar: AppBar(
         title: const Text('Access Requests'),
         centerTitle: true,
