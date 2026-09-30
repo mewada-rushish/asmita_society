@@ -113,27 +113,19 @@ class TenantsScreen extends ConsumerWidget {
   }
 
   Widget _buildTenantGridCard(BuildContext context, WidgetRef ref, TextTheme textTheme, TenantModel member) {
-    final isPrimary = member.id == -1 || member.relationship == 'Primary';
-
     return Stack(
       children: [
         GestureDetector(
           onTap: () {
-            if (isPrimary) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Primary member profile can be edited from the Profile section')),
-              );
-            } else {
-              _showMemberOptions(context, ref, member);
-            }
+            _showMemberOptions(context, ref, member);
           },
           child: Container(
         decoration: BoxDecoration(
-          color: isPrimary ? AsmitaPalette.deepNavy.withValues(alpha: 0.03) : Colors.white,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isPrimary ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey, 
-            width: isPrimary ? 2 : 1,
+            color: AsmitaPalette.borderGrey, 
+            width: 1,
           ),
           boxShadow: [
             BoxShadow(
@@ -149,7 +141,7 @@ class TenantsScreen extends ConsumerWidget {
           children: [
             CircleAvatar(
               radius: 32,
-              backgroundColor: isPrimary ? AsmitaPalette.deepNavy : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+              backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
               backgroundImage: member.avatarUrl != null && member.avatarUrl!.isNotEmpty 
                   ? NetworkImage(member.avatarUrl!) 
                   : null,
@@ -157,7 +149,7 @@ class TenantsScreen extends ConsumerWidget {
                 ? Text(
                     member.name.isNotEmpty ? member.name.substring(0, 1).toUpperCase() : '?', 
                     style: textTheme.headlineSmall?.copyWith(
-                      color: isPrimary ? Colors.white : AsmitaPalette.deepNavy, 
+                      color: AsmitaPalette.deepNavy, 
                       fontWeight: FontWeight.bold
                     )
                   )
@@ -175,12 +167,12 @@ class TenantsScreen extends ConsumerWidget {
             Text(
               member.relationship, 
               style: textTheme.bodyMedium?.copyWith(
-                color: isPrimary ? AsmitaPalette.deepNavy : AsmitaPalette.textLight,
-                fontWeight: isPrimary ? FontWeight.w600 : FontWeight.normal,
+                color: AsmitaPalette.textLight,
+                fontWeight: FontWeight.normal,
               ),
               textAlign: TextAlign.center,
             ),
-            if (member.isEmergencyContact && !isPrimary) ...[
+            if (member.isEmergencyContact) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

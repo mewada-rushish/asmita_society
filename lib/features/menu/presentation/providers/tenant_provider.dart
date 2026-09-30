@@ -24,9 +24,9 @@ class TenantNotifier extends AsyncNotifier<List<TenantModel>> {
     final cached = _repository.getCachedTenants();
     if (cached.isNotEmpty) {
       Future.microtask(() => fetchMembers(showLoading: false));
-      return _injectPrimary(cached);
+      return cached;
     }
-    return _fetchNetworkAndInject();
+    return _fetchNetwork();
   }
 
   Future<void> fetchMembers({bool showLoading = true}) async {
@@ -34,7 +34,7 @@ class TenantNotifier extends AsyncNotifier<List<TenantModel>> {
       state = const AsyncValue.loading();
     }
     try {
-      final members = await _fetchNetworkAndInject();
+      final members = await _fetchNetwork();
       state = AsyncValue.data(members);
     } catch (e, stackTrace) {
       if (showLoading) {
@@ -43,37 +43,9 @@ class TenantNotifier extends AsyncNotifier<List<TenantModel>> {
     }
   }
 
-  Future<List<TenantModel>> _fetchNetworkAndInject() async {
+  Future<List<TenantModel>> _fetchNetwork() async {
     final members = await _repository.getTenants();
-    final injected = await _injectPrimary(members);
-    _repository.saveToCache(injected);
-    return injected;
-  }
-
-  Future<List<TenantModel>> _injectPrimary(List<TenantModel> members) async {
-    final secureStorage = SecureStorageService();
-    final userProfileJsonStr = await secureStorage.read(key: 'user_profile');
-    TenantModel? primaryMember;
-    
-    if (userProfileJsonStr != null) {
-      try {
-        final profileMap = jsonDecode(userProfileJsonStr);
-        primaryMember = TenantModel(
-          id: -1, // Use -1 to identify primary member in UI
-          name: profileMap['full_name'] ?? 'Primary Member',
-          relationship: 'Primary',
-          contactNumber: profileMap['mobile_number'],
-          isEmergencyContact: true,
-          avatarUrl: profileMap['profile_picture_url'],
-        );
-      } catch (e) {
-        // Handle json decode error silently
-      }
-    }
-
-    if (primaryMember != null) {
-      return [primaryMember, ...members];
-    }
+    _repository.saveToCache(members);
     return members;
   }
 
