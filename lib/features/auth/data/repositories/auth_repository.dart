@@ -244,6 +244,40 @@ class AuthRepository {
     }
   }
 
+  /// Changes the user's password
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    try {
+      final response = await dio.put(
+        '${EnvConfig.baseUrl}/app-api/users/me/change-password',
+        data: {
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        },
+      );
+      final data = _ensureMap(response.data);
+      if (data['success'] != true) {
+        throw Exception(data['message'] ?? 'Failed to change password');
+      }
+    } on DioException catch (e) {
+      throw _parseError(e, 'Failed to change password.');
+    }
+  }
+
+  /// Soft deletes the user's account
+  Future<void> deleteAccount() async {
+    try {
+      final response = await dio.delete(
+        '${EnvConfig.baseUrl}/app-api/users/me/delete-account',
+      );
+      final data = _ensureMap(response.data);
+      if (data['success'] != true) {
+        throw Exception(data['message'] ?? 'Failed to delete account');
+      }
+    } on DioException catch (e) {
+      throw _parseError(e, 'Failed to delete account.');
+    }
+  }
+
   /// Safely converts response data into a Map, even if it arrived as a String or List.
   Map<String, dynamic> _ensureMap(dynamic data) {
     if (data == null) return {};

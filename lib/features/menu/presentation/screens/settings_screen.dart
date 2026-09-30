@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
-import 'package:asmita_society/core/widgets/asmita_dialog.dart';
-import 'package:asmita_society/features/menu/presentation/providers/preferences_provider.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/features/menu/presentation/screens/privacy_policy_screen.dart';
+import 'package:asmita_society/core/di/injection_container.dart' as di;
+import 'package:asmita_society/features/auth/data/repositories/auth_repository.dart';
+import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -202,38 +204,60 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   void _showDeleteAccountDialog(BuildContext context) {
+    bool isLoading = false;
     showDialog(
       context: context,
-      builder: (context) => AsmitaDialog(
-        title: 'Delete Account',
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Are you sure you want to delete your account? This action cannot be undone and will permanently remove your data.',
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AsmitaDialog(
+            title: 'Delete Account',
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel', style: TextStyle(color: AsmitaPalette.deepNavy)),
+                const Text(
+                  'Are you sure you want to delete your account? This action cannot be undone and will permanently remove your data.',
                 ),
-                const SizedBox(width: 12),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    AsmitaToast.show(context, message: 'Account deletion requested. Support will contact you shortly.', type: AsmitaToastType.info);
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: AsmitaPalette.actionRed),
-                  child: const Text('Delete', style: TextStyle(color: Colors.white)),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: isLoading ? null : () => Navigator.pop(context),
+                      child: const Text('Cancel', style: TextStyle(color: AsmitaPalette.deepNavy)),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: isLoading ? null : () async {
+                        setState(() => isLoading = true);
+                        try {
+                          await di.sl<AuthRepository>().deleteAccount();
+                          if (context.mounted) {
+                            Navigator.pop(context); // close dialog
+                            AsmitaToast.show(context, message: 'Account deleted successfully', type: AsmitaToastType.success);
+                            context.read<AuthBloc>().add(const AuthLogoutRequested());
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            AsmitaToast.show(context, message: e.toString().replaceAll('Exception: ', ''), type: AsmitaToastType.error);
+                          }
+                        } finally {
+                          if (context.mounted) {
+                            setState(() => isLoading = false);
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: AsmitaPalette.actionRed),
+                      child: isLoading 
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text('Delete', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
+          );
+        }
       ),
     );
   }
@@ -309,51 +333,92 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   void _showChangePasswordDialog(BuildContext context) {
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    bool isLoading = false;
+
     showDialog(
       context: context,
-      builder: (context) => AsmitaDialog(
-        title: 'Change Password',
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CupertinoTextField(
-              placeholder: 'Current Password',
-              obscureText: true,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            const SizedBox(height: 12),
-            const CupertinoTextField(
-              placeholder: 'New Password',
-              obscureText: true,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            const SizedBox(height: 12),
-            const CupertinoTextField(
-              placeholder: 'Confirm New Password',
-              obscureText: true,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AsmitaDialog(
+            title: 'Change Password',
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel', style: TextStyle(color: AsmitaPalette.deepNavy)),
+                CupertinoTextField(
+                  controller: currentPasswordController,
+                  placeholder: 'Current Password',
+                  obscureText: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
-                const SizedBox(width: 12),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    AsmitaToast.show(context, message: 'Password changed successfully', type: AsmitaToastType.success);
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: AsmitaPalette.deepNavy),
-                  child: const Text('Save', style: TextStyle(color: Colors.white)),
+                const SizedBox(height: 12),
+                CupertinoTextField(
+                  controller: newPasswordController,
+                  placeholder: 'New Password',
+                  obscureText: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                const SizedBox(height: 12),
+                CupertinoTextField(
+                  controller: confirmPasswordController,
+                  placeholder: 'Confirm New Password',
+                  obscureText: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: isLoading ? null : () => Navigator.pop(context),
+                      child: const Text('Cancel', style: TextStyle(color: AsmitaPalette.deepNavy)),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: isLoading ? null : () async {
+                        final current = currentPasswordController.text;
+                        final newPass = newPasswordController.text;
+                        final confirm = confirmPasswordController.text;
+                        
+                        if (current.isEmpty || newPass.isEmpty) {
+                          AsmitaToast.show(context, message: 'Please fill all fields', type: AsmitaToastType.error);
+                          return;
+                        }
+                        if (newPass != confirm) {
+                          AsmitaToast.show(context, message: 'New passwords do not match', type: AsmitaToastType.error);
+                          return;
+                        }
+                        
+                        setState(() => isLoading = true);
+                        try {
+                          await di.sl<AuthRepository>().changePassword(current, newPass);
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                            AsmitaToast.show(context, message: 'Password changed successfully', type: AsmitaToastType.success);
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            AsmitaToast.show(context, message: e.toString().replaceAll('Exception: ', ''), type: AsmitaToastType.error);
+                          }
+                        } finally {
+                          if (context.mounted) {
+                            setState(() => isLoading = false);
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: AsmitaPalette.deepNavy),
+                      child: isLoading 
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text('Save', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
+          );
+        }
       ),
     );
   }
