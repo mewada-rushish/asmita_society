@@ -238,7 +238,7 @@ class SettingsScreen extends ConsumerWidget {
                           if (context.mounted) {
                             Navigator.pop(context); // close dialog
                             AsmitaToast.show(context, message: 'Account deleted successfully', type: AsmitaToastType.success);
-                            context.read<AuthBloc>().add(const AuthLogoutRequested());
+                            context.read<AuthBloc>().add(AuthLogoutRequested());
                           }
                         } catch (e) {
                           if (context.mounted) {
