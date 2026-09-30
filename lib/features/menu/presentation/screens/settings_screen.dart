@@ -10,6 +10,9 @@ import 'package:asmita_society/features/menu/presentation/screens/privacy_policy
 import 'package:asmita_society/core/di/injection_container.dart' as di;
 import 'package:asmita_society/features/auth/data/repositories/auth_repository.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
+import 'package:asmita_society/features/auth/bloc/auth_event.dart';
+import 'package:asmita_society/core/widgets/asmita_dialog.dart';
+import 'package:asmita_society/features/menu/presentation/providers/preferences_provider.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
