@@ -589,8 +589,8 @@ class TenantsScreen extends ConsumerWidget {
                           : Text(member == null ? 'Save Member' : 'Update Member', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                     ),
                   ),
-                  ),
-                ),
+                ],
+              ),
               ),
             );
           }
