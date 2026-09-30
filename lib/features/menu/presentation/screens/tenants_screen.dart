@@ -40,11 +40,25 @@ class TenantsScreen extends ConsumerWidget {
           }
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddEditSheet(context, ref),
-        backgroundColor: AsmitaPalette.deepNavy,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(CupertinoIcons.add, color: Colors.white),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            heroTag: 'request_history_fab',
+            onPressed: () => _onHistoryRequestFabTapped(context, ref),
+            backgroundColor: AsmitaPalette.systemBG,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: const Icon(Icons.history_edu, color: AsmitaPalette.deepNavy),
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton(
+            heroTag: 'add_tenant_fab',
+            onPressed: () => _showAddEditSheet(context, ref),
+            backgroundColor: AsmitaPalette.deepNavy,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: const Icon(CupertinoIcons.add, color: Colors.white),
+          ),
+        ],
       ),
       body: SafeArea(
         bottom: false,
@@ -188,75 +202,82 @@ class TenantsScreen extends ConsumerWidget {
         ),
       ),
     ),
-    _buildHistoryActionButton(context, ref, member),
     ],
     );
   }
 
-  Widget _buildHistoryActionButton(BuildContext context, WidgetRef ref, TenantModel member) {
-    if (member.id == -1 || member.relationship == 'Primary') return const SizedBox.shrink();
-
-    IconData icon;
-    Color color;
-    String tooltip;
-    VoidCallback? onTap;
-
-    if (member.historyRequestStatus == null) {
-      icon = Icons.history_edu;
-      color = AsmitaPalette.deepNavy;
-      tooltip = 'Request Visitor History';
-      onTap = () {
-        ref.read(tenantProvider.notifier).requestHistoryAccess(member.id);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Request sent to tenant')));
-      };
-    } else if (member.historyRequestStatus == 'PENDING') {
-      icon = Icons.access_time;
-      color = Colors.orange;
-      tooltip = 'Request Pending';
-    } else {
-      icon = Icons.check_circle;
-      color = Colors.green;
-      tooltip = 'History Access Approved';
-      onTap = () {
-        showCupertinoDialog(
+  void _onHistoryRequestFabTapped(BuildContext context, WidgetRef ref) {
+    final tenantState = ref.read(tenantProvider);
+    if (tenantState is AsyncData) {
+      final tenants = tenantState.value ?? [];
+      final actualTenants = tenants.where((t) => t.id != -1).toList();
+      
+      if (actualTenants.isEmpty) {
+        AsmitaToast.show(context, message: 'No tenants found', type: AsmitaToastType.info);
+        return;
+      }
+      
+      if (actualTenants.length == 1) {
+        _handleHistoryRequest(context, ref, actualTenants.first);
+      } else {
+        // Show bottom sheet to select tenant
+        showModalBottomSheet(
           context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text('History Access'),
-            content: const Text('Access to visitor history is currently approved. Request a new time range?'),
-            actions: [
-              CupertinoDialogAction(child: const Text('Cancel'), onPressed: () => Navigator.pop(context)),
-              CupertinoDialogAction(
-                child: const Text('Request Again'), 
-                onPressed: () {
-                  Navigator.pop(context);
-                  ref.read(tenantProvider.notifier).requestHistoryAccess(member.id);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('New request sent')));
-                }
-              ),
-            ]
+          backgroundColor: Colors.transparent,
+          builder: (context) => Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: AsmitaPalette.systemBG,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Select Tenant', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                const SizedBox(height: 16),
+                ...actualTenants.map((tenant) => CupertinoListTile(
+                  title: Text(tenant.name),
+                  subtitle: Text(tenant.relationship ?? 'Tenant'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _handleHistoryRequest(context, ref, tenant);
+                  },
+                )),
+              ],
+            ),
           )
         );
-      };
+      }
     }
+  }
 
-    return Positioned(
-      top: 8,
-      right: 8,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Tooltip(
-            message: tooltip,
-            child: Icon(icon, size: 20, color: color),
-          ),
-        ),
-      ),
-    );
+  void _handleHistoryRequest(BuildContext context, WidgetRef ref, TenantModel member) {
+    if (member.historyRequestStatus == null) {
+      ref.read(tenantProvider.notifier).requestHistoryAccess(member.id);
+      AsmitaToast.show(context, message: 'Request sent to tenant', type: AsmitaToastType.success);
+    } else if (member.historyRequestStatus == 'PENDING') {
+      AsmitaToast.show(context, message: 'Request is already pending', type: AsmitaToastType.info);
+    } else {
+      showCupertinoDialog(
+        context: context,
+        builder: (context) => CupertinoAlertDialog(
+          title: const Text('History Access'),
+          content: const Text('Access to visitor history is currently approved. Request a new time range?'),
+          actions: [
+            CupertinoDialogAction(child: const Text('Cancel'), onPressed: () => Navigator.pop(context)),
+            CupertinoDialogAction(
+              child: const Text('Request Again'), 
+              onPressed: () {
+                Navigator.pop(context);
+                ref.read(tenantProvider.notifier).requestHistoryAccess(member.id);
+                AsmitaToast.show(context, message: 'New request sent', type: AsmitaToastType.success);
+              }
+            ),
+          ]
+        )
+      );
+    }
   }
 
   void _showMemberOptions(BuildContext context, WidgetRef ref, TenantModel member) {
