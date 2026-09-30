@@ -13,6 +13,7 @@ import 'committee_members_screen.dart';
 import 'documents_screen.dart';
 import 'family_members_screen.dart';
 import 'tenants_screen.dart';
+import 'history_requests_screen.dart';
 import 'help_support_screen.dart';
 import 'pets_screen.dart';
 import 'profile_screen.dart';
@@ -67,6 +68,8 @@ class MenuScreen extends StatelessWidget {
                   _buildMenuItem(context, Icons.people_outline_rounded, 'Family Members'),
                   if (userRole.toLowerCase() != 'tenant')
                     _buildMenuItem(context, Icons.group_add_outlined, 'Tenants'),
+                  if (userRole.toLowerCase() == 'tenant')
+                    _buildMenuItem(context, Icons.security_rounded, 'Access Requests'),
                   _buildMenuItem(context, Icons.directions_car_filled_outlined, 'Vehicles'),
                   _buildMenuItem(context, Icons.pets_rounded, 'Pets'),
                 ],
@@ -258,6 +261,7 @@ class MenuScreen extends StatelessWidget {
           case 'Tenants': screen = TenantsScreen(onNavigateToTab: onNavigateToTab); break;
           case 'Vehicles': screen = VehiclesScreen(onNavigateToTab: onNavigateToTab); break;
           case 'Pets': screen = PetsScreen(onNavigateToTab: onNavigateToTab); break;
+          case 'Access Requests': screen = const HistoryRequestsScreen(); break;
           case 'Settings': screen = const SettingsScreen(); break;
           case 'Help & Support': screen = const HelpSupportScreen(); break;
           default: return;
