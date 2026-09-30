@@ -120,6 +120,7 @@ class TenantsScreen extends ConsumerWidget {
             _showMemberOptions(context, ref, member);
           },
           child: Container(
+        width: double.infinity,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
