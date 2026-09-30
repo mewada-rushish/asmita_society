@@ -46,9 +46,9 @@ class TenantsScreen extends ConsumerWidget {
           FloatingActionButton(
             heroTag: 'request_history_fab',
             onPressed: () => _onHistoryRequestFabTapped(context, ref),
-            backgroundColor: AsmitaPalette.systemBG,
+            backgroundColor: AsmitaPalette.deepNavy,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: const Icon(Icons.history_edu, color: AsmitaPalette.deepNavy),
+            child: const Icon(Icons.history, color: Colors.white),
           ),
           const SizedBox(height: 16),
           FloatingActionButton(
