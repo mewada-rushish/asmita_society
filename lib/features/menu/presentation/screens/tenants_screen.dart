@@ -238,7 +238,7 @@ class TenantsScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 ...actualTenants.map((tenant) => CupertinoListTile(
                   title: Text(tenant.name),
-                  subtitle: Text(tenant.relationship ?? 'Tenant'),
+                  subtitle: Text(tenant.relationship.isEmpty ? 'Tenant' : tenant.relationship),
                   onTap: () {
                     Navigator.pop(context);
                     _handleHistoryRequest(context, ref, tenant);
