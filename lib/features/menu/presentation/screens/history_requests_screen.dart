@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/asmita_theme.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
 import '../providers/history_request_provider.dart';
 import '../../data/models/history_request_model.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 
 class HistoryRequestsScreen extends ConsumerWidget {
   const HistoryRequestsScreen({super.key});
