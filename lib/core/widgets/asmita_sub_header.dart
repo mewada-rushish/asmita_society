@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
+
 
 class AsmitaSubHeader extends StatelessWidget {
   final String title;
@@ -23,23 +23,23 @@ class AsmitaSubHeader extends StatelessWidget {
           GestureDetector(
             onTap: onBackPressed ?? () => Navigator.pop(context),
             behavior: HitTestBehavior.opaque,
-            child: const Padding(
-              padding: EdgeInsets.only(right: 12.0, top: 4.0, bottom: 4.0),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 12.0, top: 4.0, bottom: 4.0),
               child: Icon(
                 Icons.arrow_back_ios_new_rounded,
                 size: 18,
-                color: AsmitaPalette.deepNavy,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Montserrat',
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
-                color: AsmitaPalette.deepNavy,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ),

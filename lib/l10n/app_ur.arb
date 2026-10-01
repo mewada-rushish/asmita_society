@@ -1,0 +1,18 @@
+{
+    "@@locale": "ur",
+    "language": "زبان",
+    "theme": "تھیم",
+    "changePassword": "پاس ورڈ تبدیل کریں",
+    "privacyPolicy": "رازداری کی پالیسی",
+    "deleteAccount": "اکاؤنٹ حذف کریں",
+    "logout": "لاگ آؤٹ",
+    "settings": "ترتیبات",
+    "selectLanguage": "زبان منتخب کریں",
+    "english": "انگریزی",
+    "hindi": "ہندی",
+    "marathi": "مراٹھی",
+    "urdu": "اردو",
+    "arabic": "عربی",
+    "cancel": "منسوخ کریں",
+    "save": "محفوظ کریں"
+}

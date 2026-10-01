@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/features/community/data/models/chat_message_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -42,19 +41,19 @@ class ContactMessageBubble extends StatelessWidget {
             children: [
               CircleAvatar(
                 backgroundColor: message.isMe 
-                    ? Colors.white.withValues(alpha: 0.2) 
-                    : AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                    ? Theme.of(context).colorScheme.surface.withValues(alpha: 0.2) 
+                    : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                 radius: 20,
                 child: Text(
                   initial,
                   style: TextStyle(
                     fontFamily: 'Montserrat',
                     fontWeight: FontWeight.w700,
-                    color: message.isMe ? Colors.white : AsmitaPalette.deepNavy,
+                    color: message.isMe ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,7 +64,7 @@ class ContactMessageBubble extends StatelessWidget {
                         fontFamily: 'Montserrat',
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
-                        color: message.isMe ? Colors.white : AsmitaPalette.textDark,
+                        color: message.isMe ? Theme.of(context).colorScheme.surface : Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -75,7 +74,7 @@ class ContactMessageBubble extends StatelessWidget {
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 12,
-                        color: message.isMe ? Colors.white70 : AsmitaPalette.textLight,
+                        color: message.isMe ? Theme.of(context).colorScheme.surface.withValues(alpha: 0.7) : Theme.of(context).textTheme.bodyMedium?.color,
                       ),
                     ),
                   ],
@@ -83,20 +82,20 @@ class ContactMessageBubble extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () => _launchPhoneCall(phone),
               style: ElevatedButton.styleFrom(
-                backgroundColor: message.isMe ? Colors.white : AsmitaPalette.deepNavy,
-                foregroundColor: message.isMe ? AsmitaPalette.deepNavy : Colors.white,
+                backgroundColor: message.isMe ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.primary,
+                foregroundColor: message.isMe ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surface,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: EdgeInsets.symmetric(vertical: 8),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              icon: const Icon(Icons.phone_rounded, size: 16),
-              label: const Text('Call Contact', style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600)),
+              icon: Icon(Icons.phone_rounded, size: 16),
+              label: Text('Call Contact', style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600)),
             ),
           ),
         ],

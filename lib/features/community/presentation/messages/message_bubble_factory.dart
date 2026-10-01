@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/features/community/data/models/chat_message_model.dart';
 import '../widgets/swipe_to_reply.dart';
@@ -74,9 +73,9 @@ class MessageBubbleFactory extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         child: Container(
           color: isSelected
-              ? AsmitaPalette.deepNavy.withValues(alpha: 0.1)
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
               : Colors.transparent,
-          padding: const EdgeInsets.symmetric(vertical: 2),
+          padding: EdgeInsets.symmetric(vertical: 2),
           child: Align(
             alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
             child: ConstrainedBox(
@@ -90,7 +89,7 @@ class MessageBubbleFactory extends StatelessWidget {
                 children: [
                   if (!isMe)
                     Padding(
-                      padding: const EdgeInsets.only(left: 4, bottom: 4),
+                      padding: EdgeInsets.only(left: 4, bottom: 4),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -100,15 +99,15 @@ class MessageBubbleFactory extends StatelessWidget {
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: isManagement
-                                  ? AsmitaPalette.actionRed
-                                  : AsmitaPalette.deepNavy,
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context).colorScheme.primary,
                             ),
                           ),
                           if (isManagement) ...[
-                            const SizedBox(width: 4),
-                            const Icon(
+                            SizedBox(width: 4),
+                            Icon(
                               Icons.verified_rounded,
-                              color: AsmitaPalette.actionRed,
+                              color: Theme.of(context).colorScheme.primary,
                               size: 12,
                             ),
                           ],
@@ -117,7 +116,11 @@ class MessageBubbleFactory extends StatelessWidget {
                     ),
                   Container(
                     decoration: BoxDecoration(
-                      color: isMe ? const Color(0xFFE6EEFA) : Colors.white,
+                      color: isMe 
+                          ? (Theme.of(context).brightness == Brightness.dark
+                              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
+                              : const Color(0xFFE6EEFA))
+                          : Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.only(
                         topLeft: const Radius.circular(16),
                         topRight: const Radius.circular(16),
@@ -126,36 +129,36 @@ class MessageBubbleFactory extends StatelessWidget {
                       ),
                       border: Border.all(
                         color: isMe
-                            ? AsmitaPalette.deepNavy.withValues(alpha: 0.15)
-                            : AsmitaPalette.borderGrey,
+                            ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15)
+                            : Theme.of(context).dividerColor,
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.02),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    padding: const EdgeInsets.all(12),
+                    padding: EdgeInsets.all(12),
                     child: IntrinsicWidth(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           if (replyToContent != null)
                             Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
+                              padding: EdgeInsets.only(bottom: 8),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(
+                                padding: EdgeInsets.symmetric(
                                   horizontal: 12,
                                   vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.05),
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: Colors.black.withValues(alpha: 0.1),
+                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
                                     width: 0.5,
                                   ),
                                 ),
@@ -167,16 +170,16 @@ class MessageBubbleFactory extends StatelessWidget {
                                       style: textTheme.bodySmall?.copyWith(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
-                                        color: AsmitaPalette.deepNavy,
+                                        color: Theme.of(context).colorScheme.primary,
                                       ),
                                     ),
-                                    const SizedBox(height: 2),
+                                    SizedBox(height: 2),
                                     Text(
                                       replyToContent!,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: textTheme.bodySmall?.copyWith(
-                                        color: AsmitaPalette.textDark,
+                                        color: Theme.of(context).textTheme.bodyLarge?.color,
                                       ),
                                     ),
                                   ],
@@ -221,7 +224,7 @@ class MessageBubbleFactory extends StatelessWidget {
                               votedOptions: votedOptions,
                               isMe: isMe,
                             ),
-                          const SizedBox(height: 6),
+                          SizedBox(height: 6),
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.end,
@@ -232,7 +235,7 @@ class MessageBubbleFactory extends StatelessWidget {
                                   style: textTheme.bodyMedium?.copyWith(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w600,
-                                    color: AsmitaPalette.actionRed,
+                                    color: Theme.of(context).colorScheme.primary,
                                   ),
                                 ),
                               Text(
@@ -240,30 +243,30 @@ class MessageBubbleFactory extends StatelessWidget {
                                 style: textTheme.bodyMedium?.copyWith(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w600,
-                                  color: AsmitaPalette.textLight,
+                                  color: Theme.of(context).textTheme.bodyMedium?.color,
                                 ),
                               ),
                               if (isMe) ...[
-                                const SizedBox(width: 4),
+                                SizedBox(width: 4),
                                 if (isFailed)
-                                  const Icon(
+                                  Icon(
                                     Icons.error_outline_rounded,
-                                    color: AsmitaPalette.actionRed,
+                                    color: Theme.of(context).colorScheme.primary,
                                     size: 12,
                                   )
                                 else if (messageId.startsWith('temp_'))
-                                  const SizedBox(
+                                  SizedBox(
                                     height: 12,
                                     width: 12,
                                     child: AsmitaLoadingIndicator(
-                                        color: AsmitaPalette.deepNavy,
+                                        color: Theme.of(context).colorScheme.primary,
                                         size: 12,
                                     ),
                                   )
                                 else
-                                  const Icon(
+                                  Icon(
                                     Icons.done_all_rounded,
-                                    color: AsmitaPalette.deepNavy,
+                                    color: Theme.of(context).colorScheme.primary,
                                     size: 12,
                                   ),
                               ],

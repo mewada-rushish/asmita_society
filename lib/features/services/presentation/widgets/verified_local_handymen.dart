@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class VerifiedLocalHandymen extends StatelessWidget {
@@ -57,12 +56,12 @@ class VerifiedLocalHandymen extends StatelessWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: _handymen.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
+          separatorBuilder: (context, index) => SizedBox(height: 12),
           itemBuilder: (context, index) {
             final handyman = _handymen[index];
             return _HandymanRow(handyman: handyman, icon: _getHandymanIcon(handyman.specialized));
@@ -85,26 +84,26 @@ class _HandymanRow extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
       ),
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
-            decoration: const BoxDecoration(
-              color: AsmitaPalette.systemBG,
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              color: AsmitaPalette.deepNavy,
+              color: Theme.of(context).colorScheme.primary,
               size: 20,
             ),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,7 +115,7 @@ class _HandymanRow extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(
                   handyman.specialized,
                   style: textTheme.bodyMedium?.copyWith(
@@ -134,11 +133,11 @@ class _HandymanRow extends StatelessWidget {
                 await launchUrl(url);
               }
             },
-            icon: const Icon(Icons.call_rounded, color: AsmitaPalette.actionRed, size: 18),
+            icon: Icon(Icons.call_rounded, color: Theme.of(context).colorScheme.primary, size: 18),
             style: IconButton.styleFrom(
-              backgroundColor: AsmitaPalette.actionRed.withValues(alpha: 0.08),
+              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.all(10),
+              padding: EdgeInsets.all(10),
             ),
           ),
         ],

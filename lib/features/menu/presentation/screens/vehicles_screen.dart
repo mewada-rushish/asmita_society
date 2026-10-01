@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
@@ -23,7 +22,7 @@ class VehiclesScreen extends ConsumerWidget {
     final vehiclesState = ref.watch(vehiclesProvider);
 
     return Scaffold(
-      backgroundColor: AsmitaPalette.systemBG,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       bottomNavigationBar: AsmitaBottomNavBar(
         currentIndex: -1,
         onTap: (index) {
@@ -35,9 +34,9 @@ class VehiclesScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddEditSheet(context, ref),
-        backgroundColor: AsmitaPalette.deepNavy,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(CupertinoIcons.add, color: Colors.white),
+        child: Icon(CupertinoIcons.add, color: Theme.of(context).colorScheme.surface),
       ),
       body: SafeArea(
         bottom: false,
@@ -45,7 +44,7 @@ class VehiclesScreen extends ConsumerWidget {
           children: [
             AsmitaPrimaryHeader(
               showBackButton: false,
-              backgroundColor: AsmitaPalette.systemBG,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               bottomPadding: 0.0,
               onSearchPressed: () {},
               onChatPressed: () {},
@@ -68,7 +67,7 @@ class VehiclesScreen extends ConsumerWidget {
                           child: Center(
                             child: Text(
                               'No vehicles added yet.',
-                              style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.textLight),
+                              style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color),
                             ),
                           ),
                         )
@@ -93,7 +92,7 @@ class VehiclesScreen extends ConsumerWidget {
                     ],
                   );
                 },
-                loading: () => const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28)),
+                loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
                 error: (error, _) => Center(
                   child: Text('Error: ', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
                 ),
@@ -112,12 +111,12 @@ class VehiclesScreen extends ConsumerWidget {
       onTap: () => _showVehicleOptions(context, ref, vehicle),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AsmitaPalette.borderGrey, width: 1),
+          border: Border.all(color: Theme.of(context).dividerColor, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -130,8 +129,8 @@ class VehiclesScreen extends ConsumerWidget {
             const Spacer(),
             CircleAvatar(
               radius: 38,
-              backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-              child: Icon(isCar ? Icons.directions_car_rounded : Icons.two_wheeler_rounded, color: AsmitaPalette.deepNavy, size: 36),
+              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+              child: Icon(isCar ? Icons.directions_car_rounded : Icons.two_wheeler_rounded, color: Theme.of(context).colorScheme.primary, size: 36),
             ),
             const SizedBox(height: 12),
             Text(
@@ -156,9 +155,9 @@ class VehiclesScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.local_parking_rounded, size: 14, color: AsmitaPalette.textLight),
+                  Icon(Icons.local_parking_rounded, size: 14, color: Theme.of(context).textTheme.bodyMedium?.color),
                   const SizedBox(width: 4),
-                  Text('Slot: ${vehicle.parkingSlot}', style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight, fontWeight: FontWeight.w600)),
+                  Text('Slot: ${vehicle.parkingSlot}', style: textTheme.bodySmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w600)),
                 ],
               ),
           ],

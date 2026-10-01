@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/features/community/data/models/community_post_model.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 
@@ -44,24 +43,24 @@ class CommunityPostItem extends StatelessWidget {
         child: Align(
           alignment: Alignment.topCenter,
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+              border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
             ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AsmitaPalette.actionRed.withValues(alpha: 0.1), 
+                color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1), 
                 borderRadius: BorderRadius.circular(10)
               ),
-              child: const Icon(Icons.assignment_outlined, color: AsmitaPalette.actionRed, size: 22),
+              child: Icon(Icons.assignment_outlined, color: Theme.of(context).colorScheme.primary, size: 22),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,11 +74,11 @@ class CommunityPostItem extends StatelessWidget {
                       ),
                       Text(
                         AppDateFormatter.formatDateTime(post.createdAt),
-                        style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight),
+                        style: textTheme.bodySmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   if (!isLong)
                     QuillEditor.basic(
                       controller: quillController,
@@ -98,7 +97,7 @@ class CommunityPostItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: textTheme.bodyMedium,
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     GestureDetector(
                       onTap: () {
                         showAsmitaBottomSheet(
@@ -109,9 +108,9 @@ class CommunityPostItem extends StatelessWidget {
                               Text(
                                 post.title,
                                 textAlign: TextAlign.center,
-                                style: textTheme.titleLarge?.copyWith(fontSize: 22, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy, letterSpacing: -0.5),
+                                style: textTheme.titleLarge?.copyWith(fontSize: 22, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary, letterSpacing: -0.5),
                               ),
-                              const SizedBox(height: 16),
+                              SizedBox(height: 16),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -119,14 +118,14 @@ class CommunityPostItem extends StatelessWidget {
                                     width: 36,
                                     height: 36,
                                     decoration: BoxDecoration(
-                                      color: AsmitaPalette.actionRed.withValues(alpha: 0.1),
+                                      color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Center(
-                                      child: Icon(Icons.person_rounded, size: 20, color: AsmitaPalette.actionRed),
+                                    child: Center(
+                                      child: Icon(Icons.person_rounded, size: 20, color: Theme.of(context).colorScheme.primary),
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  SizedBox(width: 12),
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -136,7 +135,7 @@ class CommunityPostItem extends StatelessWidget {
                                       ),
                                       Text(
                                         AppDateFormatter.formatDateTime(post.createdAt),
-                                        style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight, fontSize: 11),
+                                        style: textTheme.bodySmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 11),
                                       ),
                                     ],
                                   ),
@@ -157,17 +156,17 @@ class CommunityPostItem extends StatelessWidget {
                       child: Text(
                         'Know More',
                         style: textTheme.bodySmall?.copyWith(
-                          color: AsmitaPalette.deepNavy,
+                          color: Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.bold,
                           decoration: TextDecoration.underline,
                         ),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     'By ${post.authorName}',
-                    style: textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic, color: AsmitaPalette.textLight),
+                    style: textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic, color: Theme.of(context).textTheme.bodyMedium?.color),
                   ),
                 ],
               ),
@@ -247,7 +246,7 @@ class _ScrollableQuillContentState extends State<_ScrollableQuillContent> {
             Expanded(
               child: SingleChildScrollView(
                 controller: _scrollController,
-                padding: const EdgeInsets.only(bottom: 40), // Extra padding for the fade/arrow
+                padding: EdgeInsets.only(bottom: 40), // Extra padding for the fade/arrow
                 child: QuillEditor.basic(
                   controller: widget.quillController,
                   config: const QuillEditorConfig(
@@ -277,9 +276,9 @@ class _ScrollableQuillContentState extends State<_ScrollableQuillContent> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.white.withValues(alpha: 0.0),
-                      Colors.white.withValues(alpha: 0.8),
-                      Colors.white,
+                      Theme.of(context).colorScheme.surface.withValues(alpha: 0.0),
+                      Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
+                      Theme.of(context).colorScheme.surface,
                     ],
                   ),
                 ),
@@ -309,14 +308,14 @@ class _ScrollableQuillContentState extends State<_ScrollableQuillContent> {
               },
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AsmitaPalette.borderGrey),
+                    border: Border.all(color: Theme.of(context).dividerColor),
                     boxShadow: [
                       BoxShadow(
-                        color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -328,12 +327,12 @@ class _ScrollableQuillContentState extends State<_ScrollableQuillContent> {
                       Text(
                         'Read More',
                         style: textTheme.labelSmall?.copyWith(
-                          color: AsmitaPalette.deepNavy,
+                          color: Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.deepNavy, size: 20),
+                      SizedBox(width: 4),
+                      Icon(Icons.keyboard_arrow_down_rounded, color: Theme.of(context).colorScheme.primary, size: 20),
                     ],
                   ),
                 ),

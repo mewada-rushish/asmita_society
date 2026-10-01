@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'asmita_facility_booking_wizard.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
@@ -45,7 +44,7 @@ class FacilityBookings extends StatelessWidget {
     return BlocBuilder<AmenitiesBloc, AmenitiesState>(
       builder: (context, state) {
         if (state.status == AmenitiesStatus.loading && state.amenities.isEmpty) {
-          return const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28));
+          return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
         }
         
         final amenities = state.amenities;
@@ -64,9 +63,9 @@ class FacilityBookings extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             if (displayAmenities.isEmpty && state.status != AmenitiesStatus.loading)
-              const Text('No facilities available at the moment.'),
+              Text('No facilities available at the moment.'),
             if (displayAmenities.isNotEmpty)
               GridView.builder(
                 shrinkWrap: true,
@@ -90,21 +89,21 @@ class FacilityBookings extends StatelessWidget {
                 },
               ),
             if (amenities.length > 4) ...[
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Center(
                 child: InkWell(
                   onTap: () => _showAllFacilitiesSheet(context, amenities),
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           'View All Facilities',
-                          style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.actionRed, fontSize: 13, fontWeight: FontWeight.w600),
+                          style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.primary, fontSize: 13, fontWeight: FontWeight.w600),
                         ),
-                        const Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.actionRed, size: 18),
+                        Icon(Icons.keyboard_arrow_down_rounded, color: Theme.of(context).colorScheme.primary, size: 18),
                       ],
                     ),
                   ),
@@ -112,7 +111,7 @@ class FacilityBookings extends StatelessWidget {
               ),
             ],
             if (myBookings.isNotEmpty) ...[
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               Text(
                 'My Bookings',
                 style: textTheme.titleLarge?.copyWith(
@@ -120,7 +119,7 @@ class FacilityBookings extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -128,11 +127,11 @@ class FacilityBookings extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final booking = myBookings[index];
                   return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
+                    margin: EdgeInsets.only(bottom: 8),
                     child: ListTile(
                       title: Text(booking.amenity?.name ?? 'Facility'),
                       subtitle: Text('${booking.bookingDate != null ? booking.bookingDate!.toLocal().toString().split(' ')[0] : ''} - Status: ${booking.bookingStatus}'),
-                      trailing: const Icon(Icons.chevron_right),
+                      trailing: Icon(Icons.chevron_right),
                     ),
                   );
                 },
@@ -212,16 +211,16 @@ class _ServiceCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+          border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
         ),
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(icon, color: AsmitaPalette.deepNavy, size: 24),
+            Icon(icon, color: Theme.of(context).colorScheme.primary, size: 24),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -229,13 +228,13 @@ class _ServiceCard extends StatelessWidget {
                   title,
                   style: textTheme.titleLarge?.copyWith(fontSize: 13, fontWeight: FontWeight.w700),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(
                   availability,
                   style: textTheme.bodyMedium?.copyWith(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: isAvailable ? AsmitaPalette.actionRed : AsmitaPalette.textLight,
+                    color: isAvailable ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyMedium?.color,
                   ),
                 ),
               ],

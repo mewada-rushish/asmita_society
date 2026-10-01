@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import '../providers/community_provider.dart';
 
 class CreatePollDialog extends ConsumerStatefulWidget {
@@ -74,9 +73,9 @@ class _CreatePollDialogState extends ConsumerState<CreatePollDialog> {
   InputDecoration _iosInputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: AsmitaPalette.textLight),
+      hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
       filled: true,
-      fillColor: const Color(0xFFF2F2F7), // iOS system light gray
+      fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
@@ -88,7 +87,7 @@ class _CreatePollDialogState extends ConsumerState<CreatePollDialog> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: AsmitaPalette.deepNavy, width: 1.5),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5),
       ),
     );
   }
@@ -96,8 +95,8 @@ class _CreatePollDialogState extends ConsumerState<CreatePollDialog> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(24),
           topRight: Radius.circular(24),
@@ -120,12 +119,12 @@ class _CreatePollDialogState extends ConsumerState<CreatePollDialog> {
                 width: 40,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.3),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             
             // Header
             Row(
@@ -135,40 +134,40 @@ class _CreatePollDialogState extends ConsumerState<CreatePollDialog> {
                   onPressed: () => Navigator.of(context).pop(),
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
-                    foregroundColor: AsmitaPalette.actionRed,
+                    foregroundColor: Theme.of(context).colorScheme.primary,
                     minimumSize: const Size(50, 30),
                     alignment: Alignment.centerLeft,
                   ),
-                  child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+                  child: Text('Cancel', style: TextStyle(fontSize: 16)),
                 ),
                 Text(
                   'New Poll',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                         fontSize: 17,
-                        color: AsmitaPalette.textDark,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                 ),
                 TextButton(
                   onPressed: _createPoll,
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
-                    foregroundColor: AsmitaPalette.deepNavy,
+                    foregroundColor: Theme.of(context).colorScheme.primary,
                     minimumSize: const Size(50, 30),
                     alignment: Alignment.centerRight,
                   ),
-                  child: const Text('Post', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: Text('Post', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             
             TextField(
               controller: _questionController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Ask a question...',
                 hintStyle: TextStyle(
-                  color: AsmitaPalette.textLight,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
                 ),
@@ -180,32 +179,32 @@ class _CreatePollDialogState extends ConsumerState<CreatePollDialog> {
               ),
               maxLines: 3,
               minLines: 1,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: AsmitaPalette.textDark,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(bottom: 20, top: 4),
-              child: Divider(height: 1, color: Color(0xFFE5E5EA)),
+              child: Divider(height: 1, color: Theme.of(context).dividerColor),
             ),
             
             ...List.generate(_optionControllers.length, (index) {
               return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: EdgeInsets.only(bottom: 12),
                 child: Row(
                   children: [
                     Expanded(
                       child: TextField(
                         controller: _optionControllers[index],
                         decoration: _iosInputDecoration('Option ${index + 1}'),
-                        style: const TextStyle(fontSize: 16, color: AsmitaPalette.textDark),
+                        style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color),
                       ),
                     ),
                     if (_optionControllers.length > 2)
                       IconButton(
-                        icon: const Icon(CupertinoIcons.minus_circle_fill, color: AsmitaPalette.actionRed, size: 24),
+                        icon: Icon(CupertinoIcons.minus_circle_fill, color: Theme.of(context).colorScheme.primary, size: 24),
                         onPressed: () => _removeOption(index),
                       ),
                   ],
@@ -218,29 +217,29 @@ class _CreatePollDialogState extends ConsumerState<CreatePollDialog> {
                 alignment: Alignment.centerLeft,
                 child: TextButton.icon(
                   onPressed: _addOption,
-                  icon: const Icon(CupertinoIcons.add_circled_solid, size: 20, color: AsmitaPalette.deepNavy),
-                  label: const Text(
+                  icon: Icon(CupertinoIcons.add_circled_solid, size: 20, color: Theme.of(context).colorScheme.primary),
+                  label: Text(
                     'Add Option',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primary),
                   ),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    padding: EdgeInsets.symmetric(vertical: 8),
                   ),
                 ),
               ),
             
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Material(
-              color: const Color(0xFFF2F2F7),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
               clipBehavior: Clip.antiAlias,
               child: SwitchListTile.adaptive(
-                title: const Text(
+                title: Text(
                   'Allow multiple answers',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AsmitaPalette.textDark),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Theme.of(context).textTheme.bodyLarge?.color),
                 ),
-                activeTrackColor: AsmitaPalette.deepNavy,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                activeTrackColor: Theme.of(context).colorScheme.primary,
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 value: _allowMultipleAnswers,
                 onChanged: (val) {
                   setState(() {
@@ -249,7 +248,7 @@ class _CreatePollDialogState extends ConsumerState<CreatePollDialog> {
                 },
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
           ],
         ),
       ),

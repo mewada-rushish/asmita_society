@@ -90,7 +90,7 @@ class ImageMessageBubble extends ConsumerWidget {
       },
       child: Container(
         constraints: const BoxConstraints(maxHeight: 180),
-        margin: const EdgeInsets.only(bottom: 4),
+        margin: EdgeInsets.only(bottom: 4),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: Hero(tag: 'chat_image_$messageId', child: imageWidget),

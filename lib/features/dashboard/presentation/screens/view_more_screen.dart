@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
@@ -87,24 +88,24 @@ class ViewMoreScreen extends StatelessWidget {
                     {
                       'label': 'Pre-Approve',
                       'icon': Icons.person_add_alt_1_rounded,
-                      'color': AsmitaPalette.deepNavy,
+                      'color': Theme.of(context).colorScheme.primary,
                       'onTap': () => _showPreApproveModal(context),
                     },
                     {
                       'label': 'Security Hub',
                       'icon': Icons.local_police_rounded,
-                      'color': AsmitaPalette.deepNavy,
+                      'color': Theme.of(context).colorScheme.primary,
                       'onTap': () => _showSecurityModal(context),
                     },
                     {
                       'label': 'Maintenance',
                       'icon': Icons.request_quote_rounded,
-                      'color': AsmitaPalette.deepNavy,
+                      'color': Theme.of(context).colorScheme.primary,
                     },
                     {
                       'label': 'My Vehicles',
                       'icon': Icons.directions_car_rounded,
-                      'color': AsmitaPalette.deepNavy,
+                      'color': Theme.of(context).colorScheme.primary,
                       'onTap': () {
                         Navigator.pop(context);
                         Navigator.push(
@@ -127,7 +128,7 @@ class ViewMoreScreen extends StatelessWidget {
                     {
                       'label': 'Posts',
                       'icon': Icons.dynamic_feed_rounded,
-                      'color': AsmitaPalette.deepNavy,
+                      'color': Theme.of(context).colorScheme.primary,
                       'badgeCount':
                           postsCount, // Dynamically sourced from CommunityPostBloc
                       'onTap': () {
@@ -138,17 +139,17 @@ class ViewMoreScreen extends StatelessWidget {
                     {
                       'label': 'Complaints',
                       'icon': Icons.report_problem_rounded,
-                      'color': AsmitaPalette.actionRed,
+                      'color': Theme.of(context).colorScheme.secondary,
                     },
                     {
                       'label': 'Management',
                       'icon': Icons.admin_panel_settings_rounded,
-                      'color': AsmitaPalette.deepNavy,
+                      'color': Theme.of(context).colorScheme.primary,
                     },
                     {
                       'label': 'Opinion Poll',
                       'icon': Icons.poll_rounded,
-                      'color': AsmitaPalette.deepNavy,
+                      'color': Theme.of(context).colorScheme.primary,
                       'onTap': () {
                         final nav = Navigator.of(context);
                         nav.pop();
@@ -178,12 +179,12 @@ class ViewMoreScreen extends StatelessWidget {
                     {
                       'label': 'Utility Pay',
                       'icon': Icons.receipt_long_rounded,
-                      'color': AsmitaPalette.deepNavy,
+                      'color': Theme.of(context).colorScheme.primary,
                     },
                     {
                       'label': 'Deliveries',
                       'icon': Icons.local_shipping_rounded,
-                      'color': AsmitaPalette.deepNavy,
+                      'color': Theme.of(context).colorScheme.primary,
                       'onTap': () {
                         Navigator.pop(context);
                         Navigator.push(
@@ -200,7 +201,7 @@ class ViewMoreScreen extends StatelessWidget {
                     {
                       'label': 'Amenities',
                       'icon': Icons.sports_tennis_rounded,
-                      'color': AsmitaPalette.deepNavy,
+                      'color': Theme.of(context).colorScheme.primary,
                     },
                     {
                       'label': 'Emergency',
@@ -234,16 +235,16 @@ class ViewMoreScreen extends StatelessWidget {
             title,
             style: textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              color: AsmitaPalette.deepNavy,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ),
         Container(
           padding: const EdgeInsets.only(top: 20, bottom: 8, left: 8, right: 8),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AsmitaPalette.borderGrey, width: 1.2),
+            border: Border.all(color: Theme.of(context).dividerColor, width: 1.2),
           ),
           child: GridView.builder(
             shrinkWrap: true,
@@ -298,8 +299,21 @@ class ViewMoreScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: iconColor,
                   shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).shadowColor.withValues(alpha: 0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: Icon(icon, color: Colors.white, size: 22),
+                child: Center(
+                  child: Icon(
+                    icon,
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.black : Colors.white,
+                    size: 22,
+                  ),
+                ),
               ),
               if (badgeCount > 0)
                 Positioned(
@@ -307,8 +321,8 @@ class ViewMoreScreen extends StatelessWidget {
                   right: -4,
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: AsmitaPalette.actionRed,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.secondary,
                       shape: BoxShape.circle,
                     ),
                     constraints: const BoxConstraints(

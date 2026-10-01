@@ -24,12 +24,14 @@ import 'features/services/bloc/daily_help_bloc.dart';
 import 'features/dashboard/bloc/search/search_bloc.dart';
 import 'features/community/bloc/community_post_event.dart';
 import 'features/dashboard/bloc/quick_actions/quick_actions_bloc.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+
 import 'package:flutter_quill/flutter_quill.dart'
     show FlutterQuillLocalizations;
 // import 'package:safe_device/safe_device.dart';
 import 'features/auth/presentation/unsafe_device_screen.dart';
 import 'core/observers/crashlytics_navigation_observer.dart';
+import 'package:asmita_society/l10n/app_localizations.dart';
+import 'features/menu/presentation/providers/preferences_provider.dart';
 
 Future<void> main() async {
   runZonedGuarded(
@@ -95,13 +97,32 @@ Future<void> main() async {
   );
 }
 
-class AsmitaApp extends StatelessWidget {
+class AsmitaApp extends ConsumerWidget {
   final bool isDeviceSafe;
 
   const AsmitaApp({super.key, required this.isDeviceSafe});
 
+  Locale _getLocaleFromLanguage(String? language) {
+    switch (language) {
+      case 'Hindi':
+        return const Locale('hi');
+      case 'Marathi':
+        return const Locale('mr');
+      case 'Urdu':
+        return const Locale('ur');
+      case 'Arabic':
+        return const Locale('ar');
+      case 'English':
+      default:
+        return const Locale('en');
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final preferencesAsync = ref.watch(preferencesProvider);
+    final locale = _getLocaleFromLanguage(preferencesAsync.value?.language);
+
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
@@ -141,13 +162,16 @@ class AsmitaApp extends StatelessWidget {
         title: 'AsmitA',
         debugShowCheckedModeBanner: false,
         theme: AsmitaTheme.lightTheme,
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
+        darkTheme: AsmitaTheme.darkTheme,
+        themeMode: preferencesAsync.value?.appTheme.toLowerCase() == 'dark' 
+            ? ThemeMode.dark 
+            : (preferencesAsync.value?.appTheme.toLowerCase() == 'light' ? ThemeMode.light : ThemeMode.system),
+        locale: locale,
+        localizationsDelegates: [
+          ...AppLocalizations.localizationsDelegates,
           FlutterQuillLocalizations.delegate,
         ],
-        supportedLocales: const [Locale('en', 'US')],
+        supportedLocales: AppLocalizations.supportedLocales,
         navigatorObservers: [CrashlyticsNavigationObserver()],
         home: isDeviceSafe ? const RootScreen() : const UnsafeDeviceScreen(),
       ),

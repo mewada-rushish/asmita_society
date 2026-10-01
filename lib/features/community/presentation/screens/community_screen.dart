@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
@@ -53,7 +53,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
         if (!mounted) return false;
         if (_scrollController.hasClients) {
           return _scrollController.position.pixels <=
-                 _scrollController.position.minScrollExtent + 150;
+              _scrollController.position.minScrollExtent + 150;
         }
         return true;
       },
@@ -95,84 +95,98 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
     final state = ref.watch(communityProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8FB),
+      extendBodyBehindAppBar: true,
+      extendBody: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: _buildAppBar(state),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                Expanded(
-                  child: RotatedBox(
-                    quarterTurns: 2,
-                    child: CustomScrollView(
-                      controller: _scrollController,
-                      physics: const BouncingScrollPhysics(
-                        parent: AlwaysScrollableScrollPhysics(),
+      body: Column(
+        children: [
+          Expanded(
+            child: RotatedBox(
+              quarterTurns: 2,
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
+                ),
+                slivers: [
+                  const SliverToBoxAdapter(child: SizedBox(height: 16.0)),
+                  if (state is CommunityLoaded)
+                    ChatListSliver(
+                      messages: state.messages,
+                      isLoadingMore: state.isLoadingMore,
+                    )
+                  else if (state is CommunityLoading ||
+                      state is CommunityInitial)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: AsmitaLoadingIndicator(
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 28,
+                        ),
                       ),
-                      slivers: [
-                        if (state is CommunityLoaded)
-                          ChatListSliver(
-                            messages: state.messages,
-                            isLoadingMore: state.isLoadingMore,
-                          )
-                        else if (state is CommunityLoading ||
-                            state is CommunityInitial)
-                          const SliverFillRemaining(
-                            hasScrollBody: false,
-                            child: Center(
-                              child: AsmitaLoadingIndicator(
-                                color: AsmitaPalette.deepNavy,
-                                size: 28,
-                              ),
-                            ),
-                          )
-                        else if (state is CommunityError)
-                          SliverFillRemaining(
-                            child: RotatedBox(
-                              quarterTurns: 2,
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      state.error,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: AsmitaPalette.actionRed,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    ElevatedButton.icon(
-                                      onPressed: () {
-                                        final authState = context.read<AuthBloc>().state;
-                                        int? currentUserId;
-                                        String? currentUserName;
-                                        if (authState is AuthAuthenticated) {
-                                          currentUserId = authState.user.userId;
-                                          currentUserName = authState.user.fullName;
-                                        }
-                                        ref.read(communityProvider.notifier).loadMessages(
-                                          currentUserId: currentUserId,
-                                          currentUserName: currentUserName,
-                                        );
-                                      },
-                                      icon: const Icon(Icons.refresh),
-                                      label: const Text('Retry'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AsmitaPalette.actionRed,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                    ),
-                                  ],
+                    )
+                  else if (state is CommunityError)
+                    SliverFillRemaining(
+                      child: RotatedBox(
+                        quarterTurns: 2,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                state.error,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                               ),
-                            ),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  final authState = context
+                                      .read<AuthBloc>()
+                                      .state;
+                                  int? currentUserId;
+                                  String? currentUserName;
+                                  if (authState is AuthAuthenticated) {
+                                    currentUserId = authState.user.userId;
+                                    currentUserName = authState.user.fullName;
+                                  }
+                                  ref
+                                      .read(communityProvider.notifier)
+                                      .loadMessages(
+                                        currentUserId: currentUserId,
+                                        currentUserName: currentUserName,
+                                      );
+                                },
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Retry'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primary,
+                                  foregroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.surface,
+                                ),
+                              ),
+                            ],
                           ),
-                      ],
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 160.0)),
+                ],
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
                   switchInCurve: Curves.easeOutBack,
@@ -196,18 +210,18 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // Circular Number Badge
                               Container(
                                 width: 48,
                                 height: 48,
                                 decoration: BoxDecoration(
-                                  color: AsmitaPalette.deepNavy,
+                                  color: Theme.of(context).colorScheme.primary,
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.1,
-                                      ),
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.1),
                                       blurRadius: 10,
                                       offset: const Offset(0, 4),
                                     ),
@@ -215,31 +229,29 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                                 ),
                                 alignment: Alignment.center,
                                 child: Text(
-                                  '${state.selectedMessageIds.length}',
-                                  style: const TextStyle(
+                                  '',
+                                  style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.white,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.surface,
                                     fontFamily: 'Poppins',
                                   ),
                                 ),
                               ),
-                              const SizedBox(
-                                width: 8,
-                              ), // Tiny space between them
-                              // Actions Pill
+                              const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.all(
-                                  4,
-                                ), // Equal padding for perfectly matching circular edges
+                                padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: Theme.of(context).colorScheme.surface,
                                   borderRadius: BorderRadius.circular(30),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.1,
-                                      ),
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.1),
                                       blurRadius: 10,
                                       offset: const Offset(0, 4),
                                     ),
@@ -249,40 +261,34 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     _buildFloatingAction(
-                                      icon: Icons.close_rounded,
+                                      icon: Icons.copy_rounded,
                                       onTap: () {
-                                        ref
-                                            .read(communityProvider.notifier)
-                                            .clearSelection();
-                                      },
-                                    ),
-                                    if (state.selectedMessageIds.length ==
-                                        1) ...[
-                                      const SizedBox(width: 4),
-                                      _buildFloatingAction(
-                                        icon: Icons.reply_rounded,
-                                        onTap: () {
-                                          final msgId =
-                                              state.selectedMessageIds.first;
-                                          final msg = state.messages.firstWhere(
-                                            (m) => m.id == msgId,
+                                        final selectedTexts = state.messages
+                                            .where(
+                                              (m) => state.selectedMessageIds
+                                                  .contains(m.id),
+                                            )
+                                            .map((m) => m.content)
+                                            .join('\n');
+                                        if (selectedTexts.isNotEmpty) {
+                                          Clipboard.setData(
+                                            ClipboardData(text: selectedTexts),
+                                          );
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Copied to clipboard',
+                                              ),
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                            ),
                                           );
                                           ref
                                               .read(communityProvider.notifier)
-                                              .setReplyTo(msg);
-                                          ref
-                                              .read(communityProvider.notifier)
                                               .clearSelection();
-                                        },
-                                      ),
-                                    ],
-                                    const SizedBox(width: 4),
-                                    _buildFloatingAction(
-                                      icon: Icons.copy_rounded,
-                                      onTap: () {
-                                        ref
-                                            .read(communityProvider.notifier)
-                                            .clearSelection();
+                                        }
                                       },
                                     ),
                                     const SizedBox(width: 4),
@@ -306,8 +312,8 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                 const ChatComposer(),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -318,17 +324,17 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
     bool isDestructive = false,
   }) {
     final bgColor = isDestructive
-        ? AsmitaPalette.actionRed.withValues(alpha: 0.1)
-        : AsmitaPalette.deepNavy.withValues(alpha: 0.1);
+        ? Theme.of(context).colorScheme.error.withValues(alpha: 0.1)
+        : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1);
     final iconColor = isDestructive
-        ? AsmitaPalette.actionRed
-        : AsmitaPalette.deepNavy;
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.primary;
 
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
       child: Container(
-        padding: const EdgeInsets.all(10.0),
+        padding: EdgeInsets.all(10.0),
         decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
         child: Icon(icon, size: 22, color: iconColor),
       ),

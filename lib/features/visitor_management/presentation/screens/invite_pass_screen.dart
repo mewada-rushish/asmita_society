@@ -1,7 +1,6 @@
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import '../../data/models/invite_model.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -15,12 +14,12 @@ class InvitePassScreen extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: AsmitaPalette.systemBG,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AsmitaPalette.systemBG,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AsmitaPalette.deepNavy),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.primary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -36,9 +35,9 @@ class InvitePassScreen extends StatelessWidget {
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+                border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
               ),
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -46,7 +45,7 @@ class InvitePassScreen extends StatelessWidget {
                   Text(
                     '${invite.inviteSubType.toUpperCase()} PASS',
                     style: textTheme.labelLarge?.copyWith(
-                      color: AsmitaPalette.actionRed,
+                      color: Theme.of(context).colorScheme.primary,
                       letterSpacing: 2,
                       fontSize: 12,
                     ),
@@ -61,9 +60,9 @@ class InvitePassScreen extends StatelessWidget {
                     width: 200,
                     height: 200,
                     decoration: BoxDecoration(
-                      color: AsmitaPalette.systemBG,
+                      color: Theme.of(context).scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AsmitaPalette.borderGrey),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     child: Center(
                           child: (invite.qrCode ?? '').isNotEmpty 
@@ -71,14 +70,14 @@ class InvitePassScreen extends StatelessWidget {
                                 data: invite.qrCode ?? '',
                                 version: QrVersions.auto,
                                 size: 180.0,
-                                eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: AsmitaPalette.deepNavy),
-                                dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: AsmitaPalette.deepNavy),
+                                eyeStyle: QrEyeStyle(eyeShape: QrEyeShape.square, color: Theme.of(context).colorScheme.primary),
+                                dataModuleStyle: QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: Theme.of(context).colorScheme.primary),
                               )
-                            : const Icon(Icons.qr_code_2_rounded, size: 140, color: AsmitaPalette.deepNavy),
+                            : Icon(Icons.qr_code_2_rounded, size: 140, color: Theme.of(context).colorScheme.primary),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Divider(color: AsmitaPalette.borderGrey, thickness: 1.5),
+                  Divider(color: Theme.of(context).dividerColor, thickness: 1.5),
                   const SizedBox(height: 16),
                   _buildPassDetailRow(context, 'Valid Until', _formatDate(invite.validTo?.toIso8601String())),
                   const SizedBox(height: 12),
@@ -104,13 +103,13 @@ Please present this code at the gate.
                 // ignore: deprecated_member_use
                 Share.share(passDetails);
               },
-              icon: const Icon(Icons.share_rounded, color: Colors.white, size: 18),
+              icon: Icon(Icons.share_rounded, color: Theme.of(context).colorScheme.surface, size: 18),
               label: Text(
                 'Share Invite Pass',
-                style: textTheme.bodyLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+                style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.w600, fontSize: 14),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AsmitaPalette.deepNavy,
+                backgroundColor: Theme.of(context).colorScheme.primary,
                 minimumSize: const Size(double.infinity, 54),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 0,

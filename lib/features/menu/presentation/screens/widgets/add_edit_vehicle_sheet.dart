@@ -6,7 +6,6 @@ import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/auth/data/models/user_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/features/menu/data/models/vehicle_model.dart';
@@ -143,8 +142,8 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
         right: 16,
         top: 24,
       ),
-      decoration: const BoxDecoration(
-        color: AsmitaPalette.systemBG,
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -157,7 +156,7 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
               Text(widget.vehicle == null ? 'Add Vehicle' : 'Edit Vehicle', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(CupertinoIcons.xmark_circle_fill, color: AsmitaPalette.textLight, size: 28),
+                icon: Icon(CupertinoIcons.xmark_circle_fill, color: Theme.of(context).textTheme.bodyMedium?.color, size: 28),
               ),
             ],
           ),
@@ -168,7 +167,7 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
           
-          Text('VEHICLE TYPE', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AsmitaPalette.textLight, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+          Text('VEHICLE TYPE', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -179,7 +178,7 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
           ),
           
           const SizedBox(height: 20),
-          Text('MAKE & MODEL', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AsmitaPalette.textLight, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+          Text('MAKE & MODEL', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -189,9 +188,9 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
                   controller: makeModelCtrl,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AsmitaPalette.borderGrey),
+                    border: Border.all(color: Theme.of(context).dividerColor),
                   ),
                   placeholder: 'e.g. Honda City',
                   style: Theme.of(context).textTheme.bodyLarge,
@@ -205,15 +204,15 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AsmitaPalette.borderGrey),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(selectedYear, style: Theme.of(context).textTheme.bodyLarge),
-                        const Icon(CupertinoIcons.chevron_down, size: 16, color: AsmitaPalette.textLight),
+                        Icon(CupertinoIcons.chevron_down, size: 16, color: Theme.of(context).textTheme.bodyMedium?.color),
                       ],
                     ),
                   ),
@@ -223,7 +222,7 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
           ),
 
           const SizedBox(height: 20),
-          Text('LICENSE PLATE', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AsmitaPalette.textLight, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+          Text('LICENSE PLATE', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -238,10 +237,10 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
           ),
 
           const SizedBox(height: 20),
-          Text('PARKING SLOT (OPTIONAL)', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AsmitaPalette.textLight, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+          Text('PARKING SLOT (OPTIONAL)', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
           const SizedBox(height: 8),
           if (isLoadingSlots)
-            const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28))
+            Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28))
           else if (parkingSlots.isEmpty)
             const Text("No parking slots available")
           else
@@ -250,9 +249,9 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AsmitaPalette.borderGrey),
+                  border: Border.all(color: Theme.of(context).dividerColor),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -260,11 +259,11 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
                     Text(
                       selectedSlot ?? 'Select Parking Slot',
                       style: TextStyle(
-                        color: selectedSlot == null ? CupertinoColors.placeholderText : AsmitaPalette.textDark,
+                        color: selectedSlot == null ? CupertinoColors.placeholderText : Theme.of(context).textTheme.bodyLarge?.color,
                         fontWeight: selectedSlot == null ? FontWeight.normal : FontWeight.bold,
                       ),
                     ),
-                    const Icon(CupertinoIcons.chevron_down, color: AsmitaPalette.textLight, size: 18),
+                    Icon(CupertinoIcons.chevron_down, color: Theme.of(context).textTheme.bodyMedium?.color, size: 18),
                   ],
                 ),
               ),
@@ -278,13 +277,13 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
           SizedBox(
             width: double.infinity,
             child: CupertinoButton(
-              color: AsmitaPalette.deepNavy,
+              color: Theme.of(context).colorScheme.primary,
               borderRadius: BorderRadius.circular(12),
               padding: const EdgeInsets.symmetric(vertical: 16),
               onPressed: _saveVehicle,
               child: isSaving 
-                  ? const SizedBox(width: 20, height: 20, child: AsmitaLoadingIndicator(color: Colors.white, size: 20))
-                  : Text(widget.vehicle == null ? 'Save Vehicle' : 'Update Vehicle', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  ? SizedBox(width: 20, height: 20, child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.surface, size: 20))
+                  : Text(widget.vehicle == null ? 'Save Vehicle' : 'Update Vehicle', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.surface)),
             ),
           ),
         ],
@@ -316,8 +315,8 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
             return Container(
               height: MediaQuery.of(context).size.height * 0.7,
               padding: const EdgeInsets.only(top: 24, left: 16, right: 16),
-              decoration: const BoxDecoration(
-                color: AsmitaPalette.systemBG,
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Column(
@@ -328,7 +327,7 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
                       Text('Select Parking Slot', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(CupertinoIcons.xmark_circle_fill, color: AsmitaPalette.textLight, size: 28),
+                        icon: Icon(CupertinoIcons.xmark_circle_fill, color: Theme.of(context).textTheme.bodyMedium?.color, size: 28),
                       ),
                     ],
                   ),
@@ -336,12 +335,12 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
                   CupertinoTextField(
                     controller: slotSearchCtrl,
                     placeholder: 'Search Slot (e.g. B-001)',
-                    prefix: const Padding(padding: EdgeInsets.only(left: 12), child: Icon(CupertinoIcons.search, size: 18, color: AsmitaPalette.textLight)),
+                    prefix: Padding(padding: EdgeInsets.only(left: 12), child: Icon(CupertinoIcons.search, size: 18, color: Theme.of(context).textTheme.bodyMedium?.color)),
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AsmitaPalette.borderGrey),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     onChanged: (val) => updateSearch(),
                   ),
@@ -369,14 +368,14 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
                                 child: Container(
                                   alignment: Alignment.center,
                                   decoration: BoxDecoration(
-                                    color: isSelected ? AsmitaPalette.deepNavy : Colors.white,
+                                    color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surface,
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: isSelected ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey),
+                                    border: Border.all(color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor),
                                   ),
                                   child: Text(
                                     slot,
                                     style: TextStyle(
-                                      color: isSelected ? Colors.white : AsmitaPalette.textDark,
+                                      color: isSelected ? Theme.of(context).colorScheme.surface : Theme.of(context).textTheme.bodyLarge?.color,
                                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                       fontSize: 12,
                                     ),
@@ -402,16 +401,16 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AsmitaPalette.deepNavy.withValues(alpha: 0.1) : Colors.white,
+          color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isSelected ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey, width: isSelected ? 2 : 1),
+          border: Border.all(color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor, width: isSelected ? 2 : 1),
         ),
         child: Column(
           children: [
-            Icon(icon, color: isSelected ? AsmitaPalette.deepNavy : AsmitaPalette.textLight, size: 28),
+            Icon(icon, color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyMedium?.color, size: 28),
             const SizedBox(height: 8),
             Text(label, style: TextStyle(
-              color: isSelected ? AsmitaPalette.deepNavy : AsmitaPalette.textDark,
+              color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyLarge?.color,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
             )),
           ],
@@ -439,9 +438,9 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
         textAlign: TextAlign.center,
         maxLength: maxLength,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AsmitaPalette.borderGrey),
+          border: Border.all(color: Theme.of(context).dividerColor),
         ),
         placeholder: placeholder,
         style: const TextStyle(fontWeight: FontWeight.bold),
@@ -473,9 +472,9 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
           child: Column(
             children: [
               Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: CupertinoColors.systemGroupedBackground,
-                  border: Border(bottom: BorderSide(color: AsmitaPalette.borderGrey, width: 0.5)),
+                  border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 0.5)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,

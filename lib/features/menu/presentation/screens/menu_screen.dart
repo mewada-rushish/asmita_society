@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_event.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
@@ -32,9 +32,9 @@ class MenuScreen extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: AsmitaPalette.systemBG,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AsmitaPalette.systemBG,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         automaticallyImplyLeading: false, // Root tab, no back button
         title: Text(
@@ -53,7 +53,7 @@ class MenuScreen extends StatelessWidget {
             },
           ),
           SliverPadding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0, bottom: 160.0),
             sliver: SliverToBoxAdapter(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,12 +114,12 @@ class MenuScreen extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+          border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -156,10 +156,10 @@ class MenuScreen extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 28,
-                backgroundColor: AsmitaPalette.deepNavy,
+                backgroundColor: Theme.of(context).colorScheme.primary,
                 child: Text(
                   initials, 
-                  style: textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 18)
+                  style: textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.surface, fontSize: 18)
                 ),
               ),
               const SizedBox(width: 16),
@@ -174,12 +174,12 @@ class MenuScreen extends StatelessWidget {
                       style: textTheme.bodyMedium?.copyWith(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: AsmitaPalette.actionRed),
+                          color: Theme.of(context).colorScheme.primary),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AsmitaPalette.textLight),
+              Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Theme.of(context).textTheme.bodyMedium?.color),
             ],
           );
         },
@@ -195,13 +195,13 @@ class MenuScreen extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 8, bottom: 8),
-          child: Text(title, style: textTheme.titleLarge?.copyWith(fontSize: 13, color: AsmitaPalette.textLight, fontWeight: FontWeight.w700)),
+          child: Text(title, style: textTheme.titleLarge?.copyWith(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w700)),
         ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+            border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
           ),
           child: Column(
             children: items,
@@ -213,26 +213,25 @@ class MenuScreen extends StatelessWidget {
 
   Widget _buildMenuItem(BuildContext context, IconData icon, String title, {bool isDestructive = false}) {
     final textTheme = Theme.of(context).textTheme;
-    final color = isDestructive ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy;
-    
+    final color = isDestructive ? AsmitaPalette.actionRed : Theme.of(context).colorScheme.primary;
     return InkWell(
       onTap: () {
         if (isDestructive && title == 'Logout') {
           AsmitaDialog.show(
             context: context,
             title: 'Logout',
-            content: const Text(
+            content: Text(
               'Are you sure you want to logout? You will need to sign in again to access society features.',
-              style: TextStyle(fontFamily: 'Poppins', fontSize: 14, color: AsmitaPalette.textDark),
+              style: TextStyle(fontFamily: 'Poppins', fontSize: 14, color: Theme.of(context).textTheme.bodyLarge?.color),
             ),
             actions: [
               OutlinedButton(
                 onPressed: () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AsmitaPalette.borderGrey),
+                  side: BorderSide(color: Theme.of(context).dividerColor),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                child: const Text('Cancel', style: TextStyle(color: AsmitaPalette.deepNavy, fontWeight: FontWeight.w600)),
+                child: Text('Cancel', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600)),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -241,11 +240,11 @@ class MenuScreen extends StatelessWidget {
                   context.read<AuthBloc>().add(AuthLogoutRequested());
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AsmitaPalette.actionRed,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                child: const Text('Logout', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                child: Text('Logout', style: TextStyle(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.w600)),
               ),
             ],
           );
@@ -282,11 +281,11 @@ class MenuScreen extends StatelessWidget {
                 style: textTheme.bodyLarge?.copyWith(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: isDestructive ? AsmitaPalette.actionRed : AsmitaPalette.textDark,
+                  color: isDestructive ? color : textTheme.bodyLarge?.color,
                 ),
               ),
             ),
-            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: isDestructive ? AsmitaPalette.actionRed.withValues(alpha: 0.5) : AsmitaPalette.textLight),
+            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: isDestructive ? color.withValues(alpha: 0.5) : textTheme.bodyMedium?.color),
           ],
         ),
       ),

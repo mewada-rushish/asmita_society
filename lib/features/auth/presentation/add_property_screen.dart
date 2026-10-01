@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/design_system.dart';
 import '../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../core/widgets/asmita_toast.dart';
 import '../../../core/widgets/asmita_bottom_sheet.dart';
@@ -155,7 +154,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                         style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
                         decoration: InputDecoration(
                           hintText: 'Search...',
-                          prefixIcon: const Icon(Icons.search_rounded, color: AsmitaPalette.deepNavy),
+                          prefixIcon: Icon(Icons.search_rounded, color: Theme.of(context).iconTheme.color),
                           contentPadding: const EdgeInsets.symmetric(vertical: 12),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -167,7 +166,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AsmitaPalette.deepNavy),
+                            borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                           ),
                         ),
                         onChanged: (value) {
@@ -304,18 +303,18 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: isDisabled ? Colors.grey.shade400 : AsmitaPalette.textDark,
+                    color: isDisabled ? Theme.of(context).disabledColor : Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
                 const SizedBox(width: 16),
                 if (isLoading)
-                  const Expanded(
+                  Expanded(
                     child: Align(
                       alignment: Alignment.centerRight,
                       child: SizedBox(
                         width: 16,
                         height: 16,
-                        child: AsmitaLoadingIndicator(color: AsmitaPalette.deepNavy, size: 16),
+                        child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 16),
                       ),
                     ),
                   )
@@ -328,7 +327,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 15,
-                        color: value == null ? Colors.grey.shade400 : AsmitaPalette.textLight,
+                        color: value == null ? Theme.of(context).disabledColor : Theme.of(context).textTheme.bodyMedium?.color,
                       ),
                     ),
                   ),
@@ -350,9 +349,9 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AsmitaPalette.systemBG,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AsmitaPalette.deepNavy,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
@@ -378,26 +377,26 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Link a New Flat',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
-                        color: AsmitaPalette.deepNavy,
+                        color: Theme.of(context).textTheme.titleLarge?.color,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Select the society and flat details below to link an additional property to your account.',
                       style: TextStyle(
                         fontSize: 14,
-                        color: AsmitaPalette.textLight,
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                       ),
                     ),
                     const SizedBox(height: 32),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
@@ -540,14 +539,14 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AsmitaPalette.actionRed,
-                        foregroundColor: Colors.white,
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
                         elevation: 0,
                         minimumSize: const Size(double.infinity, 56),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        disabledBackgroundColor: AsmitaPalette.actionRed.withValues(alpha: 0.5),
+                        disabledBackgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
                       ),
                       child: _isSubmitting
                           ? const SizedBox(

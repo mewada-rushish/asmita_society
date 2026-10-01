@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/constants/design_system.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 
@@ -77,7 +76,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final topPadding = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
-      backgroundColor: AsmitaPalette.systemBG,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
           Padding(
@@ -93,7 +92,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Text(
                   'Skip',
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: AsmitaPalette.deepNavy,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -118,14 +117,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       Icon(
                         _slides[index]['icon'],
                         size: 140,
-                        color: AsmitaPalette.actionRed,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                       const SizedBox(height: 64),
                       Text(
                         _slides[index]['title'],
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          color: AsmitaPalette.deepNavy,
+                          color: Theme.of(context).textTheme.headlineMedium?.color,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -160,9 +159,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   duration: const Duration(milliseconds: 300),
                   child: IconButton(
                     onPressed: _currentPage == 0 ? null : _previousPage,
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.arrow_back_ios_new_rounded,
-                      color: AsmitaPalette.deepNavy,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                     splashRadius: 24,
                   ),
@@ -179,8 +178,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     duration: const Duration(milliseconds: 300),
                     height: 56,
                     width: 56,
-                    decoration: const BoxDecoration(
-                      color: AsmitaPalette.deepNavy,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -208,7 +207,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       height: 8,
       width: isActive ? 24 : 8,
       decoration: BoxDecoration(
-        color: isActive ? AsmitaPalette.actionRed : Colors.grey.shade300,
+        color: isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor,
         borderRadius: BorderRadius.circular(4),
       ),
     );

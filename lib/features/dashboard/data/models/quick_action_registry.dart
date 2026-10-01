@@ -23,16 +23,16 @@ class QuickActionMetadata {
   final QuickActionType type;
   final String label;
   final IconData icon;
-  final Color iconColor;
-  final Color containerColor;
+  final Color? iconColor;
+  final Color? containerColor;
   final bool isUtilityButton;
   
   const QuickActionMetadata({
     required this.type,
     required this.label,
     required this.icon,
-    this.iconColor = Colors.white,
-    this.containerColor = AsmitaPalette.deepNavy,
+    this.iconColor,
+    this.containerColor,
     this.isUtilityButton = false,
   });
 }
@@ -73,7 +73,8 @@ class QuickActionRegistry {
       type: QuickActionType.raiseAlert,
       label: 'Raise Alert',
       icon: Icons.gpp_bad_outlined,
-      iconColor: AsmitaPalette.actionRed,
+      iconColor: Colors.white,
+      containerColor: AsmitaPalette.actionRed,
       isUtilityButton: true,
     ),
     QuickActionType.myVehicles: QuickActionMetadata(
@@ -85,7 +86,8 @@ class QuickActionRegistry {
       type: QuickActionType.complaints,
       label: 'Complaints',
       icon: Icons.report_problem_rounded,
-      iconColor: AsmitaPalette.actionRed,
+      iconColor: Colors.white,
+      containerColor: AsmitaPalette.actionRed,
     ),
     QuickActionType.management: QuickActionMetadata(
       type: QuickActionType.management,
@@ -116,7 +118,8 @@ class QuickActionRegistry {
       type: QuickActionType.emergency,
       label: 'Emergency',
       icon: Icons.emergency_share_rounded,
-      iconColor: AsmitaPalette.actionRed,
+      iconColor: Colors.white,
+      containerColor: AsmitaPalette.actionRed,
     ),
   };
 

@@ -1,7 +1,6 @@
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/menu/presentation/providers/support_provider.dart';
@@ -15,7 +14,7 @@ class HelpSupportScreen extends ConsumerWidget {
     final supportState = ref.watch(supportProvider);
     
     return Scaffold(
-      backgroundColor: AsmitaPalette.systemBG,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -23,12 +22,12 @@ class HelpSupportScreen extends ConsumerWidget {
             Expanded(
               child: ListView(
                 physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 children: [
-                  _buildEmergencySection(textTheme),
-                  const SizedBox(height: 24),
+                  _buildEmergencySection(context, textTheme),
+                  SizedBox(height: 24),
                   _buildRaiseTicketSection(context, ref, textTheme),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   supportState.when(
                     data: (tickets) {
                       if (tickets.isEmpty) return const SizedBox.shrink();
@@ -36,23 +35,23 @@ class HelpSupportScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Padding(
-                            padding: const EdgeInsets.only(left: 4, bottom: 12),
+                            padding: EdgeInsets.only(left: 4, bottom: 12),
                             child: Text(
                               'YOUR TICKETS',
                               style: textTheme.bodySmall?.copyWith(
-                                color: AsmitaPalette.textLight,
+                                color: Theme.of(context).textTheme.bodyMedium?.color,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 1.2,
                               ),
                             ),
                           ),
                           ...tickets.map((t) => Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(16),
+                            margin: EdgeInsets.only(bottom: 12),
+                            padding: EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.surface,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+                              border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,24 +61,24 @@ class HelpSupportScreen extends ConsumerWidget {
                                   children: [
                                     Expanded(child: Text(t.title, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600))),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
                                         color: t.status.toLowerCase() == 'open' 
                                           ? Colors.orange.withValues(alpha: 0.1) 
-                                          : AsmitaPalette.successGreen.withValues(alpha: 0.1),
+                                          : Colors.green.withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(t.status, style: textTheme.bodySmall?.copyWith(
-                                        color: t.status.toLowerCase() == 'open' ? Colors.orange : AsmitaPalette.successGreen,
+                                        color: t.status.toLowerCase() == 'open' ? Colors.orange : Colors.green,
                                         fontWeight: FontWeight.bold,
                                       )),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 8),
-                                Text(t.description, style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.textLight)),
+                                SizedBox(height: 8),
+                                Text(t.description, style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color)),
                                 if (t.createdAt != null) ...[
-                                  const SizedBox(height: 12),
+                                  SizedBox(height: 12),
                                   Text(
                                     'Raised on ${AppDateFormatter.formatDate(t.createdAt!)}',
                                     style: textTheme.bodySmall?.copyWith(color: Colors.grey),
@@ -88,14 +87,14 @@ class HelpSupportScreen extends ConsumerWidget {
                               ],
                             ),
                           )),
-                          const SizedBox(height: 24),
+                          SizedBox(height: 24),
                         ],
                       );
                     },
-                    loading: () => const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28)),
+                    loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
                     error: (err, _) => Text('Error: $err'),
                   ),
-                  _buildFAQSection(textTheme),
+                  _buildFAQSection(context, textTheme),
                 ],
               ),
             ),
@@ -105,33 +104,33 @@ class HelpSupportScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmergencySection(TextTheme textTheme) {
+  Widget _buildEmergencySection(BuildContext context, TextTheme textTheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4),
+          padding: EdgeInsets.only(left: 4),
           child: Text(
             'EMERGENCY CONTACTS',
             style: textTheme.bodySmall?.copyWith(
-              color: AsmitaPalette.textLight,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.2,
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+            border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
           ),
           child: Column(
             children: [
-              _buildContactRow(textTheme, Icons.local_police_rounded, 'Main Security Gate', 'Ext 101', true),
-              _buildContactRow(textTheme, Icons.build_circle_rounded, 'Estate Manager', '+91 8888888888', true),
-              _buildContactRow(textTheme, Icons.medical_services_rounded, 'Ambulance (Nearby)', '108', false),
+              _buildContactRow(context, textTheme, Icons.local_police_rounded, 'Main Security Gate', 'Ext 101', true),
+              _buildContactRow(context, textTheme, Icons.build_circle_rounded, 'Estate Manager', '+91 8888888888', true),
+              _buildContactRow(context, textTheme, Icons.medical_services_rounded, 'Ambulance (Nearby)', '108', false),
             ],
           ),
         ),
@@ -139,37 +138,37 @@ class HelpSupportScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildContactRow(TextTheme textTheme, IconData icon, String title, String number, bool showBorder) {
+  Widget _buildContactRow(BuildContext context, TextTheme textTheme, IconData icon, String title, String number, bool showBorder) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: showBorder ? const Border(bottom: BorderSide(color: AsmitaPalette.borderGrey, width: 1)) : null,
+        border: showBorder ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1)) : null,
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AsmitaPalette.actionRed.withValues(alpha: 0.1),
+              color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: AsmitaPalette.actionRed, size: 20),
+            child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Text(title, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AsmitaPalette.deepNavy.withValues(alpha: 0.05),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
               children: [
-                const Icon(Icons.call_rounded, size: 14, color: AsmitaPalette.deepNavy),
-                const SizedBox(width: 4),
-                Text(number, style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.deepNavy, fontWeight: FontWeight.w700)),
+                Icon(Icons.call_rounded, size: 14, color: Theme.of(context).colorScheme.primary),
+                SizedBox(width: 4),
+                Text(number, style: textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700)),
               ],
             ),
           ),
@@ -180,17 +179,17 @@ class HelpSupportScreen extends ConsumerWidget {
 
   Widget _buildRaiseTicketSection(BuildContext context, WidgetRef ref, TextTheme textTheme) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AsmitaPalette.deepNavy, Color(0xFF1E2F52)],
+        gradient: LinearGradient(
+          colors: [Theme.of(context).colorScheme.primary, Color(0xFF1E2F52)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AsmitaPalette.deepNavy.withValues(alpha: 0.2),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -202,24 +201,24 @@ class HelpSupportScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Facing an Issue?', style: textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 4),
-                Text('Plumbing, Electrical, or others.', style: textTheme.bodySmall?.copyWith(color: Colors.white70)),
-                const SizedBox(height: 16),
+                Text('Facing an Issue?', style: textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.w700)),
+                SizedBox(height: 4),
+                Text('Plumbing, Electrical, or others.', style: textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.7))),
+                SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => _showRaiseTicketSheet(context, ref),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AsmitaPalette.deepNavy,
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    foregroundColor: Theme.of(context).colorScheme.primary,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 0,
                   ),
-                  child: const Text('Raise a Ticket', style: TextStyle(fontWeight: FontWeight.w700)),
+                  child: Text('Raise a Ticket', style: TextStyle(fontWeight: FontWeight.w700)),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.support_agent_rounded, size: 64, color: Colors.white24),
+          Icon(Icons.support_agent_rounded, size: 64, color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.24)),
         ],
       ),
     );
@@ -248,7 +247,7 @@ class HelpSupportScreen extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text('Raise a Support Ticket', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     initialValue: category,
                     decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
@@ -263,18 +262,18 @@ class HelpSupportScreen extends ConsumerWidget {
                       if (val != null) setState(() => category = val);
                     },
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   TextField(
                     controller: titleCtrl,
                     decoration: const InputDecoration(labelText: 'Issue Title', border: OutlineInputBorder()),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   TextField(
                     controller: descCtrl,
                     maxLines: 3,
                     decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -291,14 +290,14 @@ class HelpSupportScreen extends ConsumerWidget {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AsmitaPalette.deepNavy,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        padding: EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('Submit Ticket', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: Text('Submit Ticket', style: TextStyle(color: Theme.of(context).colorScheme.surface, fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                 ],
               ),
             );
@@ -308,33 +307,33 @@ class HelpSupportScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildFAQSection(TextTheme textTheme) {
+  Widget _buildFAQSection(BuildContext context, TextTheme textTheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4),
+          padding: EdgeInsets.only(left: 4),
           child: Text(
             'FREQUENTLY ASKED QUESTIONS',
             style: textTheme.bodySmall?.copyWith(
-              color: AsmitaPalette.textLight,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.2,
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+            border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
           ),
           child: Column(
             children: [
-              _buildFAQItem(textTheme, 'How do I pay maintenance?', true),
-              _buildFAQItem(textTheme, 'Where can I book the clubhouse?', true),
-              _buildFAQItem(textTheme, 'How to add a family member?', false),
+              _buildFAQItem(context, textTheme, 'How do I pay maintenance?', true),
+              _buildFAQItem(context, textTheme, 'Where can I book the clubhouse?', true),
+              _buildFAQItem(context, textTheme, 'How to add a family member?', false),
             ],
           ),
         ),
@@ -342,18 +341,18 @@ class HelpSupportScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildFAQItem(TextTheme textTheme, String question, bool showBorder) {
+  Widget _buildFAQItem(BuildContext context, TextTheme textTheme, String question, bool showBorder) {
     return InkWell(
       onTap: () {},
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          border: showBorder ? const Border(bottom: BorderSide(color: AsmitaPalette.borderGrey, width: 1)) : null,
+          border: showBorder ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1)) : null,
         ),
         child: Row(
           children: [
             Expanded(child: Text(question, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500))),
-            const Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.textLight),
+            Icon(Icons.keyboard_arrow_down_rounded, color: Theme.of(context).textTheme.bodyMedium?.color),
           ],
         ),
       ),

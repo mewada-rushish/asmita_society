@@ -1,0 +1,18 @@
+{
+    "@@locale": "ar",
+    "language": "اللغة",
+    "theme": "السمة",
+    "changePassword": "تغيير كلمة المرور",
+    "privacyPolicy": "سياسة الخصوصية",
+    "deleteAccount": "حذف الحساب",
+    "logout": "تسجيل خروج",
+    "settings": "الإعدادات",
+    "selectLanguage": "اختر اللغة",
+    "english": "الإنجليزية",
+    "hindi": "الهندية",
+    "marathi": "الماراثية",
+    "urdu": "الأردية",
+    "arabic": "العربية",
+    "cancel": "إلغاء",
+    "save": "حفظ"
+}

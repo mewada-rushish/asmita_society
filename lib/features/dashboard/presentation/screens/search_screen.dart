@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/constants/design_system.dart';
+
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_state.dart';
@@ -60,7 +60,7 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,21 +71,21 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AsmitaPalette.deepNavy, size: 20),
+                    icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.primary, size: 20),
                     onPressed: widget.onBack,
                   ),
                   Expanded(
                     child: Container(
                       height: 48,
                       decoration: BoxDecoration(
-                        color: AsmitaPalette.systemBG,
+                        color: Theme.of(context).colorScheme.surfaceContainer,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AsmitaPalette.borderGrey, width: 1.2),
+                        border: Border.all(color: Theme.of(context).dividerColor, width: 1.2),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Row(
                         children: [
-                          const Icon(Icons.search_rounded, color: AsmitaPalette.textLight, size: 20),
+                          Icon(Icons.search_rounded, color: Theme.of(context).iconTheme.color, size: 20),
                           const SizedBox(width: 10),
                           Expanded(
                             child: TextField(
@@ -93,10 +93,10 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
                               autofocus: true,
                               textInputAction: TextInputAction.search,
                               onSubmitted: _executeSearch,
-                              style: const TextStyle(fontFamily: 'Poppins', fontSize: 14, color: AsmitaPalette.textDark),
-                              decoration: const InputDecoration(
+                              style: TextStyle(fontFamily: 'Poppins', fontSize: 14, color: Theme.of(context).textTheme.bodyLarge?.color),
+                              decoration: InputDecoration(
                                 hintText: 'Search services, utilities or logs...',
-                                hintStyle: TextStyle(color: AsmitaPalette.textLight, fontSize: 13, fontWeight: FontWeight.w400),
+                                hintStyle: TextStyle(color: Theme.of(context).hintColor, fontSize: 13, fontWeight: FontWeight.w400),
                                 border: InputBorder.none,
                                 isDense: true,
                               ),
@@ -111,7 +111,7 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
                                 });
                                 context.read<SearchBloc>().add(SearchCleared());
                               },
-                              child: const Icon(Icons.cancel_rounded, color: AsmitaPalette.textLight, size: 18),
+                              child: Icon(Icons.cancel_rounded, color: Theme.of(context).iconTheme.color, size: 18),
                             ),
                         ],
                       ),
@@ -121,7 +121,7 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
               ),
             ),
             
-            const Divider(color: AsmitaPalette.borderGrey, height: 1),
+            Divider(color: Theme.of(context).dividerColor, height: 1),
 
             Expanded(
               child: _hasSearched ? _buildSearchResults() : _buildSearchInitialState(),
@@ -136,13 +136,13 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        const Text(
+        Text(
           'Recent Searches',
           style: TextStyle(
             fontFamily: 'Montserrat',
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: AsmitaPalette.deepNavy,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
         const SizedBox(height: 16),
@@ -159,22 +159,22 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: AsmitaPalette.borderGrey, width: 1.2),
+                  border: Border.all(color: Theme.of(context).dividerColor, width: 1.2),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.history_rounded, color: AsmitaPalette.textLight, size: 16),
+                    Icon(Icons.history_rounded, color: Theme.of(context).iconTheme.color, size: 16),
                     const SizedBox(width: 8),
                     Text(
                       item,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: AsmitaPalette.textDark,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                   ],
@@ -184,13 +184,13 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
           }).toList(),
         ),
         const SizedBox(height: 32),
-        const Text(
+        Text(
           'Search in?',
           style: TextStyle(
             fontFamily: 'Montserrat',
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: AsmitaPalette.deepNavy,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
         const SizedBox(height: 16),
@@ -209,10 +209,10 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? AsmitaPalette.deepNavy : Colors.white,
+                  color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(30),
                   border: Border.all(
-                    color: isSelected ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey, 
+                    color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor, 
                     width: 1.2,
                   ),
                 ),
@@ -222,7 +222,7 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
                     fontFamily: 'Poppins',
                     fontSize: 12,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? Colors.white : AsmitaPalette.textDark,
+                    color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
               ),
@@ -237,8 +237,8 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
         if (state is SearchLoading) {
-          return const Center(
-            child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28),
+          return Center(
+            child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.secondary, size: 28),
           );
         }
 
@@ -246,9 +246,9 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
           return Center(
             child: Text(
               state.message,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Montserrat',
-                color: AsmitaPalette.actionRed,
+                color: Theme.of(context).colorScheme.secondary,
               ),
             ),
           );
@@ -263,23 +263,23 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0EDFF),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AsmitaPalette.deepNavy.withValues(alpha: 0.3)),
+                  border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.info_outline_rounded, color: AsmitaPalette.deepNavy, size: 16),
+                    Icon(Icons.info_outline_rounded, color: Theme.of(context).colorScheme.primary, size: 16),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Searched for "$_currentSearchQuery" in $_selectedModule',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: AsmitaPalette.deepNavy,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -290,14 +290,14 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
               ),
               const SizedBox(height: 24),
               if (results.isEmpty)
-                const Center(
+                Center(
                   child: Padding(
-                    padding: EdgeInsets.only(top: 40),
+                    padding: const EdgeInsets.only(top: 40),
                     child: Text(
                       'No results found',
                       style: TextStyle(
                         fontFamily: 'Montserrat',
-                        color: AsmitaPalette.textLight,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
                       ),
                     ),
                   ),
@@ -322,9 +322,9 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AsmitaPalette.borderGrey),
+                        border: Border.all(color: Theme.of(context).dividerColor),
                       ),
                       child: Text(
                         title.toString(),

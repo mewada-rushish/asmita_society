@@ -1,0 +1,18 @@
+{
+    "@@locale": "en",
+    "language": "Language",
+    "theme": "Theme",
+    "changePassword": "Change Password",
+    "privacyPolicy": "Privacy Policy",
+    "deleteAccount": "Delete Account",
+    "logout": "Logout",
+    "settings": "Settings",
+    "selectLanguage": "Select Language",
+    "english": "English",
+    "hindi": "Hindi",
+    "marathi": "Marathi",
+    "urdu": "Urdu",
+    "arabic": "Arabic",
+    "cancel": "Cancel",
+    "save": "Save"
+}

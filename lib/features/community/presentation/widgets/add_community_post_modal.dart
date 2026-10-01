@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/features/community/bloc/community_post_bloc.dart';
 import 'package:asmita_society/features/community/bloc/community_post_event.dart';
@@ -56,13 +55,13 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.fromSeed(
-              seedColor: AsmitaPalette.deepNavy,
-              primary: AsmitaPalette.deepNavy,
-              surface: Colors.white,
+              seedColor: Theme.of(context).colorScheme.primary,
+              primary: Theme.of(context).colorScheme.primary,
+              surface: Theme.of(context).colorScheme.surface,
             ),
             datePickerTheme: DatePickerThemeData(
-              backgroundColor: Colors.white,
-              rangeSelectionOverlayColor: WidgetStateProperty.all(AsmitaPalette.deepNavy.withValues(alpha: 0.15)),
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              rangeSelectionOverlayColor: WidgetStateProperty.all(Theme.of(context).colorScheme.primary.withValues(alpha: 0.15)),
             ),
           ),
           child: child!,
@@ -78,7 +77,7 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
 
   Future<void> _showColorPicker(QuillController controller, bool isBackground) async {
     final colors = [
-      Colors.black, Colors.white, Colors.red, Colors.green, Colors.blue,
+      Theme.of(context).colorScheme.onSurface, Theme.of(context).colorScheme.surface, Colors.red, Colors.green, Colors.blue,
       Colors.yellow, Colors.orange, Colors.purple, Colors.cyan, Colors.brown,
       Colors.grey, Colors.pink, Colors.teal, Colors.indigo,
     ];
@@ -170,10 +169,10 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
             TextField(
               controller: _titleController,
               focusNode: _titleFocus,
-              style: const TextStyle(color: Colors.black),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               decoration: InputDecoration(
                 hintText: 'Post Title',
-                hintStyle: const TextStyle(color: Colors.grey),
+                hintStyle: TextStyle(color: Colors.grey),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -181,16 +180,16 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AsmitaPalette.deepNavy, width: 2),
+                  borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Container(
               height: 200,
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: _editorFocus.hasFocus ? AsmitaPalette.deepNavy : Colors.grey.shade300,
+                  color: _editorFocus.hasFocus ? Theme.of(context).colorScheme.primary : Colors.grey.shade300,
                   width: _editorFocus.hasFocus ? 2 : 1,
                 ),
                 borderRadius: BorderRadius.circular(12),
@@ -204,9 +203,9 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+              padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
               decoration: BoxDecoration(
                 color: Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(8),
@@ -231,19 +230,19 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: _selectDateRange,
-              icon: const Icon(Icons.date_range, size: 18),
+              icon: Icon(Icons.date_range, size: 18),
               label: Text('Duration: ${_selectedDateRange!.start.day}/${_selectedDateRange!.start.month}/${_selectedDateRange!.start.year} - ${_selectedDateRange!.end.day}/${_selectedDateRange!.end.month}/${_selectedDateRange!.end.year}'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AsmitaPalette.deepNavy,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                foregroundColor: Theme.of(context).colorScheme.primary,
+                padding: EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 side: BorderSide(color: Colors.grey.shade300),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             BlocConsumer<CommunityPostBloc, CommunityPostState>(
               listener: (context, state) {
                 if (_wasSubmitting && !state.isSubmitting) {
@@ -260,17 +259,17 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
                 return ElevatedButton(
                   onPressed: state.isSubmitting ? null : _submitPost,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AsmitaPalette.deepNavy,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    padding: EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: state.isSubmitting 
-                    ? const SizedBox(width: 24, height: 24, child: AsmitaLoadingIndicator(color: Colors.white, size: 24))
-                    : const Text('Post', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    ? SizedBox(width: 24, height: 24, child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.surface, size: 24))
+                    : Text('Post', style: TextStyle(color: Theme.of(context).colorScheme.surface, fontSize: 16, fontWeight: FontWeight.bold)),
                 );
               },
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
           ],
         ),
       ),

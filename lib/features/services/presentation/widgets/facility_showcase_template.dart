@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
-
 class FacilityShowcaseTemplate extends StatelessWidget {
   final String imagePath;
   final String title;
@@ -34,37 +32,37 @@ class FacilityShowcaseTemplate extends StatelessWidget {
             fit: BoxFit.cover,
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         Text(
           title,
           style: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: AsmitaPalette.deepNavy,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(
           description,
           style: textTheme.bodyMedium?.copyWith(
             color: Colors.grey[600],
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
             onPressed: onButtonPressed,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AsmitaPalette.deepNavy,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.surface,
+              padding: EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
             child: Text(
               buttonText,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
         ),

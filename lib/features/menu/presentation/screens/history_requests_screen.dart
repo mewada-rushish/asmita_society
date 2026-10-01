@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import '../providers/history_request_provider.dart';
 import '../../data/models/history_request_model.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
@@ -15,7 +14,7 @@ class HistoryRequestsScreen extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: AsmitaPalette.systemBG,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Access Requests'),
         centerTitle: true,
@@ -38,7 +37,7 @@ class HistoryRequestsScreen extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28)),
+        loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
         error: (err, stack) => Center(child: Text('Error: $err', style: textTheme.bodyLarge?.copyWith(color: Colors.red))),
       ),
     );
@@ -85,7 +84,7 @@ class HistoryRequestsScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               'Requested on: ${formatter.format(request.createdAt)}',
-              style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight),
+              style: textTheme.bodySmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color),
             ),
             if (isPending) ...[
               const SizedBox(height: 16),
@@ -94,10 +93,10 @@ class HistoryRequestsScreen extends ConsumerWidget {
                 child: ElevatedButton(
                   onPressed: () => _showApproveDialog(context, ref, request),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AsmitaPalette.actionRed,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text('Approve Access', style: TextStyle(color: Colors.white)),
+                  child: Text('Approve Access', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
                 ),
               )
             ]
@@ -159,8 +158,8 @@ class HistoryRequestsScreen extends ConsumerWidget {
                       );
                     }
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: AsmitaPalette.actionRed),
-                  child: const Text('Approve', style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
+                  child: Text('Approve', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
                 ),
               ],
             );

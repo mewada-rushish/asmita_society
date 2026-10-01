@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../core/constants/design_system.dart';
 import '../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../core/widgets/asmita_toast.dart';
 import '../../../core/widgets/asmita_bottom_sheet.dart';
@@ -219,7 +218,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
                     decoration: InputDecoration(
                       hintText: 'Search...',
-                      prefixIcon: const Icon(Icons.search_rounded, color: AsmitaPalette.deepNavy),
+                      prefixIcon: Icon(Icons.search_rounded, color: Theme.of(context).iconTheme.color),
                       contentPadding: const EdgeInsets.symmetric(vertical: 12),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -231,7 +230,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AsmitaPalette.deepNavy),
+                        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                       ),
                     ),
                     onChanged: (value) {
@@ -341,7 +340,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
-      backgroundColor: AsmitaPalette.deepNavy,
+      backgroundColor: Theme.of(context).colorScheme.primary,
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
@@ -456,9 +455,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           Text(
             'Step ${_currentStep + 1} of $_totalSteps',
             key: const ValueKey('step_counter_text'),
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Montserrat',
-              color: AsmitaPalette.deepNavy,
+              color: Theme.of(context).textTheme.titleLarge?.color,
               fontWeight: FontWeight.w700,
               fontSize: 13,
               letterSpacing: 1.0,
@@ -493,7 +492,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Society Details', style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: AsmitaPalette.deepNavy, fontWeight: FontWeight.w800, fontFamily: 'Montserrat', fontSize: 26)),
+          Text('Society Details', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800, fontFamily: 'Montserrat', fontSize: 26)),
           const SizedBox(height: 6),
           Text('Link your multi-step infrastructure setup profiles.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600, fontFamily: 'Poppins')),
           const SizedBox(height: 28),
@@ -664,11 +663,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     const SizedBox(width: 14),
                     Text(
                       label,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Montserrat',
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: AsmitaPalette.deepNavy,
+                        color: Theme.of(context).textTheme.titleMedium?.color,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -714,7 +713,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Personal Details', style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: AsmitaPalette.deepNavy, fontWeight: FontWeight.w800, fontFamily: 'Montserrat', fontSize: 26)),
+          Text('Personal Details', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800, fontFamily: 'Montserrat', fontSize: 26)),
           const SizedBox(height: 6),
           Text('Complete your onboarding identification record.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600, fontFamily: 'Poppins')),
           const SizedBox(height: 28),
@@ -788,7 +787,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontFamily: 'Montserrat', color: AsmitaPalette.deepNavy, fontWeight: FontWeight.w700, fontSize: 13)),
+          Text(label, style: TextStyle(fontFamily: 'Montserrat', color: Theme.of(context).textTheme.titleMedium?.color, fontWeight: FontWeight.w700, fontSize: 13)),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
@@ -840,7 +839,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontFamily: 'Montserrat', color: AsmitaPalette.deepNavy, fontWeight: FontWeight.w700, fontSize: 13)),
+          Text(label, style: TextStyle(fontFamily: 'Montserrat', color: Theme.of(context).textTheme.titleMedium?.color, fontWeight: FontWeight.w700, fontSize: 13)),
           const SizedBox(height: 8),
           GestureDetector(
             onTap: () {
@@ -883,7 +882,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       ),
                     ),
                   ),
-                  const Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.deepNavy, size: 22),
+                  Icon(Icons.keyboard_arrow_down_rounded, color: Theme.of(context).iconTheme.color, size: 22),
                 ],
               ),
             ),
@@ -914,7 +913,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.grey.shade200),
                 ),
-                child: const Icon(Icons.arrow_back_ios_new_rounded, color: AsmitaPalette.deepNavy, size: 18),
+                child: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).iconTheme.color, size: 18),
               ),
             )
           else

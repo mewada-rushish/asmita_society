@@ -1,7 +1,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/features/community/presentation/providers/community_provider.dart';
 
@@ -34,39 +33,39 @@ class PollMessageBubble extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.poll_rounded,
-                color: AsmitaPalette.actionRed,
+                color: Theme.of(context).colorScheme.primary,
                 size: 16,
               ),
-              const SizedBox(width: 6),
+              SizedBox(width: 6),
               Text(
                 'POLL',
                 style: textTheme.bodyLarge?.copyWith(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
-                  color: AsmitaPalette.actionRed,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             question,
             style: textTheme.titleLarge?.copyWith(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: AsmitaPalette.textDark,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           ...options.entries.map((entry) {
             final isVoted = votedOptions.contains(entry.key);
             final percentage = totalVotes == 0
                 ? 0.0
                 : (entry.value / totalVotes);
             return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: EdgeInsets.only(bottom: 8),
               child: InkWell(
                 onTap: () {
                   ref.read(communityProvider.notifier).voteOnPoll(messageId, entry.key);
@@ -82,10 +81,10 @@ class PollMessageBubble extends ConsumerWidget {
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
-                          color: isMe ? Colors.white : AsmitaPalette.systemBG,
+                          color: isMe ? Theme.of(context).colorScheme.surface : Theme.of(context).scaffoldBackgroundColor,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: isVoted ? AsmitaPalette.deepNavy : (isMe ? Colors.transparent : AsmitaPalette.borderGrey),
+                            color: isVoted ? Theme.of(context).colorScheme.primary : (isMe ? Colors.transparent : Theme.of(context).dividerColor),
                             width: isVoted ? 1.5 : 1.0,
                           ),
                         ),
@@ -97,7 +96,7 @@ class PollMessageBubble extends ConsumerWidget {
                         widthFactor: percentage,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: isVoted ? AsmitaPalette.deepNavy.withValues(alpha: 0.3) : AsmitaPalette.deepNavy.withValues(alpha: 0.15),
+                            color: isVoted ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.3) : Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
@@ -105,7 +104,7 @@ class PollMessageBubble extends ConsumerWidget {
                     ),
                     Container(
                       height: 32,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: EdgeInsets.symmetric(horizontal: 12),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -114,7 +113,7 @@ class PollMessageBubble extends ConsumerWidget {
                             style: textTheme.bodyLarge?.copyWith(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: AsmitaPalette.textDark,
+                              color: Theme.of(context).textTheme.bodyLarge?.color,
                             ),
                           ),
                           Text(
@@ -122,7 +121,7 @@ class PollMessageBubble extends ConsumerWidget {
                             style: textTheme.bodyMedium?.copyWith(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: AsmitaPalette.textLight,
+                              color: Theme.of(context).textTheme.bodyMedium?.color,
                             ),
                           ),
                         ],

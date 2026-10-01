@@ -1,0 +1,18 @@
+{
+    "@@locale": "mr",
+    "language": "भाषा",
+    "theme": "थीम",
+    "changePassword": "पासवर्ड बदला",
+    "privacyPolicy": "गोपनीयता धोरण",
+    "deleteAccount": "खाते हटवा",
+    "logout": "लॉग आउट",
+    "settings": "सेटिंग्ज",
+    "selectLanguage": "भाषा निवडा",
+    "english": "इंग्रजी",
+    "hindi": "हिंदी",
+    "marathi": "मराठी",
+    "urdu": "उर्दू",
+    "arabic": "अरबी",
+    "cancel": "रद्द करा",
+    "save": "सेव्ह करा"
+}

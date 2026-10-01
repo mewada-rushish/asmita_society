@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/design_system.dart';
 import '../../utils/visitor_utils.dart';
 
 class VisitorHistoryCard extends StatelessWidget {
@@ -16,9 +15,9 @@ class VisitorHistoryCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+          border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
         ),
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -26,8 +25,8 @@ class VisitorHistoryCard extends StatelessWidget {
             Container(
               width: 44,
               height: 44,
-              decoration: const BoxDecoration(
-                color: AsmitaPalette.systemBG, 
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor, 
                 shape: BoxShape.circle
               ),
               child: Icon(
@@ -46,8 +45,7 @@ class VisitorHistoryCard extends StatelessWidget {
                     style: textTheme.titleLarge?.copyWith(
                       fontFamily: 'Montserrat',
                       fontSize: 15, 
-                      fontWeight: FontWeight.w800,
-                      color: AsmitaPalette.deepNavy,
+                      color: Theme.of(context).textTheme.titleLarge?.color,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -58,8 +56,7 @@ class VisitorHistoryCard extends StatelessWidget {
                     style: textTheme.bodyMedium?.copyWith(
                       fontFamily: 'Poppins',
                       fontSize: 12, 
-                      fontWeight: FontWeight.w500,
-                      color: AsmitaPalette.textLight,
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -71,8 +68,7 @@ class VisitorHistoryCard extends StatelessWidget {
                         '${VisitorUtils.formatRawTime(item['startTime'])} - ${VisitorUtils.formatRawTime(item['endTime'])}',
                         style: textTheme.bodySmall?.copyWith(
                           fontFamily: 'Poppins',
-                          fontSize: 11,
-                          color: AsmitaPalette.deepNavy,
+                          color: Theme.of(context).textTheme.bodySmall?.color,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -83,16 +79,16 @@ class VisitorHistoryCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade50,
+                        color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.red.shade200),
+                        border: Border.all(color: Theme.of(context).colorScheme.error.withValues(alpha: 0.3)),
                       ),
-                      child: const Text(
+                      child: Text(
                         '⚠️ Outside Schedule',
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 10,
-                          color: Colors.red,
+                          color: Theme.of(context).colorScheme.error,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -109,8 +105,7 @@ class VisitorHistoryCard extends StatelessWidget {
                   style: textTheme.bodyLarge?.copyWith(
                     fontFamily: 'Poppins',
                     fontSize: 13, 
-                    fontWeight: FontWeight.w600,
-                    color: AsmitaPalette.deepNavy,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -118,8 +113,7 @@ class VisitorHistoryCard extends StatelessWidget {
                   item['date'] as String,
                   style: textTheme.bodyMedium?.copyWith(
                     fontFamily: 'Poppins',
-                    fontSize: 11, 
-                    color: AsmitaPalette.actionRed, 
+                    color: Theme.of(context).colorScheme.primary, 
                     fontWeight: FontWeight.w600,
                   ),
                 ),

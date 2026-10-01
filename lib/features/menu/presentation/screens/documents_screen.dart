@@ -1,7 +1,6 @@
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/menu/presentation/providers/society_provider.dart';
@@ -15,7 +14,7 @@ class DocumentsScreen extends ConsumerWidget {
     final docsState = ref.watch(documentsProvider);
 
     return Scaffold(
-      backgroundColor: AsmitaPalette.systemBG,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -25,7 +24,7 @@ class DocumentsScreen extends ConsumerWidget {
                 data: (docs) {
                   if (docs.isEmpty) {
                     return Center(
-                      child: Text('No documents found.', style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.textLight)),
+                      child: Text('No documents found.', style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color)),
                     );
                   }
                   return ListView.builder(
@@ -40,12 +39,12 @@ class DocumentsScreen extends ConsumerWidget {
                         
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
-                        child: _buildDocumentCard(textTheme, doc.title, 'Updated: $dateStr', 'Available'),
+                        child: _buildDocumentCard(context, textTheme, doc.title, 'Updated: $dateStr', 'Available'),
                       );
                     },
                   );
                 },
-                loading: () => const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28)),
+                loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
                 error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
               ),
             ),
@@ -55,16 +54,16 @@ class DocumentsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDocumentCard(TextTheme textTheme, String title, String date, String size) {
+  Widget _buildDocumentCard(BuildContext context, TextTheme textTheme, String title, String date, String size) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -75,10 +74,10 @@ class DocumentsScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AsmitaPalette.actionRed.withValues(alpha: 0.1),
+              color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.picture_as_pdf_rounded, color: AsmitaPalette.actionRed, size: 28),
+            child: Icon(Icons.picture_as_pdf_rounded, color: Theme.of(context).colorScheme.primary, size: 28),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -94,18 +93,18 @@ class DocumentsScreen extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Text(date, style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight)),
+                    Text(date, style: textTheme.bodySmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color)),
                     const SizedBox(width: 8),
-                    Container(width: 4, height: 4, decoration: const BoxDecoration(color: AsmitaPalette.borderGrey, shape: BoxShape.circle)),
+                    Container(width: 4, height: 4, decoration: BoxDecoration(color: Theme.of(context).dividerColor, shape: BoxShape.circle)),
                     const SizedBox(width: 8),
-                    Text(size, style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight, fontWeight: FontWeight.w600)),
+                    Text(size, style: textTheme.bodySmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ],
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.download_rounded, color: AsmitaPalette.deepNavy),
+            icon: Icon(Icons.download_rounded, color: Theme.of(context).colorScheme.primary),
             onPressed: () {
               // Open fileUrl logic
             },

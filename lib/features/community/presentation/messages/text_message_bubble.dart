@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
-
 class TextMessageBubble extends StatelessWidget {
   final String content;
 
@@ -16,7 +14,7 @@ class TextMessageBubble extends StatelessWidget {
       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
             fontSize: 13,
             height: 1.4,
-            color: AsmitaPalette.textDark,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
     );
   }

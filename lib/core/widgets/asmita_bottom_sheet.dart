@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
+
 
 /// A reusable function to show a styled modal bottom sheet.
 ///
@@ -20,7 +20,7 @@ void showAsmitaBottomSheet({
   showModalBottomSheet(
     context: context,
     isScrollControlled: isScrollControlled,
-    backgroundColor: AsmitaPalette.systemBG,
+    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
     useRootNavigator: useRootNavigator,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -66,11 +66,11 @@ class AsmitaBottomSheet extends StatelessWidget {
           Container(
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
+                  color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.03),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -88,7 +88,7 @@ class AsmitaBottomSheet extends StatelessWidget {
                     width: 40,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
@@ -105,7 +105,7 @@ class AsmitaBottomSheet extends StatelessWidget {
                       style: textTheme.titleLarge?.copyWith(
                         fontSize: 17,
                         fontWeight: FontWeight.w600,
-                        color: AsmitaPalette.deepNavy,
+                        color: Theme.of(context).colorScheme.onSurface,
                         letterSpacing: -0.5,
                       ),
                     ),
@@ -115,7 +115,7 @@ class AsmitaBottomSheet extends StatelessWidget {
                       child: Text(
                         subtitle!,
                         textAlign: TextAlign.left,
-                        style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.textLight),
+                        style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     ),
                 ],
@@ -125,7 +125,7 @@ class AsmitaBottomSheet extends StatelessWidget {
                   top: -8,
                   right: -12,
                   child: IconButton(
-                    icon: const Icon(Icons.close_rounded, color: AsmitaPalette.textLight, size: 24),
+                    icon: Icon(Icons.close_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 24),
                     onPressed: () => Navigator.pop(context),
                     splashRadius: 20,
                   ),

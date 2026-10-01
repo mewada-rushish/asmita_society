@@ -1,7 +1,6 @@
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import '../../bloc/visitor_bloc.dart';
 import '../../bloc/visitor_event.dart';
@@ -44,8 +43,8 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
       builder: (BuildContext dialogContext, Widget? child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AsmitaPalette.deepNavy,
+            colorScheme: ColorScheme.light(
+              primary: Theme.of(context).colorScheme.primary,
             ),
           ),
           child: child!,
@@ -73,8 +72,8 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
       builder: (BuildContext dialogContext, Widget? child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AsmitaPalette.deepNavy,
+            colorScheme: ColorScheme.light(
+              primary: Theme.of(context).colorScheme.primary,
             ),
           ),
           child: child!,
@@ -156,12 +155,12 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: AsmitaPalette.systemBG,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: AsmitaPalette.systemBG,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AsmitaPalette.deepNavy),
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.primary),
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
@@ -188,8 +187,8 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                       onSelected: (selected) {
                         if (selected) setState(() => _inviteType = type);
                       },
-                      selectedColor: AsmitaPalette.deepNavy,
-                      labelStyle: TextStyle(color: _inviteType == type ? Colors.white : AsmitaPalette.deepNavy),
+                      selectedColor: Theme.of(context).colorScheme.primary,
+                      labelStyle: TextStyle(color: _inviteType == type ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.primary),
                     );
                   }).toList(),
                 ),
@@ -206,8 +205,8 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                       onSelected: (selected) {
                         if (selected) setState(() => _inviteSubType = freq);
                       },
-                      selectedColor: AsmitaPalette.deepNavy,
-                      labelStyle: TextStyle(color: _inviteSubType == freq ? Colors.white : AsmitaPalette.deepNavy),
+                      selectedColor: Theme.of(context).colorScheme.primary,
+                      labelStyle: TextStyle(color: _inviteSubType == freq ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.primary),
                     );
                   }).toList(),
                 ),
@@ -330,15 +329,15 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                       child: ElevatedButton(
                         onPressed: state is VisitorLoading ? null : _submit,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AsmitaPalette.deepNavy,
+                          backgroundColor: Theme.of(context).colorScheme.primary,
                           minimumSize: const Size(double.infinity, 54),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                         child: state is VisitorLoading
-                            ? const AsmitaLoadingIndicator(color: Colors.white, size: 24)
+                            ? AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.surface, size: 24)
                             : Text(
                                 'Generate Pass',
-                                style: textTheme.bodyLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
+                                style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.w600),
                               ),
                       ),
                     );

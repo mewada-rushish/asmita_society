@@ -3,7 +3,6 @@ import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 
@@ -40,11 +39,11 @@ class _DocumentMessageBubbleState extends State<DocumentMessageBubble> {
 
     final ext = fileName.split('.').last.toLowerCase();
     IconData fileIcon = Icons.insert_drive_file_rounded;
-    Color iconColor = widget.isMe ? AsmitaPalette.deepNavy : AsmitaPalette.textDark;
+    Color iconColor = widget.isMe ? Theme.of(context).colorScheme.primary : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black);
 
     if (['pdf'].contains(ext)) {
       fileIcon = Icons.picture_as_pdf_rounded;
-      iconColor = AsmitaPalette.actionRed;
+      iconColor = Theme.of(context).colorScheme.primary;
     } else if (['doc', 'docx'].contains(ext)) {
       fileIcon = Icons.description_rounded;
       iconColor = Colors.blueAccent;
@@ -102,12 +101,12 @@ class _DocumentMessageBubbleState extends State<DocumentMessageBubble> {
       },
       child: Container(
         width: MediaQuery.sizeOf(context).width * 0.65,
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: widget.isMe ? Colors.white.withValues(alpha: 0.5) : AsmitaPalette.borderGrey.withValues(alpha: 0.3),
+          color: widget.isMe ? Theme.of(context).colorScheme.surface.withValues(alpha: 0.5) : Theme.of(context).dividerColor.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: widget.isMe ? AsmitaPalette.deepNavy.withValues(alpha: 0.2) : AsmitaPalette.borderGrey,
+            color: widget.isMe ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2) : Theme.of(context).dividerColor,
             width: 1,
           ),
         ),
@@ -117,10 +116,10 @@ class _DocumentMessageBubbleState extends State<DocumentMessageBubble> {
                 ? SizedBox(
                     width: 32,
                     height: 32,
-                    child: AsmitaLoadingIndicator(color: widget.isMe ? AsmitaPalette.deepNavy : AsmitaPalette.actionRed, size: 28),
+                    child: AsmitaLoadingIndicator(color: widget.isMe ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary, size: 28),
                   )
                 : Icon(fileIcon, color: iconColor, size: 32),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,17 +132,17 @@ class _DocumentMessageBubbleState extends State<DocumentMessageBubble> {
                       fontFamily: 'Montserrat',
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: widget.isMe ? AsmitaPalette.deepNavy : AsmitaPalette.textDark,
+                      color: widget.isMe ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     fileSize,
                     style: TextStyle(
                       fontFamily: 'Montserrat',
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: widget.isMe ? AsmitaPalette.deepNavy.withValues(alpha: 0.7) : AsmitaPalette.textLight,
+                      color: widget.isMe ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.7) : Theme.of(context).textTheme.bodyMedium?.color,
                     ),
                   ),
                 ],

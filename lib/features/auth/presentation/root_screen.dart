@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
-import '../../../core/constants/design_system.dart';
 import '../../dashboard/presentation/main_dashboard_screen.dart';
 import '../../onboarding/presentation/onboarding_screen.dart';
 import '../bloc/auth_bloc.dart';
@@ -55,8 +54,8 @@ class _RootScreenState extends State<RootScreen> {
           return const LoginScreen();
         }
 
-        return const Scaffold(
-          backgroundColor: AsmitaPalette.deepNavy,
+        return Scaffold(
+          backgroundColor: Theme.of(context).colorScheme.primary,
         );
       },
     );

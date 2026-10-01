@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
@@ -10,7 +9,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     
     return Scaffold(
-      backgroundColor: AsmitaPalette.systemBG,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -21,25 +20,18 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AsmitaPalette.borderGrey),
+                    border: Border.all(color: Theme.of(context).dividerColor),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Privacy Policy',
-                        style: textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AsmitaPalette.deepNavy,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+
                       Text(
                         'Last Updated: September 2026',
                         style: textTheme.bodySmall?.copyWith(
-                          color: AsmitaPalette.textLight,
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                         ),
                       ),
                       const SizedBox(height: 24),

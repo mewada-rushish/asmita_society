@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/features/community/bloc/community_post_bloc.dart';
@@ -36,7 +35,7 @@ class _AllNoticesScreenState extends State<AllNoticesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AsmitaPalette.systemBG,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       bottomNavigationBar: AsmitaBottomNavBar(
         currentIndex: -1,
         onTap: (index) {
@@ -69,13 +68,13 @@ class _AllNoticesScreenState extends State<AllNoticesScreen> {
                   child: const AddCommunityPostModal(),
                 );
               },
-              icon: const Icon(Icons.edit_note_rounded, size: 16, color: AsmitaPalette.actionRed),
-              label: Text("New Post", style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AsmitaPalette.actionRed, fontSize: 12, fontWeight: FontWeight.w600)),
+              icon: Icon(Icons.edit_note_rounded, size: 16, color: Theme.of(context).colorScheme.primary),
+              label: Text("New Post", style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w600)),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AsmitaPalette.actionRed,
-                side: const BorderSide(color: AsmitaPalette.actionRed, width: 1.2),
+                foregroundColor: Theme.of(context).colorScheme.primary,
+                side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.2),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               ),
             ),
           ),
@@ -83,7 +82,7 @@ class _AllNoticesScreenState extends State<AllNoticesScreen> {
             child: BlocBuilder<CommunityPostBloc, CommunityPostState>(
               builder: (context, state) {
                 if (state.status == CommunityPostStatus.loading) {
-                  return const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28));
+                  return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
                 }
                 if (state.status == CommunityPostStatus.loaded) {
                   final activePosts = state.activePosts;
@@ -102,44 +101,44 @@ class _AllNoticesScreenState extends State<AllNoticesScreen> {
                           child: Center(
                             child: Semantics(
                               label: 'No active notices are currently available.',
-                              child: const Text("No active notices right now."),
+                              child: Text("No active notices right now."),
                             ),
                           ),
                         )
                       else
                         SliverPadding(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding: EdgeInsets.symmetric(vertical: 16),
                           sliver: SliverList(
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                   child: Dismissible(
                                     key: Key(activePosts[index].id),
                                     direction: DismissDirection.endToStart,
                                     background: Container(
                                       alignment: Alignment.centerRight,
-                                      padding: const EdgeInsets.only(right: 20),
+                                      padding: EdgeInsets.only(right: 20),
                                       decoration: BoxDecoration(
-                                        color: AsmitaPalette.actionRed,
+                                        color: Theme.of(context).colorScheme.primary,
                                         borderRadius: BorderRadius.circular(16),
                                       ),
-                                      child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
+                                      child: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.surface, size: 28),
                                     ),
                                     confirmDismiss: (direction) async {
                                       final confirm = await AsmitaDialog.show<bool>(
                                         context: context,
                                         title: 'Delete Post',
-                                        content: const Text('Are you sure you want to delete this post?'),
+                                        content: Text('Are you sure you want to delete this post?'),
                                         actions: [
                                           TextButton(
                                             onPressed: () => Navigator.pop(context, false),
-                                            child: const Text('Cancel', style: TextStyle(color: AsmitaPalette.deepNavy)),
+                                            child: Text('Cancel', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
                                           ),
                                           ElevatedButton(
                                             onPressed: () => Navigator.pop(context, true),
-                                            style: ElevatedButton.styleFrom(backgroundColor: AsmitaPalette.actionRed),
-                                            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+                                            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
+                                            child: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
                                           ),
                                         ],
                                       );
@@ -163,7 +162,7 @@ class _AllNoticesScreenState extends State<AllNoticesScreen> {
                 return Center(
                   child: Semantics(
                     label: 'Failed to load notices.',
-                    child: const Text('Failed to load notices.'),
+                    child: Text('Failed to load notices.'),
                   ),
                 );
               },

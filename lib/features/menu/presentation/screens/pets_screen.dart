@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
@@ -24,7 +23,7 @@ class PetsScreen extends ConsumerWidget {
     final petsState = ref.watch(petsProvider);
 
     return Scaffold(
-      backgroundColor: AsmitaPalette.systemBG,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       bottomNavigationBar: AsmitaBottomNavBar(
         currentIndex: -1,
         onTap: (index) {
@@ -36,9 +35,9 @@ class PetsScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddEditSheet(context, ref),
-        backgroundColor: AsmitaPalette.deepNavy,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(CupertinoIcons.add, color: Colors.white),
+        child: Icon(CupertinoIcons.add, color: Theme.of(context).colorScheme.surface),
       ),
       body: SafeArea(
         bottom: false,
@@ -46,7 +45,7 @@ class PetsScreen extends ConsumerWidget {
           children: [
             AsmitaPrimaryHeader(
               showBackButton: false,
-              backgroundColor: AsmitaPalette.systemBG,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               bottomPadding: 0.0,
               onSearchPressed: () {},
               onChatPressed: () {},
@@ -69,13 +68,13 @@ class PetsScreen extends ConsumerWidget {
                           child: Center(
                             child: Text(
                               'No pets added yet.',
-                              style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.textLight),
+                              style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color),
                             ),
                           ),
                         )
                       else
                         SliverPadding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                           sliver: SliverGrid(
                             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
@@ -94,7 +93,7 @@ class PetsScreen extends ConsumerWidget {
                     ],
                   );
                 },
-                loading: () => const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28)),
+                loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
                 error: (error, _) => Center(
                   child: Text('Error: ', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
                 ),
@@ -111,25 +110,25 @@ class PetsScreen extends ConsumerWidget {
       onTap: () => _showPetOptions(context, ref, pet),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AsmitaPalette.borderGrey, width: 1),
+          border: Border.all(color: Theme.of(context).dividerColor, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Spacer(),
             CircleAvatar(
               radius: 38,
-              backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
               backgroundImage: pet.avatarUrl != null && pet.avatarUrl!.isNotEmpty 
                   ? NetworkImage(pet.avatarUrl!) 
                   : null,
@@ -137,13 +136,13 @@ class PetsScreen extends ConsumerWidget {
                 ? Text(
                     pet.name.isNotEmpty ? pet.name.substring(0, 1).toUpperCase() : '?', 
                     style: textTheme.headlineSmall?.copyWith(
-                      color: AsmitaPalette.deepNavy, 
+                      color: Theme.of(context).colorScheme.primary, 
                       fontWeight: FontWeight.bold
                     )
                   )
                 : null,
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text(
               pet.name, 
               style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -151,11 +150,11 @@ class PetsScreen extends ConsumerWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 2),
+            SizedBox(height: 2),
             Text(
               pet.breed, 
               style: textTheme.bodyMedium?.copyWith(
-                color: AsmitaPalette.textLight,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
               ),
               textAlign: TextAlign.center,
               maxLines: 1,
@@ -163,9 +162,9 @@ class PetsScreen extends ConsumerWidget {
             ),
             const Spacer(),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
-                color: pet.isVaccinated ? AsmitaPalette.successGreen.withValues(alpha: 0.1) : AsmitaPalette.actionRed.withValues(alpha: 0.1),
+                color: pet.isVaccinated ? Colors.green.withValues(alpha: 0.1) : Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Row(
@@ -173,12 +172,12 @@ class PetsScreen extends ConsumerWidget {
                 children: [
                   Icon(pet.isVaccinated ? Icons.check_circle_rounded : Icons.error_outline_rounded, 
                     size: 12, 
-                    color: pet.isVaccinated ? AsmitaPalette.successGreen : AsmitaPalette.actionRed
+                    color: pet.isVaccinated ? Colors.green : Theme.of(context).colorScheme.primary
                   ),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Text(pet.isVaccinated ? 'Vaccinated' : 'Pending', 
                     style: textTheme.bodySmall?.copyWith(
-                      color: pet.isVaccinated ? AsmitaPalette.successGreen : AsmitaPalette.actionRed, 
+                      color: pet.isVaccinated ? Colors.green : Theme.of(context).colorScheme.primary, 
                       fontSize: 10, 
                       fontWeight: FontWeight.w700
                     )
@@ -198,10 +197,10 @@ class PetsScreen extends ConsumerWidget {
       builder: (BuildContext context) => SafeArea(
         child: CupertinoActionSheet(
           title: Text(pet.name),
-        message: const Text('Select an action'),
+        message: Text('Select an action'),
         actions: <CupertinoActionSheetAction>[
           CupertinoActionSheetAction(
-            child: const Text('Edit Pet'),
+            child: Text('Edit Pet'),
             onPressed: () {
               Navigator.pop(context);
               _showAddEditSheet(context, ref, pet: pet);
@@ -213,11 +212,11 @@ class PetsScreen extends ConsumerWidget {
               Navigator.pop(context);
               _confirmDelete(context, ref, pet);
             },
-            child: const Text('Delete Pet'),
+            child: Text('Delete Pet'),
           ),
         ],
         cancelButton: CupertinoActionSheetAction(
-          child: const Text('Cancel'),
+          child: Text('Cancel'),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -231,16 +230,16 @@ class PetsScreen extends ConsumerWidget {
     final confirm = await showCupertinoDialog<bool>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Delete Pet'),
+        title: Text('Delete Pet'),
         content: Text('Are you sure you want to remove ?'),
         actions: [
           CupertinoDialogAction(
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
             onPressed: () => Navigator.pop(ctx, false),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
-            child: const Text('Delete'),
+            child: Text('Delete'),
             onPressed: () => Navigator.pop(ctx, true),
           ),
         ],
@@ -276,8 +275,8 @@ class PetsScreen extends ConsumerWidget {
                 right: 16,
                 top: 24,
               ),
-              decoration: const BoxDecoration(
-                color: AsmitaPalette.systemBG,
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Column(
@@ -289,11 +288,11 @@ class PetsScreen extends ConsumerWidget {
                       Text(pet == null ? 'Add Pet' : 'Edit Pet', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(CupertinoIcons.xmark_circle_fill, color: AsmitaPalette.textLight, size: 28),
+                        icon: Icon(CupertinoIcons.xmark_circle_fill, color: Theme.of(context).textTheme.bodyMedium?.color, size: 28),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   
                   // Photo picker
                   GestureDetector(
@@ -305,76 +304,76 @@ class PetsScreen extends ConsumerWidget {
                     },
                     child: CircleAvatar(
                       radius: 40,
-                      backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                       backgroundImage: imageFile != null 
                         ? FileImage(imageFile!) as ImageProvider
                         : (pet?.avatarUrl != null && pet!.avatarUrl!.isNotEmpty) 
                           ? NetworkImage(pet.avatarUrl!) 
                           : null,
                       child: (imageFile == null && (pet?.avatarUrl == null || pet!.avatarUrl!.isEmpty))
-                        ? const Icon(CupertinoIcons.camera_fill, color: AsmitaPalette.deepNavy, size: 30)
+                        ? Icon(CupertinoIcons.camera_fill, color: Theme.of(context).colorScheme.primary, size: 30)
                         : null,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text('Tap to select photo', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight)),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 8),
+                  Text('Tap to select photo', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color)),
+                  SizedBox(height: 24),
 
-                  Text('PET NAME', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AsmitaPalette.textLight, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
-                  const SizedBox(height: 8),
+                  Text('PET NAME', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+                  SizedBox(height: 8),
                   CupertinoTextField(
                     controller: nameCtrl,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AsmitaPalette.borderGrey),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     placeholder: 'Enter pet name',
-                    placeholderStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AsmitaPalette.borderGrey),
+                    placeholderStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).dividerColor),
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
-                  const SizedBox(height: 20),
-                  Text('BREED', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AsmitaPalette.textLight, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 20),
+                  Text('BREED', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+                  SizedBox(height: 8),
                   CupertinoTextField(
                     controller: breedCtrl,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AsmitaPalette.borderGrey),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     placeholder: 'Enter breed',
-                    placeholderStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AsmitaPalette.borderGrey),
+                    placeholderStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).dividerColor),
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AsmitaPalette.borderGrey),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     child: CupertinoListTile(
                       title: Text('Vaccinated', style: Theme.of(context).textTheme.bodyLarge),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       trailing: CupertinoSwitch(
                         value: isVaccinated,
-                        activeTrackColor: AsmitaPalette.deepNavy,
+                        activeTrackColor: Theme.of(context).colorScheme.primary,
                         onChanged: (val) => setState(() => isVaccinated = val),
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 32),
+                  SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
                     child: CupertinoButton(
-                      color: AsmitaPalette.deepNavy,
+                      color: Theme.of(context).colorScheme.primary,
                       borderRadius: BorderRadius.circular(12),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.symmetric(vertical: 16),
                       onPressed: () async {
                         if (isLoading) return;
                         
@@ -425,15 +424,15 @@ class PetsScreen extends ConsumerWidget {
                         }
                       },
                       child: isLoading 
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 20,
                               height: 20,
                               child: AsmitaLoadingIndicator(
-                                  color: Colors.white,
+                                  color: Theme.of(context).colorScheme.surface,
                                   size: 20,
                                 ),
                             )
-                          : Text(pet == null ? 'Save Pet' : 'Update Pet', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                          : Text(pet == null ? 'Save Pet' : 'Update Pet', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.surface)),
                     ),
                   ),
                 ],

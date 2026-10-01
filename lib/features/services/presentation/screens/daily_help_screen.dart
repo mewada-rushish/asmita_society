@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart'; 
 import '../../../../core/widgets/asmita_bottom_nav_bar.dart'; 
@@ -88,23 +87,23 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
           Flexible(
             child: ListView.builder(
               shrinkWrap: true,
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: EdgeInsets.symmetric(vertical: 8),
               itemCount: _dropdownCategories.length,
               itemBuilder: (context, index) {
                 final category = _dropdownCategories[index];
                 final isSelected = _selectedModalCategory == category;
 
                 return Container(
-                  margin: const EdgeInsets.only(bottom: 4),
+                  margin: EdgeInsets.only(bottom: 4),
                   decoration: BoxDecoration(
-                    color: isSelected ? AsmitaPalette.deepNavy.withValues(alpha: 0.1) : Colors.transparent,
+                    color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ListTile(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     leading: Icon(
                       _getCategoryIcon(category),
-                      color: AsmitaPalette.deepNavy,
+                      color: Theme.of(context).colorScheme.primary,
                       size: 20,
                     ),
                     title: Text(
@@ -112,11 +111,11 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                       style: textTheme.bodyLarge?.copyWith(
                         fontSize: 14,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                        color: AsmitaPalette.textDark,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                     trailing: isSelected
-                        ? const Icon(Icons.check_circle_rounded, color: AsmitaPalette.actionRed, size: 20)
+                        ? Icon(Icons.check_circle_rounded, color: Theme.of(context).colorScheme.primary, size: 20)
                         : null,
                     onTap: () {
                       setModalState(() {
@@ -152,50 +151,50 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Add a new daily help contact to your society directory.', style: textTheme.bodyMedium?.copyWith(fontSize: 13, height: 1.4)),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 AsmitaTextField(label: 'Full Name', hint: 'e.g., Raju Plumber', icon: Icons.person_outline_rounded, controller: nameController),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 AsmitaTextField(label: 'Phone Number', hint: '10-digit mobile number', icon: Icons.phone_outlined, keyboardType: TextInputType.phone, controller: phoneController),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
 
-                Text('Category', style: textTheme.bodyMedium?.copyWith(fontSize: 12, fontWeight: FontWeight.w600, color: AsmitaPalette.textDark)),
-                const SizedBox(height: 8),
+                Text('Category', style: textTheme.bodyMedium?.copyWith(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                SizedBox(height: 8),
 
                 GestureDetector(
                   onTap: () => _showCategoryPicker(context, setModalState, textTheme),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                     decoration: BoxDecoration(
-                      color: AsmitaPalette.systemBG,
+                      color: Theme.of(context).scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AsmitaPalette.borderGrey, width: 1.2),
+                      border: Border.all(color: Theme.of(context).dividerColor, width: 1.2),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           _selectedModalCategory == null ? Icons.category_outlined : _getCategoryIcon(_selectedModalCategory!),
-                          color: AsmitaPalette.textLight,
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                           size: 20,
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             _selectedModalCategory ?? 'Select category',
                             style: textTheme.bodyLarge?.copyWith(
                               fontSize: 14,
                               color: _selectedModalCategory == null
-                                  ? AsmitaPalette.textLight.withValues(alpha: 0.6)
-                                  : AsmitaPalette.textDark,
+                                  ? (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black).withValues(alpha: 0.6)
+                                  : Theme.of(context).textTheme.bodyLarge?.color,
                             ),
                           ),
                         ),
-                        const Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.textLight),
+                        Icon(Icons.keyboard_arrow_down_rounded, color: Theme.of(context).textTheme.bodyMedium?.color),
                       ],
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
                 Padding(
                   padding: EdgeInsets.only(bottom: systemBottomPadding > 0 ? systemBottomPadding : 16.0),
                   child: ElevatedButton(
@@ -220,12 +219,12 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                       AsmitaToast.show(context, message: 'Contact added successfully.', type: AsmitaToastType.success);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AsmitaPalette.deepNavy,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                       minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       elevation: 0,
                     ),
-                    child: Text('Add Contact', style: textTheme.bodyLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                    child: Text('Add Contact', style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.w600, fontSize: 14)),
                   ),
                 ),
               ],
@@ -242,30 +241,30 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
     final systemBottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AsmitaPalette.deepNavy, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.primary, size: 20),
           onPressed: () => Navigator.pop(context),
           splashRadius: 24,
         ),
-        title: Text('Daily Help', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy, fontSize: 18)),
+        title: Text('Daily Help', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary, fontSize: 18)),
         centerTitle: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.search_rounded, color: AsmitaPalette.deepNavy),
+            icon: Icon(Icons.search_rounded, color: Theme.of(context).colorScheme.primary),
             onPressed: widget.onNavigateToSearch,
             splashRadius: 24,
           ),
           IconButton(
-            icon: const Icon(Icons.chat_bubble_outline_rounded, color: AsmitaPalette.deepNavy),
+            icon: Icon(Icons.chat_bubble_outline_rounded, color: Theme.of(context).colorScheme.primary),
             onPressed: widget.onNavigateToCommunity,
             splashRadius: 24,
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
         ],
       ),
       bottomNavigationBar: AsmitaBottomNavBar(
@@ -290,28 +289,28 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
           // Directory Content Area
           Expanded(
             child: Container(
-              color: AsmitaPalette.systemBG,
+              color: Theme.of(context).scaffoldBackgroundColor,
               child: Column(
                 children: [
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   // Category Slider Container
                   SizedBox(
                     height: 38,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: EdgeInsets.symmetric(horizontal: 16),
                       itemCount: _categories.length,
                       itemBuilder: (context, index) {
                         final isSelected = _selectedCategoryIndex == index;
                         return Padding(
-                          padding: const EdgeInsets.only(right: 8),
+                          padding: EdgeInsets.only(right: 8),
                           child: ChoiceChip(
                             // FIX: Disable the automated framework checkmark overlay on the avatar
                             showCheckmark: false, 
                             avatar: Icon(
                               _getCategoryIcon(_categories[index]), 
                               size: 14, 
-                              color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                              color: isSelected ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.primary,
                             ),
                             label: Text(_categories[index]),
                             selected: isSelected,
@@ -319,53 +318,53 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                               setState(() => _selectedCategoryIndex = index);
                             },
                             labelStyle: textTheme.bodyMedium?.copyWith(
-                              color: isSelected ? Colors.white : AsmitaPalette.textDark,
+                              color: isSelected ? Theme.of(context).colorScheme.surface : Theme.of(context).textTheme.bodyLarge?.color,
                               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                               fontSize: 12,
                             ),
-                            backgroundColor: Colors.white,
-                            selectedColor: AsmitaPalette.deepNavy,
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            backgroundColor: Theme.of(context).colorScheme.surface,
+                            selectedColor: Theme.of(context).colorScheme.primary,
+                            padding: EdgeInsets.symmetric(horizontal: 4),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(color: isSelected ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey, width: 1.2),
+                              side: BorderSide(color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor, width: 1.2),
                             ),
                           ),
                         );
                       },
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   
                   // Action Header Block Matching Community View Style
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: EdgeInsets.symmetric(horizontal: 20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Available Staff", style: textTheme.titleLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700, color: AsmitaPalette.textDark)),
+                        Text("Available Staff", style: textTheme.titleLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.bodyLarge?.color)),
                         OutlinedButton.icon(
                           onPressed: () => _showAddProviderModal(context, textTheme, systemBottomPadding),
-                          icon: const Icon(Icons.add_rounded, size: 14, color: AsmitaPalette.actionRed),
-                          label: Text("Add Contact", style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.actionRed, fontSize: 11, fontWeight: FontWeight.w700)),
+                          icon: Icon(Icons.add_rounded, size: 14, color: Theme.of(context).colorScheme.primary),
+                          label: Text("Add Contact", style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w700)),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AsmitaPalette.actionRed,
-                            side: const BorderSide(color: AsmitaPalette.actionRed, width: 1.2),
+                            foregroundColor: Theme.of(context).colorScheme.primary,
+                            side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.2),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   
                   // Providers Feed List View
                   Expanded(
                     child: BlocBuilder<DailyHelpBloc, DailyHelpState>(
                       builder: (context, state) {
                           if (state.status == DailyHelpStatus.loading && state.dailyHelpList.isEmpty) {
-                            return const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.deepNavy, size: 28));
+                            return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
                           } else if (state.status == DailyHelpStatus.error && state.dailyHelpList.isEmpty) {
                           return Center(child: Text("Error: ${state.errorMessage}", style: textTheme.bodyMedium));
                         }
@@ -388,7 +387,7 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                               },
                             ),
                             SliverPadding(
-                              padding: const EdgeInsets.only(left: 16, right: 16, top: 4, bottom: 24),
+                              padding: EdgeInsets.only(left: 16, right: 16, top: 4, bottom: 24),
                               sliver: SliverList(
                                 delegate: SliverChildBuilderDelegate(
                                   (context, index) {
@@ -415,14 +414,14 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
   Widget _buildDirectoryCard(BuildContext context, DailyHelpModel item) {
     final textTheme = Theme.of(context).textTheme;
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AsmitaPalette.borderGrey, width: 1.2),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 1.2),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.015), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.015), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Row(
@@ -431,42 +430,42 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: AsmitaPalette.systemBG,
+              color: Theme.of(context).scaffoldBackgroundColor,
               shape: BoxShape.circle,
-              border: Border.all(color: AsmitaPalette.borderGrey),
+              border: Border.all(color: Theme.of(context).dividerColor),
             ),
-            child: Icon(_getCategoryIcon(item.role), color: AsmitaPalette.deepNavy, size: 20),
+            child: Icon(_getCategoryIcon(item.role), color: Theme.of(context).colorScheme.primary, size: 20),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Text(item.name, style: textTheme.titleLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700, color: AsmitaPalette.textDark)),
+                    Text(item.name, style: textTheme.titleLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.bodyLarge?.color)),
                     if (item.kycStatus == 'Approved' || item.kycStatus == 'Verified') ...[
-                      const SizedBox(width: 4),
-                      const Icon(Icons.verified_rounded, color: Colors.green, size: 14),
+                      SizedBox(width: 4),
+                      Icon(Icons.verified_rounded, color: Colors.green, size: 14),
                     ]
                   ],
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(color: AsmitaPalette.systemBG, borderRadius: BorderRadius.circular(6)),
-                      child: Text(item.role, style: textTheme.bodyMedium?.copyWith(fontSize: 9, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy)),
+                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(6)),
+                      child: Text(item.role, style: textTheme.bodyMedium?.copyWith(fontSize: 9, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primary)),
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     Icon(Icons.star_rounded, color: Colors.amber.shade600, size: 14),
-                    const SizedBox(width: 2),
-                    Text('4.5', style: textTheme.bodyMedium?.copyWith(fontSize: 11, fontWeight: FontWeight.w700, color: AsmitaPalette.textDark)),
+                    SizedBox(width: 2),
+                    Text('4.5', style: textTheme.bodyMedium?.copyWith(fontSize: 11, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.bodyLarge?.color)),
                   ],
                 ),
-                const SizedBox(height: 6),
-                Text('Trusted by Management', style: textTheme.bodyMedium?.copyWith(fontSize: 10, color: AsmitaPalette.textLight, fontWeight: FontWeight.w500)),
+                SizedBox(height: 6),
+                Text('Trusted by Management', style: textTheme.bodyMedium?.copyWith(fontSize: 10, color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
@@ -498,14 +497,14 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                     }
                   }
                 },
-                icon: const Icon(Icons.person_add_rounded, color: AsmitaPalette.deepNavy, size: 18),
+                icon: Icon(Icons.person_add_rounded, color: Theme.of(context).colorScheme.primary, size: 18),
                 style: IconButton.styleFrom(
-                  backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.all(10),
+                  padding: EdgeInsets.all(10),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               IconButton(
                 onPressed: () async {
                   final uri = Uri.parse('tel:${item.phone}');
@@ -517,11 +516,11 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                     }
                   }
                 },
-                icon: const Icon(Icons.call_rounded, color: AsmitaPalette.actionRed, size: 18),
+                icon: Icon(Icons.call_rounded, color: Theme.of(context).colorScheme.primary, size: 18),
                 style: IconButton.styleFrom(
-                  backgroundColor: AsmitaPalette.actionRed.withValues(alpha: 0.08),
+                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.all(10),
+                  padding: EdgeInsets.all(10),
                 ),
               ),
             ],

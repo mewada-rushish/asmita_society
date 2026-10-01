@@ -77,5 +77,5 @@ class EnvConfig {
   static String get societyRules => '$baseUrl/app-api/society/rules';
   static String get societyDocuments => '$baseUrl/app-api/society/documents';
   static String get supportTickets => '$baseUrl/app-api/support-tickets';
-  static String get userPreferences => '$baseUrl/app-api/user-preferences';
+  static String get userPreferences => '$baseUrl/app-api/preferences';
 }

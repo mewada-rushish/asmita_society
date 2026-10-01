@@ -58,7 +58,7 @@ class ImageGridBubble extends ConsumerWidget {
     Widget imageWidget;
     Widget placeholder = Container(
       color: Colors.grey.shade200,
-      child: const Icon(Icons.broken_image, color: Colors.grey),
+      child: Icon(Icons.broken_image, color: Colors.grey),
     );
 
     if (msg.content.startsWith('http')) {
@@ -93,12 +93,12 @@ class ImageGridBubble extends ConsumerWidget {
           children: [
             imageWidget,
             Container(
-              color: Colors.black54,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
               alignment: Alignment.center,
               child: Text(
                 '+${count - 4}',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.surface,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
@@ -141,16 +141,16 @@ class ImageGridBubble extends ConsumerWidget {
           color: isSelected
               ? const Color(0xFF142E5C).withValues(alpha: 0.1)
               : Colors.transparent, // AsmitaPalette.primary
-          padding: const EdgeInsets.symmetric(vertical: 2),
+          padding: EdgeInsets.symmetric(vertical: 2),
           child: Align(
             alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
             child: Container(
               width: gridWidth + 8, // add padding space
               height: count == 1 ? gridHeight + 8 : null,
-              margin: const EdgeInsets.only(bottom: 4),
-              padding: const EdgeInsets.all(4), // inner padding around images
+              margin: EdgeInsets.only(bottom: 4),
+              padding: EdgeInsets.all(4), // inner padding around images
               decoration: BoxDecoration(
-                color: isMe ? const Color(0xFFE6EEFA) : Colors.white,
+                color: isMe ? const Color(0xFFE6EEFA) : Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
@@ -161,13 +161,13 @@ class ImageGridBubble extends ConsumerWidget {
                   color: isMe
                       ? const Color(0xFF142E5C).withValues(
                           alpha: 0.15,
-                        ) // AsmitaPalette.deepNavy
-                      : const Color(0xFFE0E0E0), // AsmitaPalette.borderGrey
+                        ) // Theme.of(context).colorScheme.primary
+                      : const Color(0xFFE0E0E0), // Theme.of(context).dividerColor
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.02),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -188,9 +188,9 @@ class ImageGridBubble extends ConsumerWidget {
                       bottom: 4,
                       right: 4,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.4),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
@@ -200,27 +200,27 @@ class ImageGridBubble extends ConsumerWidget {
                               displayMessages.first.time.contains('|')
                                   ? displayMessages.first.time.split('|')[1]
                                   : displayMessages.first.time,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.surface,
                               ),
                             ),
                             if (isMe) ...[
-                              const SizedBox(width: 4),
+                              SizedBox(width: 4),
                               if (displayMessages.first.id.startsWith('temp_'))
-                                const SizedBox(
+                                SizedBox(
                                   height: 10,
                                   width: 10,
                                   child: AsmitaLoadingIndicator(
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.surface,
                                     size: 10,
                                   ),
                                 )
                               else
-                                const Icon(
+                                Icon(
                                   Icons.done_all_rounded,
-                                  color: Colors.white,
+                                  color: Theme.of(context).colorScheme.surface,
                                   size: 10,
                                 ),
                             ],
@@ -257,7 +257,7 @@ class ImageGridBubble extends ConsumerWidget {
             Expanded(
               child: _buildImageItem(context, ref, displayMessages[0], 0, count),
             ),
-            const SizedBox(width: 2),
+            SizedBox(width: 2),
             Expanded(
               child: _buildImageItem(context, ref, displayMessages[1], 1, count),
             ),
@@ -283,7 +283,7 @@ class ImageGridBubble extends ConsumerWidget {
                       count,
                     ),
                   ),
-                  const SizedBox(width: 2),
+                  SizedBox(width: 2),
                   Expanded(
                     child: _buildImageItem(
                       context,
@@ -296,7 +296,7 @@ class ImageGridBubble extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 2),
+            SizedBox(height: 2),
             Expanded(
               child: _buildImageItem(
                 context,
@@ -328,7 +328,7 @@ class ImageGridBubble extends ConsumerWidget {
                     count,
                   ),
                 ),
-                const SizedBox(width: 2),
+                SizedBox(width: 2),
                 Expanded(
                   child: _buildImageItem(
                     context,
@@ -341,7 +341,7 @@ class ImageGridBubble extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 2),
+          SizedBox(height: 2),
           Expanded(
             child: Row(
               children: [
@@ -354,7 +354,7 @@ class ImageGridBubble extends ConsumerWidget {
                     count,
                   ),
                 ),
-                const SizedBox(width: 2),
+                SizedBox(width: 2),
                 Expanded(
                   child: _buildImageItem(
                     context,

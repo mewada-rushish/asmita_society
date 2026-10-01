@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
@@ -286,11 +285,11 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           'Book a Facility',
-          style: TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy),
+          style: TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -317,29 +316,29 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
               },
               borderRadius: BorderRadius.circular(16),
               child: Container(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 4))],
+                  border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
+                  boxShadow: [BoxShadow(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 4))],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(facility['icon'] as IconData, color: isAvailable ? AsmitaPalette.deepNavy : Colors.grey, size: 28),
+                    Icon(facility['icon'] as IconData, color: isAvailable ? Theme.of(context).colorScheme.primary : Colors.grey, size: 28),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           facility['label'] as String,
-                          style: TextStyle(fontFamily: 'Montserrat', fontSize: 13, fontWeight: FontWeight.w700, color: isAvailable ? AsmitaPalette.deepNavy : Colors.grey),
+                          style: TextStyle(fontFamily: 'Montserrat', fontSize: 13, fontWeight: FontWeight.w700, color: isAvailable ? Theme.of(context).colorScheme.primary : Colors.grey),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           isAvailable ? 'Available' : 'Unavailable',
-                          style: TextStyle(fontFamily: 'Poppins', fontSize: 11, fontWeight: FontWeight.w600, color: isAvailable ? AsmitaPalette.actionRed : AsmitaPalette.textLight),
+                          style: TextStyle(fontFamily: 'Poppins', fontSize: 11, fontWeight: FontWeight.w600, color: isAvailable ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyMedium?.color),
                         ),
                       ],
                     ),
@@ -355,28 +354,28 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
 
   Widget _buildTextField(String label, {bool isRequired = true, TextInputType keyboardType = TextInputType.text, String? initialValue, void Function(String?)? onSaved, void Function(String)? onChanged, String? Function(String?)? validator, String? hintText}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: EdgeInsets.only(bottom: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(bottom: 6.0),
-            child: Text(label + (isRequired ? ' *' : ''), style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textDark)),
+            padding: EdgeInsets.only(bottom: 6.0),
+            child: Text(label + (isRequired ? ' *' : ''), style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: Theme.of(context).textTheme.bodyLarge?.color)),
           ),
           TextFormField(
             initialValue: initialValue,
             onChanged: onChanged,
             decoration: InputDecoration(
               hintText: hintText ?? 'Enter $label',
-              hintStyle: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.textLight),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AsmitaPalette.borderGrey, width: 1.2)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AsmitaPalette.borderGrey, width: 1.2)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AsmitaPalette.deepNavy, width: 1.2)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              hintStyle: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).dividerColor, width: 1.2)),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).dividerColor, width: 1.2)),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.2)),
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: Theme.of(context).colorScheme.surface,
             ),
-            style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.deepNavy, fontWeight: FontWeight.w500),
+            style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w500),
             keyboardType: keyboardType,
             validator: validator ?? (isRequired ? (value) {
               if (value == null || value.trim().isEmpty) return 'Please enter $label';
@@ -397,12 +396,12 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
     final List<String> selected = List<String>.from(_dynamicFormData[field.key]);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: EdgeInsets.only(bottom: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(field.label, style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.textDark)),
-          const SizedBox(height: 8),
+          Text(field.label, style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: Theme.of(context).textTheme.bodyLarge?.color)),
+          SizedBox(height: 8),
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -422,9 +421,9 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(isSelected ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded, color: AsmitaPalette.actionRed),
-                    const SizedBox(width: 8),
-                    Text(opt, style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.deepNavy)),
+                    Icon(isSelected ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded, color: Theme.of(context).colorScheme.primary),
+                    SizedBox(width: 8),
+                    Text(opt, style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: Theme.of(context).colorScheme.primary)),
                   ],
                 ),
               );
@@ -474,7 +473,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
               final currentValue = _dynamicFormData[field.key] ?? field.options!.first;
               if (!_dynamicFormData.containsKey(field.key)) _dynamicFormData[field.key] = currentValue;
               return Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
+                padding: EdgeInsets.only(bottom: 16.0),
                 child: _buildBottomSheetTrigger(
                   label: field.label + (field.isRequired ? ' *' : ''),
                   value: currentValue,
@@ -489,14 +488,14 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
               final currentValue = _dynamicFormData[field.key] ?? false;
               if (!_dynamicFormData.containsKey(field.key)) _dynamicFormData[field.key] = currentValue;
               return Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
+                padding: EdgeInsets.only(bottom: 16.0),
                 child: InkWell(
                   onTap: () => setState(() => _dynamicFormData[field.key] = !currentValue),
                   child: Row(
                     children: [
-                      Icon(currentValue ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded, color: AsmitaPalette.actionRed),
-                      const SizedBox(width: 12),
-                      Expanded(child: Text(field.label, style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.deepNavy))),
+                      Icon(currentValue ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded, color: Theme.of(context).colorScheme.primary),
+                      SizedBox(width: 12),
+                      Expanded(child: Text(field.label, style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: Theme.of(context).colorScheme.primary))),
                     ],
                   ),
                 ),
@@ -534,30 +533,30 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(displayLabel, style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textDark, fontWeight: FontWeight.w500)),
-        const SizedBox(height: 8),
+        Text(displayLabel, style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.w500)),
+        SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: AsmitaPalette.borderGrey.withValues(alpha: 0.5)),
+            color: Theme.of(context).colorScheme.surface,
+            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
             borderRadius: BorderRadius.circular(12),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(icon: const Icon(Icons.remove, size: 20, color: AsmitaPalette.actionRed), onPressed: () => updateValue(value > 0 ? value - 1 : 0)),
+              IconButton(icon: Icon(Icons.remove, size: 20, color: Theme.of(context).colorScheme.primary), onPressed: () => updateValue(value > 0 ? value - 1 : 0)),
               Expanded(
                 child: TextField(
                   controller: TextEditingController(text: value.toString())..selection = TextSelection.collapsed(offset: value.toString().length),
                   keyboardType: TextInputType.number,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 14, fontWeight: FontWeight.w600),
+                  style: TextStyle(fontFamily: 'Poppins', fontSize: 14, fontWeight: FontWeight.w600),
                   decoration: const InputDecoration(border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero),
                   onChanged: (v) => updateValue(int.tryParse(v) ?? 0),
                 ),
               ),
-              IconButton(icon: const Icon(Icons.add, size: 20, color: AsmitaPalette.actionRed), onPressed: () => updateValue(value + 1)),
+              IconButton(icon: Icon(Icons.add, size: 20, color: Theme.of(context).colorScheme.primary), onPressed: () => updateValue(value + 1)),
             ],
           ),
         ),
@@ -579,28 +578,28 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
             _buildHallBookingCard() 
           else ...[
             _buildScheduleCard(),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _buildAttendeesCard(),
           ],
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           if (widget.initialAmenity != null && widget.initialAmenity!.customFields.isNotEmpty) ...[
             _buildDynamicFieldsCard(),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
           ],
           _buildTextField('Special Requirements / Notes', isRequired: false, initialValue: _specialNotes, onSaved: (v) => _specialNotes = v),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           InkWell(
             onTap: () => setState(() => _termsAccepted = !_termsAccepted),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(_termsAccepted ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded, color: AsmitaPalette.actionRed),
-                const SizedBox(width: 12),
-                const Expanded(child: Text('I accept the Terms & Conditions and agree to the society amenity usage rules.', style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textDark))),
+                Icon(_termsAccepted ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded, color: Theme.of(context).colorScheme.primary),
+                SizedBox(width: 12),
+                Expanded(child: Text('I accept the Terms & Conditions and agree to the society amenity usage rules.', style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: Theme.of(context).textTheme.bodyLarge?.color))),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           _buildPrimaryButton(label: 'Review Booking', onPressed: _reviewBooking),
         ],
       ),
@@ -609,30 +608,30 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
 
   Widget _buildScheduleCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white, 
-        border: Border.all(color: AsmitaPalette.borderGrey.withValues(alpha: 0.5)), 
+        color: Theme.of(context).colorScheme.surface, 
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)), 
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              const Icon(Icons.calendar_month_rounded, color: AsmitaPalette.actionRed, size: 20),
-              const SizedBox(width: 8),
-              const Text('Schedule', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
+              Icon(Icons.calendar_month_rounded, color: Theme.of(context).colorScheme.primary, size: 20),
+              SizedBox(width: 8),
+              Text('Schedule', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary)),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           _buildBottomSheetTrigger(
             label: 'Booking Date *',
             value: _bookingDate == null ? 'Select Date' : _formatDate(_bookingDate!),
             onTap: _showDatePickerSheet,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           _buildBottomSheetTrigger(
             label: 'Time *',
             value: _selectedTimeSlot ?? 'Select Time',
@@ -668,7 +667,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
             onTap: _showPurposePickerSheet,
           ),
           if (_bookingPurpose == 'Other') ...[
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _buildTextField(
               'Specify Custom Purpose *',
               hintText: 'E.g., Corporate Meeting',
@@ -677,7 +676,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
               validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
             ),
           ],
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
         ],
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -689,7 +688,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
                 onTap: _showDatePickerSheet,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: _buildBottomSheetTrigger(
                 label: 'Time *',
@@ -699,7 +698,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         _buildNumberStepper(
           'Expected Number of Guests (Excluding Family)',
           _expectedGuests,
@@ -719,24 +718,24 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
       } catch (_) {}
     }
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white, 
-        border: Border.all(color: AsmitaPalette.borderGrey.withValues(alpha: 0.5)), 
+        color: Theme.of(context).colorScheme.surface, 
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)), 
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              const Icon(Icons.group_rounded, color: AsmitaPalette.actionRed, size: 20),
-              const SizedBox(width: 8),
-              const Text('Attendees', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
+              Icon(Icons.group_rounded, color: Theme.of(context).colorScheme.primary, size: 20),
+              SizedBox(width: 8),
+              Text('Attendees', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary)),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           if (widget.initialAmenity != null && widget.initialAmenity!.outsiderFee == 0) ...[
             _buildNumberStepper(
               'Number of Players / Attendees',
@@ -751,9 +750,9 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
             children: ['Myself Only', 'With Family', 'With Guests'].map((option) {
               final isSelected = _bookingFor == option;
               return ChoiceChip(
-                label: Text(option, style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: isSelected ? Colors.white : AsmitaPalette.deepNavy)),
+                label: Text(option, style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: isSelected ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.primary)),
                 selected: isSelected,
-                selectedColor: AsmitaPalette.actionRed,
+                selectedColor: Theme.of(context).colorScheme.primary,
                 backgroundColor: Colors.grey.shade200,
                 onSelected: (selected) {
                   if (selected) {
@@ -772,15 +771,15 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
               );
             }).toList(),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           if (_bookingFor == 'With Family') ...[
-            const Text('Select Family Members:', style: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy)),
-            const SizedBox(height: 8),
+            Text('Select Family Members:', style: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primary)),
+            SizedBox(height: 8),
             ..._mockFamilyMembers.map((member) {
               return CheckboxListTile(
-                title: Text('${member['name']} (${member['relation']})', style: const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
+                title: Text('${member['name']} (${member['relation']})', style: TextStyle(fontFamily: 'Poppins', fontSize: 13)),
                 value: member['selected'],
-                activeColor: AsmitaPalette.actionRed,
+                activeColor: Theme.of(context).colorScheme.primary,
                 onChanged: (val) {
                   setState(() {
                     member['selected'] = val;
@@ -812,17 +811,17 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
               },
               maxLimit: currentAmenity?.maxBookingSize,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             ..._guestDetails.asMap().entries.map((entry) {
               int index = entry.key;
               return Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
+                padding: EdgeInsets.only(bottom: 8.0),
                 child: Row(
                   children: [
                     Expanded(
                       child: _buildTextField('Guest ${index + 1} Name (Optional)', isRequired: false, initialValue: entry.value['name'], onChanged: (v) => _guestDetails[index]['name'] = v),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Expanded(
                       child: _buildTextField('Phone (Optional)', isRequired: false, keyboardType: TextInputType.phone, initialValue: entry.value['phone'], onChanged: (v) => _guestDetails[index]['phone'] = v),
                     ),
@@ -839,18 +838,18 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
 
   Widget _buildDynamicFieldsCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white, 
-        border: Border.all(color: AsmitaPalette.borderGrey.withValues(alpha: 0.5)), 
+        color: Theme.of(context).colorScheme.surface, 
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)), 
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Additional Details', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
-          const SizedBox(height: 16),
+          Text('Additional Details', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary)),
+          SizedBox(height: 16),
           _buildDynamicFields(),
         ],
       ),
@@ -871,23 +870,23 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
             GestureDetector(
               onTap: _prevStep,
               behavior: HitTestBehavior.opaque,
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.only(right: 12.0, top: 4.0, bottom: 4.0),
-                child: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AsmitaPalette.deepNavy),
+                child: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Theme.of(context).colorScheme.primary),
               ),
             ),
-            const Expanded(
+            Expanded(
               child: Text(
                 'Review Booking',
-                style: TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy),
+                style: TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AsmitaPalette.borderGrey)),
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: Theme.of(context).dividerColor)),
           child: _buildIOSList([
               _buildReviewRow('Facility', _selectedFacility),
               if (_isBookingType) ...[
@@ -926,7 +925,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
               }).whereType<Widget>(),
           ]),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: 24),
         _buildPrimaryButton(label: 'Confirm Booking', onPressed: _submitBooking),
       ],
     );
@@ -944,8 +943,8 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
           rows[i],
           if (i < rows.length - 1)
             Padding(
-              padding: const EdgeInsets.only(left: 16.0),
-              child: Divider(height: 1, thickness: 1, color: AsmitaPalette.borderGrey.withValues(alpha: 0.5)),
+              padding: EdgeInsets.only(left: 16.0),
+              child: Divider(height: 1, thickness: 1, color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
             ),
         ],
       ],
@@ -954,14 +953,14 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
 
   Widget _buildReviewRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
+      padding: EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w400, color: AsmitaPalette.textLight)),
-          const SizedBox(width: 16),
+          Text(label, style: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w400, color: Theme.of(context).textTheme.bodyMedium?.color)),
+          SizedBox(width: 16),
           Expanded(
-            child: Text(value, textAlign: TextAlign.right, style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w500, color: AsmitaPalette.deepNavy)),
+            child: Text(value, textAlign: TextAlign.right, style: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.primary)),
           ),
         ],
       ),
@@ -977,7 +976,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: _needsApproval ? const Color(0xFFFFF4E5) : const Color(0xFFE8F5E9), 
               shape: BoxShape.circle
@@ -988,77 +987,77 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
               size: 40
             ),
           ),
-          const SizedBox(height: 16),
-          Text(_needsApproval ? 'Booking Pending' : 'Booking Confirmed', style: const TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy)),
-          const SizedBox(height: 8),
+          SizedBox(height: 16),
+          Text(_needsApproval ? 'Booking Pending' : 'Booking Confirmed', style: TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary)),
+          SizedBox(height: 8),
           Text(
             _needsApproval 
               ? 'Your booking request for $_selectedFacility has been submitted to the Committee.' 
               : 'Your booking for $_selectedFacility has been successfully confirmed.', 
             textAlign: TextAlign.center, 
-            style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.textLight)
+            style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color)
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+              border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
             ),
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(24),
             child: Column(
               children: [
-                const Text(
+                Text(
                   'FACILITY BOOKING PASS',
                   style: TextStyle(
                     fontFamily: 'Montserrat',
-                    color: AsmitaPalette.actionRed,
+                    color: Theme.of(context).colorScheme.primary,
                     letterSpacing: 2,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   _selectedFacility,
-                  style: const TextStyle(fontFamily: 'Montserrat', fontSize: 20, fontWeight: FontWeight.w700, color: AsmitaPalette.deepNavy),
+                  style: TextStyle(fontFamily: 'Montserrat', fontSize: 20, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.primary),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Container(
                   width: 200,
                   height: 200,
                   decoration: BoxDecoration(
-                    color: AsmitaPalette.systemBG,
+                    color: Theme.of(context).scaffoldBackgroundColor,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AsmitaPalette.borderGrey),
+                    border: Border.all(color: Theme.of(context).dividerColor),
                   ),
-                  child: const Center(
-                    child: Icon(Icons.qr_code_2_rounded, size: 140, color: AsmitaPalette.deepNavy),
+                  child: Center(
+                    child: Icon(Icons.qr_code_2_rounded, size: 140, color: Theme.of(context).colorScheme.primary),
                   ),
                 ),
-                const SizedBox(height: 24),
-                const Divider(color: AsmitaPalette.borderGrey, thickness: 1.5),
-                const SizedBox(height: 16),
+                SizedBox(height: 24),
+                Divider(color: Theme.of(context).dividerColor, thickness: 1.5),
+                SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Date', style: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w500, color: AsmitaPalette.textLight)),
-                    Text(_bookingDate != null ? _formatDate(_bookingDate!) : 'N/A', style: const TextStyle(fontFamily: 'Poppins', fontSize: 14, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy)),
+                    Text('Date', style: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w500, color: Theme.of(context).textTheme.bodyMedium?.color)),
+                    Text(_bookingDate != null ? _formatDate(_bookingDate!) : 'N/A', style: TextStyle(fontFamily: 'Poppins', fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primary)),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Time', style: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w500, color: AsmitaPalette.textLight)),
-                    Text(_selectedTimeSlot ?? 'N/A', style: const TextStyle(fontFamily: 'Poppins', fontSize: 14, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy)),
+                    Text('Time', style: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w500, color: Theme.of(context).textTheme.bodyMedium?.color)),
+                    Text(_selectedTimeSlot ?? 'N/A', style: TextStyle(fontFamily: 'Poppins', fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primary)),
                   ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () {
               final details = '''
@@ -1072,19 +1071,19 @@ Show this at the gate for entry.
               // ignore: deprecated_member_use
               Share.share(details);
             },
-            icon: const Icon(Icons.share_rounded, color: Colors.white, size: 18),
-            label: const Text(
+            icon: Icon(Icons.share_rounded, color: Theme.of(context).colorScheme.surface, size: 18),
+            label: Text(
               'Share Booking Pass',
-              style: TextStyle(fontFamily: 'Montserrat', color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+              style: TextStyle(fontFamily: 'Montserrat', color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.w600, fontSize: 14),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AsmitaPalette.deepNavy,
+              backgroundColor: Theme.of(context).colorScheme.primary,
               minimumSize: const Size(double.infinity, 54),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               elevation: 0,
             ),
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
           _buildPrimaryButton(label: 'Done', onPressed: () {
             // This check prevents a race condition where the widget might be disposed
             // while the pop navigation is being processed.
@@ -1097,8 +1096,8 @@ Show this at the gate for entry.
       );
     } catch (e) {
       return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Text('Error building success pass: $e', style: const TextStyle(color: Colors.red)),
+        padding: EdgeInsets.all(16.0),
+        child: Text('Error building success pass: $e', style: TextStyle(color: Colors.red)),
       );
     }
   }
@@ -1172,7 +1171,7 @@ Show this at the gate for entry.
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 GridView.builder(
-                  padding: const EdgeInsets.all(2), // Prevent border clipping
+                  padding: EdgeInsets.all(2), // Prevent border clipping
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -1245,17 +1244,17 @@ Show this at the gate for entry.
                       },
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isSelected ? AsmitaPalette.actionRed.withValues(alpha: 0.1) : Colors.white,
-                          border: Border.all(color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey, width: 1.2),
+                          color: isSelected ? Theme.of(context).colorScheme.error.withValues(alpha: 0.1) : Theme.of(context).colorScheme.surface,
+                          border: Border.all(color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor, width: 1.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            FaIcon(icon, color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy, size: 16),
-                            const SizedBox(width: 8),
+                            FaIcon(icon, color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary, size: 16),
+                            SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 option,
@@ -1263,7 +1262,7 @@ Show this at the gate for entry.
                                   fontFamily: 'Poppins',
                                   fontSize: 11,
                                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                  color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy,
+                                  color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
@@ -1276,22 +1275,22 @@ Show this at the gate for entry.
                   },
                 ),
                 if (tempPurpose == 'Other') ...[
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   TextFormField(
                     initialValue: tempCustom,
                     onChanged: (val) => tempCustom = val,
                     decoration: InputDecoration(
                       hintText: 'Please specify purpose',
-                      hintStyle: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.textLight),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AsmitaPalette.borderGrey, width: 1.2)),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AsmitaPalette.borderGrey, width: 1.2)),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AsmitaPalette.actionRed, width: 1.5)),
+                      hintStyle: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).dividerColor, width: 1.2)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).dividerColor, width: 1.2)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5)),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: Theme.of(context).colorScheme.surface,
                     ),
                   ),
                 ],
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: () {
                     setState(() {
@@ -1301,11 +1300,11 @@ Show this at the gate for entry.
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AsmitaPalette.actionRed,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text('Confirm', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                  child: Text('Confirm', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.surface)),
                 ),
               ],
             ),
@@ -1331,7 +1330,7 @@ Show this at the gate for entry.
           maxHeight: MediaQuery.sizeOf(context).height * 0.7,
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: EdgeInsets.symmetric(vertical: 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1339,7 +1338,7 @@ Show this at the gate for entry.
               Flexible(
                 child: ListView.builder(
                   shrinkWrap: true,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   itemCount: options.length,
                   itemBuilder: (context, index) {
                     final option = options[index];
@@ -1372,7 +1371,7 @@ Show this at the gate for entry.
                     }
 
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
+                      padding: EdgeInsets.only(bottom: 12),
                       child: InkWell(
                         onTap: () {
                           if (!isSheetClosing) {
@@ -1383,31 +1382,31 @@ Show this at the gate for entry.
                         },
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           decoration: BoxDecoration(
-                            color: isSelected ? AsmitaPalette.actionRed.withValues(alpha: 0.05) : Colors.white,
+                            color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.05) : Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
+                              color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor,
                               width: 1.5,
                             ),
                           ),
                           child: Row(
                             children: [
-                              Icon(icon, color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy, size: 22),
-                              const SizedBox(width: 12),
+                              Icon(icon, color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary, size: 22),
+                              SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   option, 
                                   style: TextStyle(
                                     fontFamily: 'Poppins', 
                                     fontSize: 14, 
-                                    color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy, 
+                                    color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary, 
                                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500
                                   ),
                                 ),
                               ),
-                              if (isSelected) const Icon(Icons.check_circle_rounded, color: AsmitaPalette.actionRed, size: 20),
+                              if (isSelected) Icon(Icons.check_circle_rounded, color: Theme.of(context).colorScheme.primary, size: 20),
                             ],
                           ),
                         ),
@@ -1431,18 +1430,18 @@ Show this at the gate for entry.
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (label != null) Padding(padding: const EdgeInsets.only(bottom: 6.0), child: Text(label, style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AsmitaPalette.textDark))),
+        if (label != null) Padding(padding: EdgeInsets.only(bottom: 6.0), child: Text(label, style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: Theme.of(context).textTheme.bodyLarge?.color))),
         InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), 
-            decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AsmitaPalette.borderGrey, width: 1.2), borderRadius: BorderRadius.circular(12)),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14), 
+            decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, border: Border.all(color: Theme.of(context).dividerColor, width: 1.2), borderRadius: BorderRadius.circular(12)),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(child: Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w500, color: AsmitaPalette.deepNavy))),
-                const Icon(Icons.arrow_drop_down_rounded, color: AsmitaPalette.deepNavy, size: 24),
+                Expanded(child: Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.primary))),
+                Icon(Icons.arrow_drop_down_rounded, color: Theme.of(context).colorScheme.primary, size: 24),
               ],
             ),
           ),
@@ -1458,21 +1457,21 @@ Show this at the gate for entry.
       child: ElevatedButton(
         onPressed: _isClosing ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AsmitaPalette.actionRed,
-          disabledBackgroundColor: AsmitaPalette.actionRed.withValues(alpha: 0.7),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          disabledBackgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), 
           elevation: 0
         ),
         child: _isClosing
-            ? const SizedBox(
+            ? SizedBox(
                 width: 24,
                 height: 24,
                 child: AsmitaLoadingIndicator(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   size: 24,
                 ),
               )
-            : Text(label, style: const TextStyle(fontFamily: 'Montserrat', color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
+            : Text(label, style: TextStyle(fontFamily: 'Montserrat', color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.w700, fontSize: 15)),
       ),
     );
   }
@@ -1481,28 +1480,28 @@ Show this at the gate for entry.
     TimeOfDay initialTime = TimeOfDay.fromDateTime(DateTime.now().add(const Duration(minutes: 30)));
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              Text(
                 'Select Time',
                 style: TextStyle(
                   fontFamily: 'Montserrat',
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
-                  color: AsmitaPalette.deepNavy,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               SizedBox(
                 height: 180,
                 child: CupertinoDatePicker(
@@ -1521,7 +1520,7 @@ Show this at the gate for entry.
                   },
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               _buildPrimaryButton(
                 label: 'Done',
                 onPressed: () {

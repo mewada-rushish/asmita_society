@@ -116,8 +116,8 @@ class _CustomiseQuickActionsSheetState extends State<CustomiseQuickActionsSheet>
                   ElevatedButton(
                     onPressed: _save,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AsmitaPalette.deepNavy,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
@@ -132,12 +132,12 @@ class _CustomiseQuickActionsSheetState extends State<CustomiseQuickActionsSheet>
       key: key,
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AsmitaPalette.borderGrey, width: 1),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -149,12 +149,12 @@ class _CustomiseQuickActionsSheetState extends State<CustomiseQuickActionsSheet>
           leading: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: meta.isUtilityButton ? meta.iconColor : AsmitaPalette.systemBG,
+              color: meta.iconColor ?? Theme.of(context).colorScheme.primary,
               shape: BoxShape.circle,
             ),
             child: Icon(
               meta.icon,
-              color: meta.isUtilityButton ? Colors.white : meta.iconColor,
+              color: Theme.of(context).brightness == Brightness.dark ? Colors.black : Colors.white,
               size: 20,
             ),
           ),

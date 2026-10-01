@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
@@ -43,9 +44,9 @@ class AsmitaPrimaryHeader extends StatelessWidget {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surfaceContainer,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AsmitaPalette.borderGrey),
+              border: Border.all(color: Theme.of(context).dividerColor),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.03),
@@ -63,35 +64,61 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                   if (user.flatMappings.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(16.0),
-                      child: Text('No properties found.', style: TextStyle(color: Colors.grey)),
-                    ),
-                for (int i = 0; i < user.flatMappings.length; i++) ...[
-                  ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    leading: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AsmitaPalette.systemBG,
-                        borderRadius: BorderRadius.circular(8),
+                      child: Text(
+                        'No properties found.',
+                        style: TextStyle(color: Colors.grey),
                       ),
-                      child: const Icon(Icons.apartment_rounded, color: AsmitaPalette.deepNavy, size: 20),
                     ),
-                    title: Text(
-                      '${user.flatMappings[i].towerName} - ${user.flatMappings[i].flatNumber}', 
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                  for (int i = 0; i < user.flatMappings.length; i++) ...[
+                    ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      leading: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).scaffoldBackgroundColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.apartment_rounded,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 20,
+                        ),
+                      ),
+                      title: Text(
+                        '${user.flatMappings[i].towerName} - ${user.flatMappings[i].flatNumber}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      subtitle: Text(
+                        user.societyName ?? 'AsmitA Society',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Theme.of(context).textTheme.bodySmall?.color,
+                        ),
+                      ),
+                      trailing: i == 0
+                          ? const Icon(
+                              Icons.check_circle_rounded,
+                              color: Colors.green,
+                              size: 22,
+                            )
+                          : null,
+                      onTap: () => Navigator.pop(context),
                     ),
-                    subtitle: Text(
-                      user.societyName ?? 'AsmitA Society', 
-                      style: const TextStyle(fontSize: 13, color: Colors.grey),
-                    ),
-                    trailing: i == 0 ? const Icon(Icons.check_circle_rounded, color: Colors.green, size: 22) : null,
-                    onTap: () => Navigator.pop(context),
-                  ),
-                  if (i < user.flatMappings.length - 1)
-                    const Divider(height: 1, indent: 64, color: AsmitaPalette.borderGrey),
+                    if (i < user.flatMappings.length - 1)
+                      Divider(
+                        height: 1,
+                        indent: 64,
+                        color: Theme.of(context).dividerColor,
+                      ),
+                  ],
                 ],
-              ],
-            ),
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -106,9 +133,12 @@ class AsmitaPrimaryHeader extends StatelessWidget {
               },
               borderRadius: BorderRadius.circular(12),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
-                  color: AsmitaPalette.deepNavy,
+                  color: Theme.of(context).colorScheme.primary,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -120,7 +150,11 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                         color: Colors.white,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.add_rounded, color: AsmitaPalette.deepNavy, size: 16),
+                      child: Icon(
+                        Icons.add_rounded,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 16,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     const Text(
@@ -163,15 +197,23 @@ class AsmitaPrimaryHeader extends StatelessWidget {
           } else if (user.flatMappings.isNotEmpty) {
             final mapping = user.flatMappings.first;
             flatDetails = '${mapping.towerName} - ${mapping.flatNumber}';
-          } else if (user.systemRole?.isNotEmpty == true || user.primaryRole.isNotEmpty) {
-            flatDetails = user.systemRole?.isNotEmpty == true ? user.systemRole! : user.primaryRole;
+          } else if (user.systemRole?.isNotEmpty == true ||
+              user.primaryRole.isNotEmpty) {
+            flatDetails = user.systemRole?.isNotEmpty == true
+                ? user.systemRole!
+                : user.primaryRole;
             if (flatDetails.isNotEmpty) {
-              flatDetails = flatDetails.substring(0, 1).toUpperCase() + flatDetails.substring(1).toLowerCase();
+              flatDetails =
+                  flatDetails.substring(0, 1).toUpperCase() +
+                  flatDetails.substring(1).toLowerCase();
             }
           }
-          
+
           if (user.fullName.isNotEmpty) {
-            final parts = user.fullName.split(' ').where((s) => s.isNotEmpty).toList();
+            final parts = user.fullName
+                .split(' ')
+                .where((s) => s.isNotEmpty)
+                .toList();
             if (parts.length > 1) {
               initials = '${parts[0][0]}${parts[1][0]}'.toUpperCase();
             } else if (parts.isNotEmpty) {
@@ -181,129 +223,189 @@ class AsmitaPrimaryHeader extends StatelessWidget {
         }
 
         return Container(
-          color: backgroundColor ?? AsmitaPalette.systemBG,
+          color: backgroundColor ?? Colors.transparent,
           padding: EdgeInsets.only(bottom: bottomPadding),
-          child: Container(
-            padding: EdgeInsets.fromLTRB(16, topPadding > 0 ? topPadding + 12 : 24, 16, 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(24),
             ),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 48),
-              child: Row(
-                children: [
-            if (showBackButton)
-              Padding(
-                padding: const EdgeInsets.only(right: 12.0),
-                child: InkWell(
-                  onTap: () => Navigator.pop(context),
-                  borderRadius: BorderRadius.circular(20),
-                  child: const Padding(
-                    padding: EdgeInsets.all(4.0),
-                    child: Icon(Icons.arrow_back_ios_new_rounded, color: AsmitaPalette.deepNavy, size: 20),
-                  ),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+              child: Container(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  topPadding > 0 ? topPadding + 12 : 24,
+                  16,
+                  12,
                 ),
-              ),
-            Expanded(
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                  child: const Center(child: Icon(Icons.blur_on_rounded, color: AsmitaPalette.actionRed, size: 20)),
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.surface.withValues(alpha: 0.85),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: InkWell(
-                    onTap: allowPropertySwitching ? () {
-                      if (authState is AuthAuthenticated) {
-                        _showPropertiesBottomSheet(context, authState.user);
-                      }
-                    } : null,
-                    borderRadius: BorderRadius.circular(4),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Flexible(
-                              child: Text(
-                                societyName, 
-                                style: textTheme.titleLarge?.copyWith(
-                                  fontSize: 16, 
-                                  fontWeight: FontWeight.w800,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  child: Row(
+                    children: [
+                      if (showBackButton)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 12.0),
+                          child: InkWell(
+                            onTap: () => Navigator.pop(context),
+                            borderRadius: BorderRadius.circular(20),
+                            child: const Padding(
+                              padding: EdgeInsets.all(4.0),
+                              child: Icon(
+                                Icons.arrow_back_ios_new_rounded,
+                                color: AsmitaPalette.deepNavy,
+                                size: 20,
                               ),
                             ),
-                            if (allowPropertySwitching) ...[
-                              const SizedBox(width: 2),
-                              Icon(Icons.keyboard_arrow_down_rounded, color: AsmitaPalette.deepNavy.withValues(alpha: 0.8), size: 18),
-                            ],
+                          ),
+                        ),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.blur_on_rounded,
+                                  color: AsmitaPalette.actionRed,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: InkWell(
+                                onTap: allowPropertySwitching
+                                    ? () {
+                                        if (authState is AuthAuthenticated) {
+                                          _showPropertiesBottomSheet(
+                                            context,
+                                            authState.user,
+                                          );
+                                        }
+                                      }
+                                    : null,
+                                borderRadius: BorderRadius.circular(4),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            societyName,
+                                            style: textTheme.titleLarge
+                                                ?.copyWith(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        if (allowPropertySwitching) ...[
+                                          const SizedBox(width: 2),
+                                          Icon(
+                                            Icons.keyboard_arrow_down_rounded,
+                                            color: Theme.of(context).colorScheme.onSurface
+                                                .withValues(alpha: 0.8),
+                                            size: 18,
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      flatDetails,
+                                      style: textTheme.bodyMedium?.copyWith(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w400,
+                                        color: AsmitaPalette.textLight,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          flatDetails, 
-                          style: textTheme.bodyMedium?.copyWith(
-                            fontSize: 12, 
-                            fontWeight: FontWeight.w400,
-                            color: AsmitaPalette.textLight,
+                      ),
+                      if (trailingActions != null)
+                        trailingActions!
+                      else ...[
+                        InkWell(
+                          onTap:
+                              onSearchPressed ??
+                              () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const AsmitaSearchScreen(),
+                                ),
+                              ),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Icon(
+                              Icons.search_rounded,
+                              color: Theme.of(context).iconTheme.color,
+                              size: 24,
+                            ),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(width: 4),
+                        InkWell(
+                          onTap: onChatPressed,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Icon(
+                              Icons.chat_bubble_outline_rounded,
+                              color: Theme.of(context).iconTheme.color,
+                              size: 24,
+                            ),
+                          ),
                         ),
                       ],
-                    ),
+                      const SizedBox(width: 12),
+                      GestureDetector(
+                        onTap: onProfilePressed,
+                        child: CircleAvatar(
+                          radius: 17,
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          child: Text(
+                            initials,
+                            style: textTheme.titleLarge?.copyWith(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-          if (trailingActions != null) 
-            trailingActions!
-          else ...[
-            InkWell(
-              onTap: onSearchPressed ?? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AsmitaSearchScreen())),
-              borderRadius: BorderRadius.circular(20),
-              child: const Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Icon(Icons.search_rounded, color: AsmitaPalette.deepNavy, size: 24),
               ),
-            ),
-            const SizedBox(width: 4),
-            InkWell(
-              onTap: onChatPressed,
-              borderRadius: BorderRadius.circular(20),
-              child: const Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Icon(Icons.chat_bubble_outline_rounded, color: AsmitaPalette.deepNavy, size: 24),
-              ),
-            ),
-          ],
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: onProfilePressed,
-            child: CircleAvatar(
-              radius: 17,
-              backgroundColor: AsmitaPalette.deepNavy,
-              child: Text(initials, style: textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
-            ),
-          ),
-              ],
-            ),
             ),
           ),
         );

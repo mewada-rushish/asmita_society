@@ -29,7 +29,11 @@ class PreferencesRepository {
       );
       return response.statusCode == 200;
     } catch (e) {
-      debugPrint('Error updating preferences: $e');
+      if (e is DioException) {
+        debugPrint('Error updating preferences: \${e.response?.statusCode} \${e.response?.data}');
+      } else {
+        debugPrint('Error updating preferences: \$e');
+      }
       return false;
     }
   }

@@ -15,30 +15,30 @@ class VideoMessageBubble extends StatelessWidget {
       width: 200,
       height: 150,
       decoration: BoxDecoration(
-        color: Colors.black87,
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Stack(
         alignment: Alignment.center,
         children: [
           // Mock video thumbnail
-          const Center(
+          Center(
             child: Icon(
               Icons.videocam_rounded,
-              color: Colors.white54,
+              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.54),
               size: 48,
             ),
           ),
           // Play button overlay
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.5),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.play_arrow_rounded,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               size: 32,
             ),
           ),
@@ -47,15 +47,15 @@ class VideoMessageBubble extends StatelessWidget {
             bottom: 8,
             right: 8,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.6),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text(
+              child: Text(
                 '0:45', // Mock duration
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
                 ),

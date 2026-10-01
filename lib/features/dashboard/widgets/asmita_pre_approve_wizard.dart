@@ -588,11 +588,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           widget.isGuardMode
               ? 'Select Visitor Category'
               : 'Allow Future Entries',
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Montserrat',
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: AsmitaPalette.deepNavy,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 20),
@@ -626,15 +626,15 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surfaceContainer,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AsmitaPalette.borderGrey,
+                        color: Theme.of(context).dividerColor,
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
+                          color: Theme.of(context).shadowColor.withValues(alpha: 0.03),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -642,7 +642,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                     ),
                     child: Icon(
                       cat['icon'] as IconData,
-                      color: AsmitaPalette.deepNavy,
+                      color: Theme.of(context).colorScheme.primary,
                       size: 28,
                     ),
                   ),
@@ -652,11 +652,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: AsmitaPalette.deepNavy,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ],
@@ -669,7 +669,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF3F0FF),
+              color: Theme.of(context).colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -680,13 +680,13 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                     children: [
                       Row(
                         children: [
-                          const Text(
+                          Text(
                             'Safe Pickup Mode',
                             style: TextStyle(
                               fontFamily: 'Montserrat',
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF4A3498),
+                              color: Theme.of(context).colorScheme.onPrimaryContainer,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -712,12 +712,12 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                         ],
                       ),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         'No need to share flat details with the cab driver or guard. Know more »',
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 11,
-                          color: Color(0xFF6B5DA8),
+                          color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
                           height: 1.4,
                         ),
                       ),
@@ -725,9 +725,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Icon(
+                Icon(
                   Icons.shield_rounded,
-                  color: Color(0xFFB39DDB),
+                  color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.5),
                   size: 36,
                 ),
               ],

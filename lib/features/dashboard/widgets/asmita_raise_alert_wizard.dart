@@ -50,7 +50,7 @@ class _AsmitaRaiseAlertWizardState extends State<AsmitaRaiseAlertWizard> {
             style: textTheme.bodyMedium?.copyWith(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AsmitaPalette.textLight,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 24),
@@ -98,15 +98,15 @@ class _AsmitaRaiseAlertWizardState extends State<AsmitaRaiseAlertWizard> {
               width: 58,
               height: 58,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surfaceContainer,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AsmitaPalette.borderGrey,
+                  color: Theme.of(context).dividerColor,
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
+                    color: Theme.of(context).shadowColor.withValues(alpha: 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -129,7 +129,7 @@ class _AsmitaRaiseAlertWizardState extends State<AsmitaRaiseAlertWizard> {
               style: textTheme.bodyLarge?.copyWith(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: AsmitaPalette.textDark,
+                color: Theme.of(context).colorScheme.onSurface,
                 height: 1.2,
               ),
             ),
@@ -158,23 +158,23 @@ class _AsmitaRaiseAlertWizardState extends State<AsmitaRaiseAlertWizard> {
           ),
         ),
         const SizedBox(height: 20),
-        const Text(
+        Text(
           'Request Sent',
           style: TextStyle(
             fontFamily: 'Montserrat',
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: AsmitaPalette.deepNavy,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 10),
         Text(
           '$_selectedEmergencyType request has been shared with security.',
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Poppins',
             fontSize: 13,
-            color: AsmitaPalette.textLight,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             height: 1.5,
           ),
         ),

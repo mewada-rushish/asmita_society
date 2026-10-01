@@ -118,7 +118,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isDestructive
               ? Colors.redAccent.withValues(alpha: 0.1)
@@ -155,7 +155,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
             child: _selectedImageIds.isNotEmpty
                 ? Padding(
                     key: const ValueKey('selection_bar'),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -168,7 +168,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -177,25 +177,25 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                           alignment: Alignment.center,
                           child: Text(
                             '${_selectedImageIds.length}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.surface,
                               fontFamily: 'Poppins',
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8), // Tiny space between them
+                        SizedBox(width: 8), // Tiny space between them
                         
                         // Actions Pill
                         Container(
-                          padding: const EdgeInsets.all(4), // Equal padding
+                          padding: EdgeInsets.all(4), // Equal padding
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -213,7 +213,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                                 },
                               ),
                               if (_isDownloading)
-                                const Padding(
+                                Padding(
                                   padding: EdgeInsets.all(12.0),
                                   child: SizedBox(
                                     width: 20,
@@ -255,19 +255,19 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
     final currentMessage = widget.imageMessages[_currentIndex];
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).colorScheme.onSurface,
       appBar: AppBar(
-        backgroundColor: Colors.black.withValues(alpha: 0.5),
+        backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.surface),
         title: Text(
           '${_currentIndex + 1} / ${widget.imageMessages.length}',
-          style: const TextStyle(color: Colors.white, fontSize: 16),
+          style: TextStyle(color: Theme.of(context).colorScheme.surface, fontSize: 16),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.chat_bubble_outline),
+            icon: Icon(Icons.chat_bubble_outline),
             tooltip: 'Show in Chat',
             onPressed: () {
               Navigator.pop(context);
@@ -278,7 +278,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
           ),
           if (widget.onReply != null)
             IconButton(
-              icon: const Icon(Icons.reply_rounded),
+              icon: Icon(Icons.reply_rounded),
               tooltip: 'Reply',
               onPressed: () {
                 Navigator.pop(context);
@@ -286,26 +286,26 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
               },
             ),
           if (_isDownloading && _selectedImageIds.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.all(16.0),
               child: SizedBox(
                 width: 20,
                 height: 20,
                 child: AsmitaLoadingIndicator(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   size: 20,
                 ),
               ),
             )
           else if (_selectedImageIds.isEmpty)
             IconButton(
-              icon: const Icon(Icons.download),
+              icon: Icon(Icons.download),
               tooltip: 'Download',
               onPressed: () => _downloadImages([currentMessage.content]),
             ),
           if (currentMessage.isMe && widget.onDelete != null)
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              icon: Icon(Icons.delete_outline, color: Colors.redAccent),
               tooltip: 'Delete Message',
               onPressed: () {
                 Navigator.pop(context);
@@ -344,16 +344,16 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                         ? CachedNetworkImage(
                             imageUrl: imagePath,
                             fit: BoxFit.contain,
-                            placeholder: (context, url) => const Center(
+                            placeholder: (context, url) => Center(
                               child: AsmitaLoadingIndicator(
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.surface,
                                 size: 28,
                               ),
                             ),
-                            errorWidget: (context, url, error) => const Center(
+                            errorWidget: (context, url, error) => Center(
                               child: Icon(
                                 Icons.broken_image_rounded,
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.surface,
                                 size: 50,
                               ),
                             ),
@@ -379,7 +379,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: [
-                    Colors.black.withValues(alpha: 0.8),
+                    Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                     Colors.transparent,
                   ],
                 ),
@@ -388,7 +388,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                 child: ListView.builder(
                   controller: _thumbnailScrollController,
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 8,
                   ),
@@ -427,7 +427,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                         children: [
                           Container(
                             width: 60,
-                            margin: const EdgeInsets.only(right: 8),
+                            margin: EdgeInsets.only(right: 8),
                             decoration: BoxDecoration(
                               border: Border.all(
                                 color: isSelected && _selectedImageIds.isEmpty
@@ -455,11 +455,11 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                               top: 4,
                               right: 12,
                               child: Container(
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.surface,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.check_circle,
                                   color: Colors.blueAccent,
                                   size: 20,

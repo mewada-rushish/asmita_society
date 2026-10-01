@@ -200,10 +200,10 @@ class VisitorUtils {
               ),
               child: CircleAvatar(
                 radius: 36,
-                backgroundColor: AsmitaPalette.systemBG,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 child: Icon(
                   visitor['icon'] as IconData, 
-                  color: visitor['brandColor'] as Color, 
+                  color: visitor['brandColor'] == AsmitaPalette.deepNavy ? Theme.of(context).colorScheme.primary : visitor['brandColor'] as Color, 
                   size: 32
                 ),
               ),
@@ -213,11 +213,11 @@ class VisitorUtils {
           Center(
             child: Text(
               visitor['titleText'] as String,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Montserrat',
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
-                color: AsmitaPalette.deepNavy,
+                color: Theme.of(context).textTheme.titleLarge?.color,
               ),
             ),
           ),
@@ -241,13 +241,13 @@ class VisitorUtils {
             ),
           ),
           const SizedBox(height: 24),
-          const Divider(color: AsmitaPalette.borderGrey, height: 1),
+          Divider(color: Theme.of(context).dividerColor, height: 1),
           const SizedBox(height: 20),
 
           if (visitor['inviteSubType'] != null && visitor['inviteSubType'] != 'ONCE')
-            _buildDetailRow(textTheme, label: 'Frequency', value: visitor['inviteSubType'] as String),
+            _buildDetailRow(context, textTheme, label: 'Frequency', value: visitor['inviteSubType'] as String),
           if (visitor['validTo'] != null && visitor['inviteSubType'] == 'FREQUENT')
-            _buildDetailRow(textTheme, label: 'Allowed Until', value: visitor['validTo'] as String),
+            _buildDetailRow(context, textTheme, label: 'Allowed Until', value: visitor['validTo'] as String),
           if (visitor['inviteSubType'] == 'FREQUENT' || (visitor['allowedDays'] != null && visitor['allowedDays'].toString().isNotEmpty)) ...[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -261,29 +261,29 @@ class VisitorUtils {
                       fontFamily: 'Poppins',
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: AsmitaPalette.textLight,
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                     ),
                   ),
-                  _buildDaysIndicator(visitor['allowedDays']?.toString().isNotEmpty == true ? visitor['allowedDays'] as String : 'Mon,Tue,Wed,Thu,Fri,Sat,Sun'),
+                  _buildDaysIndicator(context, visitor['allowedDays']?.toString().isNotEmpty == true ? visitor['allowedDays'] as String : 'Mon,Tue,Wed,Thu,Fri,Sat,Sun'),
                 ],
               ),
             ),
           ],
           if (visitor['startTime'] != null && visitor['endTime'] != null)
-            _buildDetailRow(textTheme, label: 'Time Slot', value: '${formatRawTime(visitor['startTime'])} - ${formatRawTime(visitor['endTime'])}'),
+            _buildDetailRow(context, textTheme, label: 'Time Slot', value: '${formatRawTime(visitor['startTime'])} - ${formatRawTime(visitor['endTime'])}'),
           if (visitor['vehicleNumber'] != null && visitor['vehicleNumber'].toString().isNotEmpty)
-            _buildDetailRow(textTheme, label: 'Vehicle Number', value: visitor['vehicleNumber'] as String),
+            _buildDetailRow(context, textTheme, label: 'Vehicle Number', value: visitor['vehicleNumber'] as String),
           if (visitor['maxGuestCount'] != null && visitor['maxGuestCount'] > 1)
-            _buildDetailRow(textTheme, label: 'Guest Count', value: visitor['maxGuestCount'].toString()),
+            _buildDetailRow(context, textTheme, label: 'Guest Count', value: visitor['maxGuestCount'].toString()),
           if (visitor['isPrivate'] == true)
-            _buildDetailRow(textTheme, label: 'Entry Mode', value: 'Surprise / Secret Delivery', isHighlight: true),
+            _buildDetailRow(context, textTheme, label: 'Entry Mode', value: 'Surprise / Secret Delivery', isHighlight: true),
             
-          _buildDetailRow(textTheme, label: 'Gate Access Status', value: visitor['status'] as String, isStatus: true),
-          _buildDetailRow(textTheme, label: 'Arrival Date', value: visitor['date'] as String),
-          _buildDetailRow(textTheme, label: 'Entry Boundary Check', value: visitor['gate'] as String),
-          _buildDetailRow(textTheme, label: 'Inbound Timestamp', value: visitor['entryTime'] as String),
+          _buildDetailRow(context, textTheme, label: 'Gate Access Status', value: visitor['status'] as String, isStatus: true),
+          _buildDetailRow(context, textTheme, label: 'Arrival Date', value: visitor['date'] as String),
+          _buildDetailRow(context, textTheme, label: 'Entry Boundary Check', value: visitor['gate'] as String),
+          _buildDetailRow(context, textTheme, label: 'Inbound Timestamp', value: visitor['entryTime'] as String),
           if (visitor['exitTime'] != '--')
-            _buildDetailRow(textTheme, label: 'Outbound Timestamp', value: visitor['exitTime'] as String),
+            _buildDetailRow(context, textTheme, label: 'Outbound Timestamp', value: visitor['exitTime'] as String),
           
 
         ],
@@ -292,6 +292,7 @@ class VisitorUtils {
   }
 
   static Widget _buildDetailRow(
+    BuildContext context,
     TextTheme textTheme, {
     required String label,
     required String value,
@@ -310,7 +311,7 @@ class VisitorUtils {
                 fontFamily: 'Poppins',
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: AsmitaPalette.textLight,
+                color: textTheme.bodyMedium?.color,
               ),
             ),
           ),
@@ -322,7 +323,7 @@ class VisitorUtils {
                     ? Colors.red.withValues(alpha: 0.1) 
                     : (value.toLowerCase().contains('entered') || value.toLowerCase().contains('exited')
                         ? Colors.green.withValues(alpha: 0.1)
-                        : AsmitaPalette.systemBG),
+                        : Theme.of(context).scaffoldBackgroundColor),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Row(
@@ -331,7 +332,7 @@ class VisitorUtils {
                   if (value.toLowerCase() != 'expired' && value.toLowerCase() != 'pending') ...[
                     Icon(Icons.check_circle_outline, 
                       size: 14, 
-                      color: value.toLowerCase().contains('exited') ? Colors.green.shade700 : AsmitaPalette.deepNavy
+                      color: value.toLowerCase().contains('exited') ? Colors.green.shade700 : Theme.of(context).textTheme.bodyLarge?.color
                     ),
                     const SizedBox(width: 4),
                   ],
@@ -342,7 +343,7 @@ class VisitorUtils {
                       fontWeight: FontWeight.w600,
                       color: value.toLowerCase() == 'expired' 
                           ? Colors.red 
-                          : (value.toLowerCase().contains('exited') ? Colors.green.shade700 : AsmitaPalette.deepNavy),
+                          : (value.toLowerCase().contains('exited') ? Colors.green.shade700 : Theme.of(context).textTheme.bodyLarge?.color),
                     ),
                   ),
                 ],
@@ -355,7 +356,7 @@ class VisitorUtils {
                 fontFamily: 'Montserrat',
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: isHighlight ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy,
+                color: isHighlight ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.titleLarge?.color,
               ),
             ),
         ],
@@ -363,7 +364,7 @@ class VisitorUtils {
     );
   }
 
-  static Widget _buildDaysIndicator(String allowedDays) {
+  static Widget _buildDaysIndicator(BuildContext context, String allowedDays) {
     final days = [
       {'key': 'Mon', 'label': 'M'},
       {'key': 'Tue', 'label': 'T'},
@@ -383,9 +384,9 @@ class VisitorUtils {
           height: 24,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isAllowed ? AsmitaPalette.actionRed : Colors.transparent,
+            color: isAllowed ? Theme.of(context).colorScheme.primary : Colors.transparent,
             border: Border.all(
-              color: isAllowed ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
+              color: isAllowed ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor,
               width: 1,
             ),
           ),
@@ -396,7 +397,7 @@ class VisitorUtils {
               fontFamily: 'Montserrat',
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: isAllowed ? Colors.white : AsmitaPalette.deepNavy,
+              color: isAllowed ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).textTheme.titleLarge?.color,
             ),
           ),
         );

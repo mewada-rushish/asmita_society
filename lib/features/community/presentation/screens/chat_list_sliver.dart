@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../data/models/chat_message_model.dart';
 import '../messages/message_bubble_factory.dart';
@@ -76,7 +75,7 @@ class ChatListSliver extends ConsumerWidget {
     final groupedMessages = _groupMessages(messages);
 
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(
+      padding: EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 20,
       ),
@@ -84,14 +83,14 @@ class ChatListSliver extends ConsumerWidget {
         itemCount: groupedMessages.length + (isLoadingMore ? 1 : 0),
         itemBuilder: (context, index) {
           if (index == groupedMessages.length) {
-            return const Padding(
+            return Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Center(
                 child: SizedBox(
                     height: 24,
                     width: 24,
                     child: AsmitaLoadingIndicator(
-                      color: AsmitaPalette.deepNavy,
+                      color: Theme.of(context).colorScheme.primary,
                       size: 24,
                   ),
                 ),
@@ -159,31 +158,31 @@ class ChatListSliver extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (showDateBadge) ...[
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Center(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AsmitaPalette.borderGrey,
+                        color: Theme.of(context).dividerColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         msg.time.contains('|') ? msg.time.split('|')[0] : 'Today',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: AsmitaPalette.textDark,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                 ] else ...[
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                 ],
                 bubbleContent,
               ],

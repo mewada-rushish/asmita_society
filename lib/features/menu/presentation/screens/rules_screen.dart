@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/menu/presentation/providers/society_provider.dart';
@@ -14,7 +13,7 @@ class RulesScreen extends ConsumerWidget {
     final rulesState = ref.watch(rulesProvider);
 
     return Scaffold(
-      backgroundColor: AsmitaPalette.systemBG,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -24,7 +23,7 @@ class RulesScreen extends ConsumerWidget {
                 data: (rules) {
                   if (rules.isEmpty) {
                     return Center(
-                      child: Text('No rules found.', style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.textLight)),
+                      child: Text('No rules found.', style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color)),
                     );
                   }
                   return ListView.builder(
@@ -42,12 +41,12 @@ class RulesScreen extends ConsumerWidget {
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
-                        child: _buildRuleCard(textTheme, icon, rule.title, rule.description),
+                        child: _buildRuleCard(context, textTheme, icon, rule.title, rule.description),
                       );
                     },
                   );
                 },
-                loading: () => const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28)),
+                loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
                 error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
               ),
             ),
@@ -57,16 +56,16 @@ class RulesScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildRuleCard(TextTheme textTheme, IconData icon, String title, String description) {
+  Widget _buildRuleCard(BuildContext context, TextTheme textTheme, IconData icon, String title, String description) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -80,10 +79,10 @@ class RulesScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.05),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: AsmitaPalette.deepNavy, size: 20),
+                child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -94,7 +93,7 @@ class RulesScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           Text(
             description,
-            style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.textLight, height: 1.5),
+            style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, height: 1.5),
           ),
         ],
       ),

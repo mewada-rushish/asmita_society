@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/design_system.dart';
+
 import '../../../core/widgets/asmita_bottom_nav_bar.dart'; 
 import '../../../core/widgets/asmita_animated_indexed_stack.dart';
 import '../../menu/presentation/screens/menu_screen.dart'; 
@@ -219,7 +219,8 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AsmitaPalette.systemBG,
+      extendBody: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: AsmitaAnimatedIndexedStack(
         index: _currentIndex,
         children: _buildScreens(),

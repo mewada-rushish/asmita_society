@@ -2,7 +2,6 @@ import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
@@ -29,7 +28,7 @@ class CommitteeMembersScreen extends ConsumerWidget {
     final committeeState = ref.watch(committeeProvider);
     
     return Scaffold(
-      backgroundColor: AsmitaPalette.systemBG,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       bottomNavigationBar: AsmitaBottomNavBar(
         currentIndex: -1,
         onTap: (index) {
@@ -45,7 +44,7 @@ class CommitteeMembersScreen extends ConsumerWidget {
           children: [
             AsmitaPrimaryHeader(
               showBackButton: false,
-              backgroundColor: AsmitaPalette.systemBG,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               bottomPadding: 0.0,
               onSearchPressed: onNavigateToSearch,
               onChatPressed: onNavigateToCommunity,
@@ -56,7 +55,7 @@ class CommitteeMembersScreen extends ConsumerWidget {
                 data: (members) {
                   if (members.isEmpty) {
                     return Center(
-                      child: Text('No committee members found.', style: textTheme.bodyLarge?.copyWith(color: AsmitaPalette.textLight)),
+                      child: Text('No committee members found.', style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color)),
                     );
                   }
                   return CustomScrollView(
@@ -69,7 +68,7 @@ class CommitteeMembersScreen extends ConsumerWidget {
                         },
                       ),
                       SliverPadding(
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.all(16),
                         sliver: SliverGrid(
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
@@ -80,7 +79,7 @@ class CommitteeMembersScreen extends ConsumerWidget {
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
                               final member = members[index];
-                              return _buildMemberCard(textTheme, member);
+                              return _buildMemberCard(context, textTheme, member);
                             },
                             childCount: members.length,
                           ),
@@ -89,8 +88,8 @@ class CommitteeMembersScreen extends ConsumerWidget {
                     ],
                   );
                 },
-                loading: () => const Center(child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28)),
-                error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
+                loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
+                error: (err, _) => Center(child: Text('Error: $err', style: TextStyle(color: Colors.red))),
               ),
             ),
           ],
@@ -99,7 +98,7 @@ class CommitteeMembersScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildMemberCard(TextTheme textTheme, CommitteeMemberModel member) {
+  Widget _buildMemberCard(BuildContext context, TextTheme textTheme, CommitteeMemberModel member) {
     String formattedDate = '';
     if (member.createdAt != null && member.createdAt!.isNotEmpty) {
       try {
@@ -117,12 +116,12 @@ class CommitteeMembersScreen extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -131,48 +130,50 @@ class CommitteeMembersScreen extends ConsumerWidget {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Column(
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundColor: AsmitaPalette.deepNavy,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   child: Text(
                     name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?', 
-                    style: textTheme.titleLarge?.copyWith(color: Colors.white)
+                    style: textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.surface)
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Text(name, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, fontSize: 14), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 4),
-                Text(role, style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.actionRed, fontWeight: FontWeight.w600, fontSize: 12), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+                SizedBox(height: 4),
+                Text(role, style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600, fontSize: 12), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
                 if (formattedDate.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text('Joined $formattedDate', style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.textLight, fontSize: 10), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  SizedBox(height: 4),
+                  Text('Joined $formattedDate', style: textTheme.bodySmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 10), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
                 ],
               ],
             ),
           ),
           const Spacer(),
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: Color(0xFFF8F9FC),
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(18),
                 bottomRight: Radius.circular(18),
               ),
-              border: Border(top: BorderSide(color: AsmitaPalette.borderGrey)),
+              border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
             ),
-            padding: const EdgeInsets.symmetric(vertical: 4),
+            padding: EdgeInsets.symmetric(vertical: 4),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildActionButton(
+                  context,
                   Icons.call_rounded, 
                   () => _launchUrl('tel:$phone'),
                 ),
-                Container(width: 1, height: 24, color: AsmitaPalette.borderGrey),
+                Container(width: 1, height: 24, color: Theme.of(context).dividerColor),
                 _buildActionButton(
+                  context,
                   Icons.email_rounded, 
                   () => _launchUrl('mailto:$email'),
                 ),
@@ -184,12 +185,12 @@ class CommitteeMembersScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionButton(IconData icon, VoidCallback onTap) {
+  Widget _buildActionButton(BuildContext context, IconData icon, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-        child: Icon(icon, size: 22, color: AsmitaPalette.textLight),
+        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+        child: Icon(icon, size: 22, color: Theme.of(context).textTheme.bodyMedium?.color),
       ),
     );
   }

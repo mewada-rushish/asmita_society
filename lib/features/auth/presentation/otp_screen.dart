@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/constants/design_system.dart';
 import '../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../core/widgets/asmita_toast.dart';
 import '../../dashboard/presentation/main_dashboard_screen.dart'; // Added dashboard routing import
@@ -78,7 +77,7 @@ class _OtpScreenState extends State<OtpScreen> {
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
-      backgroundColor: AsmitaPalette.deepNavy,
+      backgroundColor: Theme.of(context).colorScheme.primary,
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
@@ -154,16 +153,16 @@ class _OtpScreenState extends State<OtpScreen> {
                       top: 0, left: 24, right: 24, bottom: 0,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.4),
+                          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.4),
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
                         ),
                       ),
                     ),
                     Container(
                       margin: const EdgeInsets.only(top: 12),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                       ),
                       padding: EdgeInsets.only(
                         left: 24.0, right: 24.0, top: 48.0, 
@@ -173,14 +172,14 @@ class _OtpScreenState extends State<OtpScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Verify It\'s You', style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.black, fontWeight: FontWeight.w800)),
+                          Text('Verify It\'s You', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
                           const SizedBox(height: 8),
                           RichText(
                             text: TextSpan(
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade500, height: 1.5),
                               children: [
                                 const TextSpan(text: 'We\'ve sent a secure 6-digit code to\n'),
-                                TextSpan(text: '+91 ${widget.phoneNumber}', style: const TextStyle(color: AsmitaPalette.deepNavy, fontWeight: FontWeight.bold)),
+                                TextSpan(text: '+91 ${widget.phoneNumber}', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.bold)),
                               ],
                             ),
                           ),
@@ -197,10 +196,10 @@ class _OtpScreenState extends State<OtpScreen> {
                                     return Container(
                                       height: 56, width: 48, alignment: Alignment.center,
                                       decoration: BoxDecoration(
-                                        color: Colors.white, borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: isActive ? AsmitaPalette.actionRed : (isFilled ? AsmitaPalette.deepNavy : Colors.grey.shade300), width: isActive || isFilled ? 2.0 : 1.0),
+                                        color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: isActive ? Theme.of(context).colorScheme.primary : (isFilled ? Theme.of(context).textTheme.bodyLarge!.color! : Theme.of(context).dividerColor), width: isActive || isFilled ? 2.0 : 1.0),
                                       ),
-                                      child: Text(isFilled ? _otp[index] : '', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AsmitaPalette.deepNavy, fontWeight: FontWeight.bold)),
+                                      child: Text(isFilled ? _otp[index] : '', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.bold)),
                                     );
                                   }),
                                 ),
@@ -231,7 +230,7 @@ class _OtpScreenState extends State<OtpScreen> {
                               onTap: _resendOtp,
                               child: Text(
                                 _canResend ? 'Resend OTP' : 'Resend code in 00:${_secondsRemaining.toString().padLeft(2, '0')}',
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(color: _canResend ? AsmitaPalette.actionRed : Colors.grey.shade500, fontWeight: _canResend ? FontWeight.bold : FontWeight.w500),
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(color: _canResend ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyMedium?.color, fontWeight: _canResend ? FontWeight.bold : FontWeight.w500),
                               ),
                             ),
                           ),
@@ -243,11 +242,11 @@ class _OtpScreenState extends State<OtpScreen> {
                               return SizedBox(
                                 width: double.infinity, height: 56,
                                 child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(backgroundColor: isComplete ? AsmitaPalette.actionRed : Colors.grey.shade300, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                                  style: ElevatedButton.styleFrom(backgroundColor: isComplete ? Theme.of(context).colorScheme.primary : Theme.of(context).disabledColor, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                                   onPressed: isLoading || !isComplete ? null : _verifyOtp,
                                   child: isLoading 
-                                    ? const SizedBox(height: 24, width: 24, child: AsmitaLoadingIndicator(color: Colors.white, size: 24))
-                                    : Text('Verify Secure Code', style: TextStyle(color: isComplete ? Colors.white : Colors.grey.shade500, fontSize: 16, fontWeight: FontWeight.w600)),
+                                    ? SizedBox(height: 24, width: 24, child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.onPrimary, size: 24))
+                                    : Text('Verify Secure Code', style: TextStyle(color: isComplete ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).disabledColor, fontSize: 16, fontWeight: FontWeight.w600)),
                                 ),
                               );
                             },

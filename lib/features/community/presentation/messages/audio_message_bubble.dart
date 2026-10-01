@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
-
 class AudioMessageBubble extends StatefulWidget {
   final String content; // URL or local path
   final bool isMe;
@@ -130,13 +128,13 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
             _isPlaying
                 ? Icons.pause_circle_filled_rounded
                 : Icons.play_circle_fill_rounded,
-            color: widget.isMe ? AsmitaPalette.deepNavy : AsmitaPalette.actionRed,
+            color: widget.isMe ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary,
             size: 32,
           ),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         SizedBox(
           width: 100,
           child: Row(
@@ -150,23 +148,23 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
                 height: index % 2 == 0 ? 12 : (index % 3 == 0 ? 20 : 8),
                 decoration: BoxDecoration(
                   color: isActive
-                      ? (widget.isMe ? AsmitaPalette.deepNavy : AsmitaPalette.actionRed)
+                      ? (widget.isMe ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary)
                       : (widget.isMe
-                          ? AsmitaPalette.deepNavy.withValues(alpha: 0.3)
-                          : AsmitaPalette.borderGrey),
+                          ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)
+                          : Theme.of(context).dividerColor),
                   borderRadius: BorderRadius.circular(2),
                 ),
               );
             }),
           ),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Text(
           displayDuration,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: widget.isMe ? AsmitaPalette.deepNavy : AsmitaPalette.textDark,
+            color: widget.isMe ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
       ],

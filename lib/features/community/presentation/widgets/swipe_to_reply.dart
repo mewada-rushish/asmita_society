@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
-
 class SwipeToReply extends StatefulWidget {
   final Widget child;
   final VoidCallback onSwipeReply;
@@ -106,12 +104,12 @@ class _SwipeToReplyState extends State<SwipeToReply>
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.reply_rounded,
-                    color: AsmitaPalette.deepNavy,
+                    color: Theme.of(context).colorScheme.primary,
                     size: 20,
                   ),
                 ),

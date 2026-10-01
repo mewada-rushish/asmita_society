@@ -114,12 +114,12 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Tap an icon to select the action, then continue to provide details.',
           style: TextStyle(
             fontFamily: 'Poppins',
             fontSize: 13,
-            color: AsmitaPalette.textLight,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             height: 1.4,
           ),
         ),
@@ -153,15 +153,15 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
                       width: 58,
                       height: 58,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surfaceContainer,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: selected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
+                          color: selected ? AsmitaPalette.actionRed : Theme.of(context).dividerColor,
                           width: 1.5,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
+                            color: Theme.of(context).shadowColor.withValues(alpha: 0.03),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -170,7 +170,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
                       child: Center(
                         child: Icon(
                           icon,
-                          color: selected ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy,
+                          color: selected ? AsmitaPalette.actionRed : Theme.of(context).colorScheme.onSurface,
                           size: 22,
                         ),
                       ),
@@ -181,11 +181,11 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
                       textAlign: TextAlign.center,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: AsmitaPalette.textDark,
+                        color: selected ? AsmitaPalette.actionRed : Theme.of(context).colorScheme.onSurface,
                         height: 1.2,
                       ),
                     ),
@@ -238,15 +238,15 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
                       width: 58,
                       height: 58,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surfaceContainer,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: selected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
+                          color: selected ? AsmitaPalette.actionRed : Theme.of(context).dividerColor,
                           width: 1.5,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
+                            color: Theme.of(context).shadowColor.withValues(alpha: 0.03),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -255,7 +255,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
                       child: Center(
                         child: Icon(
                           icon,
-                          color: AsmitaPalette.actionRed,
+                          color: selected ? AsmitaPalette.actionRed : Theme.of(context).colorScheme.onSurface,
                           size: 24,
                         ),
                       ),
@@ -266,11 +266,11 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
                       textAlign: TextAlign.center,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: AsmitaPalette.textDark,
+                        color: selected ? AsmitaPalette.actionRed : Theme.of(context).colorScheme.onSurface,
                         height: 1.2,
                       ),
                     ),
@@ -292,10 +292,10 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
       children: [
         Text(
           _getActionDescription(),
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Poppins',
             fontSize: 13,
-            color: AsmitaPalette.textLight,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             height: 1.5,
           ),
         ),
@@ -321,7 +321,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
               Expanded(
                 child: Text(
                   'I confirm this child has permission to leave with an escort.',
-                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.textDark, height: 1.4),
+                  style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: Theme.of(context).colorScheme.onSurface, height: 1.4),
                 ),
               ),
             ],
@@ -370,13 +370,13 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
         const SizedBox(height: 16),
         Text(
           'Request Sent',
-          style: const TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy),
+          style: TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface),
         ),
         const SizedBox(height: 10),
         Text(
           '${_getHeadlineLabel()} request has been shared with security.',
           textAlign: TextAlign.center,
-          style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, color: AsmitaPalette.textLight, height: 1.5),
+          style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),
         ),
         const SizedBox(height: 24),
         _buildPrimaryButton(label: 'Done', onPressed: _nextStep),

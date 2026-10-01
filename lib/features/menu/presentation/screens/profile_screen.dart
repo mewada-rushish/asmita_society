@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
@@ -106,7 +105,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
 
         return Scaffold(
-          backgroundColor: AsmitaPalette.systemBG,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
             child: Column(
               children: [
@@ -122,7 +121,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                       child: Icon(
                         _isEditing ? Icons.close_rounded : Icons.edit_outlined,
-                        color: AsmitaPalette.deepNavy,
+                        color: Theme.of(context).colorScheme.primary,
                         size: 22,
                       ),
                     ),
@@ -164,12 +163,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -179,12 +178,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           CircleAvatar(
             radius: 40,
-            backgroundColor: AsmitaPalette.deepNavy,
+            backgroundColor: Theme.of(context).colorScheme.primary,
             backgroundImage: user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty
                 ? NetworkImage(user.profilePictureUrl!)
                 : null,
             child: user.profilePictureUrl == null || user.profilePictureUrl!.isEmpty
-                ? Text(initials, style: textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: 24))
+                ? Text(initials, style: textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.surface, fontSize: 24))
                 : null,
           ),
           const SizedBox(height: 16),
@@ -193,10 +192,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AsmitaPalette.actionRed.withValues(alpha: 0.1),
+              color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Text((user.systemRole ?? user.primaryRole).toUpperCase(), style: textTheme.bodySmall?.copyWith(color: AsmitaPalette.actionRed, fontWeight: FontWeight.w700)),
+            child: Text((user.systemRole ?? user.primaryRole).toUpperCase(), style: textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -206,9 +205,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildDetailsSection(TextTheme textTheme, UserModel user) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AsmitaPalette.borderGrey, width: 1.5),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
       ),
       child: Column(
         children: [
@@ -224,24 +223,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: showBorder ? const Border(bottom: BorderSide(color: AsmitaPalette.borderGrey, width: 1)) : null,
+        border: showBorder ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1)) : null,
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AsmitaPalette.deepNavy.withValues(alpha: 0.05),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: AsmitaPalette.deepNavy, size: 20),
+            child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: textTheme.bodyMedium?.copyWith(color: AsmitaPalette.textLight, fontSize: 12)),
+                Text(label, style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 12)),
                 const SizedBox(height: 2),
                 if (_isEditing)
                   TextField(
@@ -269,14 +268,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: ElevatedButton(
         onPressed: isLoading ? null : _saveProfile,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AsmitaPalette.deepNavy,
+          backgroundColor: Theme.of(context).colorScheme.primary,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
         ),
         child: isLoading
-            ? const SizedBox(height: 20, width: 20, child: AsmitaLoadingIndicator(color: Colors.white, size: 20))
-            : Text('Save Profile', style: textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
+            ? SizedBox(height: 20, width: 20, child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.surface, size: 20))
+            : Text('Save Profile', style: textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.w600)),
       ),
     );
   }

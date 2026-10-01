@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/community_provider.dart';
@@ -92,21 +91,21 @@ class _ContactPickerBottomSheetState extends ConsumerState<ContactPickerBottomSh
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const SizedBox(
+      return SizedBox(
         height: 200,
         child: Center(
-          child: AsmitaLoadingIndicator(color: AsmitaPalette.deepNavy, size: 28),
+          child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28),
         ),
       );
     }
 
     if (_permissionDenied) {
-      return const SizedBox(
+      return SizedBox(
         height: 200,
         child: Center(
           child: Text(
             'Contact permissions are required.',
-            style: TextStyle(fontFamily: 'Poppins', color: AsmitaPalette.textDark),
+            style: TextStyle(fontFamily: 'Poppins', color: Theme.of(context).textTheme.bodyLarge?.color),
           ),
         ),
       );
@@ -120,11 +119,11 @@ class _ContactPickerBottomSheetState extends ConsumerState<ContactPickerBottomSh
           TextField(
             controller: _searchController,
             onChanged: _filterContacts,
-            style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
+            style: TextStyle(fontFamily: 'Poppins', fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Search contacts...',
-              prefixIcon: const Icon(Icons.search_rounded, color: AsmitaPalette.deepNavy),
-              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              prefixIcon: Icon(Icons.search_rounded, color: Theme.of(context).colorScheme.primary),
+              contentPadding: EdgeInsets.symmetric(vertical: 12),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey.shade200),
@@ -135,17 +134,17 @@ class _ContactPickerBottomSheetState extends ConsumerState<ContactPickerBottomSh
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AsmitaPalette.deepNavy),
+                borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           if (_filteredContacts.isEmpty)
-            const Expanded(
+            Expanded(
               child: Center(
                 child: Text(
                   'No contacts found.',
-                  style: TextStyle(fontFamily: 'Poppins', color: Colors.black38),
+                  style: TextStyle(fontFamily: 'Poppins', color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38)),
                 ),
               ),
             )
@@ -154,7 +153,7 @@ class _ContactPickerBottomSheetState extends ConsumerState<ContactPickerBottomSh
               child: ListView.separated(
                 physics: const BouncingScrollPhysics(),
                 itemCount: _filteredContacts.length,
-                separatorBuilder: (context, index) => const Divider(color: AsmitaPalette.borderGrey, height: 1),
+                separatorBuilder: (context, index) => Divider(color: Theme.of(context).dividerColor, height: 1),
                 itemBuilder: (context, index) {
                   final contact = _filteredContacts[index];
                   final initial = (contact.displayName?.isNotEmpty ?? false) ? contact.displayName![0].toUpperCase() : '?';
@@ -163,33 +162,33 @@ class _ContactPickerBottomSheetState extends ConsumerState<ContactPickerBottomSh
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: CircleAvatar(
-                      backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                       child: Text(
                         initial,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Montserrat',
                           fontWeight: FontWeight.w700,
-                          color: AsmitaPalette.deepNavy,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     ),
                     title: Text(
                       contact.displayName ?? "",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Montserrat',
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
-                        color: AsmitaPalette.textDark,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     subtitle: Text(
                       phone,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 12,
-                        color: AsmitaPalette.textLight,
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                       ),
                     ),
                     onTap: () => _onContactSelected(contact),
