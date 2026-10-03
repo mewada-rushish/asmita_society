@@ -26,7 +26,7 @@ class HelpSupportScreen extends ConsumerWidget {
                 slivers: [
                   AsmitaAnimatedRefresh(
                     onRefresh: () async {
-                      await ref.refresh(supportProvider.future);
+                      await ref.read(supportProvider.notifier).fetchTickets();
                     },
                   ),
                   SliverPadding(
