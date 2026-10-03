@@ -1,9 +1,10 @@
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/menu/presentation/providers/support_provider.dart';
+import 'package:shimmer/shimmer.dart';
 
 class HelpSupportScreen extends ConsumerWidget {
   const HelpSupportScreen({super.key});
@@ -20,14 +21,22 @@ class HelpSupportScreen extends ConsumerWidget {
           children: [
             const AsmitaSubHeader(title: 'Help & Support'),
             Expanded(
-              child: ListView(
-                physics: const ClampingScrollPhysics(),
-                padding: EdgeInsets.all(16),
-                children: [
-                  _buildEmergencySection(context, textTheme),
-                  SizedBox(height: 24),
-                  _buildRaiseTicketSection(context, ref, textTheme),
-                  SizedBox(height: 24),
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                slivers: [
+                  AsmitaAnimatedRefresh(
+                    onRefresh: () async {
+                      ref.invalidate(supportProvider);
+                    },
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.all(16),
+                    sliver: SliverList.list(
+                      children: [
+                        _buildEmergencySection(context, textTheme),
+                        SizedBox(height: 24),
+                        _buildRaiseTicketSection(context, ref, textTheme),
+                        SizedBox(height: 24),
                   supportState.when(
                     data: (tickets) {
                       if (tickets.isEmpty) return const SizedBox.shrink();
@@ -91,10 +100,13 @@ class HelpSupportScreen extends ConsumerWidget {
                         ],
                       );
                     },
-                    loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
+                    loading: () => _buildSkeletonTickets(context),
                     error: (err, _) => Text('Error: $err'),
                   ),
                   _buildFAQSection(context, textTheme),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -356,6 +368,99 @@ class HelpSupportScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSkeletonTickets(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          child: Shimmer.fromColors(
+            baseColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+            highlightColor: isDark ? Colors.grey[700]! : Colors.grey[100]!,
+            child: Container(
+              width: 100,
+              height: 14,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ),
+        ...List.generate(3, (index) => Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: theme.dividerColor, width: 1.5),
+          ),
+          child: Shimmer.fromColors(
+            baseColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+            highlightColor: isDark ? Colors.grey[700]! : Colors.grey[100]!,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      height: 18,
+                      width: 150,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    Container(
+                      height: 24,
+                      width: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  height: 14,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 14,
+                  width: 200,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  height: 12,
+                  width: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        )),
+        SizedBox(height: 24),
+      ],
     );
   }
 }
