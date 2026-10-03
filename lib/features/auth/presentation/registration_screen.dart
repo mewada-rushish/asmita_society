@@ -352,7 +352,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
-                builder: (_) => MainDashboardScreen(userRole: state.user.systemRole ?? state.user.secondaryRole ?? state.user.primaryRole),
+                builder: (_) => MainDashboardScreen(userRole: state.sessionRole),
               ),
               (route) => false,
             );
