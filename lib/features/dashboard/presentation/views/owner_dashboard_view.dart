@@ -614,6 +614,16 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                       ),
                     ),
                   );
+                } else if (state is VisitorError) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 12.0),
+                    child: Text(
+                      'Failed to load updates: ${state.message}',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  );
                 }
                 return Padding(
                   padding: const EdgeInsets.all(8.0),

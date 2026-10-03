@@ -12,8 +12,13 @@ class SupportRepository {
     try {
       final response = await dio.get(EnvConfig.supportTickets);
       if (response.statusCode == 200 && response.data != null) {
-        final List<dynamic> rawList = response.data;
-        return rawList.map((e) => SupportTicketModel.fromJson(e)).toList();
+        final data = response.data;
+        if (data['success'] == true && data['tickets'] != null) {
+          final List<dynamic> rawList = data['tickets'];
+          return rawList.map((e) => SupportTicketModel.fromJson(e)).toList();
+        } else if (data is List) { // fallback
+          return data.map((e) => SupportTicketModel.fromJson(e)).toList();
+        }
       }
       return [];
     } catch (e) {
@@ -31,13 +36,17 @@ class SupportRepository {
       final response = await dio.post(
         EnvConfig.supportTickets,
         data: {
-          'title': title,
+          'subject': title,
           'description': description,
           'category': category,
         },
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return SupportTicketModel.fromJson(response.data);
+        final data = response.data;
+        if (data['success'] == true && data['ticket'] != null) {
+          return SupportTicketModel.fromJson(data['ticket']);
+        }
+        return SupportTicketModel.fromJson(data);
       }
       return null;
     } catch (e) {

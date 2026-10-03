@@ -17,8 +17,8 @@ class SupportTicketModel {
 
   factory SupportTicketModel.fromJson(Map<String, dynamic> json) {
     return SupportTicketModel(
-      id: json['id'] as int? ?? 0,
-      title: json['title'] as String? ?? '',
+      id: (json['id'] ?? json['ticket_id']) as int? ?? 0,
+      title: (json['title'] ?? json['subject']) as String? ?? '',
       description: json['description'] as String? ?? '',
       status: json['status'] as String? ?? 'Open',
       category: json['category'] as String?,

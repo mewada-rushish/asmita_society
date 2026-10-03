@@ -14,6 +14,7 @@ import '../../../../features/auth/bloc/auth_state.dart';
 import 'package:intl/intl.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import '../../../dashboard/widgets/asmita_pre_approve_wizard.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 
 class VisitorHistoryScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -926,6 +927,8 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                 }
 
                 if (state is VisitorError) {
+                  final isPermissionError = state.message.toLowerCase().contains('permission') || state.message.toLowerCase().contains('denied');
+                  
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -941,10 +944,18 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: () {
-                            _loadHistory(isRefresh: true);
+                            if (isPermissionError) {
+                              String requestTarget = 'tenant to share logs';
+                              if (authState is AuthAuthenticated && authState.sessionRole == 'tenant') {
+                                requestTarget = 'owner/admin for access';
+                              }
+                              AsmitaToast.show(context, message: 'Access request sent to $requestTarget.', type: AsmitaToastType.success);
+                            } else {
+                              _loadHistory(isRefresh: true);
+                            }
                           },
-                          icon: Icon(Icons.refresh),
-                          label: const Text('Retry'),
+                          icon: Icon(isPermissionError ? Icons.lock_open_rounded : Icons.refresh),
+                          label: Text(isPermissionError ? 'Request Access' : 'Retry'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Theme.of(
                               context,
