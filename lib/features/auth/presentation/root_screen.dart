@@ -8,6 +8,7 @@ import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import 'login_screen.dart'; 
+import 'biometric_lock_wrapper.dart';
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
@@ -47,7 +48,9 @@ class _RootScreenState extends State<RootScreen> {
           if (effectiveRole.trim().isEmpty) {
             effectiveRole = 'resident';
           }
-          return MainDashboardScreen(userRole: effectiveRole);
+          return BiometricLockWrapper(
+            child: MainDashboardScreen(userRole: effectiveRole),
+          );
         } else if (state is AuthNeedsOnboarding) {
           return const OnboardingScreen();
         } else if (state is AuthUnauthenticated || state is AuthError) {

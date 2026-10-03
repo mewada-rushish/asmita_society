@@ -25,40 +25,44 @@ class AsmitaBottomNavBar extends StatelessWidget {
         ? Colors.white.withValues(alpha: 0.15) 
         : Colors.black.withValues(alpha: 0.05);
 
+    final navContent = Container(
+      height: barHeight + bottomPadding,
+      padding: EdgeInsets.only(bottom: bottomPadding),
+      decoration: BoxDecoration(
+        color: isDark 
+            ? Theme.of(context).colorScheme.surface.withValues(alpha: 0.65) 
+            : Theme.of(context).colorScheme.primary,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: isDark ? Border.all(color: borderColor, width: 1.0) : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 30,
+            offset: const Offset(0, -10),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: _getVisibleIndices().map((index) {
+          final isSelected = currentIndex == index;
+          return _buildNavigationItem(context, index, isSelected);
+        }).toList(),
+      ),
+    );
+
     return Container(
       decoration: const BoxDecoration(
         color: Colors.transparent,
       ),
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
-          child: Container(
-            height: barHeight + bottomPadding,
-            padding: EdgeInsets.only(bottom: bottomPadding),
-            decoration: BoxDecoration(
-              color: isDark 
-                  ? Theme.of(context).colorScheme.surface.withValues(alpha: 0.65) 
-                  : Theme.of(context).colorScheme.primary.withValues(alpha: 0.75),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              border: Border.all(color: borderColor, width: 1.0),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 30,
-                  offset: const Offset(0, -10),
-                ),
-              ],
-            ),
-            child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: _getVisibleIndices().map((index) {
-            final isSelected = currentIndex == index;
-            return _buildNavigationItem(context, index, isSelected);
-          }).toList(),
-        ),
-          ),
-        ),
+        child: isDark 
+          ? BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+              child: navContent,
+            )
+          : navContent,
       ),
     );
   }
@@ -110,8 +114,8 @@ class AsmitaBottomNavBar extends StatelessWidget {
   }
 
   Widget _buildCustomScaledIcon(BuildContext context, int index) {
-    final iconColor = Theme.of(context).iconTheme.color ?? Colors.white;
-    final colorFilter = ColorFilter.mode(iconColor, BlendMode.srcIn);
+    const iconColor = Colors.white;
+    const colorFilter = ColorFilter.mode(iconColor, BlendMode.srcIn);
 
     switch (index) {
       case 0:

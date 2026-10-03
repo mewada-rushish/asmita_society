@@ -916,7 +916,6 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
           Expanded(
             child: BlocBuilder<VisitorBloc, VisitorState>(
               builder: (context, state) {
-                debugPrint('VisitorHistoryScreen BlocBuilder State: $state');
                 if (state is VisitorLoading) {
                   return Center(
                     child: AsmitaLoadingIndicator(

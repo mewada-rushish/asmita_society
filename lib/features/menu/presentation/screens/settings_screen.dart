@@ -14,6 +14,7 @@ import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/l10n/app_localizations.dart';
 import 'package:asmita_society/features/menu/presentation/providers/preferences_provider.dart';
+import 'package:local_auth/local_auth.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -96,7 +97,20 @@ class SettingsScreen extends ConsumerWidget {
                             'Biometric Login', 
                             prefs.biometricLogin, 
                             false,
-                            (val) => ref.read(preferencesProvider.notifier).updatePreference(biometricLogin: val)
+                            (val) async {
+                              if (val) {
+                                final auth = LocalAuthentication();
+                                final canCheck = await auth.canCheckBiometrics;
+                                final isSupported = await auth.isDeviceSupported();
+                                if (!canCheck && !isSupported) {
+                                  if (context.mounted) {
+                                    AsmitaToast.show(context, message: 'Your device does not support screen lock or biometrics.', type: AsmitaToastType.error);
+                                  }
+                                  return;
+                                }
+                              }
+                              ref.read(preferencesProvider.notifier).updatePreference(biometricLogin: val);
+                            }
                           ),
                         ],
                       ),

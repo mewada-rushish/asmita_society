@@ -76,11 +76,16 @@ class AsmitaDioClient {
           return handler.next(customError);
         }
 
+        final isExpectedHttpError = e.response?.statusCode == 401 || 
+                                    e.response?.statusCode == 403 || 
+                                    e.response?.statusCode == 404;
+
         if (e.type != DioExceptionType.connectionTimeout && 
             e.type != DioExceptionType.receiveTimeout && 
             e.type != DioExceptionType.sendTimeout &&
             e.type != DioExceptionType.connectionError &&
-            e.type != DioExceptionType.unknown) {
+            e.type != DioExceptionType.unknown &&
+            !isExpectedHttpError) {
           FirebaseCrashlytics.instance.recordError(
             e,
             e.stackTrace,
