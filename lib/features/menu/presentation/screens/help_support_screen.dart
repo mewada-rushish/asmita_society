@@ -380,12 +380,134 @@ class _TicketCarouselState extends State<TicketCarousel> {
     super.dispose();
   }
 
+  void _showTicketDetails(BuildContext context, dynamic ticket) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return AsmitaBottomSheet(
+          title: 'Ticket Conversation',
+          child: Container(
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Theme.of(context).dividerColor, width: 1),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: Text(ticket.title, style: widget.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600))),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: ticket.status.toLowerCase() == 'open' 
+                                ? Colors.orange.withValues(alpha: 0.1) 
+                                : Colors.green.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(ticket.status, style: widget.textTheme.bodySmall?.copyWith(
+                              color: ticket.status.toLowerCase() == 'open' ? Colors.orange : Colors.green,
+                              fontWeight: FontWeight.bold,
+                            )),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(ticket.description, style: widget.textTheme.bodyMedium),
+                      if (ticket.createdAt != null) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          'Raised on ',
+                          style: widget.textTheme.bodySmall?.copyWith(color: Colors.grey),
+                        )
+                      ]
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.timer_outlined, size: 20, color: Theme.of(context).colorScheme.primary),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Average reply time: < 2 hours',
+                          style: widget.textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      'No replies yet.',
+                      style: widget.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Type your reply...',
+                          filled: true,
+                          fillColor: Theme.of(context).colorScheme.surface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      child: IconButton(
+                        icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                        onPressed: () {},
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 16),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         SizedBox(
-          height: 160,
+          height: 85,
           child: PageView.builder(
             controller: _pageController,
             itemCount: widget.tickets.length,
@@ -397,8 +519,7 @@ class _TicketCarouselState extends State<TicketCarousel> {
             itemBuilder: (context, index) {
               final t = widget.tickets[index];
               return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
@@ -411,39 +532,37 @@ class _TicketCarouselState extends State<TicketCarousel> {
                     ),
                   ],
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(child: Text(t.title, style: widget.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: t.status.toLowerCase() == 'open' 
-                              ? Colors.orange.withValues(alpha: 0.1) 
-                              : Colors.green.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                  clipBehavior: Clip.hardEdge,
+                  child: InkWell(
+                    onTap: () => _showTicketDetails(context, t),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(child: Text(t.title, style: widget.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: t.status.toLowerCase() == 'open' 
+                                ? Colors.orange.withValues(alpha: 0.1) 
+                                : Colors.green.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(t.status, style: widget.textTheme.bodySmall?.copyWith(
+                              color: t.status.toLowerCase() == 'open' ? Colors.orange : Colors.green,
+                              fontWeight: FontWeight.bold,
+                            )),
                           ),
-                          child: Text(t.status, style: widget.textTheme.bodySmall?.copyWith(
-                            color: t.status.toLowerCase() == 'open' ? Colors.orange : Colors.green,
-                            fontWeight: FontWeight.bold,
-                          )),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(t.description, style: widget.textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color), maxLines: 2, overflow: TextOverflow.ellipsis),
-                    if (t.createdAt != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        'Raised on ${AppDateFormatter.formatDate(t.createdAt!)}',
-                        style: widget.textTheme.bodySmall?.copyWith(color: Colors.grey),
-                      )
-                    ]
-                  ],
+                  ),
                 ),
               );
             },
