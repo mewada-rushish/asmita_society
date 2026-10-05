@@ -1,4 +1,4 @@
-
+import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
@@ -381,15 +381,11 @@ class _TicketCarouselState extends State<TicketCarousel> {
   }
 
   void _showTicketDetails(BuildContext context, dynamic ticket) {
-    showModalBottomSheet(
+    showAsmitaBottomSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return AsmitaBottomSheet(
-          title: 'Ticket Conversation',
-          child: Container(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
+      title: 'Ticket Conversation',
+      child: Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -426,7 +422,7 @@ class _TicketCarouselState extends State<TicketCarousel> {
                       if (ticket.createdAt != null) ...[
                         const SizedBox(height: 12),
                         Text(
-                          'Raised on ',
+                          'Raised on ${AppDateFormatter.formatDate(ticket.createdAt!)}',
                           style: widget.textTheme.bodySmall?.copyWith(color: Colors.grey),
                         )
                       ]
@@ -497,8 +493,6 @@ class _TicketCarouselState extends State<TicketCarousel> {
               ],
             ),
           ),
-        );
-      },
     );
   }
 
