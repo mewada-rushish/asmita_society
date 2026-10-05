@@ -2,6 +2,7 @@ import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
+import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/menu/presentation/providers/support_provider.dart';
 import 'package:shimmer/shimmer.dart';
@@ -240,25 +241,15 @@ class HelpSupportScreen extends ConsumerWidget {
     final descCtrl = TextEditingController();
     String category = 'Bug Report';
 
-    showModalBottomSheet(
+    showAsmitaBottomSheet(
       context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 20,
-                left: 20,
-                right: 20,
-                top: 20,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('Raise a Support Ticket', style: Theme.of(context).textTheme.titleLarge),
-                  SizedBox(height: 16),
+      title: 'Raise a Support Ticket',
+      child: StatefulBuilder(
+        builder: (context, setState) {
+          return SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                   DropdownButtonFormField<String>(
                     initialValue: category,
                     decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
@@ -312,9 +303,8 @@ class HelpSupportScreen extends ConsumerWidget {
                 ],
               ),
             );
-          }
-        );
-      }
+          },
+        ),
     );
   }
 
