@@ -54,63 +54,7 @@ class HelpSupportScreen extends ConsumerWidget {
                               ),
                             ),
                           ),
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            clipBehavior: Clip.none,
-                            child: Row(
-                              children: displayTickets.map((t) => Container(
-                                width: MediaQuery.of(context).size.width * 0.8,
-                                margin: EdgeInsets.only(right: 12, bottom: 8),
-                                padding: EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(child: Text(t.title, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                                        SizedBox(width: 8),
-                                        Container(
-                                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: t.status.toLowerCase() == 'open' 
-                                              ? Colors.orange.withValues(alpha: 0.1) 
-                                              : Colors.green.withValues(alpha: 0.1),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Text(t.status, style: textTheme.bodySmall?.copyWith(
-                                            color: t.status.toLowerCase() == 'open' ? Colors.orange : Colors.green,
-                                            fontWeight: FontWeight.bold,
-                                          )),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text(t.description, style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color), maxLines: 2, overflow: TextOverflow.ellipsis),
-                                    if (t.createdAt != null) ...[
-                                      SizedBox(height: 12),
-                                      Text(
-                                        'Raised on ${AppDateFormatter.formatDate(t.createdAt!)}',
-                                        style: textTheme.bodySmall?.copyWith(color: Colors.grey),
-                                      )
-                                    ]
-                                  ],
-                                ),
-                              )).toList(),
-                            ),
-                          ),
+                          TicketCarousel(tickets: displayTickets, textTheme: textTheme),
                           if (tickets.length > 3) ...[
                             SizedBox(height: 16),
                             Center(
@@ -411,6 +355,121 @@ class HelpSupportScreen extends ConsumerWidget {
           ),
         )),
         SizedBox(height: 24),
+      ],
+    );
+  }
+}
+
+class TicketCarousel extends StatefulWidget {
+  final List<dynamic> tickets;
+  final TextTheme textTheme;
+
+  const TicketCarousel({super.key, required this.tickets, required this.textTheme});
+
+  @override
+  State<TicketCarousel> createState() => _TicketCarouselState();
+}
+
+class _TicketCarouselState extends State<TicketCarousel> {
+  final PageController _pageController = PageController(viewportFraction: 1.0);
+  int _currentIndex = 0;
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 160,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: widget.tickets.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              final t = widget.tickets[index];
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(child: Text(t.title, style: widget.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: t.status.toLowerCase() == 'open' 
+                              ? Colors.orange.withValues(alpha: 0.1) 
+                              : Colors.green.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(t.status, style: widget.textTheme.bodySmall?.copyWith(
+                            color: t.status.toLowerCase() == 'open' ? Colors.orange : Colors.green,
+                            fontWeight: FontWeight.bold,
+                          )),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(t.description, style: widget.textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    if (t.createdAt != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'Raised on ${AppDateFormatter.formatDate(t.createdAt!)}',
+                        style: widget.textTheme.bodySmall?.copyWith(color: Colors.grey),
+                      )
+                    ]
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        if (widget.tickets.length > 1) ...[
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              widget.tickets.length,
+              (index) => AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                height: 8,
+                width: _currentIndex == index ? 24 : 8,
+                decoration: BoxDecoration(
+                  color: _currentIndex == index
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).dividerColor,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
