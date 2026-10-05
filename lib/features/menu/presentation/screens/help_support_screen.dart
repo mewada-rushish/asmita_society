@@ -53,7 +53,7 @@ class HelpSupportScreen extends ConsumerWidget {
                             ),
                           ),
                           TicketCarousel(tickets: displayTickets, textTheme: textTheme),
-                          if (tickets.length > 3) ...[
+                          if (tickets.isNotEmpty) ...[
                             SizedBox(height: 16),
                             Center(
                               child: TextButton.icon(
@@ -557,13 +557,38 @@ class _TicketCarouselState extends State<TicketCarousel> {
                             ],
                           ),
                           const SizedBox(height: 6),
-                          Text(
-                            t.status.toLowerCase() == 'open' 
-                                ? 'Awaiting support reply • ${AppDateFormatter.timeAgo(t.createdAt)}' 
-                                : '${t.status} • ${AppDateFormatter.timeAgo(t.createdAt)}',
-                            style: widget.textTheme.bodySmall?.copyWith(color: Colors.grey, fontSize: 12),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          Row(
+                            children: [
+                              Icon(
+                                t.status.toLowerCase() == 'open' ? Icons.support_agent_rounded : Icons.check_circle_outline_rounded,
+                                size: 14,
+                                color: t.status.toLowerCase() == 'open' ? Colors.orange[700] : Colors.green[700],
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: RichText(
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  text: TextSpan(
+                                    style: widget.textTheme.bodySmall?.copyWith(fontSize: 12),
+                                    children: [
+                                      TextSpan(
+                                        text: t.status.toLowerCase() == 'open' ? 'Awaiting support reply' : t.status,
+                                        style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w500),
+                                      ),
+                                      TextSpan(
+                                        text: '  •  ',
+                                        style: TextStyle(color: Colors.grey[400]),
+                                      ),
+                                      TextSpan(
+                                        text: AppDateFormatter.timeAgo(t.createdAt),
+                                        style: TextStyle(color: Colors.grey[600]),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
