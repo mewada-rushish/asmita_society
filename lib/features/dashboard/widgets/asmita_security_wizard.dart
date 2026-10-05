@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
+
 import 'package:asmita_society/core/widgets/asmita_text_field.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -72,15 +72,15 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
         GestureDetector(
           onTap: _prevStep,
           behavior: HitTestBehavior.opaque,
-          child: const Padding(
+          child: Padding(
             padding: EdgeInsets.only(right: 12.0, top: 4.0, bottom: 4.0),
-            child: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AsmitaPalette.deepNavy),
+            child: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Theme.of(context).colorScheme.onSurface),
           ),
         ),
         Expanded(
           child: Text(
             _currentStep == 1 ? 'Emergency Broadcast' : 'Security Assistant',
-            style: const TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: AsmitaPalette.deepNavy),
+            style: TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface),
           ),
         ),
       ],
@@ -156,7 +156,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
                         color: Theme.of(context).colorScheme.surfaceContainer,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: selected ? AsmitaPalette.actionRed : Theme.of(context).dividerColor,
+                          color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor,
                           width: 1.5,
                         ),
                         boxShadow: [
@@ -170,7 +170,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
                       child: Center(
                         child: Icon(
                           icon,
-                          color: selected ? AsmitaPalette.actionRed : Theme.of(context).colorScheme.onSurface,
+                          color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                           size: 22,
                         ),
                       ),
@@ -185,7 +185,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
                         fontFamily: 'Poppins',
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: selected ? AsmitaPalette.actionRed : Theme.of(context).colorScheme.onSurface,
+                        color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                         height: 1.2,
                       ),
                     ),
@@ -241,7 +241,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
                         color: Theme.of(context).colorScheme.surfaceContainer,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: selected ? AsmitaPalette.actionRed : Theme.of(context).dividerColor,
+                          color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor,
                           width: 1.5,
                         ),
                         boxShadow: [
@@ -255,7 +255,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
                       child: Center(
                         child: Icon(
                           icon,
-                          color: selected ? AsmitaPalette.actionRed : Theme.of(context).colorScheme.onSurface,
+                          color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                           size: 24,
                         ),
                       ),
@@ -270,7 +270,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
                         fontFamily: 'Poppins',
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: selected ? AsmitaPalette.actionRed : Theme.of(context).colorScheme.onSurface,
+                        color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                         height: 1.2,
                       ),
                     ),
@@ -314,7 +314,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
             children: [
               Checkbox(
                 value: _allowKidExit,
-                activeColor: AsmitaPalette.actionRed,
+                activeColor: Theme.of(context).colorScheme.primary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                 onChanged: (value) => setState(() => _allowKidExit = value ?? false),
               ),
@@ -391,7 +391,7 @@ class _AsmitaSecurityWizardState extends State<AsmitaSecurityWizard> {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AsmitaPalette.actionRed,
+          backgroundColor: Theme.of(context).colorScheme.primary,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
         ),

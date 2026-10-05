@@ -11,7 +11,7 @@ import 'package:asmita_society/features/auth/data/repositories/auth_repository.d
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_event.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
+
 import 'package:asmita_society/l10n/app_localizations.dart';
 import 'package:asmita_society/features/menu/presentation/providers/preferences_provider.dart';
 import 'package:local_auth/local_auth.dart';
@@ -129,7 +129,7 @@ class SettingsScreen extends ConsumerWidget {
                           }),
                           _buildActionRow(context, textTheme, Icons.delete_forever_rounded, l10n.deleteAccount, '', false, () {
                             _showDeleteAccountDialog(context);
-                          }, textColor: AsmitaPalette.actionRed, iconColor: AsmitaPalette.actionRed),
+                          }, textColor: Theme.of(context).colorScheme.error, iconColor: Theme.of(context).colorScheme.error),
                         ],
                       ),
                       const SizedBox(height: 24),

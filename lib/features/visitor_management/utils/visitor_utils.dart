@@ -1,7 +1,7 @@
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/constants/design_system.dart';
+
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
 
 class VisitorUtils {
@@ -122,7 +122,7 @@ class VisitorUtils {
     }
 
     IconData icon = Icons.person_rounded;
-    Color brandColor = AsmitaPalette.deepNavy;
+    Color? brandColor;
 
     if (category.toString().toLowerCase() == 'delivery') {
       icon = Icons.local_shipping_rounded;
@@ -196,14 +196,14 @@ class VisitorUtils {
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: visitor['brandColor'] as Color, width: 2),
+                border: Border.all(color: visitor['brandColor'] as Color? ?? Theme.of(context).colorScheme.primary, width: 2),
               ),
               child: CircleAvatar(
                 radius: 36,
                 backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 child: Icon(
                   visitor['icon'] as IconData, 
-                  color: visitor['brandColor'] == AsmitaPalette.deepNavy ? Theme.of(context).colorScheme.primary : visitor['brandColor'] as Color, 
+                  color: visitor['brandColor'] as Color? ?? Theme.of(context).colorScheme.primary, 
                   size: 32
                 ),
               ),
@@ -226,7 +226,7 @@ class VisitorUtils {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: (visitor['brandColor'] as Color).withValues(alpha: 0.1),
+                color: (visitor['brandColor'] as Color? ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -235,7 +235,7 @@ class VisitorUtils {
                   fontFamily: 'Poppins',
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: visitor['brandColor'] as Color,
+                  color: visitor['brandColor'] as Color? ?? Theme.of(context).colorScheme.primary,
                 ),
               ),
             ),

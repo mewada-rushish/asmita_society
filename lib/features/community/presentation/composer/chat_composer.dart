@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
+
 import '../providers/community_provider.dart';
 import 'package:flutter/foundation.dart' as foundation;
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
@@ -266,7 +266,7 @@ class _ChatComposerState extends ConsumerState<ChatComposer>
             width: 4,
             height: 40,
             decoration: BoxDecoration(
-              color: AsmitaPalette.deepNavy,
+              color: Theme.of(context).colorScheme.primary,
               borderRadius: BorderRadius.circular(4),
             ),
           ),
@@ -278,11 +278,11 @@ class _ChatComposerState extends ConsumerState<ChatComposer>
               children: [
                 Text(
                   msg.isMe ? 'You' : msg.sender,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
-                    color: AsmitaPalette.deepNavy,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
                 Text(
@@ -297,9 +297,9 @@ class _ChatComposerState extends ConsumerState<ChatComposer>
                       : msg.content,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: AsmitaPalette.textLight,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
                   ),
                 ),
               ],
@@ -307,7 +307,7 @@ class _ChatComposerState extends ConsumerState<ChatComposer>
           ),
           IconButton(
             icon: const Icon(Icons.close, size: 20),
-            color: AsmitaPalette.textLight,
+            color: Theme.of(context).textTheme.bodySmall?.color,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
             onPressed: () {
@@ -400,7 +400,7 @@ class _ChatComposerState extends ConsumerState<ChatComposer>
                                             ? Icons.keyboard_rounded
                                             : Icons.emoji_emotions_outlined,
                                       ),
-                                      color: AsmitaPalette.textLight,
+                                      color: Theme.of(context).textTheme.bodySmall?.color,
                                       onPressed: () {
                                         setState(() {
                                           _emojiShowing = !_emojiShowing;
@@ -451,7 +451,7 @@ class _ChatComposerState extends ConsumerState<ChatComposer>
                                       icon: const Icon(
                                         Icons.attach_file_rounded,
                                       ),
-                                      color: AsmitaPalette.textLight,
+                                      color: Theme.of(context).textTheme.bodySmall?.color,
                                       onPressed: _showAttachmentMenu,
                                     ),
                                     if (!_isTyping)
@@ -459,7 +459,7 @@ class _ChatComposerState extends ConsumerState<ChatComposer>
                                         icon: const Icon(
                                           Icons.camera_alt_outlined,
                                         ),
-                                        color: AsmitaPalette.textLight,
+                                        color: Theme.of(context).textTheme.bodySmall?.color,
                                         onPressed: _openCamera,
                                       ),
                                   ],
@@ -488,8 +488,8 @@ class _ChatComposerState extends ConsumerState<ChatComposer>
                                       child: Container(
                                         width: 10,
                                         height: 10,
-                                        decoration: const BoxDecoration(
-                                          color: AsmitaPalette.actionRed,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.error,
                                           shape: BoxShape.circle,
                                         ),
                                       ),
@@ -514,9 +514,9 @@ class _ChatComposerState extends ConsumerState<ChatComposer>
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          const Icon(
+                                          Icon(
                                             Icons.chevron_left_rounded,
-                                            color: AsmitaPalette.textLight,
+                                            color: Theme.of(context).textTheme.bodySmall?.color,
                                             size: 20,
                                           ),
                                           const SizedBox(width: 4),
@@ -524,8 +524,8 @@ class _ChatComposerState extends ConsumerState<ChatComposer>
                                             'Slide to cancel',
                                             style: TextStyle(
                                               fontSize: 14,
-                                              color: AsmitaPalette.textLight
-                                                  .withValues(alpha: 0.8),
+                                              color: Theme.of(context).textTheme.bodySmall?.color
+                                                  ?.withValues(alpha: 0.8),
                                             ),
                                           ),
                                         ],
@@ -626,11 +626,11 @@ class _ChatComposerState extends ConsumerState<ChatComposer>
                       showBackspaceButton: false,
                       showSearchViewButton: false,
                     ),
-                    categoryViewConfig: const CategoryViewConfig(
+                    categoryViewConfig: CategoryViewConfig(
                       backgroundColor: Colors.white,
-                      iconColor: AsmitaPalette.textLight,
-                      iconColorSelected: AsmitaPalette.deepNavy,
-                      indicatorColor: AsmitaPalette.deepNavy,
+                      iconColor: Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface,
+                      iconColorSelected: Theme.of(context).colorScheme.primary,
+                      indicatorColor: Theme.of(context).colorScheme.primary,
                       dividerColor: Colors.black12,
                     ),
                     emojiViewConfig: EmojiViewConfig(

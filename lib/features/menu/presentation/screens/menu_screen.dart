@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_event.dart';
@@ -213,7 +213,7 @@ class MenuScreen extends StatelessWidget {
 
   Widget _buildMenuItem(BuildContext context, IconData icon, String title, {bool isDestructive = false}) {
     final textTheme = Theme.of(context).textTheme;
-    final color = isDestructive ? AsmitaPalette.actionRed : Theme.of(context).colorScheme.primary;
+    final color = isDestructive ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.primary;
     return InkWell(
       onTap: () {
         if (isDestructive && title == 'Logout') {

@@ -248,7 +248,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: visitor['brandColor'] as Color,
+                  color: visitor['brandColor'] as Color? ?? Theme.of(context).colorScheme.primary,
                   width: 2,
                 ),
               ),
@@ -257,7 +257,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                 backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 child: Icon(
                   visitor['icon'] as IconData,
-                  color: visitor['brandColor'] as Color,
+                  color: visitor['brandColor'] as Color? ?? Theme.of(context).colorScheme.primary,
                   size: 32,
                 ),
               ),
@@ -282,7 +282,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: (visitor['brandColor'] as Color).withValues(alpha: 0.1),
+                color: (visitor['brandColor'] as Color? ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -292,7 +292,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                   fontFamily: 'Poppins',
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: visitor['brandColor'] as Color,
+                  color: visitor['brandColor'] as Color? ?? Theme.of(context).colorScheme.primary,
                 ),
               ),
             ),
@@ -1055,7 +1055,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                                       ),
                                       child: Icon(
                                         item['icon'] as IconData,
-                                        color: item['brandColor'] as Color,
+                                        color: item['brandColor'] as Color? ?? Theme.of(context).colorScheme.primary,
                                         size: 22,
                                       ),
                                     ),

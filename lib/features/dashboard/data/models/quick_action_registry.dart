@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
+
 
 enum QuickActionType {
   preApprove,
@@ -74,7 +74,7 @@ class QuickActionRegistry {
       label: 'Raise Alert',
       icon: Icons.gpp_bad_outlined,
       iconColor: Colors.white,
-      containerColor: AsmitaPalette.actionRed,
+      containerColor: Colors.red,
       isUtilityButton: true,
     ),
     QuickActionType.myVehicles: QuickActionMetadata(
@@ -87,7 +87,7 @@ class QuickActionRegistry {
       label: 'Complaints',
       icon: Icons.report_problem_rounded,
       iconColor: Colors.white,
-      containerColor: AsmitaPalette.actionRed,
+      containerColor: Colors.red,
     ),
     QuickActionType.management: QuickActionMetadata(
       type: QuickActionType.management,
@@ -119,7 +119,7 @@ class QuickActionRegistry {
       label: 'Emergency',
       icon: Icons.emergency_share_rounded,
       iconColor: Colors.white,
-      containerColor: AsmitaPalette.actionRed,
+      containerColor: Colors.red,
     ),
   };
 

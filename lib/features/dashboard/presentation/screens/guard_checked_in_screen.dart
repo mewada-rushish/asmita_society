@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/constants/design_system.dart';
+
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
@@ -56,10 +56,10 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
       title: 'Confirm Check-Out',
       content: Text(
         'Are you sure you want to check out $name?',
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Poppins',
           fontSize: 14,
-          color: AsmitaPalette.deepNavy,
+          color: Theme.of(context).colorScheme.primary,
         ),
       ),
       actions: [
@@ -81,7 +81,7 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
             ));
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: AsmitaPalette.actionRed,
+            backgroundColor: Theme.of(context).colorScheme.error,
             foregroundColor: Colors.white,
           ),
           child: const Text('Check-Out'),
@@ -93,7 +93,7 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AsmitaPalette.systemBG,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
           AsmitaPrimaryHeader(
@@ -121,8 +121,8 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
               },
               builder: (context, state) {
                 if (state.status == GuardGateStatus.loading && state.checkedInVisitors.isEmpty) {
-                  return const Center(
-                    child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28),
+                  return Center(
+                    child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.error, size: 28),
                   );
                 }
 
@@ -141,7 +141,7 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                         ElevatedButton(
                           onPressed: _loadCheckedIn,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AsmitaPalette.deepNavy,
+                            backgroundColor: Theme.of(context).colorScheme.primary,
                             foregroundColor: Colors.white,
                           ),
                           child: const Text('Retry'),
@@ -203,7 +203,7 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                           final entryTime = _formatTime(dateStr, entryTimeStr);
 
                           IconData iconData = Icons.person;
-                          Color brandColor = AsmitaPalette.deepNavy;
+                          Color brandColor = Theme.of(context).colorScheme.primary;
 
                           if (category.toString().toUpperCase() == 'DELIVERY') {
                             iconData = Icons.local_shipping;
@@ -213,7 +213,7 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                             brandColor = Colors.green;
                           } else if (isPreApproved) {
                             iconData = Icons.check_circle_outline;
-                            brandColor = AsmitaPalette.actionRed;
+                            brandColor = Theme.of(context).colorScheme.error;
                           }
 
                           return Container(
@@ -225,7 +225,7 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                               border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.05),
+                                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -249,11 +249,11 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                                     children: [
                                       Text(
                                         name,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontFamily: 'Montserrat',
                                           fontSize: 15,
                                           fontWeight: FontWeight.w700,
-                                          color: AsmitaPalette.deepNavy,
+                                          color: Theme.of(context).colorScheme.primary,
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -282,14 +282,14 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                                             ),
                                           ),
                                           const SizedBox(width: 8),
-                                          const Icon(Icons.login, size: 12, color: AsmitaPalette.deepNavy),
+                                          Icon(Icons.login, size: 12, color: Theme.of(context).colorScheme.primary),
                                           const SizedBox(width: 4),
                                           Text(
                                             entryTime,
                                             style: TextStyle(
                                               fontFamily: 'Poppins',
                                               fontSize: 12,
-                                              color: AsmitaPalette.textLight,
+                                              color: Theme.of(context).textTheme.bodySmall?.color,
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
@@ -299,19 +299,19 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                                   ),
                                 ),
                                 state.isSubmitting && state.submittingVisitorId == item['id'].toString()
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         width: 48,
                                         height: 48,
                                         child: Center(
                                           child: AsmitaLoadingIndicator(
-                                            color: AsmitaPalette.actionRed,
+                                            color: Theme.of(context).colorScheme.error,
                                             size: 20,
                                           ),
                                         ),
                                       )
                                     : IconButton(
                                         onPressed: () => _handleCheckOut(context, item),
-                                        icon: const Icon(Icons.exit_to_app, color: AsmitaPalette.actionRed),
+                                        icon: Icon(Icons.exit_to_app, color: Theme.of(context).colorScheme.error),
                                         tooltip: 'Check Out',
                                       ),
                               ],

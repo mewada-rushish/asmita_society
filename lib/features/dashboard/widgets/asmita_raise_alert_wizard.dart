@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
+
 
 class AsmitaRaiseAlertWizard extends StatefulWidget {
   const AsmitaRaiseAlertWizard({super.key});
@@ -115,7 +115,7 @@ class _AsmitaRaiseAlertWizardState extends State<AsmitaRaiseAlertWizard> {
               child: Center(
                 child: Icon(
                   icon,
-                  color: AsmitaPalette.actionRed,
+                  color: Theme.of(context).colorScheme.primary,
                   size: 24,
                 ),
               ),
@@ -185,7 +185,7 @@ class _AsmitaRaiseAlertWizardState extends State<AsmitaRaiseAlertWizard> {
           child: ElevatedButton(
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AsmitaPalette.actionRed,
+              backgroundColor: Theme.of(context).colorScheme.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),

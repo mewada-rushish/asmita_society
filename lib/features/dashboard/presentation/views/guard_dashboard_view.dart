@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../../core/constants/design_system.dart';
+
 import '../../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
@@ -168,7 +168,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
             );
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: AsmitaPalette.deepNavy,
+            backgroundColor: Theme.of(context).colorScheme.primary,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -184,7 +184,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
   Widget _buildDialogRow(String label, String value, {bool highlight = false}) {
     return Container(
       color: highlight
-          ? AsmitaPalette.deepNavy.withValues(alpha: 0.05)
+          ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.05)
           : Colors.transparent,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
@@ -422,7 +422,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
               ElevatedButton(
                 onPressed: isSubmitting ? null : _searchCode,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AsmitaPalette.deepNavy,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   padding: const EdgeInsets.all(16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -474,7 +474,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AsmitaPalette.deepNavy,
+                color: Theme.of(context).colorScheme.primary,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.person_add, color: Colors.white),
@@ -597,7 +597,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AsmitaPalette.deepNavy.withValues(
+                              color: Theme.of(context).colorScheme.primary.withValues(
                                 alpha: 0.1,
                               ),
                               borderRadius: BorderRadius.circular(4),
@@ -621,12 +621,12 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                 const SizedBox(width: 12),
                 state.isSubmitting &&
                         state.submittingVisitorId == invite['id'].toString()
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 28,
                         height: 28,
                         child: Center(
                           child: AsmitaLoadingIndicator(
-                            color: AsmitaPalette.deepNavy,
+                            color: Theme.of(context).colorScheme.primary,
                             size: 20,
                           ),
                         ),
@@ -719,12 +719,12 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: AsmitaPalette.deepNavy.withValues(alpha: 0.05),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(
         isDelivery ? Icons.local_shipping : Icons.person,
-        color: AsmitaPalette.deepNavy,
+        color: Theme.of(context).colorScheme.primary,
       ),
     );
   }

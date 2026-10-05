@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/constants/design_system.dart';
+
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
@@ -64,7 +64,7 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AsmitaPalette.systemBG,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
           AsmitaPrimaryHeader(
@@ -77,8 +77,8 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
             child: BlocBuilder<GuardGateBloc, GuardGateState>(
               builder: (context, state) {
                 if (state.status == GuardGateStatus.loading && state.historyRecords.isEmpty) {
-                  return const Center(
-                    child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28),
+                  return Center(
+                    child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.error, size: 28),
                   );
                 }
 
@@ -97,7 +97,7 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                         ElevatedButton(
                           onPressed: _loadHistory,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AsmitaPalette.deepNavy,
+                            backgroundColor: Theme.of(context).colorScheme.primary,
                             foregroundColor: Colors.white,
                           ),
                           child: const Text('Retry'),
@@ -162,7 +162,7 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                           final exitTime = exitTimeStr != null ? _formatTime(dateStr, exitTimeStr) : '--:--';
 
                           IconData iconData = Icons.person;
-                          Color brandColor = AsmitaPalette.deepNavy;
+                          Color brandColor = Theme.of(context).colorScheme.primary;
 
                           if (category.toString().toUpperCase() == 'DELIVERY') {
                             iconData = Icons.local_shipping;
@@ -172,7 +172,7 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                             brandColor = Colors.green;
                           } else if (isPreApproved) {
                             iconData = Icons.check_circle_outline;
-                            brandColor = AsmitaPalette.actionRed;
+                            brandColor = Theme.of(context).colorScheme.error;
                           }
 
                           return Container(
@@ -184,7 +184,7 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                               border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.05),
+                                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -208,11 +208,11 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                                     children: [
                                       Text(
                                         name,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontFamily: 'Montserrat',
                                           fontSize: 15,
                                           fontWeight: FontWeight.w700,
-                                          color: AsmitaPalette.deepNavy,
+                                          color: Theme.of(context).colorScheme.primary,
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -248,7 +248,7 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                                             style: TextStyle(
                                               fontFamily: 'Poppins',
                                               fontSize: 12,
-                                              color: AsmitaPalette.textLight,
+                                              color: Theme.of(context).textTheme.bodySmall?.color,
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
@@ -263,15 +263,15 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(Icons.login, size: 12, color: AsmitaPalette.deepNavy),
+                                        Icon(Icons.login, size: 12, color: Theme.of(context).colorScheme.primary),
                                         const SizedBox(width: 4),
                                         Text(
                                           entryTime,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontFamily: 'Poppins',
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600,
-                                            color: AsmitaPalette.deepNavy,
+                                            color: Theme.of(context).colorScheme.primary,
                                           ),
                                         ),
                                       ],
@@ -280,15 +280,15 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(Icons.logout, size: 12, color: AsmitaPalette.actionRed),
+                                        Icon(Icons.logout, size: 12, color: Theme.of(context).colorScheme.error),
                                         const SizedBox(width: 4),
                                         Text(
                                           exitTime,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontFamily: 'Poppins',
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600,
-                                            color: AsmitaPalette.actionRed,
+                                            color: Theme.of(context).colorScheme.error,
                                           ),
                                         ),
                                       ],
