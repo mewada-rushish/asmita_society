@@ -44,13 +44,11 @@ class HelpSupportScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Padding(
-                            padding: EdgeInsets.only(left: 4, bottom: 12),
+                            padding: const EdgeInsets.only(left: 4, bottom: 12),
                             child: Text(
-                              'YOUR TICKETS',
-                              style: textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).textTheme.bodyMedium?.color,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.2,
+                              'Your Tickets',
+                              style: textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
@@ -214,13 +212,11 @@ class HelpSupportScreen extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.only(left: 4),
+          padding: const EdgeInsets.only(left: 4),
           child: Text(
-            'FREQUENTLY ASKED QUESTIONS',
-            style: textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).textTheme.bodyMedium?.color,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.2,
+            'Frequently Asked Questions',
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
@@ -501,7 +497,7 @@ class _TicketCarouselState extends State<TicketCarousel> {
     return Column(
       children: [
         SizedBox(
-          height: 85,
+          height: 100,
           child: PageView.builder(
             controller: _pageController,
             itemCount: widget.tickets.length,
@@ -534,24 +530,39 @@ class _TicketCarouselState extends State<TicketCarousel> {
                     onTap: () => _showTicketDetails(context, t),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Expanded(child: Text(t.title, style: widget.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: t.status.toLowerCase() == 'open' 
-                                ? Colors.orange.withValues(alpha: 0.1) 
-                                : Colors.green.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(t.status, style: widget.textTheme.bodySmall?.copyWith(
-                              color: t.status.toLowerCase() == 'open' ? Colors.orange : Colors.green,
-                              fontWeight: FontWeight.bold,
-                            )),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(child: Text(t.title, style: widget.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: t.status.toLowerCase() == 'open' 
+                                    ? Colors.orange.withValues(alpha: 0.1) 
+                                    : Colors.green.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(t.status, style: widget.textTheme.bodySmall?.copyWith(
+                                  color: t.status.toLowerCase() == 'open' ? Colors.orange : Colors.green,
+                                  fontWeight: FontWeight.bold,
+                                )),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            t.status.toLowerCase() == 'open' 
+                                ? 'Awaiting support reply • ${AppDateFormatter.formatDate(t.createdAt)}' 
+                                : '${t.status} • ${AppDateFormatter.formatDate(t.createdAt)}',
+                            style: widget.textTheme.bodySmall?.copyWith(color: Colors.grey, fontSize: 12),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
