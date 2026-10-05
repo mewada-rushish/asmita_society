@@ -34,8 +34,6 @@ class HelpSupportScreen extends ConsumerWidget {
                     padding: const EdgeInsets.all(16),
                     sliver: SliverList.list(
                       children: [
-                        _buildEmergencySection(context, textTheme),
-                        SizedBox(height: 24),
                         _buildRaiseTicketSection(context, ref, textTheme),
                         SizedBox(height: 24),
                   supportState.when(
@@ -113,78 +111,6 @@ class HelpSupportScreen extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmergencySection(BuildContext context, TextTheme textTheme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(left: 4),
-          child: Text(
-            'SUPPORT CONTACTS',
-            style: textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).textTheme.bodyMedium?.color,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.2,
-            ),
-          ),
-        ),
-        SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
-          ),
-          child: Column(
-            children: [
-              _buildContactRow(context, textTheme, Icons.headset_mic_rounded, 'AsmitA App Support', '1800-123-4567', true),
-              _buildContactRow(context, textTheme, Icons.bug_report_rounded, 'Technical Helpdesk', '1800-123-4568', false),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildContactRow(BuildContext context, TextTheme textTheme, IconData icon, String title, String number, bool showBorder) {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: showBorder ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1)) : null,
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
-          ),
-          SizedBox(width: 16),
-          Expanded(
-            child: Text(title, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.call_rounded, size: 14, color: Theme.of(context).colorScheme.primary),
-                SizedBox(width: 4),
-                Text(number, style: textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700)),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -332,9 +258,9 @@ class HelpSupportScreen extends ConsumerWidget {
           ),
           child: Column(
             children: [
-              _buildFAQItem(context, textTheme, 'How do I reset my password?', true),
-              _buildFAQItem(context, textTheme, 'How do I update my profile details?', true),
-              _buildFAQItem(context, textTheme, 'The app is crashing, what should I do?', false),
+              _buildFAQItem(context, textTheme, 'How do I reset my password?', 'Go to the login screen, tap "Forgot Password", and follow the OTP instructions sent to your registered mobile number.', true),
+              _buildFAQItem(context, textTheme, 'How do I update my profile details?', 'Navigate to the Profile tab in the bottom navigation bar, tap the edit icon, and save your changes.', true),
+              _buildFAQItem(context, textTheme, 'The app is crashing, what should I do?', 'Please ensure you are on the latest version of the app. If the issue persists, raise a Bug Report ticket using the button above.', false),
             ],
           ),
         ),
@@ -342,18 +268,22 @@ class HelpSupportScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildFAQItem(BuildContext context, TextTheme textTheme, String question, bool showBorder) {
-    return InkWell(
-      onTap: () {},
-      child: Container(
-        padding: EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          border: showBorder ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1)) : null,
-        ),
-        child: Row(
+  Widget _buildFAQItem(BuildContext context, TextTheme textTheme, String question, String answer, bool showBorder) {
+    return Container(
+      decoration: BoxDecoration(
+        border: showBorder ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1)) : null,
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: EdgeInsets.all(16),
+          title: Text(question, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
+          iconColor: Theme.of(context).textTheme.bodyMedium?.color,
+          collapsedIconColor: Theme.of(context).textTheme.bodyMedium?.color,
+          childrenPadding: EdgeInsets.only(left: 16, right: 16, bottom: 16),
+          expandedAlignment: Alignment.centerLeft,
           children: [
-            Expanded(child: Text(question, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500))),
-            Icon(Icons.keyboard_arrow_down_rounded, color: Theme.of(context).textTheme.bodyMedium?.color),
+            Text(answer, style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7))),
           ],
         ),
       ),
