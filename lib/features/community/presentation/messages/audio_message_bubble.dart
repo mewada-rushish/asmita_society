@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:just_audio/just_audio.dart';
 class AudioMessageBubble extends StatefulWidget {
   final String content; // URL or local path
   final bool isMe;
@@ -32,36 +32,32 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
   }
 
   Future<void> _initAudioPlayer() async {
-    _playerStateSubscription = _audioPlayer.onPlayerStateChanged.listen((state) {
+    _playerStateSubscription = _audioPlayer.playerStateStream.listen((state) {
       if (mounted) {
         setState(() {
-          _isPlaying = state == PlayerState.playing;
+          _isPlaying = state.playing;
+          if (state.processingState == ProcessingState.completed) {
+            _isPlaying = false;
+            _position = Duration.zero;
+            _audioPlayer.seek(Duration.zero);
+            _audioPlayer.pause();
+          }
         });
       }
     });
 
-    _durationSubscription = _audioPlayer.onDurationChanged.listen((newDuration) {
-      if (mounted) {
+    _durationSubscription = _audioPlayer.durationStream.listen((newDuration) {
+      if (mounted && newDuration != null) {
         setState(() {
           _duration = newDuration;
         });
       }
     });
 
-    _positionSubscription = _audioPlayer.onPositionChanged.listen((newPosition) {
+    _positionSubscription = _audioPlayer.positionStream.listen((newPosition) {
       if (mounted && (_isPlaying || newPosition == Duration.zero)) {
         setState(() {
           _position = newPosition;
-        });
-      }
-    });
-
-    _playerCompleteSubscription = _audioPlayer.onPlayerComplete.listen((_) async {
-      await _audioPlayer.stop();
-      if (mounted) {
-        setState(() {
-          _isPlaying = false;
-          _position = Duration.zero;
         });
       }
     });
@@ -70,9 +66,9 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
     try {
       final path = widget.content.split('|').first; // Handle our "path|duration" format if present
       if (path.startsWith('http')) {
-        await _audioPlayer.setSourceUrl(path);
+        await _audioPlayer.setUrl(path);
       } else {
-        await _audioPlayer.setSourceDeviceFile(path);
+        await _audioPlayer.setFilePath(path);
       }
     } catch (e) {
       debugPrint('Error setting audio source: $e');
@@ -93,10 +89,10 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
     if (_isPlaying) {
       await _audioPlayer.pause();
     } else {
-      if (_position == Duration.zero) {
+      if (_position >= _duration && _duration != Duration.zero) {
         await _audioPlayer.seek(Duration.zero);
       }
-      await _audioPlayer.resume();
+      await _audioPlayer.play();
     }
   }
 

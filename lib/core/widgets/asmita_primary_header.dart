@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
@@ -222,35 +222,32 @@ class AsmitaPrimaryHeader extends StatelessWidget {
           }
         }
 
-        return Container(
-          color: backgroundColor ?? Colors.transparent,
-          padding: EdgeInsets.only(bottom: bottomPadding),
-          child: ClipRRect(
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        
+        Widget headerContent = Container(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            topPadding > 0 ? topPadding + 12 : 24,
+            16,
+            12,
+          ),
+          decoration: BoxDecoration(
+            color: isDark 
+                ? Theme.of(context).colorScheme.surface.withValues(alpha: 0.75) 
+                : Theme.of(context).colorScheme.surface,
             borderRadius: const BorderRadius.vertical(
               bottom: Radius.circular(24),
             ),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-              child: Container(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  topPadding > 0 ? topPadding + 12 : 24,
-                  16,
-                  12,
-                ),
-                decoration: BoxDecoration(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.surface.withValues(alpha: 0.85),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: ConstrainedBox(
+            border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.0) : null,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ConstrainedBox(
                   constraints: const BoxConstraints(minHeight: 48),
                   child: Row(
                     children: [
@@ -405,9 +402,24 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                     ],
                   ),
                 ),
-              ),
+          );
+
+        if (isDark) {
+          headerContent = ClipRRect(
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(24),
             ),
-          ),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: headerContent,
+            ),
+          );
+        }
+
+        return Container(
+          color: backgroundColor ?? Colors.transparent,
+          padding: EdgeInsets.only(bottom: bottomPadding),
+          child: headerContent,
         );
       },
     );

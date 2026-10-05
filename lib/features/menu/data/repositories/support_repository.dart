@@ -71,4 +71,52 @@ class SupportRepository {
       return false;
     }
   }
+
+  Future<List<dynamic>> getTicketMessages(int ticketId) async {
+    try {
+      final response = await dio.get('${EnvConfig.supportTickets}/$ticketId/messages');
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        if (data['success'] == true && data['messages'] != null) {
+          return data['messages'] as List<dynamic>;
+        }
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error fetching ticket messages: $e');
+      return [];
+    }
+  }
+
+  Future<dynamic> addTicketMessage(int ticketId, String message, {String? attachmentPath}) async {
+    try {
+      dynamic requestData;
+      if (attachmentPath != null) {
+        requestData = FormData.fromMap({
+          'message': message,
+          'attachment': await MultipartFile.fromFile(
+            attachmentPath,
+            filename: attachmentPath.split('/').last,
+          ),
+        });
+      } else {
+        requestData = {'message': message};
+      }
+
+      final response = await dio.post(
+        '${EnvConfig.supportTickets}/$ticketId/messages',
+        data: requestData,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+        if (data['success'] == true && data['message'] != null) {
+          return data['message'];
+        }
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error adding ticket message: $e');
+      return null;
+    }
+  }
 }

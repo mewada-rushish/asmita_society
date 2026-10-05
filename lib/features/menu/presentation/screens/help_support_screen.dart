@@ -5,7 +5,9 @@ import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/menu/presentation/providers/support_provider.dart';
+import '../widgets/ticket_conversation_bottom_sheet.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:asmita_society/features/menu/presentation/screens/all_tickets_screen.dart';
 
 class HelpSupportScreen extends ConsumerWidget {
   const HelpSupportScreen({super.key});
@@ -58,7 +60,7 @@ class HelpSupportScreen extends ConsumerWidget {
                             Center(
                               child: TextButton.icon(
                                 onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All Tickets screen coming soon')));
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const AllTicketsScreen()));
                                 },
                                 icon: const Icon(Icons.arrow_forward_rounded, size: 16),
                                 label: Text('View All Tickets', style: TextStyle(fontWeight: FontWeight.w600)),
@@ -379,116 +381,9 @@ class _TicketCarouselState extends State<TicketCarousel> {
   void _showTicketDetails(BuildContext context, dynamic ticket) {
     showAsmitaBottomSheet(
       context: context,
-      title: 'Ticket Conversation',
-      child: Container(
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Theme.of(context).dividerColor, width: 1),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(child: Text(ticket.title, style: widget.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600))),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: ticket.status.toLowerCase() == 'open' 
-                                ? Colors.orange.withValues(alpha: 0.1) 
-                                : Colors.green.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(ticket.status, style: widget.textTheme.bodySmall?.copyWith(
-                              color: ticket.status.toLowerCase() == 'open' ? Colors.orange : Colors.green,
-                              fontWeight: FontWeight.bold,
-                            )),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(ticket.description, style: widget.textTheme.bodyMedium),
-                      if (ticket.createdAt != null) ...[
-                        const SizedBox(height: 12),
-                        Text(
-                          'Raised ${AppDateFormatter.timeAgo(ticket.createdAt!)}',
-                          style: widget.textTheme.bodySmall?.copyWith(color: Colors.grey),
-                        )
-                      ]
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.timer_outlined, size: 20, color: Theme.of(context).colorScheme.primary),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Average reply time: < 2 hours',
-                          style: widget.textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      'No replies yet.',
-                      style: widget.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Type your reply...',
-                          filled: true,
-                          fillColor: Theme.of(context).colorScheme.surface,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      child: IconButton(
-                        icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                        onPressed: () {},
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 16),
-              ],
-            ),
-          ),
+      customHeader: TicketConversationHeader(ticket: ticket),
+      contentPadding: EdgeInsets.zero,
+      child: TicketConversationBottomSheet(ticket: ticket),
     );
   }
 

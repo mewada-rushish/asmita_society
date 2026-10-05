@@ -16,6 +16,7 @@ void showAsmitaBottomSheet({
   required Widget child,
   bool isScrollControlled = true,
   bool useRootNavigator = false,
+  EdgeInsetsGeometry? contentPadding,
 }) {
   showModalBottomSheet(
     context: context,
@@ -29,6 +30,7 @@ void showAsmitaBottomSheet({
       title: title,
       subtitle: subtitle,
       customHeader: customHeader,
+      contentPadding: contentPadding,
       child: child,
     ),
   );
@@ -40,12 +42,14 @@ class AsmitaBottomSheet extends StatelessWidget {
   final String? subtitle;
   final Widget? customHeader;
   final Widget child;
+  final EdgeInsetsGeometry? contentPadding;
 
   const AsmitaBottomSheet({
     super.key,
     required this.title,
     this.subtitle,
     this.customHeader,
+    this.contentPadding,
     required this.child,
   });
 
@@ -136,7 +140,7 @@ class AsmitaBottomSheet extends StatelessWidget {
           // Content Area (Grey Background from the BottomSheet itself)
           Flexible(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(24, 16, 24, bottomPadding + 24),
+              padding: contentPadding ?? EdgeInsets.fromLTRB(24, 16, 24, bottomPadding + 24),
               child: child,
             ),
           ),
