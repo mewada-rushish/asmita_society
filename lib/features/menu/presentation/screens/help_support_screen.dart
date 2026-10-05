@@ -277,11 +277,11 @@ class HelpSupportScreen extends ConsumerWidget {
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          tilePadding: EdgeInsets.all(16),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
           title: Text(question, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
           iconColor: Theme.of(context).textTheme.bodyMedium?.color,
           collapsedIconColor: Theme.of(context).textTheme.bodyMedium?.color,
-          childrenPadding: EdgeInsets.only(left: 16, right: 16, bottom: 16),
+          childrenPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
           expandedAlignment: Alignment.centerLeft,
           children: [
             Text(answer, style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7))),
