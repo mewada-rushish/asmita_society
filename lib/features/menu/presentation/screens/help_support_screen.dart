@@ -123,7 +123,7 @@ class HelpSupportScreen extends ConsumerWidget {
         Padding(
           padding: EdgeInsets.only(left: 4),
           child: Text(
-            'EMERGENCY CONTACTS',
+            'SUPPORT CONTACTS',
             style: textTheme.bodySmall?.copyWith(
               color: Theme.of(context).textTheme.bodyMedium?.color,
               fontWeight: FontWeight.w700,
@@ -140,9 +140,8 @@ class HelpSupportScreen extends ConsumerWidget {
           ),
           child: Column(
             children: [
-              _buildContactRow(context, textTheme, Icons.local_police_rounded, 'Main Security Gate', 'Ext 101', true),
-              _buildContactRow(context, textTheme, Icons.build_circle_rounded, 'Estate Manager', '+91 8888888888', true),
-              _buildContactRow(context, textTheme, Icons.medical_services_rounded, 'Ambulance (Nearby)', '108', false),
+              _buildContactRow(context, textTheme, Icons.headset_mic_rounded, 'AsmitA App Support', '1800-123-4567', true),
+              _buildContactRow(context, textTheme, Icons.bug_report_rounded, 'Technical Helpdesk', '1800-123-4568', false),
             ],
           ),
         ),
@@ -213,9 +212,9 @@ class HelpSupportScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Facing an Issue?', style: textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.w700)),
+                Text('Need App Support?', style: textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.w700)),
                 SizedBox(height: 4),
-                Text('Plumbing, Electrical, or others.', style: textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.7))),
+                Text('Having trouble with the app or your account?', style: textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.7))),
                 SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => _showRaiseTicketSheet(context, ref),
@@ -239,7 +238,7 @@ class HelpSupportScreen extends ConsumerWidget {
   void _showRaiseTicketSheet(BuildContext context, WidgetRef ref) {
     final titleCtrl = TextEditingController();
     final descCtrl = TextEditingController();
-    String category = 'Plumbing';
+    String category = 'Bug Report';
 
     showModalBottomSheet(
       context: context,
@@ -264,10 +263,10 @@ class HelpSupportScreen extends ConsumerWidget {
                     initialValue: category,
                     decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
                     items: const [
-                      DropdownMenuItem(value: 'Plumbing', child: Text('Plumbing')),
-                      DropdownMenuItem(value: 'Electrical', child: Text('Electrical')),
-                      DropdownMenuItem(value: 'Cleaning', child: Text('Cleaning/Housekeeping')),
-                      DropdownMenuItem(value: 'Security', child: Text('Security')),
+                      DropdownMenuItem(value: 'Bug Report', child: Text('Bug Report')),
+                      DropdownMenuItem(value: 'Account Issue', child: Text('Account Issue')),
+                      DropdownMenuItem(value: 'Feature Request', child: Text('Feature Request')),
+                      DropdownMenuItem(value: 'Billing', child: Text('Billing')),
                       DropdownMenuItem(value: 'Other', child: Text('Other')),
                     ],
                     onChanged: (val) {
@@ -343,9 +342,9 @@ class HelpSupportScreen extends ConsumerWidget {
           ),
           child: Column(
             children: [
-              _buildFAQItem(context, textTheme, 'How do I pay maintenance?', true),
-              _buildFAQItem(context, textTheme, 'Where can I book the clubhouse?', true),
-              _buildFAQItem(context, textTheme, 'How to add a family member?', false),
+              _buildFAQItem(context, textTheme, 'How do I reset my password?', true),
+              _buildFAQItem(context, textTheme, 'How do I update my profile details?', true),
+              _buildFAQItem(context, textTheme, 'The app is crashing, what should I do?', false),
             ],
           ),
         ),
