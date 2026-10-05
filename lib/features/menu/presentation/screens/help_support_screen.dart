@@ -250,11 +250,12 @@ class HelpSupportScreen extends ConsumerWidget {
           ),
         ),
         SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
+        Material(
+          color: Theme.of(context).colorScheme.surface,
+          clipBehavior: Clip.hardEdge,
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
+            side: BorderSide(color: Theme.of(context).dividerColor, width: 1.5),
           ),
           child: Column(
             children: [
