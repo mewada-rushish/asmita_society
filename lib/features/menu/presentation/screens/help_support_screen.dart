@@ -499,6 +499,7 @@ class _TicketCarouselState extends State<TicketCarousel> {
         SizedBox(
           height: 100,
           child: PageView.builder(
+            clipBehavior: Clip.none,
             controller: _pageController,
             itemCount: widget.tickets.length,
             onPageChanged: (index) {
