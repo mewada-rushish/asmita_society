@@ -418,7 +418,7 @@ class _TicketCarouselState extends State<TicketCarousel> {
                       if (ticket.createdAt != null) ...[
                         const SizedBox(height: 12),
                         Text(
-                          'Raised on ${AppDateFormatter.formatDate(ticket.createdAt!)}',
+                          'Raised ${AppDateFormatter.timeAgo(ticket.createdAt!)}',
                           style: widget.textTheme.bodySmall?.copyWith(color: Colors.grey),
                         )
                       ]
@@ -558,8 +558,8 @@ class _TicketCarouselState extends State<TicketCarousel> {
                           const SizedBox(height: 6),
                           Text(
                             t.status.toLowerCase() == 'open' 
-                                ? 'Awaiting support reply • ${AppDateFormatter.formatDate(t.createdAt)}' 
-                                : '${t.status} • ${AppDateFormatter.formatDate(t.createdAt)}',
+                                ? 'Awaiting support reply • ${AppDateFormatter.timeAgo(t.createdAt)}' 
+                                : '${t.status} • ${AppDateFormatter.timeAgo(t.createdAt)}',
                             style: widget.textTheme.bodySmall?.copyWith(color: Colors.grey, fontSize: 12),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

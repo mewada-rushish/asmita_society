@@ -40,4 +40,34 @@ class AppDateFormatter {
       return date.toString();
     }
   }
+
+  static String timeAgo(dynamic date) {
+    if (date == null) return 'N/A';
+    try {
+      DateTime dt;
+      if (date is DateTime) {
+        dt = date;
+      } else if (date is String) {
+        dt = DateTime.parse(date);
+      } else {
+        return date.toString();
+      }
+      final now = DateTime.now();
+      final difference = now.difference(dt.toLocal());
+      
+      if (difference.inDays > 7) {
+        return formatDate(dt);
+      } else if (difference.inDays >= 1) {
+        return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
+      } else if (difference.inHours >= 1) {
+        return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
+      } else if (difference.inMinutes >= 1) {
+        return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
+      } else {
+        return 'Just now';
+      }
+    } catch (_) {
+      return date.toString();
+    }
+  }
 }
