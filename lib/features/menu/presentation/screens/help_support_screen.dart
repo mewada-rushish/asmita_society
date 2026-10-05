@@ -39,6 +39,7 @@ class HelpSupportScreen extends ConsumerWidget {
                   supportState.when(
                     data: (tickets) {
                       if (tickets.isEmpty) return const SizedBox.shrink();
+                      final displayTickets = tickets.take(3).toList();
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -53,48 +54,78 @@ class HelpSupportScreen extends ConsumerWidget {
                               ),
                             ),
                           ),
-                          ...tickets.map((t) => Container(
-                            margin: EdgeInsets.only(bottom: 12),
-                            padding: EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(child: Text(t.title, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600))),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: t.status.toLowerCase() == 'open' 
-                                          ? Colors.orange.withValues(alpha: 0.1) 
-                                          : Colors.green.withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(t.status, style: textTheme.bodySmall?.copyWith(
-                                        color: t.status.toLowerCase() == 'open' ? Colors.orange : Colors.green,
-                                        fontWeight: FontWeight.bold,
-                                      )),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            clipBehavior: Clip.none,
+                            child: Row(
+                              children: displayTickets.map((t) => Container(
+                                width: MediaQuery.of(context).size.width * 0.8,
+                                margin: EdgeInsets.only(right: 12, bottom: 8),
+                                padding: EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.surface,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
                                     ),
                                   ],
                                 ),
-                                SizedBox(height: 8),
-                                Text(t.description, style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color)),
-                                if (t.createdAt != null) ...[
-                                  SizedBox(height: 12),
-                                  Text(
-                                    'Raised on ${AppDateFormatter.formatDate(t.createdAt!)}',
-                                    style: textTheme.bodySmall?.copyWith(color: Colors.grey),
-                                  )
-                                ]
-                              ],
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(child: Text(t.title, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                                        SizedBox(width: 8),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: t.status.toLowerCase() == 'open' 
+                                              ? Colors.orange.withValues(alpha: 0.1) 
+                                              : Colors.green.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(t.status, style: textTheme.bodySmall?.copyWith(
+                                            color: t.status.toLowerCase() == 'open' ? Colors.orange : Colors.green,
+                                            fontWeight: FontWeight.bold,
+                                          )),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(t.description, style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color), maxLines: 2, overflow: TextOverflow.ellipsis),
+                                    if (t.createdAt != null) ...[
+                                      SizedBox(height: 12),
+                                      Text(
+                                        'Raised on ${AppDateFormatter.formatDate(t.createdAt!)}',
+                                        style: textTheme.bodySmall?.copyWith(color: Colors.grey),
+                                      )
+                                    ]
+                                  ],
+                                ),
+                              )).toList(),
                             ),
-                          )),
+                          ),
+                          if (tickets.length > 3) ...[
+                            SizedBox(height: 16),
+                            Center(
+                              child: TextButton.icon(
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All Tickets screen coming soon')));
+                                },
+                                icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                                label: Text('View All Tickets', style: TextStyle(fontWeight: FontWeight.w600)),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            )
+                          ],
                           SizedBox(height: 24),
                         ],
                       );
