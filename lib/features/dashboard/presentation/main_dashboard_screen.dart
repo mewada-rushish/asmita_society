@@ -102,30 +102,30 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   }
 
   // Dynamically builds the view list cleanly to keep callback bindings alive on state mutations
-  List<Widget> _buildScreens() {
+  List<Widget> _buildScreens(String activeRole) {
     return [
-      _resolveRoleBasedHomeView(widget.userRole), // Index 0: Home view
-      widget.userRole.toLowerCase() == 'guard'
+      _resolveRoleBasedHomeView(activeRole), // Index 0: Home view
+      activeRole.toLowerCase() == 'guard'
           ? const SizedBox.shrink()
           : ServicesScreen( // Index 1: Services Grid
               onNavigateToSearch: _navigateToSearch,
               onNavigateToCommunity: () => setState(() => _currentIndex = 2),
             ),
-      widget.userRole.toLowerCase() == 'guard'
+      activeRole.toLowerCase() == 'guard'
           ? const SizedBox.shrink()
           : CommunityScreen( // Index 2: Society Chat
               onNavigateToSearch: _navigateToSearch,
               onNavigateToCommunity: () => setState(() => _currentIndex = 2),
             ),
-      _resolveRoleBasedHistoryView(widget.userRole),               // Index 3: Gate Records (History)
+      _resolveRoleBasedHistoryView(activeRole),               // Index 3: Gate Records (History)
       MenuScreen(
-        userRole: widget.userRole,
+        userRole: activeRole,
         onNavigateToTab: (index) {
           setState(() => _currentIndex = index);
         },
       ),      // Index 4: Profile Settings
-      _resolveRoleBasedQrScanner(widget.userRole), // Index 5: QR Scanner
-      _resolveRoleBasedCheckedInView(widget.userRole), // Index 6: Checked In (Guard only)
+      _resolveRoleBasedQrScanner(activeRole), // Index 5: QR Scanner
+      _resolveRoleBasedCheckedInView(activeRole), // Index 6: Checked In (Guard only)
     ];
   }
 
@@ -222,20 +222,29 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBody: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: AsmitaAnimatedIndexedStack(
-        index: _currentIndex,
-        children: _buildScreens(),
-      ),
-      bottomNavigationBar: AsmitaBottomNavBar(
-        currentIndex: _currentIndex,
-        userRole: widget.userRole,
-        onTap: (index) {
-          setState(() => _currentIndex = index);
-        },
-      ),
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        String activeRole = widget.userRole;
+        if (state is AuthAuthenticated) {
+          activeRole = state.sessionRole;
+        }
+
+        return Scaffold(
+          extendBody: true,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          body: AsmitaAnimatedIndexedStack(
+            index: _currentIndex,
+            children: _buildScreens(activeRole),
+          ),
+          bottomNavigationBar: AsmitaBottomNavBar(
+            currentIndex: _currentIndex,
+            userRole: activeRole,
+            onTap: (index) {
+              setState(() => _currentIndex = index);
+            },
+          ),
+        );
+      }
     );
   }
 }

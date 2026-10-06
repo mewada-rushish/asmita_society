@@ -81,3 +81,4 @@ class AuthUpdateProfileRequested extends AuthEvent {
 }
 
 class AuthLogoutRequested extends AuthEvent {}
+class AuthRefreshProfileRequested extends AuthEvent {}

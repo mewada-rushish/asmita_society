@@ -62,6 +62,7 @@ class UserModel {
   final String? profilePictureUrl;
   final String? societyName;
   final List<FlatMapping> flatMappings;
+  final List<String> permissions;
 
   UserModel({
     required this.userId,
@@ -77,6 +78,7 @@ class UserModel {
     this.profilePictureUrl,
     this.societyName,
     this.flatMappings = const [],
+    this.permissions = const [],
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -85,6 +87,11 @@ class UserModel {
       mappings = (json['user_flat_mapping'] as List).map((m) => FlatMapping.fromJson(m)).toList();
     } else if (json['flat_mappings'] != null && json['flat_mappings'] is List) {
       mappings = (json['flat_mappings'] as List).map((m) => FlatMapping.fromJson(m)).toList();
+    }
+
+    var permissionsList = <String>[];
+    if (json['permissions'] != null && json['permissions'] is List) {
+      permissionsList = List<String>.from(json['permissions']);
     }
 
     return UserModel(
@@ -105,6 +112,7 @@ class UserModel {
       profilePictureUrl: json['profile_picture_url']?.toString(),
       societyName: json['society_name']?.toString(),
       flatMappings: mappings,
+      permissions: permissionsList,
     );
   }
 
@@ -123,6 +131,7 @@ class UserModel {
       'profile_picture_url': profilePictureUrl,
       'society_name': societyName,
       'user_flat_mapping': flatMappings.map((m) => m.toJson()).toList(),
+      'permissions': permissions,
     };
   }
 
@@ -140,6 +149,7 @@ class UserModel {
     String? profilePictureUrl,
     String? societyName,
     List<FlatMapping>? flatMappings,
+    List<String>? permissions,
   }) {
     return UserModel(
       userId: userId ?? this.userId,
@@ -155,6 +165,7 @@ class UserModel {
       profilePictureUrl: profilePictureUrl ?? this.profilePictureUrl,
       societyName: societyName ?? this.societyName,
       flatMappings: flatMappings ?? this.flatMappings,
+      permissions: permissions ?? this.permissions,
     );
   }
 }

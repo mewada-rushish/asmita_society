@@ -9,6 +9,7 @@ import 'package:asmita_society/core/utils/dashboard_scroll_physics.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_raise_alert_wizard.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
+import 'package:asmita_society/core/widgets/permission_gate.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_bloc.dart';
@@ -187,7 +188,10 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        _buildGateSyncModule(context),
+                        PermissionGate(
+                          permissionKey: 'visitor_management',
+                          child: _buildGateSyncModule(context),
+                        ),
                         const SizedBox(height: 24),
                         _buildAdPlaceholder(
                           context,
@@ -196,13 +200,29 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                           margin: const EdgeInsets.symmetric(horizontal: 16),
                         ),
                         const SizedBox(height: 24),
-                        _buildCommunityPostsHeader(context),
-                        const SizedBox(height: 12),
-                        _buildCommunityPostsModule(context),
+                        PermissionGate(
+                          permissionKey: 'community',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildCommunityPostsHeader(context),
+                              const SizedBox(height: 12),
+                              _buildCommunityPostsModule(context),
+                            ],
+                          ),
+                        ),
                         const SizedBox(height: 24),
-                        _buildServicesFooter(context),
-                        const SizedBox(height: 12),
-                        _buildFrequentServices(context),
+                        PermissionGate(
+                          permissionKey: 'services',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildServicesFooter(context),
+                              const SizedBox(height: 12),
+                              _buildFrequentServices(context),
+                            ],
+                          ),
+                        ),
                         const SizedBox(height: 160),
                       ],
                     ),

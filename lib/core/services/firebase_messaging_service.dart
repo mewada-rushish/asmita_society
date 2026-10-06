@@ -4,6 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:asmita_society/core/security/secure_storage_service.dart';
 
 import 'package:asmita_society/features/auth/data/repositories/auth_repository.dart';
+import 'package:asmita_society/main.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
+import 'package:asmita_society/features/auth/bloc/auth_event.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -118,6 +122,13 @@ class FirebaseMessagingService {
   void _handleForegroundMessage(RemoteMessage message) {
     debugPrint('Got a message whilst in the foreground!');
     debugPrint('Message data: ${message.data}');
+
+    if (message.data['type'] == 'ROLE_UPDATED') {
+      final context = globalNavigatorKey.currentContext;
+      if (context != null) {
+        context.read<AuthBloc>().add(AuthRefreshProfileRequested());
+      }
+    }
 
     if (message.notification != null) {
       debugPrint('Message also contained a notification: ${message.notification}');

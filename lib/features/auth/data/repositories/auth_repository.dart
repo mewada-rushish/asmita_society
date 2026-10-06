@@ -176,6 +176,23 @@ class AuthRepository {
     }
   }
 
+  /// Fetches the latest user profile from the backend
+  Future<UserModel> fetchProfile() async {
+    try {
+      final response = await dio.get(EnvConfig.usersMe);
+      final data = _ensureMap(response.data);
+      
+      if (data['success'] == true && data['user'] != null) {
+        // Return UserModel directly
+        return UserModel.fromJson(data['user']);
+      }
+      
+      throw Exception(data['message'] ?? 'Failed to fetch profile');
+    } on DioException catch (e) {
+      throw _parseError(e, 'Failed to fetch profile.');
+    }
+  }
+
   /// Updates the user's profile information
   Future<AuthResponse> updateProfile({
     required String fullName,

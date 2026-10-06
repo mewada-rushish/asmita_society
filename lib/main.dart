@@ -97,10 +97,40 @@ Future<void> main() async {
   );
 }
 
-class AsmitaApp extends ConsumerWidget {
+final GlobalKey<NavigatorState> globalNavigatorKey = GlobalKey<NavigatorState>();
+
+class AsmitaApp extends ConsumerStatefulWidget {
   final bool isDeviceSafe;
 
   const AsmitaApp({super.key, required this.isDeviceSafe});
+
+  @override
+  ConsumerState<AsmitaApp> createState() => _AsmitaAppState();
+}
+
+class _AsmitaAppState extends ConsumerState<AsmitaApp> with WidgetsBindingObserver {
+  
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      final context = globalNavigatorKey.currentContext;
+      if (context != null) {
+        context.read<AuthBloc>().add(AuthRefreshProfileRequested());
+      }
+    }
+  }
 
   Locale _getLocaleFromLanguage(String? language) {
     switch (language) {
@@ -119,7 +149,7 @@ class AsmitaApp extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final preferencesAsync = ref.watch(preferencesProvider);
     final locale = _getLocaleFromLanguage(preferencesAsync.value?.language);
 
@@ -159,6 +189,7 @@ class AsmitaApp extends ConsumerWidget {
         ),
       ],
       child: MaterialApp(
+        navigatorKey: globalNavigatorKey,
         title: 'AsmitA',
         debugShowCheckedModeBanner: false,
         theme: AsmitaTheme.lightTheme,
@@ -173,7 +204,7 @@ class AsmitaApp extends ConsumerWidget {
         ],
         supportedLocales: AppLocalizations.supportedLocales,
         navigatorObservers: [CrashlyticsNavigationObserver()],
-        home: isDeviceSafe ? const RootScreen() : const UnsafeDeviceScreen(),
+        home: widget.isDeviceSafe ? const RootScreen() : const UnsafeDeviceScreen(),
       ),
     );
   }

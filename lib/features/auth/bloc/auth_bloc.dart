@@ -22,6 +22,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthRegisterRequested>(_onRegisterRequested);
     on<AuthUpdateProfileRequested>(_onUpdateProfileRequested);
     on<AuthLogoutRequested>(_onLogoutRequested);
+    on<AuthRefreshProfileRequested>(_onRefreshProfileRequested);
   }
 
   Future<void> _onAuthCheckRequested(
@@ -186,6 +187,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       // Revert to old state
       emit(AuthError(message: _formatException(e)));
       emit(currentState);
+    }
+  }
+
+  Future<void> _onRefreshProfileRequested(
+    AuthRefreshProfileRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! AuthAuthenticated) return;
+    
+    try {
+      final updatedUser = await authRepository.fetchProfile();
+      
+      // Update secure storage
+      await secureStorage.write(key: 'user_profile', value: jsonEncode(updatedUser.toJson()));
+      await secureStorage.saveUserRole(updatedUser.primaryRole);
+      
+      emit(AuthAuthenticated(user: updatedUser, sessionRole: updatedUser.primaryRole));
+    } catch (e) {
+      // If refresh fails, we silently fail and keep current state
+      // (or log it via a logger)
     }
   }
 
