@@ -25,6 +25,15 @@ import 'features/services/bloc/daily_help_bloc.dart';
 import 'features/dashboard/bloc/search/search_bloc.dart';
 import 'features/community/bloc/community_post_event.dart';
 import 'features/dashboard/bloc/quick_actions/quick_actions_bloc.dart';
+import 'features/menu/bloc/family_bloc.dart';
+import 'features/menu/bloc/pets_bloc.dart';
+import 'features/menu/bloc/vehicles_bloc.dart';
+import 'features/menu/bloc/tenant_bloc.dart';
+import 'features/menu/bloc/preferences_bloc.dart';
+import 'features/menu/bloc/society_bloc.dart';
+import 'features/menu/bloc/support_bloc.dart';
+import 'features/menu/bloc/historyrequest_bloc.dart';
+import 'features/menu/bloc/preferences_event.dart';
 
 import 'package:flutter_quill/flutter_quill.dart'
     show FlutterQuillLocalizations;
@@ -188,6 +197,16 @@ class _AsmitaAppState extends ConsumerState<AsmitaApp> with WidgetsBindingObserv
         BlocProvider<QuickActionsBloc>(
           create: (context) => QuickActionsBloc()..add(LoadQuickActions()),
         ),
+        BlocProvider<FamilyBloc>(create: (_) => di.sl<FamilyBloc>()),
+        BlocProvider<PetsBloc>(create: (_) => di.sl<PetsBloc>()),
+        BlocProvider<VehiclesBloc>(create: (_) => di.sl<VehiclesBloc>()),
+        BlocProvider<TenantBloc>(create: (_) => di.sl<TenantBloc>()),
+        BlocProvider<PreferencesBloc>(
+          create: (_) => di.sl<PreferencesBloc>()..add(const LoadPreferences()),
+        ),
+        BlocProvider<SocietyBloc>(create: (_) => di.sl<SocietyBloc>()),
+        BlocProvider<SupportBloc>(create: (_) => di.sl<SupportBloc>()),
+        BlocProvider<HistoryRequestBloc>(create: (_) => di.sl<HistoryRequestBloc>()),
       ],
       child: MaterialApp(
         navigatorKey: globalNavigatorKey,
