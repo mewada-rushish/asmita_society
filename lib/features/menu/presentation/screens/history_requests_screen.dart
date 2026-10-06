@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import '../providers/history_request_provider.dart';
+import '../../bloc/historyrequest_bloc.dart';
+import '../../bloc/historyrequest_event.dart';
+import '../../bloc/historyrequest_state.dart';
 import '../../data/models/history_request_model.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 
-class HistoryRequestsScreen extends ConsumerWidget {
+class HistoryRequestsScreen extends StatelessWidget {
   const HistoryRequestsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final requestsState = ref.watch(historyRequestProvider);
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -19,31 +20,39 @@ class HistoryRequestsScreen extends ConsumerWidget {
         title: const Text('Access Requests'),
         centerTitle: true,
       ),
-      body: requestsState.when(
-        data: (requests) {
-          if (requests.isEmpty) {
-            return const Center(child: Text('No access requests found.'));
-          }
+      body: BlocBuilder<HistoryRequestBloc, HistoryRequestState>(
+        builder: (context, state) {
+          if (state is HistoryRequestLoading) {
+            return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+          } else if (state is HistoryRequestError) {
+            return Center(child: Text('Error: ${state.message}', style: textTheme.bodyLarge?.copyWith(color: Colors.red)));
+          } else if (state is HistoryRequestLoaded) {
+            final requests = state.items;
+            if (requests.isEmpty) {
+              return const Center(child: Text('No access requests found.'));
+            }
 
-          return RefreshIndicator(
-            onRefresh: () => ref.read(historyRequestProvider.notifier).fetchRequests(),
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: requests.length,
-              itemBuilder: (context, index) {
-                final req = requests[index];
-                return _buildRequestCard(context, ref, textTheme, req);
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<HistoryRequestBloc>().add(const LoadHistoryRequest());
               },
-            ),
-          );
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: requests.length,
+                itemBuilder: (context, index) {
+                  final req = requests[index];
+                  return _buildRequestCard(context, textTheme, req);
+                },
+              ),
+            );
+          }
+          return const SizedBox.shrink();
         },
-        loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
-        error: (err, stack) => Center(child: Text('Error: $err', style: textTheme.bodyLarge?.copyWith(color: Colors.red))),
       ),
     );
   }
 
-  Widget _buildRequestCard(BuildContext context, WidgetRef ref, TextTheme textTheme, HistoryRequestModel request) {
+  Widget _buildRequestCard(BuildContext context, TextTheme textTheme, HistoryRequestModel request) {
     final isPending = request.status == 'PENDING';
     final formatter = DateFormat('MMM d, yyyy');
 
@@ -91,7 +100,7 @@ class HistoryRequestsScreen extends ConsumerWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => _showApproveDialog(context, ref, request),
+                  onPressed: () => _showApproveDialog(context, request),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -106,7 +115,7 @@ class HistoryRequestsScreen extends ConsumerWidget {
     );
   }
 
-  void _showApproveDialog(BuildContext context, WidgetRef ref, HistoryRequestModel request) {
+  void _showApproveDialog(BuildContext context, HistoryRequestModel request) {
     DateTimeRange? selectedRange;
     
     showDialog(
@@ -145,16 +154,16 @@ class HistoryRequestsScreen extends ConsumerWidget {
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  onPressed: selectedRange == null ? null : () async {
+                  onPressed: selectedRange == null ? null : () {
                     Navigator.pop(context);
-                    final success = await ref.read(historyRequestProvider.notifier).approveRequest(
-                      request.id, 
-                      selectedRange!.start, 
-                      selectedRange!.end
-                    );
+                    context.read<HistoryRequestBloc>().add(ApproveRequest(
+                      id: request.id, 
+                      startDate: selectedRange!.start, 
+                      endDate: selectedRange!.end
+                    ));
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(success ? 'Access approved' : 'Failed to approve access')),
+                        SnackBar(content: Text('Access approval request submitted')),
                       );
                     }
                   },

@@ -12,3 +12,18 @@ class LoadHistoryRequest extends HistoryRequestEvent {
   @override
   List<Object?> get props => [showLoading];
 }
+
+class ApproveRequest extends HistoryRequestEvent {
+  final int id;
+  final DateTime startDate;
+  final DateTime endDate;
+
+  const ApproveRequest({
+    required this.id,
+    required this.startDate,
+    required this.endDate,
+  });
+
+  @override
+  List<Object?> get props => [id, startDate, endDate];
+}

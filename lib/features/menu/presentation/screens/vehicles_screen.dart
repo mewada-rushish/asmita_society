@@ -1,25 +1,28 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/vehicles_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/vehicles_event.dart';
+import 'package:asmita_society/features/menu/bloc/vehicles_state.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
-import 'package:asmita_society/features/menu/presentation/providers/vehicles_provider.dart';
+
 import 'package:asmita_society/features/menu/data/models/vehicle_model.dart';
 import 'package:asmita_society/features/menu/presentation/screens/widgets/add_edit_vehicle_sheet.dart';
 
-class VehiclesScreen extends ConsumerWidget {
+class VehiclesScreen extends StatelessWidget {
   final ValueChanged<int>? onNavigateToTab;
 
   const VehiclesScreen({super.key, this.onNavigateToTab});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final vehiclesState = ref.watch(vehiclesProvider);
+    
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -33,7 +36,7 @@ class VehiclesScreen extends ConsumerWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddEditSheet(context, ref),
+        onPressed: () => _showAddEditSheet(context),
         backgroundColor: Theme.of(context).colorScheme.primary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Icon(CupertinoIcons.add, color: Theme.of(context).colorScheme.surface),
@@ -51,14 +54,20 @@ class VehiclesScreen extends ConsumerWidget {
             ),
             const AsmitaSubHeader(title: 'Vehicles'),
             Expanded(
-              child: vehiclesState.when(
-                data: (vehicles) {
-                  return CustomScrollView(
+              child: BlocBuilder<VehiclesBloc, VehiclesState>(
+                builder: (context, state) {
+                  if (state is VehiclesLoading) {
+                    return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+                  } else if (state is VehiclesError) {
+                    return Center(child: Text('Error: ${state.message}', style: textTheme.bodyLarge?.copyWith(color: Colors.red)));
+                  } else if (state is VehiclesLoaded) {
+                    final vehicles = state.items;
+                    return CustomScrollView(
                     physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                     slivers: [
                       AsmitaAnimatedRefresh(
                         onRefresh: () async {
-                          ref.invalidate(vehiclesProvider);
+                          context.read<VehiclesBloc>().add(const LoadVehicles());
                           await Future.delayed(const Duration(milliseconds: 1000));
                         },
                       ),
@@ -83,7 +92,7 @@ class VehiclesScreen extends ConsumerWidget {
                             ),
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
-                                return _buildVehicleGridCard(context, ref, textTheme, vehicles[index]);
+                                return _buildVehicleGridCard(context, textTheme, vehicles[index]);
                               },
                               childCount: vehicles.length,
                             ),
@@ -91,11 +100,9 @@ class VehiclesScreen extends ConsumerWidget {
                         ),
                     ],
                   );
+                  }
+                  return const SizedBox.shrink();
                 },
-                loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
-                error: (error, _) => Center(
-                  child: Text('Error: ', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
-                ),
               ),
             ),
           ],
@@ -104,11 +111,11 @@ class VehiclesScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildVehicleGridCard(BuildContext context, WidgetRef ref, TextTheme textTheme, VehicleModel vehicle) {
+  Widget _buildVehicleGridCard(BuildContext context, TextTheme textTheme, VehicleModel vehicle) {
     bool isCar = vehicle.type.toLowerCase() == '4-wheeler' || vehicle.type.toLowerCase() == 'car';
 
     return GestureDetector(
-      onTap: () => _showVehicleOptions(context, ref, vehicle),
+      onTap: () => _showVehicleOptions(context, vehicle),
       child: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
@@ -166,7 +173,7 @@ class VehiclesScreen extends ConsumerWidget {
     );
   }
 
-  void _showVehicleOptions(BuildContext context, WidgetRef ref, VehicleModel vehicle) {
+  void _showVehicleOptions(BuildContext context, VehicleModel vehicle) {
     showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) => SafeArea(
@@ -178,14 +185,14 @@ class VehiclesScreen extends ConsumerWidget {
             child: const Text('Edit Vehicle'),
             onPressed: () {
               Navigator.pop(context);
-              _showAddEditSheet(context, ref, vehicle: vehicle);
+              _showAddEditSheet(context, vehicle: vehicle);
             },
           ),
           CupertinoActionSheetAction(
             isDestructiveAction: true,
             onPressed: () {
               Navigator.pop(context);
-              _confirmDelete(context, ref, vehicle);
+              _confirmDelete(context, vehicle);
             },
             child: const Text('Delete Vehicle'),
           ),
@@ -201,7 +208,7 @@ class VehiclesScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref, VehicleModel vehicle) async {
+  Future<void> _confirmDelete(BuildContext context, VehicleModel vehicle) async {
     final confirm = await showCupertinoDialog<bool>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
@@ -221,15 +228,13 @@ class VehiclesScreen extends ConsumerWidget {
       ),
     );
     
-    if (confirm == true) {
-      final success = await ref.read(vehiclesProvider.notifier).deleteVehicle(vehicle.id);
-      if (success && context.mounted) {
-        AsmitaToast.show(context, message: ' deleted', type: AsmitaToastType.success);
-      }
+    if (confirm == true && context.mounted) {
+      context.read<VehiclesBloc>().add(DeleteVehicle(vehicle.id));
+      AsmitaToast.show(context, message: 'Vehicle deleted', type: AsmitaToastType.success);
     }
   }
 
-  void _showAddEditSheet(BuildContext context, WidgetRef ref, {VehicleModel? vehicle}) {
+  void _showAddEditSheet(BuildContext context, {VehicleModel? vehicle}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

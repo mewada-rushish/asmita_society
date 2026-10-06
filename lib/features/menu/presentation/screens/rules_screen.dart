@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
-import 'package:asmita_society/features/menu/presentation/providers/society_provider.dart';
+import 'package:asmita_society/features/menu/bloc/society_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/society_state.dart';
 
-class RulesScreen extends ConsumerWidget {
+class RulesScreen extends StatelessWidget {
   const RulesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final rulesState = ref.watch(rulesProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -19,35 +19,41 @@ class RulesScreen extends ConsumerWidget {
           children: [
             const AsmitaSubHeader(title: 'Rules & Regulations'),
             Expanded(
-              child: rulesState.when(
-                data: (rules) {
-                  if (rules.isEmpty) {
-                    return Center(
-                      child: Text('No rules found.', style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color)),
+              child: BlocBuilder<SocietyBloc, SocietyState>(
+                builder: (context, societyState) {
+                  if (societyState is SocietyLoading || societyState is SocietyInitial) {
+                    return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+                  } else if (societyState is SocietyError) {
+                    return Center(child: Text('Error: ${societyState.message}', style: const TextStyle(color: Colors.red)));
+                  } else if (societyState is SocietyLoaded) {
+                    final rules = societyState.rules;
+                    if (rules.isEmpty) {
+                      return Center(
+                        child: Text('No rules found.', style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color)),
+                      );
+                    }
+                    return ListView.builder(
+                      physics: const ClampingScrollPhysics(),
+                      padding: const EdgeInsets.all(16),
+                      itemCount: rules.length,
+                      itemBuilder: (context, index) {
+                        final rule = rules[index];
+                        // Use a generic icon if title doesn't match predefined ones
+                        IconData icon = Icons.rule_rounded;
+                        if (rule.title.toLowerCase().contains('parking')) icon = Icons.directions_car_rounded;
+                        if (rule.title.toLowerCase().contains('pet')) icon = Icons.pets_rounded;
+                        if (rule.title.toLowerCase().contains('noise')) icon = Icons.volume_off_rounded;
+                        if (rule.title.toLowerCase().contains('club')) icon = Icons.sports_tennis_rounded;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _buildRuleCard(context, textTheme, icon, rule.title, rule.description),
+                        );
+                      },
                     );
                   }
-                  return ListView.builder(
-                    physics: const ClampingScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    itemCount: rules.length,
-                    itemBuilder: (context, index) {
-                      final rule = rules[index];
-                      // Use a generic icon if title doesn't match predefined ones
-                      IconData icon = Icons.rule_rounded;
-                      if (rule.title.toLowerCase().contains('parking')) icon = Icons.directions_car_rounded;
-                      if (rule.title.toLowerCase().contains('pet')) icon = Icons.pets_rounded;
-                      if (rule.title.toLowerCase().contains('noise')) icon = Icons.volume_off_rounded;
-                      if (rule.title.toLowerCase().contains('club')) icon = Icons.sports_tennis_rounded;
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: _buildRuleCard(context, textTheme, icon, rule.title, rule.description),
-                      );
-                    },
-                  );
+                  return const SizedBox.shrink();
                 },
-                loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
-                error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
               ),
             ),
           ],

@@ -14,14 +14,151 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
   bool _isFetching = false;
 
   CommunityBloc({required this.repository}) : super(CommunityInitial()) {
+    on<StartPolling>(_onStartPolling);
+    on<StopPolling>(_onStopPolling);
+    on<PollMessages>(_onPollMessages);
     on<LoadCommunityMessages>(_onLoadMessages);
-    on<LoadMoreMessages>(_onLoadMoreMessages);
+    on<LoadMoreCommunityMessages>(_onLoadMoreCommunityMessages);
+    on<ToggleMessageSelection>(_onToggleMessageSelection);
+    on<ClearMessageSelection>(_onClearMessageSelection);
+    on<SetReplyToMessage>(_onSetReplyToMessage);
+    on<ClearReplyToMessage>(_onClearReplyToMessage);
+    on<DeleteSelectedMessages>(_onDeleteSelectedMessages);
+    on<StarSelectedMessages>(_onStarSelectedMessages);
     on<SendTextMessage>(_onSendTextMessage);
     on<SendAudioMessage>(_onSendAudioMessage);
     on<SendPollMessage>(_onSendPollMessage);
     on<VoteOnPollMessage>(_onVoteOnPollMessage);
     on<SendImageMessage>(_onSendImageMessage);
     on<SendDocumentMessage>(_onSendDocumentMessage);
+  }
+
+  bool _isPollingActive = false;
+  int _pollingFailures = 0;
+  bool Function()? _isAtBottomCallback;
+
+  void _onStartPolling(StartPolling event, Emitter<CommunityState> emit) {
+    if (_isPollingActive) return;
+    _isAtBottomCallback = event.isAtBottom;
+    _isPollingActive = true;
+    _pollingFailures = 0;
+    _scheduleNextPoll();
+  }
+
+  void _onStopPolling(StopPolling event, Emitter<CommunityState> emit) {
+    _isPollingActive = false;
+  }
+
+  void _scheduleNextPoll() {
+    if (!_isPollingActive) return;
+    final backoffSeconds = _calculateBackoff(_pollingFailures);
+    Future.delayed(Duration(seconds: backoffSeconds), () {
+      if (_isPollingActive && !isClosed) {
+        add(PollMessages());
+      }
+    });
+  }
+
+  Future<void> _onPollMessages(PollMessages event, Emitter<CommunityState> emit) async {
+    if (!_isPollingActive) return;
+
+    final isAtBottom = _isAtBottomCallback?.call() ?? true;
+    if (!isAtBottom) {
+      _scheduleNextPoll();
+      return;
+    }
+
+    final currentState = state;
+    if (currentState is! CommunityLoaded || _isFetching) {
+      _scheduleNextPoll();
+      return;
+    }
+
+    try {
+      await _fetchAndMergeLatestMessages(currentState, emit);
+      _pollingFailures = 0;
+    } catch (e) {
+      _pollingFailures++;
+    } finally {
+      _scheduleNextPoll();
+    }
+  }
+
+  int _calculateBackoff(int failures) {
+    if (failures == 0) return 10;
+    int backoff = 10;
+    for (int i = 0; i < failures; i++) {
+      backoff *= 2;
+    }
+    return backoff > 60 ? 60 : backoff;
+  }
+
+  void _onToggleMessageSelection(ToggleMessageSelection event, Emitter<CommunityState> emit) {
+    if (state is! CommunityLoaded) return;
+    final currentState = state as CommunityLoaded;
+    final newSelection = Set<String>.from(currentState.selectedMessageIds);
+    if (newSelection.contains(event.messageId)) {
+      newSelection.remove(event.messageId);
+    } else {
+      newSelection.add(event.messageId);
+    }
+    emit(currentState.copyWith(selectedMessageIds: newSelection));
+  }
+
+  void _onClearMessageSelection(ClearMessageSelection event, Emitter<CommunityState> emit) {
+    if (state is! CommunityLoaded) return;
+    emit((state as CommunityLoaded).copyWith(selectedMessageIds: const {}));
+  }
+
+  void _onSetReplyToMessage(SetReplyToMessage event, Emitter<CommunityState> emit) {
+    if (state is! CommunityLoaded) return;
+    emit((state as CommunityLoaded).copyWith(replyingToMessage: event.message));
+  }
+
+  void _onClearReplyToMessage(ClearReplyToMessage event, Emitter<CommunityState> emit) {
+    if (state is! CommunityLoaded) return;
+    emit((state as CommunityLoaded).copyWith(clearReplyingToMessage: true));
+  }
+
+  Future<void> _onDeleteSelectedMessages(DeleteSelectedMessages event, Emitter<CommunityState> emit) async {
+    if (state is! CommunityLoaded) return;
+    final currentState = state as CommunityLoaded;
+    final idsToDelete = currentState.selectedMessageIds.toList();
+    
+    final updatedMessages = currentState.messages
+        .where((m) => !idsToDelete.contains(m.id))
+        .toList();
+    
+    emit(currentState.copyWith(
+      messages: updatedMessages,
+      selectedMessageIds: const {},
+    ));
+
+    for (final id in idsToDelete) {
+      if (!id.startsWith('temp_')) {
+        try {
+          await repository.deleteMessage(id);
+        } catch (e) {
+          debugPrint('Failed to delete message $id');
+        }
+      }
+    }
+  }
+
+  void _onStarSelectedMessages(StarSelectedMessages event, Emitter<CommunityState> emit) {
+    if (state is! CommunityLoaded) return;
+    final currentState = state as CommunityLoaded;
+    final updatedMessages = currentState.messages.map((m) {
+      if (currentState.selectedMessageIds.contains(m.id)) {
+        return m.copyWith(isStarred: !m.isStarred);
+      }
+      return m;
+    }).toList();
+    
+    emit(currentState.copyWith(
+      messages: updatedMessages,
+      selectedMessageIds: const {},
+    ));
   }
 
   String _getCurrentFormattedTime() {
@@ -47,7 +184,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     }
   }
 
-  Future<void> _onLoadMoreMessages(LoadMoreMessages event, Emitter<CommunityState> emit) async {
+  Future<void> _onLoadMoreCommunityMessages(LoadMoreCommunityMessages event, Emitter<CommunityState> emit) async {
     if (state is! CommunityLoaded || _isFetching) return;
     final currentState = state as CommunityLoaded;
     if (currentState.hasReachedMax) return;

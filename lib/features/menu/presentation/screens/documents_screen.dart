@@ -1,17 +1,17 @@
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
-import 'package:asmita_society/features/menu/presentation/providers/society_provider.dart';
+import 'package:asmita_society/features/menu/bloc/society_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/society_state.dart';
 
-class DocumentsScreen extends ConsumerWidget {
+class DocumentsScreen extends StatelessWidget {
   const DocumentsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final docsState = ref.watch(documentsProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -20,32 +20,38 @@ class DocumentsScreen extends ConsumerWidget {
           children: [
             const AsmitaSubHeader(title: 'Important Documents'),
             Expanded(
-              child: docsState.when(
-                data: (docs) {
-                  if (docs.isEmpty) {
-                    return Center(
-                      child: Text('No documents found.', style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color)),
+              child: BlocBuilder<SocietyBloc, SocietyState>(
+                builder: (context, societyState) {
+                  if (societyState is SocietyLoading || societyState is SocietyInitial) {
+                    return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+                  } else if (societyState is SocietyError) {
+                    return Center(child: Text('Error: ${societyState.message}', style: const TextStyle(color: Colors.red)));
+                  } else if (societyState is SocietyLoaded) {
+                    final docs = societyState.documents;
+                    if (docs.isEmpty) {
+                      return Center(
+                        child: Text('No documents found.', style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color)),
+                      );
+                    }
+                    return ListView.builder(
+                      physics: const ClampingScrollPhysics(),
+                      padding: const EdgeInsets.all(16),
+                      itemCount: docs.length,
+                      itemBuilder: (context, index) {
+                        final doc = docs[index];
+                        final dateStr = doc.uploadedAt != null 
+                          ? AppDateFormatter.formatDate(doc.uploadedAt!)
+                          : 'Unknown Date';
+                          
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _buildDocumentCard(context, textTheme, doc.title, 'Updated: $dateStr', 'Available'),
+                        );
+                      },
                     );
                   }
-                  return ListView.builder(
-                    physics: const ClampingScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    itemCount: docs.length,
-                    itemBuilder: (context, index) {
-                      final doc = docs[index];
-                      final dateStr = doc.uploadedAt != null 
-                        ? AppDateFormatter.formatDate(doc.uploadedAt!)
-                        : 'Unknown Date';
-                        
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: _buildDocumentCard(context, textTheme, doc.title, 'Updated: $dateStr', 'Available'),
-                      );
-                    },
-                  );
+                  return const SizedBox.shrink();
                 },
-                loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
-                error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
               ),
             ),
           ],

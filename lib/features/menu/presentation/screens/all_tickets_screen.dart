@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
-import 'package:asmita_society/features/menu/presentation/providers/support_provider.dart';
+import 'package:asmita_society/features/menu/bloc/support_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/support_state.dart';
+import 'package:asmita_society/features/menu/bloc/support_event.dart';
 import '../widgets/ticket_conversation_bottom_sheet.dart';
 import 'package:shimmer/shimmer.dart';
 
-class AllTicketsScreen extends ConsumerWidget {
+class AllTicketsScreen extends StatelessWidget {
   const AllTicketsScreen({super.key});
 
   void _showTicketDetails(BuildContext context, dynamic ticket) {
@@ -19,8 +21,7 @@ class AllTicketsScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final supportState = ref.watch(supportProvider);
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -32,40 +33,46 @@ class AllTicketsScreen extends ConsumerWidget {
         elevation: 0,
         scrolledUnderElevation: 1,
       ),
-      body: supportState.when(
-        data: (tickets) {
-          if (tickets.isEmpty) {
+      body: BlocBuilder<SupportBloc, SupportState>(
+        builder: (context, supportState) {
+          if (supportState is SupportLoading || supportState is SupportInitial) {
+            return _buildSkeletonList(context);
+          } else if (supportState is SupportError) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.inbox_rounded, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text('No tickets found', style: textTheme.titleMedium?.copyWith(color: Colors.grey[600])),
-                ],
+              child: Text('Error: ${supportState.message}', style: TextStyle(color: Colors.red)),
+            );
+          } else if (supportState is SupportLoaded) {
+            final tickets = supportState.items;
+            if (tickets.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.inbox_rounded, size: 64, color: Colors.grey[400]),
+                    const SizedBox(height: 16),
+                    Text('No tickets found', style: textTheme.titleMedium?.copyWith(color: Colors.grey[600])),
+                  ],
+                ),
+              );
+            }
+            
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<SupportBloc>().add(const LoadSupport());
+              },
+              child: ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: tickets.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final t = tickets[index];
+                  return _buildTicketCard(context, t, textTheme);
+                },
               ),
             );
           }
-          
-          return RefreshIndicator(
-            onRefresh: () async {
-              await ref.read(supportProvider.notifier).fetchTickets();
-            },
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: tickets.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final t = tickets[index];
-                return _buildTicketCard(context, t, textTheme);
-              },
-            ),
-          );
+          return const SizedBox.shrink();
         },
-        loading: () => _buildSkeletonList(context),
-        error: (err, _) => Center(
-          child: Text('Error: $err', style: TextStyle(color: Colors.red)),
-        ),
       ),
     );
   }

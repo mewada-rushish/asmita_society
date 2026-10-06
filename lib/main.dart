@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
@@ -30,6 +29,7 @@ import 'features/menu/bloc/pets_bloc.dart';
 import 'features/menu/bloc/vehicles_bloc.dart';
 import 'features/menu/bloc/tenant_bloc.dart';
 import 'features/menu/bloc/preferences_bloc.dart';
+import 'features/menu/bloc/preferences_state.dart';
 import 'features/menu/bloc/society_bloc.dart';
 import 'features/menu/bloc/support_bloc.dart';
 import 'features/menu/bloc/historyrequest_bloc.dart';
@@ -41,7 +41,6 @@ import 'package:flutter_quill/flutter_quill.dart'
 import 'features/auth/presentation/unsafe_device_screen.dart';
 import 'core/observers/crashlytics_navigation_observer.dart';
 import 'package:asmita_society/l10n/app_localizations.dart';
-import 'features/menu/presentation/providers/preferences_provider.dart';
 
 Future<void> main() async {
   runZonedGuarded(
@@ -98,7 +97,7 @@ Future<void> main() async {
       //   print("safe_device plugin error (ignoring for simulator): $e");
       // }
 
-      runApp(ProviderScope(child: AsmitaApp(isDeviceSafe: isDeviceSafe)));
+      runApp(AsmitaApp(isDeviceSafe: isDeviceSafe));
     },
     (error, stack) {
       // Catch unhandled async errors outside the Flutter framework
@@ -109,16 +108,16 @@ Future<void> main() async {
 
 final GlobalKey<NavigatorState> globalNavigatorKey = GlobalKey<NavigatorState>();
 
-class AsmitaApp extends ConsumerStatefulWidget {
+class AsmitaApp extends StatefulWidget {
   final bool isDeviceSafe;
 
   const AsmitaApp({super.key, required this.isDeviceSafe});
 
   @override
-  ConsumerState<AsmitaApp> createState() => _AsmitaAppState();
+  State<AsmitaApp> createState() => _AsmitaAppState();
 }
 
-class _AsmitaAppState extends ConsumerState<AsmitaApp> with WidgetsBindingObserver {
+class _AsmitaAppState extends State<AsmitaApp> with WidgetsBindingObserver {
   
   @override
   void initState() {
@@ -160,8 +159,6 @@ class _AsmitaAppState extends ConsumerState<AsmitaApp> with WidgetsBindingObserv
 
   @override
   Widget build(BuildContext context) {
-    final preferencesAsync = ref.watch(preferencesProvider);
-    final locale = _getLocaleFromLanguage(preferencesAsync.value?.language);
 
     return MultiBlocProvider(
       providers: [
@@ -208,23 +205,35 @@ class _AsmitaAppState extends ConsumerState<AsmitaApp> with WidgetsBindingObserv
         BlocProvider<SupportBloc>(create: (_) => di.sl<SupportBloc>()),
         BlocProvider<HistoryRequestBloc>(create: (_) => di.sl<HistoryRequestBloc>()),
       ],
-      child: MaterialApp(
-        navigatorKey: globalNavigatorKey,
-        title: 'AsmitA',
-        debugShowCheckedModeBanner: false,
-        theme: AsmitaTheme.lightTheme,
-        darkTheme: AsmitaTheme.darkTheme,
-        themeMode: preferencesAsync.value?.appTheme.toLowerCase() == 'dark' 
-            ? ThemeMode.dark 
-            : (preferencesAsync.value?.appTheme.toLowerCase() == 'light' ? ThemeMode.light : ThemeMode.system),
-        locale: locale,
-        localizationsDelegates: [
-          ...AppLocalizations.localizationsDelegates,
-          FlutterQuillLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
-        navigatorObservers: [CrashlyticsNavigationObserver()],
-        home: widget.isDeviceSafe ? const RootScreen() : const UnsafeDeviceScreen(),
+      child: BlocBuilder<PreferencesBloc, PreferencesState>(
+        builder: (context, state) {
+          String? language;
+          String? appTheme;
+          if (state is PreferencesLoaded) {
+            language = state.items?.language;
+            appTheme = state.items?.appTheme;
+          }
+          final locale = _getLocaleFromLanguage(language);
+          
+          return MaterialApp(
+            navigatorKey: globalNavigatorKey,
+            title: 'AsmitA',
+            debugShowCheckedModeBanner: false,
+            theme: AsmitaTheme.lightTheme,
+            darkTheme: AsmitaTheme.darkTheme,
+            themeMode: appTheme?.toLowerCase() == 'dark' 
+                ? ThemeMode.dark 
+                : (appTheme?.toLowerCase() == 'light' ? ThemeMode.light : ThemeMode.system),
+            locale: locale,
+            localizationsDelegates: [
+              ...AppLocalizations.localizationsDelegates,
+              FlutterQuillLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            navigatorObservers: [CrashlyticsNavigationObserver()],
+            home: widget.isDeviceSafe ? const RootScreen() : const UnsafeDeviceScreen(),
+          );
+        }
       ),
     );
   }

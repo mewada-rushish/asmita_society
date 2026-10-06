@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
-import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
+import 'package:asmita_society/features/menu/bloc/preferences_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/preferences_event.dart';
+import 'package:asmita_society/features/menu/bloc/preferences_state.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/features/menu/presentation/screens/privacy_policy_screen.dart';
 import 'package:asmita_society/core/di/injection_container.dart' as di;
@@ -13,16 +15,14 @@ import 'package:asmita_society/features/auth/bloc/auth_event.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 
 import 'package:asmita_society/l10n/app_localizations.dart';
-import 'package:asmita_society/features/menu/presentation/providers/preferences_provider.dart';
 import 'package:local_auth/local_auth.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final prefsState = ref.watch(preferencesProvider);
 
     final l10n = AppLocalizations.of(context)!;
 
@@ -33,13 +33,21 @@ class SettingsScreen extends ConsumerWidget {
           children: [
             AsmitaSubHeader(title: l10n.settings),
             Expanded(
-              child: prefsState.when(
-                data: (prefs) {
-                  if (prefs == null) return const Center(child: Text('Failed to load preferences'));
-                  return ListView(
-                    physics: const ClampingScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    children: [
+              child: BlocBuilder<PreferencesBloc, PreferencesState>(
+                builder: (context, state) {
+                  if (state is PreferencesLoading) {
+                    return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+                  } else if (state is PreferencesError) {
+                    return Center(
+                      child: Text('Error: ${state.message}', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
+                    );
+                  } else if (state is PreferencesLoaded) {
+                    final prefs = state.items;
+                    if (prefs == null) return const Center(child: Text('Failed to load preferences'));
+                    return ListView(
+                      physics: const ClampingScrollPhysics(),
+                      padding: const EdgeInsets.all(16),
+                      children: [
                       _buildSectionTitle(context, textTheme, 'Notifications'),
                       const SizedBox(height: 12),
                       _buildSettingsCard(
@@ -52,7 +60,7 @@ class SettingsScreen extends ConsumerWidget {
                             'Push Notifications', 
                             prefs.pushNotifications, 
                             true,
-                            (val) => ref.read(preferencesProvider.notifier).updatePreference(pushNotifications: val)
+                            (val) => context.read<PreferencesBloc>().add(UpdatePreferences(pushNotifications: val))
                           ),
                           _buildToggleRow(
                             context,
@@ -61,7 +69,7 @@ class SettingsScreen extends ConsumerWidget {
                             'Email Alerts', 
                             prefs.emailAlerts, 
                             false,
-                            (val) => ref.read(preferencesProvider.notifier).updatePreference(emailAlerts: val)
+                            (val) => context.read<PreferencesBloc>().add(UpdatePreferences(emailAlerts: val))
                           ),
                         ],
                       ),
@@ -73,10 +81,10 @@ class SettingsScreen extends ConsumerWidget {
                         context,
                         children: [
                           _buildActionRow(context, textTheme, Icons.language_rounded, l10n.language, prefs.language, true, () {
-                            _showLanguagePicker(context, ref, prefs.language);
+                            _showLanguagePicker(context, prefs.language);
                           }),
                           _buildActionRow(context, textTheme, Icons.dark_mode_rounded, l10n.theme, prefs.appTheme, false, () {
-                            _showThemePicker(context, ref, prefs.appTheme);
+                            _showThemePicker(context, prefs.appTheme);
                           }),
                         ],
                       ),
@@ -109,7 +117,9 @@ class SettingsScreen extends ConsumerWidget {
                                   return;
                                 }
                               }
-                              ref.read(preferencesProvider.notifier).updatePreference(biometricLogin: val);
+                              if (context.mounted) {
+                                context.read<PreferencesBloc>().add(UpdatePreferences(biometricLogin: val));
+                              }
                             }
                           ),
                         ],
@@ -135,9 +145,9 @@ class SettingsScreen extends ConsumerWidget {
                       const SizedBox(height: 24),
                     ],
                   );
+                  }
+                  return const SizedBox.shrink();
                 },
-                loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
-                error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
               ),
             ),
           ],
@@ -286,7 +296,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showLanguagePicker(BuildContext context, WidgetRef ref, String currentLanguage) {
+  void _showLanguagePicker(BuildContext context, String currentLanguage) {
     final l10n = AppLocalizations.of(context)!;
     final languages = [
       {'name': 'English', 'localName': l10n.english}, 
@@ -308,7 +318,7 @@ class SettingsScreen extends ConsumerWidget {
               onPressed: () {
                 Navigator.pop(context);
                 if (lang != currentLanguage) {
-                  ref.read(preferencesProvider.notifier).updatePreference(language: lang);
+                  context.read<PreferencesBloc>().add(UpdatePreferences(language: lang));
                 }
               },
               child: Text(
@@ -330,7 +340,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showThemePicker(BuildContext context, WidgetRef ref, String currentTheme) {
+  void _showThemePicker(BuildContext context, String currentTheme) {
     final themes = ['System', 'Light', 'Dark'];
     showCupertinoModalPopup(
       context: context,
@@ -342,7 +352,7 @@ class SettingsScreen extends ConsumerWidget {
               onPressed: () {
                 Navigator.pop(context);
                 if (theme != currentTheme) {
-                  ref.read(preferencesProvider.notifier).updatePreference(appTheme: theme);
+                  context.read<PreferencesBloc>().add(UpdatePreferences(appTheme: theme));
                   AsmitaToast.show(context, message: 'Theme changed to $theme', type: AsmitaToastType.success);
                 }
               },

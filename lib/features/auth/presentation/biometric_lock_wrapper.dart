@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/preferences_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/preferences_state.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:asmita_society/features/menu/presentation/providers/preferences_provider.dart';
 import 'package:flutter/services.dart';
 
-class BiometricLockWrapper extends ConsumerStatefulWidget {
+class BiometricLockWrapper extends StatefulWidget {
   final Widget child;
 
   const BiometricLockWrapper({super.key, required this.child});
 
   @override
-  ConsumerState<BiometricLockWrapper> createState() => _BiometricLockWrapperState();
+  State<BiometricLockWrapper> createState() => _BiometricLockWrapperState();
 }
 
-class _BiometricLockWrapperState extends ConsumerState<BiometricLockWrapper> {
+class _BiometricLockWrapperState extends State<BiometricLockWrapper> {
   final LocalAuthentication _auth = LocalAuthentication();
   bool _isAuthenticated = false;
   bool _isAuthenticating = false;
@@ -71,32 +72,32 @@ class _BiometricLockWrapperState extends ConsumerState<BiometricLockWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    final prefsState = ref.watch(preferencesProvider);
-    
-    if (prefsState.isLoading && !prefsState.hasValue) {
-      debugPrint('Biometrics - Waiting for preferences to load...');
-      return Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-      );
-    }
+    return BlocBuilder<PreferencesBloc, PreferencesState>(
+      builder: (context, prefsState) {
+        if (prefsState is PreferencesInitial) {
+          debugPrint('Biometrics - Waiting for preferences to load...');
+          return Scaffold(
+            backgroundColor: Theme.of(context).colorScheme.primary,
+          );
+        }
 
-    final isBiometricEnabled = prefsState.value?.biometricLogin ?? false;
-    debugPrint('Biometrics - Loaded! enabled: $isBiometricEnabled, hasPrompted: $_hasPrompted, isAuth: $_isAuthenticated');
+        final isBiometricEnabled = prefsState is PreferencesLoaded ? prefsState.items?.biometricLogin ?? false : false;
+        debugPrint('Biometrics - Loaded! enabled: $isBiometricEnabled, hasPrompted: $_hasPrompted, isAuth: $_isAuthenticated');
 
-    if (isBiometricEnabled && !_isAuthenticated && !_hasPrompted && !_isAuthenticating) {
-      _hasPrompted = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _authenticate();
-      });
-    }
+        if (isBiometricEnabled && !_isAuthenticated && !_hasPrompted && !_isAuthenticating) {
+          _hasPrompted = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _authenticate();
+          });
+        }
 
-    // Show child if biometrics is disabled, or if we successfully authenticated.
-    if (!isBiometricEnabled || _isAuthenticated) {
-      return widget.child;
-    }
+        // Show child if biometrics is disabled, or if we successfully authenticated.
+        if (!isBiometricEnabled || _isAuthenticated) {
+          return widget.child;
+        }
 
-    // Otherwise, show the lock screen
-    return Scaffold(
+        // Otherwise, show the lock screen
+        return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: Center(
@@ -144,6 +145,8 @@ class _BiometricLockWrapperState extends ConsumerState<BiometricLockWrapper> {
           ),
         ),
       ),
+    );
+      },
     );
   }
 }

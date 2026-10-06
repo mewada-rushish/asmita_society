@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../data/models/support_ticket_model.dart';
 import '../../data/models/support_ticket_message_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../providers/support_provider.dart';
+import '../../data/repositories/support_repository.dart';
+import 'package:asmita_society/core/di/injection_container.dart' as di;
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
 
-class TicketConversationBottomSheet extends ConsumerStatefulWidget {
+class TicketConversationBottomSheet extends StatefulWidget {
   final SupportTicketModel ticket;
 
   const TicketConversationBottomSheet({super.key, required this.ticket});
 
   @override
-  ConsumerState<TicketConversationBottomSheet> createState() => _TicketConversationBottomSheetState();
+  State<TicketConversationBottomSheet> createState() => _TicketConversationBottomSheetState();
 }
 
-class _TicketConversationBottomSheetState extends ConsumerState<TicketConversationBottomSheet> {
+class _TicketConversationBottomSheetState extends State<TicketConversationBottomSheet> {
   final _messageController = TextEditingController();
   bool _isLoading = true;
   bool _isSending = false;
@@ -38,7 +38,7 @@ class _TicketConversationBottomSheetState extends ConsumerState<TicketConversati
       _error = null;
     });
     try {
-      final repo = ref.read(supportRepositoryProvider);
+      final repo = di.sl<SupportRepository>();
       final rawMessages = await repo.getTicketMessages(widget.ticket.id);
       if (mounted) {
         setState(() {
@@ -63,7 +63,7 @@ class _TicketConversationBottomSheetState extends ConsumerState<TicketConversati
     setState(() => _isSending = true);
     
     try {
-      final repo = ref.read(supportRepositoryProvider);
+      final repo = di.sl<SupportRepository>();
       final rawMessage = await repo.addTicketMessage(
         widget.ticket.id,
         text,

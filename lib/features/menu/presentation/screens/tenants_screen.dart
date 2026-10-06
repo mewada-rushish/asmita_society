@@ -2,16 +2,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/tenant_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/tenant_event.dart';
+import 'package:asmita_society/features/menu/bloc/tenant_state.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
-import 'package:asmita_society/features/menu/presentation/providers/tenant_provider.dart';
 import 'package:asmita_society/features/menu/data/models/tenant_model.dart';
 
-class TenantsScreen extends ConsumerWidget {
+class TenantsScreen extends StatelessWidget {
   final ValueChanged<int>? onNavigateToTab;
   final VoidCallback? onNavigateToCommunity;
   final VoidCallback? onNavigateToSearch;
@@ -24,9 +26,8 @@ class TenantsScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final tenantState = ref.watch(tenantProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -44,7 +45,7 @@ class TenantsScreen extends ConsumerWidget {
         children: [
           FloatingActionButton(
             heroTag: 'request_history_fab',
-            onPressed: () => _onHistoryRequestFabTapped(context, ref),
+            onPressed: () => _onHistoryRequestFabTapped(context),
             backgroundColor: Theme.of(context).colorScheme.primary,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Icon(Icons.history, color: Theme.of(context).colorScheme.surface),
@@ -52,7 +53,7 @@ class TenantsScreen extends ConsumerWidget {
           SizedBox(height: 16),
           FloatingActionButton(
             heroTag: 'add_tenant_fab',
-            onPressed: () => _showAddEditSheet(context, ref),
+            onPressed: () => _showAddEditSheet(context),
             backgroundColor: Theme.of(context).colorScheme.primary,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Icon(CupertinoIcons.add, color: Theme.of(context).colorScheme.surface),
@@ -72,51 +73,57 @@ class TenantsScreen extends ConsumerWidget {
             ),
             const AsmitaSubHeader(title: 'Tenants'),
             Expanded(
-              child: tenantState.when(
-                data: (members) {
-                  return CustomScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                    slivers: [
-                      AsmitaAnimatedRefresh(
-                        onRefresh: () async {
-                          ref.invalidate(tenantProvider);
-                          await Future.delayed(const Duration(milliseconds: 1000));
-                        },
-                      ),
-                      if (members.isEmpty)
-                        SliverFillRemaining(
-                          child: Center(
-                            child: Text(
-                              'No Tenants added yet.',
-                              style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color),
-                            ),
-                          ),
-                        )
-                      else
-                        SliverPadding(
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                          sliver: SliverGrid(
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 0.85,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                            ),
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                return _buildTenantGridCard(context, ref, textTheme, members[index]);
-                              },
-                              childCount: members.length,
-                            ),
-                          ),
+              child: BlocBuilder<TenantBloc, TenantState>(
+                builder: (context, state) {
+                  if (state is TenantLoading) {
+                    return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+                  } else if (state is TenantError) {
+                    return Center(
+                      child: Text('Error: ${state.message}', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
+                    );
+                  } else if (state is TenantLoaded) {
+                    final members = state.items;
+                    return CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                      slivers: [
+                        AsmitaAnimatedRefresh(
+                          onRefresh: () async {
+                            context.read<TenantBloc>().add(const LoadTenant());
+                            await Future.delayed(const Duration(milliseconds: 1000));
+                          },
                         ),
-                    ],
-                  );
+                        if (members.isEmpty)
+                          SliverFillRemaining(
+                            child: Center(
+                              child: Text(
+                                'No Tenants added yet.',
+                                style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color),
+                              ),
+                            ),
+                          )
+                        else
+                          SliverPadding(
+                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            sliver: SliverGrid(
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 0.85,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                              ),
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  return _buildTenantGridCard(context, textTheme, members[index]);
+                                },
+                                childCount: members.length,
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  }
+                  return const SizedBox.shrink();
                 },
-                loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
-                error: (error, _) => Center(
-                  child: Text('Error: $error', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
-                ),
               ),
             ),
           ],
@@ -125,12 +132,12 @@ class TenantsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTenantGridCard(BuildContext context, WidgetRef ref, TextTheme textTheme, TenantModel member) {
+  Widget _buildTenantGridCard(BuildContext context, TextTheme textTheme, TenantModel member) {
     return Stack(
       children: [
         GestureDetector(
           onTap: () {
-            _showMemberOptions(context, ref, member);
+            _showMemberOptions(context, member);
           },
           child: Container(
         width: double.infinity,
@@ -205,10 +212,10 @@ class TenantsScreen extends ConsumerWidget {
     );
   }
 
-  void _onHistoryRequestFabTapped(BuildContext context, WidgetRef ref) {
-    final tenantState = ref.read(tenantProvider);
-    if (tenantState is AsyncData) {
-      final tenants = tenantState.value ?? [];
+  void _onHistoryRequestFabTapped(BuildContext context) {
+    final tenantState = context.read<TenantBloc>().state;
+    if (tenantState is TenantLoaded) {
+      final tenants = tenantState.items;
       final actualTenants = tenants.where((t) => t.id != -1).toList();
       
       if (actualTenants.isEmpty) {
@@ -217,7 +224,7 @@ class TenantsScreen extends ConsumerWidget {
       }
       
       if (actualTenants.length == 1) {
-        _handleHistoryRequest(context, ref, actualTenants.first);
+        _handleHistoryRequest(context, actualTenants.first);
       } else {
         // Show bottom sheet to select tenant
         showModalBottomSheet(
@@ -240,7 +247,7 @@ class TenantsScreen extends ConsumerWidget {
                   subtitle: Text(tenant.relationship.isEmpty ? 'Tenant' : tenant.relationship),
                   onTap: () {
                     Navigator.pop(context);
-                    _handleHistoryRequest(context, ref, tenant);
+                    _handleHistoryRequest(context, tenant);
                   },
                 )),
               ],
@@ -251,9 +258,9 @@ class TenantsScreen extends ConsumerWidget {
     }
   }
 
-  void _handleHistoryRequest(BuildContext context, WidgetRef ref, TenantModel member) {
+  void _handleHistoryRequest(BuildContext context, TenantModel member) {
     if (member.historyRequestStatus == null) {
-      ref.read(tenantProvider.notifier).requestHistoryAccess(member.id);
+      context.read<TenantBloc>().add(RequestTenantHistoryAccess(member.id));
       AsmitaToast.show(context, message: 'Request sent to tenant', type: AsmitaToastType.success);
     } else if (member.historyRequestStatus == 'PENDING') {
       AsmitaToast.show(context, message: 'Request is already pending', type: AsmitaToastType.info);
@@ -269,7 +276,7 @@ class TenantsScreen extends ConsumerWidget {
               child: Text('Request Again'), 
               onPressed: () {
                 Navigator.pop(context);
-                ref.read(tenantProvider.notifier).requestHistoryAccess(member.id);
+                context.read<TenantBloc>().add(RequestTenantHistoryAccess(member.id));
                 AsmitaToast.show(context, message: 'New request sent', type: AsmitaToastType.success);
               }
             ),
@@ -279,7 +286,7 @@ class TenantsScreen extends ConsumerWidget {
     }
   }
 
-  void _showMemberOptions(BuildContext context, WidgetRef ref, TenantModel member) {
+  void _showMemberOptions(BuildContext context, TenantModel member) {
     showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) => SafeArea(
@@ -291,14 +298,14 @@ class TenantsScreen extends ConsumerWidget {
             child: Text('Edit Member'),
             onPressed: () {
               Navigator.pop(context);
-              _showAddEditSheet(context, ref, member: member);
+              _showAddEditSheet(context, member: member);
             },
           ),
           CupertinoActionSheetAction(
             isDestructiveAction: true,
             onPressed: () {
               Navigator.pop(context);
-              _confirmDelete(context, ref, member);
+              _confirmDelete(context, member);
             },
             child: Text('Delete Member'),
           ),
@@ -314,7 +321,7 @@ class TenantsScreen extends ConsumerWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, WidgetRef ref, TenantModel member) {
+  void _confirmDelete(BuildContext context, TenantModel member) {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
@@ -330,7 +337,8 @@ class TenantsScreen extends ConsumerWidget {
             child: Text('Delete'),
             onPressed: () {
               Navigator.pop(context);
-              ref.read(tenantProvider.notifier).deleteMember(member.id);
+              context.read<TenantBloc>().add(DeleteTenant(member.id));
+              AsmitaToast.show(context, message: 'Tenant deleted', type: AsmitaToastType.success);
             },
           ),
         ],
@@ -338,7 +346,7 @@ class TenantsScreen extends ConsumerWidget {
     );
   }
 
-  void _showAddEditSheet(BuildContext context, WidgetRef ref, {TenantModel? member}) {
+  void _showAddEditSheet(BuildContext context, {TenantModel? member}) {
     final nameCtrl = TextEditingController(text: member?.name ?? '');
     final contactCtrl = TextEditingController(text: member?.contactNumber ?? '');
     String selectedRel = member?.relationship ?? 'Primary Tenant';
@@ -564,38 +572,36 @@ class TenantsScreen extends ConsumerWidget {
                           return;
                         }
 
-                        final notifier = ref.read(tenantProvider.notifier);
+                        final bloc = context.read<TenantBloc>();
                         
                         setState(() => isLoading = true);
                         
-                        bool success;
                         if (member == null) {
-                          success = await notifier.addMember(
+                          bloc.add(AddTenant(
                             name: name, 
                             relationship: selectedRel, 
                             contactNumber: contact,
                             isEmergencyContact: isEmergency
-                          );
+                          ));
                         } else {
-                          success = await notifier.updateMember(
-                            member.id, 
+                          bloc.add(UpdateTenant(
+                            id: member.id, 
                             name: name, 
                             relationship: selectedRel, 
                             contactNumber: contact,
                             isEmergencyContact: isEmergency
-                          );
+                          ));
                         }
                         
+                        await Future.delayed(const Duration(milliseconds: 500));
                         if (context.mounted) {
                           setState(() => isLoading = false);
-                          if (success) {
-                            AsmitaToast.show(
-                              context,
-                              message: member == null ? 'Tenant saved successfully!' : 'Tenant updated successfully!',
-                              type: AsmitaToastType.success,
-                            );
-                            Navigator.pop(context);
-                          }
+                          AsmitaToast.show(
+                            context,
+                            message: member == null ? 'Tenant saved successfully!' : 'Tenant updated successfully!',
+                            type: AsmitaToastType.success,
+                          );
+                          Navigator.pop(context);
                         }
                       },
                       child: isLoading 

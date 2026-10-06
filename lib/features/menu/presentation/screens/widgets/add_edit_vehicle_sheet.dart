@@ -5,22 +5,25 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/auth/data/models/user_model.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:asmita_society/core/di/injection_container.dart';
+import 'package:asmita_society/features/menu/data/repositories/vehicles_repository.dart';
+import 'package:asmita_society/features/menu/bloc/vehicles_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/vehicles_event.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/features/menu/data/models/vehicle_model.dart';
-import 'package:asmita_society/features/menu/presentation/providers/vehicles_provider.dart';
 
-class AddEditVehicleSheet extends ConsumerStatefulWidget {
+
+class AddEditVehicleSheet extends StatefulWidget {
   final VehicleModel? vehicle;
 
   const AddEditVehicleSheet({super.key, this.vehicle});
 
   @override
-  ConsumerState<AddEditVehicleSheet> createState() => _AddEditVehicleSheetState();
+  State<AddEditVehicleSheet> createState() => _AddEditVehicleSheetState();
 }
 
-class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
+class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
   late TextEditingController makeModelCtrl;
   String selectedYear = DateTime.now().year.toString();
   late String type;
@@ -104,7 +107,7 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
 
   Future<void> _loadParkingSlots() async {
     try {
-      final slots = await ref.read(vehiclesRepositoryProvider).getParkingSlots();
+      final slots = await sl<VehiclesRepository>().getParkingSlots();
       if (mounted) {
         setState(() {
           parkingSlots = slots;
@@ -523,38 +526,37 @@ class _AddEditVehicleSheetState extends ConsumerState<AddEditVehicleSheet> {
 
     setState(() => isSaving = true);
     
-    final notifier = ref.read(vehiclesProvider.notifier);
-    bool success;
+    final bloc = context.read<VehiclesBloc>();
     
     if (widget.vehicle == null) {
-      success = await notifier.addVehicle(
+      bloc.add(AddVehicle(
         type: type,
         makeModel: combinedMakeModel,
         licensePlate: combinedLicense,
         parkingSlot: selectedSlot,
         flatId: selectedFlat!.flatId,
-      );
+      ));
     } else {
-      success = await notifier.updateVehicle(
-        widget.vehicle!.id,
+      bloc.add(UpdateVehicle(
+        id: widget.vehicle!.id,
         type: type,
         makeModel: combinedMakeModel,
         licensePlate: combinedLicense,
         parkingSlot: selectedSlot,
         flatId: selectedFlat!.flatId,
-      );
+      ));
     }
+    
+    await Future.delayed(const Duration(milliseconds: 500));
     
     if (mounted) {
       setState(() => isSaving = false);
-      if (success) {
-        AsmitaToast.show(
-          context,
-          message: widget.vehicle == null ? 'Vehicle saved successfully!' : 'Vehicle updated successfully!',
-          type: AsmitaToastType.success,
-        );
-        Navigator.pop(context);
-      }
+      AsmitaToast.show(
+        context,
+        message: widget.vehicle == null ? 'Vehicle saved successfully!' : 'Vehicle updated successfully!',
+        type: AsmitaToastType.success,
+      );
+      Navigator.pop(context);
     }
   }
 }

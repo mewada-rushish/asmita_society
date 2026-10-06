@@ -1,21 +1,22 @@
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
-import 'package:asmita_society/features/menu/presentation/providers/support_provider.dart';
+import 'package:asmita_society/features/menu/bloc/support_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/support_event.dart';
+import 'package:asmita_society/features/menu/bloc/support_state.dart';
 import '../widgets/ticket_conversation_bottom_sheet.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:asmita_society/features/menu/presentation/screens/all_tickets_screen.dart';
 
-class HelpSupportScreen extends ConsumerWidget {
+class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final supportState = ref.watch(supportProvider);
     
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -29,53 +30,59 @@ class HelpSupportScreen extends ConsumerWidget {
                 slivers: [
                   AsmitaAnimatedRefresh(
                     onRefresh: () async {
-                      await ref.read(supportProvider.notifier).fetchTickets();
+                      context.read<SupportBloc>().add(const LoadSupport());
                     },
                   ),
                   SliverPadding(
                     padding: const EdgeInsets.all(16),
                     sliver: SliverList.list(
                       children: [
-                        _buildRaiseTicketSection(context, ref, textTheme),
+                        _buildRaiseTicketSection(context, textTheme),
                         SizedBox(height: 24),
-                  supportState.when(
-                    data: (tickets) {
-                      if (tickets.isEmpty) return const SizedBox.shrink();
-                      final displayTickets = tickets.take(3).toList();
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(left: 4, bottom: 12),
-                            child: Text(
-                              'Your Tickets',
-                              style: textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          TicketCarousel(tickets: displayTickets, textTheme: textTheme),
-                          if (tickets.isNotEmpty) ...[
-                            SizedBox(height: 16),
-                            Center(
-                              child: TextButton.icon(
-                                onPressed: () {
-                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const AllTicketsScreen()));
-                                },
-                                icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-                                label: Text('View All Tickets', style: TextStyle(fontWeight: FontWeight.w600)),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: Theme.of(context).colorScheme.primary,
+                  BlocBuilder<SupportBloc, SupportState>(
+                    builder: (context, state) {
+                      if (state is SupportLoading) {
+                        return _buildSkeletonTickets(context);
+                      } else if (state is SupportError) {
+                        return Text('Error: ${state.message}');
+                      } else if (state is SupportLoaded) {
+                        final tickets = state.items;
+                        if (tickets.isEmpty) return const SizedBox.shrink();
+                        final displayTickets = tickets.take(3).toList();
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4, bottom: 12),
+                              child: Text(
+                                'Your Tickets',
+                                style: textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            )
+                            ),
+                            TicketCarousel(tickets: displayTickets, textTheme: textTheme),
+                            if (tickets.isNotEmpty) ...[
+                              SizedBox(height: 16),
+                              Center(
+                                child: TextButton.icon(
+                                  onPressed: () {
+                                    Navigator.push(context, MaterialPageRoute(builder: (_) => const AllTicketsScreen()));
+                                  },
+                                  icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                                  label: Text('View All Tickets', style: TextStyle(fontWeight: FontWeight.w600)),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                              )
+                            ],
+                            SizedBox(height: 24),
                           ],
-                          SizedBox(height: 24),
-                        ],
-                      );
+                        );
+                      }
+                      return const SizedBox.shrink();
                     },
-                    loading: () => _buildSkeletonTickets(context),
-                    error: (err, _) => Text('Error: $err'),
                   ),
                   _buildFAQSection(context, textTheme),
                       ],
@@ -90,7 +97,7 @@ class HelpSupportScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildRaiseTicketSection(BuildContext context, WidgetRef ref, TextTheme textTheme) {
+  Widget _buildRaiseTicketSection(BuildContext context, TextTheme textTheme) {
     return Container(
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -119,7 +126,7 @@ class HelpSupportScreen extends ConsumerWidget {
                 Text('Having trouble with the app or your account?', style: textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.7))),
                 SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () => _showRaiseTicketSheet(context, ref),
+                  onPressed: () => _showRaiseTicketSheet(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.surface,
                     foregroundColor: Theme.of(context).colorScheme.primary,
@@ -137,7 +144,7 @@ class HelpSupportScreen extends ConsumerWidget {
     );
   }
 
-  void _showRaiseTicketSheet(BuildContext context, WidgetRef ref) {
+  void _showRaiseTicketSheet(BuildContext context) {
     final titleCtrl = TextEditingController();
     final descCtrl = TextEditingController();
     String category = 'Bug Report';
@@ -180,14 +187,15 @@ class HelpSupportScreen extends ConsumerWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () async {
+                      onPressed: () {
                         if (titleCtrl.text.isEmpty || descCtrl.text.isEmpty) return;
-                        final success = await ref.read(supportProvider.notifier).createTicket(
-                          title: titleCtrl.text,
-                          description: descCtrl.text,
+                        context.read<SupportBloc>().add(CreateSupportTicket(
+                          subject: titleCtrl.text,
+                          message: descCtrl.text,
                           category: category,
-                        );
-                        if (success && context.mounted) {
+                          priority: 'MEDIUM',
+                        ));
+                        if (context.mounted) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ticket raised successfully')));
                         }

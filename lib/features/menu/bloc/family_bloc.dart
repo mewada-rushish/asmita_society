@@ -8,6 +8,9 @@ class FamilyBloc extends Bloc<FamilyEvent, FamilyState> {
 
   FamilyBloc({required this.repository}) : super(FamilyInitial()) {
     on<LoadFamily>(_onLoadFamily);
+    on<AddFamilyMember>(_onAddFamilyMember);
+    on<UpdateFamilyMember>(_onUpdateFamilyMember);
+    on<DeleteFamilyMember>(_onDeleteFamilyMember);
   }
 
   Future<void> _onLoadFamily(LoadFamily event, Emitter<FamilyState> emit) async {
@@ -18,5 +21,37 @@ class FamilyBloc extends Bloc<FamilyEvent, FamilyState> {
     } catch (e) {
       emit(FamilyError(e.toString()));
     }
+  }
+
+  Future<void> _onAddFamilyMember(AddFamilyMember event, Emitter<FamilyState> emit) async {
+    try {
+      final success = await repository.addFamilyMember(
+        name: event.name,
+        relationship: event.relationship,
+        contactNumber: event.contactNumber,
+        isEmergencyContact: event.isEmergencyContact,
+      );
+      if (success != null) add(const LoadFamily(showLoading: false));
+    } catch (_) {}
+  }
+
+  Future<void> _onUpdateFamilyMember(UpdateFamilyMember event, Emitter<FamilyState> emit) async {
+    try {
+      final success = await repository.updateFamilyMember(
+        event.id,
+        name: event.name,
+        relationship: event.relationship,
+        contactNumber: event.contactNumber,
+        isEmergencyContact: event.isEmergencyContact,
+      );
+      if (success) add(const LoadFamily(showLoading: false));
+    } catch (_) {}
+  }
+
+  Future<void> _onDeleteFamilyMember(DeleteFamilyMember event, Emitter<FamilyState> emit) async {
+    try {
+      final success = await repository.deleteFamilyMember(event.id);
+      if (success) add(const LoadFamily(showLoading: false));
+    } catch (_) {}
   }
 }

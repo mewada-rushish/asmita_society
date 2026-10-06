@@ -1,16 +1,18 @@
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
-import 'package:asmita_society/features/menu/presentation/providers/society_provider.dart';
+import 'package:asmita_society/features/menu/bloc/society_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/society_state.dart';
+import 'package:asmita_society/features/menu/bloc/society_event.dart';
 import 'package:asmita_society/features/menu/data/models/committee_member_model.dart';
 
-class CommitteeMembersScreen extends ConsumerWidget {
+class CommitteeMembersScreen extends StatelessWidget {
   final ValueChanged<int>? onNavigateToTab;
   final VoidCallback? onNavigateToCommunity;
   final VoidCallback? onNavigateToSearch;
@@ -23,9 +25,8 @@ class CommitteeMembersScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final committeeState = ref.watch(committeeProvider);
     
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -51,45 +52,51 @@ class CommitteeMembersScreen extends ConsumerWidget {
             ),
             const AsmitaSubHeader(title: 'Committee Members'),
             Expanded(
-              child: committeeState.when(
-                data: (members) {
-                  if (members.isEmpty) {
-                    return Center(
-                      child: Text('No committee members found.', style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color)),
-                    );
-                  }
-                  return CustomScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                    slivers: [
-                      AsmitaAnimatedRefresh(
-                        onRefresh: () async {
-                          ref.invalidate(committeeProvider);
-                          await Future.delayed(const Duration(milliseconds: 1000));
-                        },
-                      ),
-                      SliverPadding(
-                        padding: EdgeInsets.all(16),
-                        sliver: SliverGrid(
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                            mainAxisExtent: 205,
-                          ),
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final member = members[index];
-                              return _buildMemberCard(context, textTheme, member);
-                            },
-                            childCount: members.length,
+              child: BlocBuilder<SocietyBloc, SocietyState>(
+                builder: (context, societyState) {
+                  if (societyState is SocietyLoading || societyState is SocietyInitial) {
+                    return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+                  } else if (societyState is SocietyError) {
+                    return Center(child: Text('Error: ${societyState.message}', style: TextStyle(color: Colors.red)));
+                  } else if (societyState is SocietyLoaded) {
+                    final members = societyState.committeeMembers;
+                    if (members.isEmpty) {
+                      return Center(
+                        child: Text('No committee members found.', style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color)),
+                      );
+                    }
+                    return CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                      slivers: [
+                        AsmitaAnimatedRefresh(
+                          onRefresh: () async {
+                            context.read<SocietyBloc>().add(const LoadSocietyData());
+                            await Future.delayed(const Duration(milliseconds: 1000));
+                          },
+                        ),
+                        SliverPadding(
+                          padding: EdgeInsets.all(16),
+                          sliver: SliverGrid(
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              mainAxisExtent: 205,
+                            ),
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final member = members[index];
+                                return _buildMemberCard(context, textTheme, member);
+                              },
+                              childCount: members.length,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  );
+                      ],
+                    );
+                  }
+                  return const SizedBox.shrink();
                 },
-                loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
-                error: (err, _) => Center(child: Text('Error: $err', style: TextStyle(color: Colors.red))),
               ),
             ),
           ],

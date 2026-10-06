@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
-import 'package:flutter_bloc/flutter_bloc.dart' as bloc;
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../bloc/community_state.dart';
-import '../providers/community_provider.dart';
+import '../../bloc/community_bloc.dart';
+import '../../bloc/community_event.dart';
 import 'chat_list_sliver.dart';
 import '../composer/chat_composer.dart';
 
-class CommunityScreen extends ConsumerStatefulWidget {
+class CommunityScreen extends StatefulWidget {
   final VoidCallback? onNavigateToSearch;
   final VoidCallback? onNavigateToCommunity;
 
@@ -24,18 +23,16 @@ class CommunityScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<CommunityScreen> createState() => _CommunityScreenState();
+  State<CommunityScreen> createState() => _CommunityScreenState();
 }
 
-class _CommunityScreenState extends ConsumerState<CommunityScreen> {
+class _CommunityScreenState extends State<CommunityScreen> {
   final ScrollController _scrollController = ScrollController();
-  CommunityNotifier? _notifier;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _notifier = ref.read(communityProvider.notifier);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authState = context.read<AuthBloc>().state;
@@ -45,10 +42,10 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
         userId = authState.user.userId;
         userName = authState.user.fullName;
       }
-      _notifier?.loadMessages(currentUserId: userId, currentUserName: userName);
+      context.read<CommunityBloc>().add(LoadCommunityMessages(currentUserId: userId, currentUserName: userName));
     });
 
-    _notifier?.startPolling(
+    context.read<CommunityBloc>().add(StartPolling(
       isAtBottom: () {
         if (!mounted) return false;
         if (_scrollController.hasClients) {
@@ -57,7 +54,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
         }
         return true;
       },
-    );
+    ));
   }
 
   void _onScroll() {
@@ -65,11 +62,11 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
       // maxScrollExtent is the TOP of the physical screen (oldest messages)
       if (_scrollController.position.pixels >=
           _scrollController.position.maxScrollExtent - 100) {
-        final state = ref.read(communityProvider);
+        final state = context.read<CommunityBloc>().state;
         if (state is CommunityLoaded &&
             !state.hasReachedMax &&
             !state.isLoadingMore) {
-          _notifier?.loadMoreMessages();
+          context.read<CommunityBloc>().add(LoadMoreCommunityMessages());
         }
       }
     }
@@ -79,7 +76,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
-    _notifier?.stopPolling();
+    if (mounted) {
+      context.read<CommunityBloc>().add(StopPolling());
+    }
     super.dispose();
   }
 
@@ -92,11 +91,11 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(communityProvider);
-
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      extendBody: true,
+    return BlocBuilder<CommunityBloc, CommunityState>(
+      builder: (context, state) {
+        return Scaffold(
+          extendBodyBehindAppBar: true,
+          extendBody: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: _buildAppBar(state),
       body: Column(
@@ -154,12 +153,10 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                                     currentUserId = authState.user.userId;
                                     currentUserName = authState.user.fullName;
                                   }
-                                  ref
-                                      .read(communityProvider.notifier)
-                                      .loadMessages(
-                                        currentUserId: currentUserId,
-                                        currentUserName: currentUserName,
-                                      );
+                                  context.read<CommunityBloc>().add(LoadCommunityMessages(
+                                    currentUserId: currentUserId,
+                                    currentUserName: currentUserName,
+                                  ));
                                 },
                                 icon: const Icon(Icons.refresh),
                                 label: const Text('Retry'),
@@ -285,9 +282,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                                                   SnackBarBehavior.floating,
                                             ),
                                           );
-                                          ref
-                                              .read(communityProvider.notifier)
-                                              .clearSelection();
+                                          if (mounted) {
+                                            context.read<CommunityBloc>().add(ClearMessageSelection());
+                                          }
                                         }
                                       },
                                     ),
@@ -295,9 +292,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                                     _buildFloatingAction(
                                       icon: Icons.delete_outline_rounded,
                                       onTap: () {
-                                        ref
-                                            .read(communityProvider.notifier)
-                                            .deleteSelectedMessages();
+                                        context.read<CommunityBloc>().add(DeleteSelectedMessages());
                                       },
                                       isDestructive: true,
                                     ),
@@ -316,6 +311,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
         ],
       ),
     );
+  });
   }
 
   Widget _buildFloatingAction({

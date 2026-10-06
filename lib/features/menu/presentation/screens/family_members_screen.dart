@@ -2,16 +2,19 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/family_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/family_event.dart';
+import 'package:asmita_society/features/menu/bloc/family_state.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
-import 'package:asmita_society/features/menu/presentation/providers/family_provider.dart';
+
 import 'package:asmita_society/features/menu/data/models/family_member_model.dart';
 
-class FamilyMembersScreen extends ConsumerWidget {
+class FamilyMembersScreen extends StatelessWidget {
   final ValueChanged<int>? onNavigateToTab;
   final VoidCallback? onNavigateToCommunity;
   final VoidCallback? onNavigateToSearch;
@@ -24,9 +27,9 @@ class FamilyMembersScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final familyState = ref.watch(familyProvider);
+    
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -40,7 +43,7 @@ class FamilyMembersScreen extends ConsumerWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddEditSheet(context, ref),
+        onPressed: () => _showAddEditSheet(context),
         backgroundColor: Theme.of(context).colorScheme.primary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Icon(CupertinoIcons.add, color: Theme.of(context).colorScheme.surface),
@@ -58,14 +61,22 @@ class FamilyMembersScreen extends ConsumerWidget {
             ),
             const AsmitaSubHeader(title: 'Family Members'),
             Expanded(
-              child: familyState.when(
-                data: (members) {
-                  return CustomScrollView(
+              child: BlocBuilder<FamilyBloc, FamilyState>(
+                builder: (context, state) {
+                  if (state is FamilyLoading) {
+                    return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+                  } else if (state is FamilyError) {
+                    return Center(
+                  child: Text('Error: ${state.message}', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
+                );
+                  } else if (state is FamilyLoaded) {
+                    final members = state.items;
+                    return CustomScrollView(
                     physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                     slivers: [
                       AsmitaAnimatedRefresh(
                         onRefresh: () async {
-                          ref.invalidate(familyProvider);
+                          context.read<FamilyBloc>().add(const LoadFamily());
                           await Future.delayed(const Duration(milliseconds: 1000));
                         },
                       ),
@@ -90,7 +101,7 @@ class FamilyMembersScreen extends ConsumerWidget {
                             ),
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
-                                return _buildFamilyGridCard(context, ref, textTheme, members[index]);
+                                return _buildFamilyGridCard(context, textTheme, members[index]);
                               },
                               childCount: members.length,
                             ),
@@ -98,11 +109,9 @@ class FamilyMembersScreen extends ConsumerWidget {
                         ),
                     ],
                   );
+                  }
+                  return const SizedBox.shrink();
                 },
-                loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
-                error: (error, _) => Center(
-                  child: Text('Error: $error', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
-                ),
               ),
             ),
           ],
@@ -111,7 +120,7 @@ class FamilyMembersScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildFamilyGridCard(BuildContext context, WidgetRef ref, TextTheme textTheme, FamilyMemberModel member) {
+  Widget _buildFamilyGridCard(BuildContext context, TextTheme textTheme, FamilyMemberModel member) {
     final isPrimary = member.id == -1 || member.relationship == 'Primary';
 
     return GestureDetector(
@@ -121,7 +130,7 @@ class FamilyMembersScreen extends ConsumerWidget {
             const SnackBar(content: Text('Primary member profile can be edited from the Profile section')),
           );
         } else {
-          _showMemberOptions(context, ref, member);
+          _showMemberOptions(context, member);
         }
       },
       child: Container(
@@ -194,7 +203,7 @@ class FamilyMembersScreen extends ConsumerWidget {
     );
   }
 
-  void _showMemberOptions(BuildContext context, WidgetRef ref, FamilyMemberModel member) {
+  void _showMemberOptions(BuildContext context, FamilyMemberModel member) {
     showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) => SafeArea(
@@ -206,14 +215,14 @@ class FamilyMembersScreen extends ConsumerWidget {
             child: Text('Edit Member'),
             onPressed: () {
               Navigator.pop(context);
-              _showAddEditSheet(context, ref, member: member);
+              _showAddEditSheet(context, member: member);
             },
           ),
           CupertinoActionSheetAction(
             isDestructiveAction: true,
             onPressed: () {
               Navigator.pop(context);
-              _confirmDelete(context, ref, member);
+              _confirmDelete(context, member);
             },
             child: Text('Delete Member'),
           ),
@@ -229,7 +238,7 @@ class FamilyMembersScreen extends ConsumerWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, WidgetRef ref, FamilyMemberModel member) {
+  void _confirmDelete(BuildContext context, FamilyMemberModel member) {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
@@ -245,7 +254,7 @@ class FamilyMembersScreen extends ConsumerWidget {
             child: Text('Delete'),
             onPressed: () {
               Navigator.pop(context);
-              ref.read(familyProvider.notifier).deleteMember(member.id);
+              context.read<FamilyBloc>().add(DeleteFamilyMember(member.id));
             },
           ),
         ],
@@ -253,7 +262,7 @@ class FamilyMembersScreen extends ConsumerWidget {
     );
   }
 
-  void _showAddEditSheet(BuildContext context, WidgetRef ref, {FamilyMemberModel? member}) {
+  void _showAddEditSheet(BuildContext context, {FamilyMemberModel? member}) {
     final nameCtrl = TextEditingController(text: member?.name ?? '');
     final contactCtrl = TextEditingController(text: member?.contactNumber ?? '');
     String selectedRel = member?.relationship ?? 'Spouse';
@@ -478,38 +487,38 @@ class FamilyMembersScreen extends ConsumerWidget {
                           return;
                         }
 
-                        final notifier = ref.read(familyProvider.notifier);
+                        final bloc = context.read<FamilyBloc>();
                         
                         setState(() => isLoading = true);
                         
-                        bool success;
                         if (member == null) {
-                          success = await notifier.addMember(
+                          bloc.add(AddFamilyMember(
                             name: name, 
                             relationship: selectedRel, 
                             contactNumber: contact,
-                            isEmergencyContact: isEmergency
-                          );
+                            isEmergencyContact: isEmergency,
+                          ));
                         } else {
-                          success = await notifier.updateMember(
-                            member.id, 
+                          bloc.add(UpdateFamilyMember(
+                            id: member.id, 
                             name: name, 
                             relationship: selectedRel, 
                             contactNumber: contact,
-                            isEmergencyContact: isEmergency
-                          );
+                            isEmergencyContact: isEmergency,
+                          ));
                         }
+                        
+                        // Give bloc time to process
+                        await Future.delayed(const Duration(milliseconds: 500));
                         
                         if (context.mounted) {
                           setState(() => isLoading = false);
-                          if (success) {
-                            AsmitaToast.show(
-                              context,
-                              message: member == null ? 'Family member saved successfully!' : 'Family member updated successfully!',
-                              type: AsmitaToastType.success,
-                            );
-                            Navigator.pop(context);
-                          }
+                          AsmitaToast.show(
+                            context,
+                            message: member == null ? 'Family member saved successfully!' : 'Family member updated successfully!',
+                            type: AsmitaToastType.success,
+                          );
+                          Navigator.pop(context);
                         }
                       },
                       child: isLoading 

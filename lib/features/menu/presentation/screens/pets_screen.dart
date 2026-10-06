@@ -1,26 +1,29 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/pets_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/pets_event.dart';
+import 'package:asmita_society/features/menu/bloc/pets_state.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
-import 'package:asmita_society/features/menu/presentation/providers/pets_provider.dart';
+
 import 'package:asmita_society/features/menu/data/models/pet_model.dart';
 import 'package:image_picker/image_picker.dart';
 
-class PetsScreen extends ConsumerWidget {
+class PetsScreen extends StatelessWidget {
   final ValueChanged<int>? onNavigateToTab;
 
   const PetsScreen({super.key, this.onNavigateToTab});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final petsState = ref.watch(petsProvider);
+    
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -34,7 +37,7 @@ class PetsScreen extends ConsumerWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddEditSheet(context, ref),
+        onPressed: () => _showAddEditSheet(context),
         backgroundColor: Theme.of(context).colorScheme.primary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Icon(CupertinoIcons.add, color: Theme.of(context).colorScheme.surface),
@@ -52,14 +55,20 @@ class PetsScreen extends ConsumerWidget {
             ),
             const AsmitaSubHeader(title: 'Pets'),
             Expanded(
-              child: petsState.when(
-                data: (pets) {
-                  return CustomScrollView(
+              child: BlocBuilder<PetsBloc, PetsState>(
+                builder: (context, state) {
+                  if (state is PetsLoading) {
+                    return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+                  } else if (state is PetsError) {
+                    return Center(child: Text('Error: ${state.message}', style: textTheme.bodyLarge?.copyWith(color: Colors.red)));
+                  } else if (state is PetsLoaded) {
+                    final pets = state.items;
+                    return CustomScrollView(
                     physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                     slivers: [
                       AsmitaAnimatedRefresh(
                         onRefresh: () async {
-                          ref.invalidate(petsProvider);
+                          context.read<PetsBloc>().add(const LoadPets());
                           await Future.delayed(const Duration(milliseconds: 1000));
                         },
                       ),
@@ -84,7 +93,7 @@ class PetsScreen extends ConsumerWidget {
                             ),
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
-                                return _buildPetGridCard(context, ref, textTheme, pets[index]);
+                                return _buildPetGridCard(context, textTheme, pets[index]);
                               },
                               childCount: pets.length,
                             ),
@@ -92,11 +101,9 @@ class PetsScreen extends ConsumerWidget {
                         ),
                     ],
                   );
+                  }
+                  return const SizedBox.shrink();
                 },
-                loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
-                error: (error, _) => Center(
-                  child: Text('Error: ', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
-                ),
               ),
             ),
           ],
@@ -105,9 +112,9 @@ class PetsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildPetGridCard(BuildContext context, WidgetRef ref, TextTheme textTheme, PetModel pet) {
+  Widget _buildPetGridCard(BuildContext context, TextTheme textTheme, PetModel pet) {
     return GestureDetector(
-      onTap: () => _showPetOptions(context, ref, pet),
+      onTap: () => _showPetOptions(context, pet),
       child: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
@@ -191,7 +198,7 @@ class PetsScreen extends ConsumerWidget {
     );
   }
 
-  void _showPetOptions(BuildContext context, WidgetRef ref, PetModel pet) {
+  void _showPetOptions(BuildContext context, PetModel pet) {
     showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) => SafeArea(
@@ -203,14 +210,14 @@ class PetsScreen extends ConsumerWidget {
             child: Text('Edit Pet'),
             onPressed: () {
               Navigator.pop(context);
-              _showAddEditSheet(context, ref, pet: pet);
+              _showAddEditSheet(context, pet: pet);
             },
           ),
           CupertinoActionSheetAction(
             isDestructiveAction: true,
             onPressed: () {
               Navigator.pop(context);
-              _confirmDelete(context, ref, pet);
+              _confirmDelete(context, pet);
             },
             child: Text('Delete Pet'),
           ),
@@ -226,7 +233,7 @@ class PetsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref, PetModel pet) async {
+  Future<void> _confirmDelete(BuildContext context, PetModel pet) async {
     final confirm = await showCupertinoDialog<bool>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
@@ -246,15 +253,13 @@ class PetsScreen extends ConsumerWidget {
       ),
     );
     
-    if (confirm == true) {
-      final success = await ref.read(petsProvider.notifier).deletePet(pet.id);
-      if (success && context.mounted) {
-        AsmitaToast.show(context, message: ' deleted', type: AsmitaToastType.success);
-      }
+    if (confirm == true && context.mounted) {
+      context.read<PetsBloc>().add(DeletePet(pet.id));
+      AsmitaToast.show(context, message: 'Pet deleted', type: AsmitaToastType.success);
     }
   }
 
-  void _showAddEditSheet(BuildContext context, WidgetRef ref, {PetModel? pet}) {
+  void _showAddEditSheet(BuildContext context, {PetModel? pet}) {
     final nameCtrl = TextEditingController(text: pet?.name ?? '');
     final breedCtrl = TextEditingController(text: pet?.breed ?? '');
     bool isVaccinated = pet?.isVaccinated ?? false;
@@ -390,37 +395,35 @@ class PetsScreen extends ConsumerWidget {
                            return;
                         }
 
-                        final notifier = ref.read(petsProvider.notifier);
+                        final bloc = context.read<PetsBloc>();
                         setState(() => isLoading = true);
                         
-                        bool success;
                         if (pet == null) {
-                          success = await notifier.addPet(
+                          bloc.add(AddPet(
                             name: name, 
                             breed: breed, 
                             isVaccinated: isVaccinated,
                             imageFile: imageFile!,
-                          );
+                          ));
                         } else {
-                          success = await notifier.updatePet(
-                            pet.id, 
+                          bloc.add(UpdatePet(
+                            id: pet.id, 
                             name: name, 
                             breed: breed, 
                             isVaccinated: isVaccinated,
                             imageFile: imageFile,
-                          );
+                          ));
                         }
                         
+                        await Future.delayed(const Duration(milliseconds: 500));
                         if (context.mounted) {
                           setState(() => isLoading = false);
-                          if (success) {
-                            AsmitaToast.show(
-                              context,
-                              message: pet == null ? 'Pet saved successfully!' : 'Pet updated successfully!',
-                              type: AsmitaToastType.success,
-                            );
-                            Navigator.pop(context);
-                          }
+                          AsmitaToast.show(
+                            context,
+                            message: pet == null ? 'Pet saved successfully!' : 'Pet updated successfully!',
+                            type: AsmitaToastType.success,
+                          );
+                          Navigator.pop(context);
                         }
                       },
                       child: isLoading 

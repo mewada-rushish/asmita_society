@@ -99,7 +99,7 @@ void main() {
     );
 
     blocTest<CommunityBloc, CommunityState>(
-      'emits updated state when LoadMoreMessages is called',
+      'emits updated state when LoadMoreCommunityMessages is called',
       build: () {
         when(() => mockCommunityRepository.getMessages(
               currentUserId: any(named: 'currentUserId'),
@@ -109,7 +109,7 @@ void main() {
         return communityBloc;
       },
       seed: () => CommunityLoaded([testMessage], hasReachedMax: false),
-      act: (bloc) => bloc.add(const LoadMoreMessages()),
+      act: (bloc) => bloc.add(LoadMoreCommunityMessages()),
       expect: () => [
         isA<CommunityLoaded>().having((s) => s.isLoadingMore, 'isLoadingMore', true),
         isA<CommunityLoaded>().having((s) => s.messages.length, 'length', 2),
@@ -316,7 +316,7 @@ void main() {
     );
 
     blocTest<CommunityBloc, CommunityState>(
-      'emits reverted state when LoadMoreMessages fails',
+      'emits reverted state when LoadMoreCommunityMessages fails',
       build: () {
         when(() => mockCommunityRepository.getMessages(
               currentUserId: any(named: 'currentUserId'),
@@ -326,7 +326,7 @@ void main() {
         return communityBloc;
       },
       seed: () => CommunityLoaded([testMessage], hasReachedMax: false),
-      act: (bloc) => bloc.add(const LoadMoreMessages()),
+      act: (bloc) => bloc.add(LoadMoreCommunityMessages()),
       expect: () => [
         isA<CommunityLoaded>().having((s) => s.isLoadingMore, 'isLoadingMore', true),
         isA<CommunityLoaded>().having((s) => s.isLoadingMore, 'isLoadingMore', false),
@@ -335,7 +335,7 @@ void main() {
 
     test('event props are correct', () {
       expect(const LoadCommunityMessages(currentUserId: 1, currentUserName: 'John').props, [1, 'John', false]);
-      expect(const LoadMoreMessages(currentUserId: 1, currentUserName: 'John').props, [1, 'John']);
+      expect(LoadMoreCommunityMessages().props, [1, 'John']);
       expect(const SendTextMessage('hello', replyToMessageId: '123', replyToContent: 'hi').props, ['hello', '123', 'hi']);
       expect(const SendAudioMessage('1:00', 'path').props, ['1:00', 'path']);
       expect(const SendPollMessage(question: 'Q', options: {'A': 0}, allowMultipleAnswers: true).props, ['Q', {'A': 0}, true]);
