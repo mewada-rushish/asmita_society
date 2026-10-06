@@ -21,7 +21,7 @@ class PermissionGate extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
-        if (state is Authenticated) {
+        if (state is AuthAuthenticated) {
           final hasPermission = state.user.permissions.contains(permissionKey);
           
           if (hasPermission) {

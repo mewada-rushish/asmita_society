@@ -12,6 +12,7 @@ import 'core/security/secure_storage_service.dart';
 import 'firebase_options.dart';
 import 'core/constants/design_system.dart';
 import 'features/auth/bloc/auth_bloc.dart';
+import 'features/auth/bloc/auth_event.dart';
 import 'features/auth/presentation/root_screen.dart';
 import 'features/community/bloc/community_post_bloc.dart';
 import 'features/visitor_management/bloc/guard_gate_bloc.dart';

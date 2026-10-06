@@ -18,6 +18,7 @@ import 'package:asmita_society/features/services/presentation/screens/daily_help
 import 'screens/search_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
+import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/services/bloc/daily_help_bloc.dart';
 import 'package:asmita_society/features/services/bloc/daily_help_event.dart';
 import 'package:asmita_society/features/services/data/repositories/daily_help_repository.dart';

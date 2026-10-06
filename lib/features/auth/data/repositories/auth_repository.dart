@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import '../../../../core/config/env_config.dart';
 import '../models/auth_response.dart';
+import '../models/user_model.dart';
 
 /// Repository responsible for authentication, OTP verification, and user onboarding.
 /// Communicates with the backend API via a secure Dio instance.
