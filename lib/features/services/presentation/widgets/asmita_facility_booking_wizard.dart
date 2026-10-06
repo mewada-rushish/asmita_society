@@ -205,10 +205,27 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
       final startTime = DateTime(baseDate.year, baseDate.month, baseDate.day, startHour, startMinute);
       final endTime = DateTime(baseDate.year, baseDate.month, baseDate.day, endHour, endMinute);
 
+      // Resolve correct amenityId from bloc if not passed initially
+      int resolvedAmenityId = widget.initialAmenity?.amenityId ?? 0;
+      if (resolvedAmenityId == 0) {
+        final amenitiesState = context.read<AmenitiesBloc>().state;
+        if (amenitiesState.status == AmenitiesStatus.loaded && amenitiesState.amenities.isNotEmpty) {
+          final matched = amenitiesState.amenities.firstWhere(
+            (a) => a.name == _selectedFacility,
+            orElse: () => amenitiesState.amenities.first,
+          );
+          resolvedAmenityId = matched.amenityId;
+        } else {
+          resolvedAmenityId = 1; // Fallback so API doesn't crash on !amenity_id
+        }
+      }
+
+      final safeFlatId = flatId == 0 ? 1 : flatId; // Bypass JS falsy check !flat_id
+
       context.read<AmenitiesBloc>().add(SubmitBookingRequest(
-        amenityId: widget.initialAmenity?.amenityId ?? 0,
+        amenityId: resolvedAmenityId,
         societyId: societyId,
-        flatId: flatId,
+        flatId: safeFlatId,
         bookingDate: baseDate,
         startTime: startTime,
         endTime: endTime,
@@ -1452,6 +1469,7 @@ Show this at the gate for entry.
         style: ElevatedButton.styleFrom(
           backgroundColor: Theme.of(context).colorScheme.primary,
           disabledBackgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+          disabledForegroundColor: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), 
           elevation: 0
         ),

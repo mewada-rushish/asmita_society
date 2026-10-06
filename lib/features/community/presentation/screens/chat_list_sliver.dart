@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../data/models/chat_message_model.dart';
 import '../messages/message_bubble_factory.dart';
 import '../messages/image_grid_bubble.dart';
-import '../providers/community_provider.dart';
+import '../../bloc/community_bloc.dart';
 import '../../bloc/community_state.dart';
+import '../../bloc/community_event.dart';
 
 class MessageGroup {
   final List<ChatMessageModel> messages;
@@ -14,7 +15,7 @@ class MessageGroup {
   MessageGroup(this.messages, {this.isImageGrid = false});
 }
 
-class ChatListSliver extends ConsumerWidget {
+class ChatListSliver extends StatelessWidget {
   final List<ChatMessageModel> messages;
   final bool isLoadingMore;
 
@@ -67,10 +68,11 @@ class ChatListSliver extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(communityProvider);
-    final selectedIds = state is CommunityLoaded ? state.selectedMessageIds : <String>{};
-    final isSelectionMode = selectedIds.isNotEmpty;
+  Widget build(BuildContext context) {
+    return BlocBuilder<CommunityBloc, CommunityState>(
+      builder: (context, state) {
+        final selectedIds = state is CommunityLoaded ? state.selectedMessageIds : <String>{};
+        final isSelectionMode = selectedIds.isNotEmpty;
 
     final groupedMessages = _groupMessages(messages);
 
@@ -115,13 +117,13 @@ class ChatListSliver extends ConsumerWidget {
               sender: group.messages.first.sender,
               isSelected: selectedIds.contains(msg.id),
               onLongPress: () {
-                ref.read(communityProvider.notifier).toggleSelection(msg.id);
+                context.read<CommunityBloc>().add(ToggleMessageSelection(msg.id));
               },
               onTap: isSelectionMode ? () {
-                ref.read(communityProvider.notifier).toggleSelection(msg.id);
+                context.read<CommunityBloc>().add(ToggleMessageSelection(msg.id));
               } : null,
               onSwipeReply: isSelectionMode ? null : () {
-                ref.read(communityProvider.notifier).setReplyTo(msg);
+                context.read<CommunityBloc>().add(SetReplyToMessage(msg));
               },
             );
           } else {
@@ -140,13 +142,13 @@ class ChatListSliver extends ConsumerWidget {
               isFailed: msg.isFailed,
               isSelected: selectedIds.contains(msg.id),
               onLongPress: () {
-                ref.read(communityProvider.notifier).toggleSelection(msg.id);
+                context.read<CommunityBloc>().add(ToggleMessageSelection(msg.id));
               },
               onTap: isSelectionMode ? () {
-                ref.read(communityProvider.notifier).toggleSelection(msg.id);
+                context.read<CommunityBloc>().add(ToggleMessageSelection(msg.id));
               } : null,
               onSwipeReply: isSelectionMode ? null : () {
-                ref.read(communityProvider.notifier).setReplyTo(msg);
+                context.read<CommunityBloc>().add(SetReplyToMessage(msg));
               },
               onTogglePlayback: () {}, // Handle audio logic later
             );
@@ -190,6 +192,8 @@ class ChatListSliver extends ConsumerWidget {
           );
         },
       ),
+    );
+      },
     );
   }
 }

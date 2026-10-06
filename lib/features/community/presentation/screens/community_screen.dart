@@ -28,10 +28,12 @@ class CommunityScreen extends StatefulWidget {
 
 class _CommunityScreenState extends State<CommunityScreen> {
   final ScrollController _scrollController = ScrollController();
+  late final CommunityBloc _communityBloc;
 
   @override
   void initState() {
     super.initState();
+    _communityBloc = context.read<CommunityBloc>();
     _scrollController.addListener(_onScroll);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -42,10 +44,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
         userId = authState.user.userId;
         userName = authState.user.fullName;
       }
-      context.read<CommunityBloc>().add(LoadCommunityMessages(currentUserId: userId, currentUserName: userName));
+      _communityBloc.add(LoadCommunityMessages(currentUserId: userId, currentUserName: userName));
     });
 
-    context.read<CommunityBloc>().add(StartPolling(
+    _communityBloc.add(StartPolling(
       isAtBottom: () {
         if (!mounted) return false;
         if (_scrollController.hasClients) {
@@ -62,11 +64,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
       // maxScrollExtent is the TOP of the physical screen (oldest messages)
       if (_scrollController.position.pixels >=
           _scrollController.position.maxScrollExtent - 100) {
-        final state = context.read<CommunityBloc>().state;
+        final state = _communityBloc.state;
         if (state is CommunityLoaded &&
             !state.hasReachedMax &&
             !state.isLoadingMore) {
-          context.read<CommunityBloc>().add(LoadMoreCommunityMessages());
+          _communityBloc.add(LoadMoreCommunityMessages());
         }
       }
     }
@@ -76,9 +78,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
-    if (mounted) {
-      context.read<CommunityBloc>().add(StopPolling());
-    }
+    _communityBloc.add(StopPolling());
     super.dispose();
   }
 

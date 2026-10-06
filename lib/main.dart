@@ -13,6 +13,8 @@ import 'core/constants/design_system.dart';
 import 'features/auth/bloc/auth_bloc.dart';
 import 'features/auth/bloc/auth_event.dart';
 import 'features/auth/presentation/root_screen.dart';
+import 'features/community/bloc/community_bloc.dart';
+import 'features/community/data/repositories/community_repository.dart';
 import 'features/community/bloc/community_post_bloc.dart';
 import 'features/visitor_management/bloc/guard_gate_bloc.dart';
 import 'core/di/injection_container.dart' as di;
@@ -43,6 +45,7 @@ import 'core/observers/crashlytics_navigation_observer.dart';
 import 'package:asmita_society/l10n/app_localizations.dart';
 
 Future<void> main() async {
+  globalNavigatorKey = GlobalKey<NavigatorState>();
   runZonedGuarded(
     () async {
       WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -106,7 +109,7 @@ Future<void> main() async {
   );
 }
 
-final GlobalKey<NavigatorState> globalNavigatorKey = GlobalKey<NavigatorState>();
+GlobalKey<NavigatorState> globalNavigatorKey = GlobalKey<NavigatorState>();
 
 class AsmitaApp extends StatefulWidget {
   final bool isDeviceSafe;
@@ -190,6 +193,9 @@ class _AsmitaAppState extends State<AsmitaApp> with WidgetsBindingObserver {
         BlocProvider<CommunityPostBloc>(
           create: (context) =>
               CommunityPostBloc(repository: di.sl())..add(LoadCommunityPosts()),
+        ),
+        BlocProvider<CommunityBloc>(
+          create: (context) => CommunityBloc(repository: di.sl<ApiCommunityRepository>()),
         ),
         BlocProvider<QuickActionsBloc>(
           create: (context) => QuickActionsBloc()..add(LoadQuickActions()),

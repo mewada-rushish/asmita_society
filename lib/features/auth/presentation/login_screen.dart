@@ -60,6 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: Theme.of(context).colorScheme.primary,
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
+          if (!context.mounted) return;
           if (state is AuthOtpSent) {
             // Added Success Toast
             AsmitaToast.show(
@@ -229,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   height: 56,
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: buttonActive ? Theme.of(context).colorScheme.primary : Theme.of(context).disabledColor,
+                                      backgroundColor: buttonActive ? Theme.of(context).colorScheme.primary : Colors.grey.shade300,
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(16),
@@ -248,13 +249,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                             Text(
                                               'Login',
                                               style: TextStyle(
-                                                color: buttonActive ? Colors.white : Colors.grey.shade500,
+                                                color: buttonActive ? Colors.white : Colors.grey.shade600,
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
                                             const SizedBox(width: 8),
-                                            Icon(Icons.arrow_forward_rounded, color: buttonActive ? Colors.white : Colors.grey.shade500, size: 20),
+                                            Icon(Icons.arrow_forward_rounded, color: buttonActive ? Colors.white : Colors.grey.shade600, size: 20),
                                           ],
                                         ),
                                   ),

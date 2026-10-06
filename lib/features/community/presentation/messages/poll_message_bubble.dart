@@ -1,10 +1,11 @@
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
-import 'package:asmita_society/features/community/presentation/providers/community_provider.dart';
+import 'package:asmita_society/features/community/bloc/community_bloc.dart';
+import 'package:asmita_society/features/community/bloc/community_event.dart';
 
-class PollMessageBubble extends ConsumerWidget {
+class PollMessageBubble extends StatelessWidget {
   final String messageId;
   final String question;
   final Map<String, int> options;
@@ -21,7 +22,7 @@ class PollMessageBubble extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     final totalVotes = options.values.fold(0, (sum, item) => sum + item);
@@ -68,7 +69,7 @@ class PollMessageBubble extends ConsumerWidget {
               padding: EdgeInsets.only(bottom: 8),
               child: InkWell(
                 onTap: () {
-                  ref.read(communityProvider.notifier).voteOnPoll(messageId, entry.key);
+                  context.read<CommunityBloc>().add(VoteOnPollMessage(messageId: messageId, option: entry.key));
                   AsmitaToast.show(
                     context,
                     message: 'Vote casted for "${entry.key}"!',

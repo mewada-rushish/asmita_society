@@ -184,8 +184,20 @@ class AuthRepository {
       final data = _ensureMap(response.data);
       
       if (data['success'] == true && data['user'] != null) {
-        // Return UserModel directly
-        return UserModel.fromJson(data['user']);
+        final Map<String, dynamic> userData = Map<String, dynamic>.from(_ensureMap(data['user']));
+        
+        // The /users/me endpoint returns flat_mappings and society at the root level
+        if (data.containsKey('flat_mappings')) {
+          userData['flat_mappings'] = data['flat_mappings'];
+        }
+        if (data.containsKey('society') && data['society'] != null) {
+          final societyData = _ensureMap(data['society']);
+          if (societyData.containsKey('society_name')) {
+            userData['society_name'] = societyData['society_name'];
+          }
+        }
+        
+        return UserModel.fromJson(userData);
       }
       
       throw Exception(data['message'] ?? 'Failed to fetch profile');

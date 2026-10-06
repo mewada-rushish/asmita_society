@@ -140,6 +140,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
 
   Widget _resolveRoleBasedHomeView(String role) {
     switch (role.toLowerCase()) {
+      case 'resident':
       case 'owner':
       case 'chairman':
       case 'secretary':
