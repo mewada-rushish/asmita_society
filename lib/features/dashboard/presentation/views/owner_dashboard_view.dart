@@ -468,12 +468,8 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                 if (state is VisitorHistoryLoaded) {
                   final today = DateTime.now();
                   final todayEntries = state.history
-                      .where((rawItem) {
-                        final item = rawItem is Map
-                            ? Map<String, dynamic>.from(rawItem)
-                            : <String, dynamic>{};
-                        final dateStr =
-                            item['created_at'] ?? item['valid_from'];
+                      .where((item) {
+                        final dateStr = item.dateStr;
                         if (dateStr == null) return false;
                         try {
                           final dt = DateTime.parse(dateStr).toLocal();
@@ -508,34 +504,18 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                     child: Padding(
                       padding: const EdgeInsets.only(top: 4.0),
                       child: Row(
-                        children: todayEntries.map((rawItem) {
-                          final item = rawItem is Map
-                              ? Map<String, dynamic>.from(rawItem)
-                              : <String, dynamic>{};
-                          final name =
-                              item['visitor_name'] ??
-                              item['title'] ??
-                              'Unknown';
-                          final company =
-                              item['company_name'] ??
-                              item['purpose'] ??
-                              'Visitor';
-                          final isPreApproved =
-                              item['record_type'] == 'PRE_APPROVED';
-                          final category =
-                              (isPreApproved
-                                      ? (item['invite_type'] ?? 'Invite')
-                                      : 'Walk-in')
-                                  .toString()
-                                  .toLowerCase();
+                        children: todayEntries.map((item) {
+                          final name = item.name;
+                          final company = item.company;
+                          final category = item.category.toLowerCase();
 
                           final authState = context.read<AuthBloc>().state;
                           final currentUserId = authState is AuthAuthenticated
                               ? authState.user.userId
                               : null;
-                          final isUnviewed = item['is_viewed'] == false;
+                          final isUnviewed = item.rawData['is_viewed'] == false;
                           final isForCurrentUser =
-                              item['resident_id'] == currentUserId;
+                              item.rawData['resident_id'] == currentUserId;
                           final showBadge = isUnviewed && isForCurrentUser;
 
                           String titleText = name;

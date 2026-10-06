@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../data/models/invite_model.dart';
+import '../data/models/visitor_history_item.dart';
 
 abstract class VisitorState extends Equatable {
   const VisitorState();
@@ -13,7 +14,7 @@ class VisitorInitial extends VisitorState {}
 class VisitorLoading extends VisitorState {}
 
 class VisitorHistoryLoaded extends VisitorState {
-  final List<dynamic> history;
+  final List<VisitorHistoryItem> history;
 
   const VisitorHistoryLoaded({required this.history});
 

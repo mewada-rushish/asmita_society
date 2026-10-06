@@ -3,8 +3,10 @@ enum AppEnvironment { development, production }
 
 /// Central configuration for API environment endpoints and base URLs.
 class EnvConfig {
-  static AppEnvironment get currentEnvironment => AppEnvironment.production;
-
+  static AppEnvironment get currentEnvironment {
+    const String env = String.fromEnvironment('APP_ENV', defaultValue: 'production');
+    return env == 'development' ? AppEnvironment.development : AppEnvironment.production;
+  }
 
   /// Resolves the base URL based on the current environment and platform.
   /// Resolves the base URL using dart-define with a fallback to production.

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
@@ -9,8 +8,8 @@ import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../data/models/amenity_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/amenities_bloc.dart';
-import '../../../../core/network/dio_client.dart';
-import '../../../../core/security/secure_storage_service.dart';
+import '../../bloc/amenities_state.dart';
+import '../../bloc/amenities_event.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
 import 'package:share_plus/share_plus.dart';
@@ -176,7 +175,6 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
       final user = authState.user;
       final flatId = user.flatMappings.isNotEmpty ? user.flatMappings.first.flatId : 0;
       final societyId = user.societyId ?? 0;
-      final userId = user.userId;
 
       // Extract start and end times from _selectedTimeSlot (e.g., "18:00 - 19:00" or "1:28 PM - 2:28 PM")
       final timeParts = _selectedTimeSlot!.split(' - ');
@@ -207,63 +205,55 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
       final startTime = DateTime(baseDate.year, baseDate.month, baseDate.day, startHour, startMinute);
       final endTime = DateTime(baseDate.year, baseDate.month, baseDate.day, endHour, endMinute);
 
-      final payload = {
-        'amenity_id': widget.initialAmenity?.amenityId ?? 0,
-        'society_id': societyId,
-        'user_id': userId,
-        'flat_id': flatId,
-        'booking_date': baseDate.toIso8601String(),
-        'start_time': startTime.toIso8601String(),
-        'end_time': endTime.toIso8601String(),
-      };
-
-      final jsonString = const JsonEncoder.withIndent('  ').convert(payload);
-      developer.log('\n=== BOOKING SUBMISSION PAYLOAD ===\n$jsonString\n==================================\n', name: 'BookingWizard');
-      
-      // Perform the actual API call
-      setState(() => _isClosing = true);
-      
-      final dio = AsmitaDioClient(SecureStorageService()).dio;
-      final response = await dio.post('/app-api/amenities/book', data: payload);
-      
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        if (mounted) {
-          setState(() => _isClosing = false);
-          _nextStep();
-        }
-      } else {
-        throw Exception('Failed to submit booking');
-      }
+      context.read<AmenitiesBloc>().add(SubmitBookingRequest(
+        amenityId: widget.initialAmenity?.amenityId ?? 0,
+        societyId: societyId,
+        flatId: flatId,
+        bookingDate: baseDate,
+        startTime: startTime,
+        endTime: endTime,
+      ));
     } catch (e) {
-      if (mounted) {
-        setState(() => _isClosing = false);
-        AsmitaToast.show(context, message: 'Failed to submit booking: $e', type: AsmitaToastType.error);
-      }
       developer.log('Error creating payload: $e', name: 'BookingWizard', error: e);
+      AsmitaToast.show(context, message: 'Invalid date/time format.', type: AsmitaToastType.error);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.65,
-      ),
-      child: SingleChildScrollView(
-        controller: _scrollController,
-        physics: const BouncingScrollPhysics(),
-        child: AnimatedSize(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeInOutCubic,
-          alignment: Alignment.topCenter,
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.viewInsetsOf(context).bottom > 0 ? 16.0 : 0.0,
-            ),
-            child: _buildCurrentStep(),
+    return BlocConsumer<AmenitiesBloc, AmenitiesState>(
+      listenWhen: (previous, current) => previous.isSubmittingBooking != current.isSubmittingBooking,
+      listener: (context, state) {
+        if (!state.isSubmittingBooking) {
+          if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
+            AsmitaToast.show(context, message: 'Failed to submit booking: ${state.errorMessage}', type: AsmitaToastType.error);
+          } else if (state.bookingSuccessMessage != null && state.bookingSuccessMessage!.isNotEmpty) {
+            _nextStep();
+          }
+        }
+      },
+      builder: (context, state) {
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.65,
           ),
-        ),
-      ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(),
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOutCubic,
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.viewInsetsOf(context).bottom > 0 ? 16.0 : 0.0,
+                ),
+                child: _buildCurrentStep(),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1451,18 +1441,21 @@ Show this at the gate for entry.
   }
 
   Widget _buildPrimaryButton({required String label, VoidCallback? onPressed}) {
+    final isSubmitting = context.watch<AmenitiesBloc>().state.isSubmittingBooking;
+    final isDisabled = _isClosing || isSubmitting;
+    
     return SizedBox(
       width: double.infinity,
       height: 52, 
       child: ElevatedButton(
-        onPressed: _isClosing ? null : onPressed,
+        onPressed: isDisabled ? null : onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: Theme.of(context).colorScheme.primary,
           disabledBackgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), 
           elevation: 0
         ),
-        child: _isClosing
+        child: isDisabled
             ? SizedBox(
                 width: 24,
                 height: 24,

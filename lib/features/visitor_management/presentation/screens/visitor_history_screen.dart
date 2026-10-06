@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/visitor_bloc.dart';
 import '../../bloc/visitor_event.dart';
 import '../../bloc/visitor_state.dart';
+import '../../data/models/visitor_history_item.dart';
 import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_state.dart';
 import 'package:intl/intl.dart';
@@ -84,33 +85,24 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
     }
   }
 
-  Map<String, dynamic> _normalizeItem(dynamic rawItem, String currentUserName) {
-    final item = rawItem is Map
-        ? Map<String, dynamic>.from(rawItem)
-        : <String, dynamic>{};
-    final isPreApproved = item['record_type'] == 'PRE_APPROVED';
+  Map<String, dynamic> _normalizeItem(VisitorHistoryItem item, String currentUserName) {
+    final isPreApproved = item.isPreApproved;
 
-    final name = item['visitor_name'] ?? item['title'] ?? 'Unknown';
-    final company = item['company_name'] ?? item['purpose'] ?? 'Visitor';
-    final category = isPreApproved
-        ? (item['invite_type'] ?? 'Invite')
-        : (item['visitor_type_name'] ?? 'Walk-in');
+    final name = item.name;
+    final company = item.company;
+    final category = item.category;
 
-    final entryTimeStr = item['checkin_at'] ?? item['start_time'];
-    final exitTimeStr = item['checkout_at'] ?? item['end_time'];
-    final dateStr = item['created_at'] ?? item['valid_from'];
+    final entryTime = _formatTime(item.dateStr, item.entryTimeStr);
+    final exitTime = _formatTime(item.dateStr, item.exitTimeStr);
+    final date = _formatDate(item.dateStr);
 
-    final entryTime = _formatTime(dateStr, entryTimeStr);
-    final exitTime = _formatTime(dateStr, exitTimeStr);
-    final date = _formatDate(dateStr);
-
-    String status = item['status'] ?? 'Pending';
+    String status = item.status;
     final gate = isPreApproved ? 'Pre-Approved' : 'Main Gate';
 
-    String? validToRaw = item['valid_to'];
+    String? validToRaw = item.validToRaw;
     if (validToRaw != null &&
-        item['invite_sub_type']?.toString().toUpperCase() == 'FREQUENT') {
-      DateTime? validToDate = DateTime.tryParse(validToRaw.toString());
+        item.inviteSubType == 'FREQUENT') {
+      DateTime? validToDate = DateTime.tryParse(validToRaw);
       if (validToDate != null) {
         DateTime now = DateTime.now();
         DateTime today = DateTime(now.year, now.month, now.day);
@@ -126,15 +118,15 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
     }
 
     bool isOutsideSchedule = false;
-    String? allowedDays = item['allowed_days'];
-    String? startTime = item['start_time'];
-    String? endTime = item['end_time'];
+    String? allowedDays = item.allowedDays;
+    String? startTime = item.startTime;
+    String? endTime = item.endTime;
     if (allowedDays != null &&
         startTime != null &&
         endTime != null &&
-        item['created_at'] != null) {
+        item.dateStr != null) {
       DateTime entryDateTime =
-          DateTime.tryParse(item['created_at'].toString()) ?? DateTime.now();
+          DateTime.tryParse(item.dateStr!) ?? DateTime.now();
       String dayOfWeek = DateFormat('E').format(entryDateTime); // e.g., 'Mon'
       bool validDay = allowedDays.contains(dayOfWeek);
 
@@ -162,27 +154,27 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
     IconData icon = Icons.person_rounded;
     Color brandColor = Theme.of(context).colorScheme.primary;
 
-    if (category.toString().toLowerCase() == 'delivery') {
+    if (category.toLowerCase() == 'delivery') {
       icon = Icons.local_shipping_rounded;
-      if (company.toString().toLowerCase().contains('amazon')) {
+      if (company.toLowerCase().contains('amazon')) {
         brandColor = const Color(0xFFFF9900);
-      } else if (company.toString().toLowerCase().contains('zomato')) {
+      } else if (company.toLowerCase().contains('zomato')) {
         icon = Icons.fastfood_rounded;
         brandColor = const Color(0xFFCB202D);
-      } else if (company.toString().toLowerCase().contains('swiggy')) {
+      } else if (company.toLowerCase().contains('swiggy')) {
         icon = Icons.fastfood_rounded;
         brandColor = const Color(0xFFFC8019);
       }
-    } else if (company.toString().toLowerCase().contains('uber') ||
-        category.toString().toLowerCase().contains('cab')) {
+    } else if (company.toLowerCase().contains('uber') ||
+        category.toLowerCase().contains('cab')) {
       icon = Icons.directions_car_rounded;
       brandColor = Colors.black;
     }
 
     // Default title is name, but for Cab/Delivery/Guest it should be the company/purpose
     String titleText = name;
-    if (category.toString().toLowerCase() == 'delivery' ||
-        category.toString().toLowerCase() == 'cab' ||
+    if (category.toLowerCase() == 'delivery' ||
+        category.toLowerCase() == 'cab' ||
         icon != Icons.person_rounded ||
         name.toLowerCase().contains('invite')) {
       titleText = company;
@@ -216,16 +208,16 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
       'status': status,
       'icon': icon,
       'brandColor': brandColor,
-      'inviteSubType': item['invite_sub_type']?.toString().toUpperCase(),
+      'inviteSubType': item.inviteSubType,
       'allowedDays': allowedDays,
       'startTime': startTime,
       'endTime': endTime,
-      'validTo': item['valid_to'] != null
-          ? _formatDate(item['valid_to'].toString())
+      'validTo': item.validToRaw != null
+          ? _formatDate(item.validToRaw)
           : null,
-      'vehicleNumber': item['vehicle_number'],
-      'maxGuestCount': item['max_guest_count'],
-      'isPrivate': item['is_private'] == true,
+      'vehicleNumber': item.vehicleNumber,
+      'maxGuestCount': item.maxGuestCount,
+      'isPrivate': item.isPrivate,
       'isOutsideSchedule': isOutsideSchedule,
     };
   }
@@ -970,20 +962,12 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                   );
                 }
 
-                var rawHistory = state is VisitorHistoryLoaded
+                var historyList = state is VisitorHistoryLoaded
                     ? state.history
-                    : [];
+                    : <VisitorHistoryItem>[];
                 if (widget.filterCategory != null) {
-                  rawHistory = rawHistory.where((item) {
-                    final rawItem = item is Map
-                        ? Map<String, dynamic>.from(item)
-                        : <String, dynamic>{};
-                    final isPreApproved =
-                        rawItem['record_type'] == 'PRE_APPROVED';
-                    final category = isPreApproved
-                        ? (rawItem['invite_type'] ?? 'Invite')
-                        : 'Walk-in';
-                    return category.toString().toLowerCase() ==
+                  historyList = historyList.where((item) {
+                    return item.category.toLowerCase() ==
                         widget.filterCategory!.toLowerCase();
                   }).toList();
                 }
@@ -1001,7 +985,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                         ); // UX delay
                       },
                     ),
-                    if (rawHistory.isEmpty)
+                    if (historyList.isEmpty)
                       SliverFillRemaining(
                         hasScrollBody: false,
                         child: Center(
@@ -1020,12 +1004,12 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                       SliverPadding(
                         padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 160),
                         sliver: SliverList.separated(
-                          itemCount: rawHistory.length,
+                          itemCount: historyList.length,
                           separatorBuilder: (context, index) =>
                               const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final item = _normalizeItem(
-                              rawHistory[index],
+                              historyList[index],
                               currentUserName,
                             );
                             return InkWell(

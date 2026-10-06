@@ -49,8 +49,8 @@ void main() {
 
       final history = await repository.getMyHistory(residentId: 1);
       expect(history.length, 2);
-      expect(history.first['record_type'], 'WALK_IN'); // sorted descending by default
-      expect(history.last['record_type'], 'PRE_APPROVED');
+      expect(history.first.rawData['record_type'], 'WALK_IN'); // sorted descending by default
+      expect(history.last.rawData['record_type'], 'PRE_APPROVED');
     });
 
     test('getMyHistory safely handles HTML non-JSON response on 404', () async {

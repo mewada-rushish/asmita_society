@@ -4,6 +4,8 @@ import '../models/invite_model.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 
+import '../models/visitor_history_item.dart';
+
 class VisitorRepository {
   final Dio _dio;
 
@@ -40,7 +42,7 @@ class VisitorRepository {
   }
 
   /// Fetches resident's pre-approved invites and on-the-spot visitor requests
-  Future<List<dynamic>> getMyHistory({
+  Future<List<VisitorHistoryItem>> getMyHistory({
     required int residentId,
     String? status,
     DateTime? startDate,
@@ -68,19 +70,19 @@ class VisitorRepository {
       debugPrint('Invites Response: ${invitesResp.statusCode} ${invitesResp.data}');
       debugPrint('Requests Response: ${requestsResp.statusCode} ${requestsResp.data}');
 
-      final List<dynamic> mergedHistory = [];
+      final List<Map<String, dynamic>> mergedHistory = [];
 
       if (invitesResp.statusCode == 200) {
         final data = invitesResp.data;
         if (data is Map) {
           final invitesList = (data['invites'] ?? data['entries'] ?? data['data'] ?? []) as List<dynamic>;
           mergedHistory.addAll(invitesList.map((e) => {
-            ...e,
+            ...(e as Map<String, dynamic>),
             'record_type': 'PRE_APPROVED'
           }));
         } else if (data is List) {
           mergedHistory.addAll(data.map((e) => {
-            ...e,
+            ...(e as Map<String, dynamic>),
             'record_type': 'PRE_APPROVED'
           }));
         } else {
@@ -93,12 +95,12 @@ class VisitorRepository {
         if (data is Map) {
           final requestsList = (data['requests'] ?? data['entries'] ?? data['data'] ?? []) as List<dynamic>;
           mergedHistory.addAll(requestsList.map((e) => {
-            ...e,
+            ...(e as Map<String, dynamic>),
             'record_type': 'WALK_IN'
           }));
         } else if (data is List) {
           mergedHistory.addAll(data.map((e) => {
-            ...e,
+            ...(e as Map<String, dynamic>),
             'record_type': 'WALK_IN'
           }));
         } else {
@@ -114,7 +116,7 @@ class VisitorRepository {
       });
 
       debugPrint('mergedHistory count: ${mergedHistory.length}');
-      return mergedHistory;
+      return mergedHistory.map((e) => VisitorHistoryItem.fromJson(e)).toList();
     } on DioException catch (e) {
       String msg = 'Network error fetching history';
       if (e.response?.data != null) {
