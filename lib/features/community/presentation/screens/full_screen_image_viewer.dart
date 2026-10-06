@@ -4,7 +4,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/features/community/data/models/chat_message_model.dart';
 import 'package:gal/gal.dart';
-import 'package:dio/dio.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/network/dio_client.dart';
 
 class FullScreenImageViewer extends StatefulWidget {
   final List<ChatMessageModel> imageMessages;
@@ -82,7 +83,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
           final tempDir = Directory.systemTemp;
           final savePath =
               '${tempDir.path}/downloaded_image_${DateTime.now().microsecondsSinceEpoch}.jpg';
-          await Dio().download(path, savePath);
+          await sl<AsmitaDioClient>().dio.download(path, savePath);
           await Gal.putImage(savePath);
         } else {
           await Gal.putImage(path);
