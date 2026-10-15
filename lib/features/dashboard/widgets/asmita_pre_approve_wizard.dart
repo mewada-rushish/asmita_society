@@ -41,6 +41,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   List<FlatMapping> _societyFlats = [];
   bool _isLoadingFlats = false;
 
+  List<Map<String, dynamic>> _meetingRooms = [];
+  int? _selectedMeetingRoomId;
+  String? _selectedMeetingRoomName;
+  bool _isHostAbsent = false;
+
   List<Map<String, dynamic>> _getTowers() {
     final towers = <int, String>{};
     for (final flat in _societyFlats) {
@@ -150,11 +155,39 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 .toList();
           });
         }
+        if (societyId != null) {
+          _fetchMeetingRooms(societyId);
+        }
       }
     } catch (e) {
       debugPrint('Error fetching flats: $e');
     } finally {
       setState(() => _isLoadingFlats = false);
+    }
+  }
+
+  Future<void> _fetchMeetingRooms(int societyId) async {
+    try {
+      final response = await sl<AsmitaDioClient>().dio.get(
+        '${EnvConfig.baseUrl}/app-api/amenities',
+        queryParameters: {'society_id': societyId, 'type': 'meeting_room'},
+      );
+      if (response.statusCode == 200) {
+        dynamic data = response.data;
+        if (data is String) data = jsonDecode(data);
+        final list = (data is Map && data['data'] is List) ? (data['data'] as List) : [];
+        if (mounted) {
+          setState(() {
+            _meetingRooms = list.map<Map<String, dynamic>>((m) => {
+              'id': m['amenity_id'] is int ? m['amenity_id'] : int.tryParse(m['amenity_id']?.toString() ?? '0') ?? 0,
+              'name': m['name']?.toString() ?? '',
+              'floor': (m['custom_fields'] is Map) ? m['custom_fields']['floor'] : null,
+            }).toList();
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching meeting rooms: $e');
     }
   }
 
@@ -230,6 +263,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             : (_selectedCategory == 'Cab' ? 'Cab' : _selectedCompany),
         'vehicle_number': _cabNoController.text.trim(),
         'no_of_visitors': _selectedCategory == 'Guest' ? _guestCount : 1,
+        'meeting_room_id': _selectedMeetingRoomId,
+        'meeting_room_name': _selectedMeetingRoomName,
+        'is_host_absent': _isHostAbsent,
       }).toList();
       context.read<GuardGateBloc>().add(SubmitWalkInVisitor(payloads));
       return;
@@ -577,6 +613,71 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 ),
               ],
             ),
+          if (widget.isGuardMode && _meetingRooms.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: _showMeetingRoomPicker,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _selectedMeetingRoomName ?? 'Allot Meeting Room (Optional)',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 14,
+                          color: _selectedMeetingRoomName != null
+                              ? Theme.of(context).colorScheme.onSurface
+                              : Colors.grey.shade600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Icon(
+                      Icons.meeting_room_outlined,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: () => setState(() => _isHostAbsent = !_isHostAbsent),
+              child: Row(
+                children: [
+                  SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: Checkbox(
+                      value: _isHostAbsent,
+                      activeColor: Theme.of(context).colorScheme.primary,
+                      onChanged: (val) => setState(() => _isHostAbsent = val ?? false),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Host is absent (Escalate to Team Lead)',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
         ],
         Text(
@@ -920,6 +1021,71 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             ],
           );
         },
+      ),
+    );
+  }
+
+  void _showMeetingRoomPicker() {
+    if (_meetingRooms.isEmpty) return;
+
+    showAsmitaBottomSheet(
+      context: context,
+      title: 'Allot Meeting Room',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.not_interested, color: Colors.grey),
+            title: const Text('None (Wait at Reception)'),
+            selected: _selectedMeetingRoomId == null,
+            onTap: () {
+              setState(() {
+                _selectedMeetingRoomId = null;
+                _selectedMeetingRoomName = null;
+              });
+              Navigator.pop(context);
+            },
+          ),
+          const Divider(),
+          Flexible(
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: _meetingRooms.length,
+              itemBuilder: (context, index) {
+                final room = _meetingRooms[index];
+                final isSelected = _selectedMeetingRoomId == room['id'];
+                final floorStr = room['floor'] != null ? ' (Floor ${room['floor']})' : '';
+                return ListTile(
+                  leading: Icon(
+                    Icons.meeting_room,
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.grey.shade600,
+                  ),
+                  title: Text(
+                    '${room['name']}$floorStr',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  selected: isSelected,
+                  trailing: isSelected
+                      ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
+                      : null,
+                  onTap: () {
+                    setState(() {
+                      _selectedMeetingRoomId = room['id'] as int?;
+                      _selectedMeetingRoomName = room['name'] as String?;
+                    });
+                    Navigator.pop(context);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
