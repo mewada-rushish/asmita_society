@@ -104,15 +104,16 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
 
   // Dynamically builds the view list cleanly to keep callback bindings alive on state mutations
   List<Widget> _buildScreens(String activeRole) {
+    final isStaff = _isGuardOrReceptionist(activeRole);
     return [
       _resolveRoleBasedHomeView(activeRole), // Index 0: Home view
-      activeRole.toLowerCase() == 'guard'
+      isStaff
           ? const SizedBox.shrink()
           : ServicesScreen( // Index 1: Services Grid
               onNavigateToSearch: _navigateToSearch,
               onNavigateToCommunity: () => setState(() => _currentIndex = 2),
             ),
-      activeRole.toLowerCase() == 'guard'
+      isStaff
           ? const SizedBox.shrink()
           : CommunityScreen( // Index 2: Society Chat
               onNavigateToSearch: _navigateToSearch,
@@ -126,87 +127,93 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         },
       ),      // Index 4: Profile Settings
       _resolveRoleBasedQrScanner(activeRole), // Index 5: QR Scanner
-      _resolveRoleBasedCheckedInView(activeRole), // Index 6: Checked In (Guard only)
+      _resolveRoleBasedCheckedInView(activeRole), // Index 6: Checked In (Guard/Receptionist only)
     ];
   }
 
+  bool _isGuardOrReceptionist(String role) {
+    final r = role.toLowerCase();
+    return r == 'guard' || r.contains('guard') || r.contains('receptionist');
+  }
+
   Widget _resolveRoleBasedCheckedInView(String role) {
-    if (role.toLowerCase() == 'guard') {
+    if (_isGuardOrReceptionist(role)) {
       return const GuardCheckedInScreen();
     }
     return const SizedBox.shrink();
   }
 
-
   Widget _resolveRoleBasedHomeView(String role) {
-    switch (role.toLowerCase()) {
-      case 'resident':
-      case 'owner':
-      case 'chairman':
-      case 'secretary':
-      case 'treasurer':
-      case 'committee':
-        return OwnerDashboardView(
-          onNavigateToCommunity: () {
-            setState(() {
-              _currentIndex = 2; // Society Chat
-            });
-          },
-          onNavigateToHistory: () {
-            setState(() {
-              _currentIndex = 3; // Gate Records
-            });
-          },
-          onNavigateToViewMore: () {
-            showViewMoreSheet(context, onNavigationItemSelected: (index) {
-              setState(() => _currentIndex = index);
-            }, onNavigateToPosts: _navigateToAllNotices);
-          },
-          onNavigateToServices: () {
-            setState(() {
-              _currentIndex = 1; // FIXED: Natively switches view canvas to Services (Index 1)
-            });
-          },
-          onNavigateToDailyHelp: _navigateToDailyHelp,
-          onNavigateToAllNotices: _navigateToAllNotices,
-          onNavigateToSearch: _navigateToSearch,
-        );
-      case 'tenant':
-        return TenantDashboardView(
-          onNavigateToCommunity: () {
-            setState(() {
-              _currentIndex = 2; // Society Chat
-            });
-          },
-          onNavigateToHistory: () {
-            setState(() {
-              _currentIndex = 3; // Gate Records
-            });
-          },
-          onNavigateToViewMore: () {
-            setState(() {
-              _currentIndex = 4; // View More/Menu
-            });
-          },
-          onNavigateToServices: () => setState(() => _currentIndex = 1),
-          onNavigateToDailyHelp: _navigateToDailyHelp,
-          onNavigateToAllNotices: _navigateToAllNotices,
-          onNavigateToSearch: _navigateToSearch,
-        );
-      case 'guard':
-        return GuardDashboardView(
-          onNavigateToMenu: () => setState(() => _currentIndex = 4),
-          onNavigateToHistory: () => setState(() => _currentIndex = 3),
-          onNavigateToScanner: () => setState(() => _currentIndex = 5),
-        );
-      default:
-        return Center(child: Text('Role Architecture: $role'));
+    final r = role.toLowerCase();
+
+    // 1. Guards and Receptionists (Desk & Gate scanning)
+    if (_isGuardOrReceptionist(role)) {
+      return GuardDashboardView(
+        onNavigateToMenu: () => setState(() => _currentIndex = 4),
+        onNavigateToHistory: () => setState(() => _currentIndex = 3),
+        onNavigateToScanner: () => setState(() => _currentIndex = 5),
+      );
     }
+
+    // 2. Tenants, Corporate Staff & HR
+    if (r == 'tenant' ||
+        r.contains('tenant') ||
+        r.contains('staff') ||
+        r.contains('employee') ||
+        r == 'hr') {
+      return TenantDashboardView(
+        onNavigateToCommunity: () {
+          setState(() {
+            _currentIndex = 2; // Society Chat
+          });
+        },
+        onNavigateToHistory: () {
+          setState(() {
+            _currentIndex = 3; // Gate Records
+          });
+        },
+        onNavigateToViewMore: () {
+          setState(() {
+            _currentIndex = 4; // View More/Menu
+          });
+        },
+        onNavigateToServices: () => setState(() => _currentIndex = 1),
+        onNavigateToDailyHelp: _navigateToDailyHelp,
+        onNavigateToAllNotices: _navigateToAllNotices,
+        onNavigateToSearch: _navigateToSearch,
+      );
+    }
+
+    // 3. Owners, Directors, Executives & Residents
+    return OwnerDashboardView(
+      onNavigateToCommunity: () {
+        setState(() {
+          _currentIndex = 2; // Society Chat
+        });
+      },
+      onNavigateToHistory: () {
+        setState(() {
+          _currentIndex = 3; // Gate Records
+        });
+      },
+      onNavigateToViewMore: () {
+        showViewMoreSheet(context, onNavigationItemSelected: (index) {
+          setState(() => _currentIndex = index);
+        }, onNavigateToPosts: _navigateToAllNotices);
+      },
+      onNavigateToServices: () {
+        setState(() {
+          _currentIndex = 1; // Natively switches view canvas to Services (Index 1)
+        });
+      },
+      onNavigateToDailyHelp: _navigateToDailyHelp,
+      onNavigateToAllNotices: _navigateToAllNotices,
+      onNavigateToSearch: _navigateToSearch,
+    );
   }
 
-
   Widget _resolveRoleBasedQrScanner(String role) {
-    if (role.toLowerCase() == 'guard') {
+    if (_isGuardOrReceptionist(role)) {
       return GuardQrScannerScreen(
         isActive: _currentIndex == 5,
         onScanComplete: () => setState(() => _currentIndex = 0),
@@ -216,7 +223,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   }
 
   Widget _resolveRoleBasedHistoryView(String role) {
-    if (role.toLowerCase() == 'guard') {
+    if (_isGuardOrReceptionist(role)) {
       return const GuardHistoryScreen();
     }
     return VisitorHistoryScreen(onBack: () => setState(() => _currentIndex = 0));

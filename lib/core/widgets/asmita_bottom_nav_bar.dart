@@ -68,7 +68,8 @@ class AsmitaBottomNavBar extends StatelessWidget {
   }
 
   List<int> _getVisibleIndices() {
-    if (userRole?.toLowerCase() == 'guard') {
+    final role = userRole?.toLowerCase() ?? '';
+    if (role == 'guard' || role.contains('guard') || role.contains('receptionist')) {
       return [0, 6, 3, 5, 4]; // Home, Checked In, History, Scan, Menu
     }
     return [0, 1, 2, 3, 4]; // All tabs
