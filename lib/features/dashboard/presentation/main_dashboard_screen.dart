@@ -160,7 +160,8 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         r.contains('tenant') ||
         r.contains('staff') ||
         r.contains('employee') ||
-        r.contains('leader') ||
+        r.contains('lead') ||
+        r.contains('hod') ||
         r.contains('head') ||
         r == 'hr') {
       return TenantDashboardView(
