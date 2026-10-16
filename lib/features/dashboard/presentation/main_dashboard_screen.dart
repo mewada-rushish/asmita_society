@@ -155,11 +155,13 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       );
     }
 
-    // 2. Tenants, Corporate Staff & HR
+    // 2. Tenants, Corporate Staff, Team Leaders & Department Heads
     if (r == 'tenant' ||
         r.contains('tenant') ||
         r.contains('staff') ||
         r.contains('employee') ||
+        r.contains('leader') ||
+        r.contains('head') ||
         r == 'hr') {
       return TenantDashboardView(
         onNavigateToCommunity: () {
