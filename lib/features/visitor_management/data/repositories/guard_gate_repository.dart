@@ -195,6 +195,115 @@ class GuardGateRepository {
     }
   }
 
+  /// Flow B: Guard creates a parking gate draft with a 5-minute countdown
+  Future<Map<String, dynamic>> createVehicleDraft({
+    required String vehicleNumber,
+    required String visitorName,
+    String? driverPhone,
+    int societyId = 114,
+  }) async {
+    try {
+      final response = await _dio.post(
+        EnvConfig.guardCreateVehicleDraft,
+        data: {
+          'society_id': societyId,
+          'vehicle_number': vehicleNumber,
+          'visitor_name': visitorName,
+          'driver_phone': driverPhone,
+        },
+      );
+      final data = response.data;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return (data is Map<String, dynamic>) ? data : {};
+      } else {
+        throw Exception(data['error'] ?? 'Failed to create vehicle draft');
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'Create Vehicle Draft');
+    } catch (e, stackTrace) {
+      FirebaseCrashlytics.instance.recordError(e, stackTrace, reason: 'Create Vehicle Draft Failure');
+      throw Exception('Unexpected error occurred');
+    }
+  }
+
+  /// Fetches active vehicle drafts with countdown timer
+  Future<List<dynamic>> getActiveVehicleDrafts({int societyId = 114}) async {
+    try {
+      final response = await _dio.get(
+        EnvConfig.guardListActiveDrafts,
+        queryParameters: {'society_id': societyId},
+      );
+      final data = response.data;
+      if (response.statusCode == 200) {
+        return (data['drafts'] ?? []) as List<dynamic>;
+      } else {
+        throw Exception(data['error'] ?? 'Failed to fetch active drafts');
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'Fetch Active Drafts');
+    } catch (e, stackTrace) {
+      FirebaseCrashlytics.instance.recordError(e, stackTrace, reason: 'Fetch Active Drafts Failure');
+      throw Exception('Unexpected error occurred');
+    }
+  }
+
+  /// Verifies one-time pass code and retrieves live selfie photo + destination
+  Future<Map<String, dynamic>> verifyPassCode(String passCode) async {
+    try {
+      final response = await _dio.get(EnvConfig.publicVisitorStatus(passCode));
+      final data = response.data;
+      if (response.statusCode == 200 && data['success'] == true) {
+        return data as Map<String, dynamic>;
+      } else {
+        throw Exception(data['error'] ?? 'Visitor pass not found or invalid');
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'Verify Pass Code');
+    } catch (e, stackTrace) {
+      FirebaseCrashlytics.instance.recordError(e, stackTrace, reason: 'Verify Pass Code Failure');
+      throw Exception('Unexpected error occurred');
+    }
+  }
+
+  /// Checks in visitor by pass code
+  Future<void> checkInWithPassCode(String passCode) async {
+    try {
+      final response = await _dio.patch(
+        EnvConfig.visitorCheckInPass,
+        data: {'pass_code': passCode},
+      );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        final data = response.data;
+        throw Exception(data['error'] ?? 'Failed to check in');
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'Check in by Pass Code');
+    } catch (e, stackTrace) {
+      FirebaseCrashlytics.instance.recordError(e, stackTrace, reason: 'Check In Pass Failure');
+      throw Exception('Unexpected error occurred');
+    }
+  }
+
+  /// Auto check-out at End of Day
+  Future<int> autoCheckOutEndOfDay({int societyId = 114}) async {
+    try {
+      final response = await _dio.post(
+        EnvConfig.visitorAutoCheckoutEod,
+        data: {'society_id': societyId},
+      );
+      final data = response.data;
+      if (response.statusCode == 200) {
+        return (data['auto_checked_out_count'] ?? 0) as int;
+      }
+      return 0;
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'Auto Check Out EOD');
+    } catch (e, stackTrace) {
+      FirebaseCrashlytics.instance.recordError(e, stackTrace, reason: 'Auto Check Out EOD Failure');
+      return 0;
+    }
+  }
+
   Exception _handleDioError(DioException e, String context) {
     String msg = 'Network error during $context';
     if (e.response?.data != null) {

@@ -20,12 +20,19 @@ import 'profile_screen.dart';
 import 'rules_screen.dart';
 import 'settings_screen.dart';
 import 'vehicles_screen.dart';
+import '../../../visitor_management/data/models/property_config.dart';
 
 class MenuScreen extends StatelessWidget {
   final String userRole;
   final void Function(int index)? onNavigateToTab;
+  final PropertyConfig? propertyConfig;
 
-  const MenuScreen({super.key, required this.userRole, this.onNavigateToTab});
+  const MenuScreen({
+    super.key,
+    required this.userRole,
+    this.onNavigateToTab,
+    this.propertyConfig,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -63,24 +70,43 @@ class MenuScreen extends StatelessWidget {
             if (userRole.toLowerCase() != 'guard') ...[
               _buildMenuSection(
                 context,
-                title: 'My Household',
+                title: propertyConfig?.isIndustrial == true
+                    ? 'My Team & Desk'
+                    : (propertyConfig?.isCommercial == true ? 'My Office' : 'My Household'),
                 items: [
-                  _buildMenuItem(context, Icons.people_outline_rounded, 'Family Members'),
-                  if (userRole.toLowerCase() != 'tenant')
+                  _buildMenuItem(
+                    context,
+                    Icons.people_outline_rounded,
+                    propertyConfig?.isIndustrial == true
+                        ? 'Team Members'
+                        : (propertyConfig?.isCommercial == true ? 'Colleagues' : 'Family Members'),
+                  ),
+                  if (userRole.toLowerCase() != 'tenant' && propertyConfig?.isIndustrial != true)
                     _buildMenuItem(context, Icons.group_add_outlined, 'Tenants'),
                   if (userRole.toLowerCase() == 'tenant')
                     _buildMenuItem(context, Icons.security_rounded, 'Access Requests'),
                   _buildMenuItem(context, Icons.directions_car_filled_outlined, 'Vehicles'),
-                  _buildMenuItem(context, Icons.pets_rounded, 'Pets'),
+                  if (propertyConfig?.isIndustrial != true && propertyConfig?.isCommercial != true)
+                    _buildMenuItem(context, Icons.pets_rounded, 'Pets'),
                 ],
               ),
               const SizedBox(height: 16),
               _buildMenuSection(
                 context,
-                title: 'Society Info',
+                title: propertyConfig?.isIndustrial == true
+                    ? 'Company Info & SOPs'
+                    : (propertyConfig?.isCommercial == true ? 'Building Info' : 'Society Info'),
                 items: [
-                  _buildMenuItem(context, Icons.contact_page_outlined, 'Committee Members'),
-                  _buildMenuItem(context, Icons.gavel_rounded, 'Rules & Regulations'),
+                  _buildMenuItem(
+                    context,
+                    Icons.contact_page_outlined,
+                    propertyConfig?.isIndustrial == true ? 'Department Heads' : 'Committee Members',
+                  ),
+                  _buildMenuItem(
+                    context,
+                    Icons.gavel_rounded,
+                    propertyConfig?.isIndustrial == true ? 'Safety Protocols' : 'Rules & Regulations',
+                  ),
                   _buildMenuItem(context, Icons.description_outlined, 'Important Documents'),
                 ],
               ),

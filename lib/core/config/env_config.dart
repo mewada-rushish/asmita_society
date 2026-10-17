@@ -55,6 +55,18 @@ class EnvConfig {
   static String guardVisitorCheckIn(String id) => '$baseUrl/app-api/visitor-entries/$id/check-in';
   static String get createVisitorEntry => '$baseUrl/app-api/visitor-entries';
 
+  /// AsmitA House Visitor Flow Endpoints
+  static String get publicVisitorSubmit => '$baseUrl/api/public/visitor/submit';
+  static String publicVisitorStatus(String code) => '$baseUrl/api/public/visitor/status/$code';
+  static String get guardCreateVehicleDraft => '$baseUrl/api/public/visitor/guard/draft';
+  static String get guardListActiveDrafts => '$baseUrl/api/public/visitor/guard/drafts';
+  static String visitorAction(String id) => '$baseUrl/api/public/visitor/entries/$id/action';
+  static String visitorAssign(String id) => '$baseUrl/api/public/visitor/entries/$id/assign';
+  static String get visitorCheckInPass => '$baseUrl/api/public/visitor/entries/0/check-in';
+  static String get visitorAutoCheckoutEod => '$baseUrl/api/public/visitor/entries/auto-checkout-eod';
+  static String propertyVisitorConfig(int societyId) =>
+      '$baseUrl/api/public/visitor/config?society_id=$societyId';
+
   /// Global Search
   static String get globalSearch => '$baseUrl/app-api/search';
 

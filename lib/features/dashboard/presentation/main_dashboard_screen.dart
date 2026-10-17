@@ -22,6 +22,9 @@ import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/services/bloc/daily_help_bloc.dart';
 import 'package:asmita_society/features/services/bloc/daily_help_event.dart';
 import 'package:asmita_society/features/services/data/repositories/daily_help_repository.dart';
+import '../../../core/di/injection_container.dart' as di;
+import '../../../core/services/property_config_service.dart';
+import '../../visitor_management/data/models/property_config.dart';
 
 class MainDashboardScreen extends StatefulWidget {
   final String userRole;
@@ -34,6 +37,29 @@ class MainDashboardScreen extends StatefulWidget {
 
 class _MainDashboardScreenState extends State<MainDashboardScreen> {
   int _currentIndex = 0;
+  PropertyConfig? _propertyConfig;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPropertyConfig();
+  }
+
+  Future<void> _loadPropertyConfig() async {
+    final authState = context.read<AuthBloc>().state;
+    int societyId = 1;
+    if (authState is AuthAuthenticated) {
+      societyId = authState.user.societyId ?? 1;
+    }
+    try {
+      final config = await di.sl<PropertyConfigService>().loadConfigForSociety(societyId);
+      if (mounted) {
+        setState(() {
+          _propertyConfig = config;
+        });
+      }
+    } catch (_) {}
+  }
 
   void _navigateToSearch() {
     Navigator.push(
@@ -122,6 +148,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       _resolveRoleBasedHistoryView(activeRole),               // Index 3: Gate Records (History)
       MenuScreen(
         userRole: activeRole,
+        propertyConfig: _propertyConfig,
         onNavigateToTab: (index) {
           setState(() => _currentIndex = index);
         },

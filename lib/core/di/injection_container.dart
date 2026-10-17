@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import '../security/secure_storage_service.dart';
 import '../services/firebase_messaging_service.dart';
+import '../services/property_config_service.dart';
 import '../network/dio_client.dart';
 import '../../features/auth/data/repositories/auth_repository.dart';
 import '../../features/auth/data/repositories/property_repository.dart';
@@ -40,6 +41,13 @@ Future<void> init() async {
   
   sl.registerLazySingleton<AsmitaDioClient>(
     () => AsmitaDioClient(sl<SecureStorageService>()),
+  );
+
+  sl.registerLazySingleton<PropertyConfigService>(
+    () => PropertyConfigService(
+      dioClient: sl<AsmitaDioClient>(),
+      secureStorage: sl<SecureStorageService>(),
+    ),
   );
 
   // Repositories

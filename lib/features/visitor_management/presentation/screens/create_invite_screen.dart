@@ -7,9 +7,12 @@ import '../../bloc/visitor_event.dart';
 import '../../bloc/visitor_state.dart';
 import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_state.dart';
+import '../../../visitor_management/data/models/property_config.dart';
+import '../../../../core/utils/property_label_resolver.dart';
 
 class CreateInviteScreen extends StatefulWidget {
-  const CreateInviteScreen({super.key});
+  final PropertyConfig? propertyConfig;
+  const CreateInviteScreen({super.key, this.propertyConfig});
 
   @override
   State<CreateInviteScreen> createState() => _CreateInviteScreenState();
@@ -180,7 +183,10 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 12,
-                  children: ['Guest', 'Delivery', 'Cab'].map((type) {
+                  children: (widget.propertyConfig != null
+                          ? PropertyLabelResolver.visitorCategories(widget.propertyConfig!)
+                          : const ['Guest', 'Delivery', 'Cab'])
+                      .map((type) {
                     return ChoiceChip(
                       label: Text(type),
                       selected: _inviteType == type,
@@ -188,7 +194,10 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                         if (selected) setState(() => _inviteType = type);
                       },
                       selectedColor: Theme.of(context).colorScheme.primary,
-                      labelStyle: TextStyle(color: _inviteType == type ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.primary),
+                      labelStyle: TextStyle(
+                          color: _inviteType == type
+                              ? Theme.of(context).colorScheme.surface
+                              : Theme.of(context).colorScheme.primary),
                     );
                   }).toList(),
                 ),

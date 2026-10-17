@@ -154,6 +154,14 @@ class VisitorUtils {
     String subtitleText = isPreApproved ? 'by $currentUserName' : 'Entered via $gate';
     String modalSubtitleText = isPreApproved ? 'Pre-approved by $currentUserName' : 'Entered via $gate';
 
+    final passCode = item['pass_code'];
+    final cabinCode = item['cabin_code'];
+    final deskCode = item['desk_code'];
+    final departmentName = item['department_name'] ?? item['flat_number'] ?? item['unit_name'];
+    final photoUrl = item['photo_url'];
+    final deliveryAction = item['delivery_action'];
+    final entryType = item['entry_type'];
+
     return {
       'titleText': titleText,
       'subtitleText': subtitleText,
@@ -178,6 +186,13 @@ class VisitorUtils {
       'maxGuestCount': item['max_guest_count'],
       'isPrivate': item['is_private'] == true,
       'isOutsideSchedule': isOutsideSchedule,
+      'passCode': passCode,
+      'cabinCode': cabinCode,
+      'deskCode': deskCode,
+      'departmentName': departmentName,
+      'photoUrl': photoUrl,
+      'deliveryAction': deliveryAction,
+      'entryType': entryType,
     };
   }
 
@@ -201,11 +216,18 @@ class VisitorUtils {
               child: CircleAvatar(
                 radius: 36,
                 backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                child: Icon(
-                  visitor['icon'] as IconData, 
-                  color: visitor['brandColor'] as Color? ?? Theme.of(context).colorScheme.primary, 
-                  size: 32
-                ),
+                backgroundImage: (visitor['photoUrl'] != null && visitor['photoUrl'].toString().isNotEmpty)
+                    ? NetworkImage(visitor['photoUrl'].toString().startsWith('http')
+                        ? visitor['photoUrl'].toString()
+                        : 'https://admin.myasmita.com${visitor['photoUrl']}')
+                    : null,
+                child: (visitor['photoUrl'] == null || visitor['photoUrl'].toString().isEmpty)
+                    ? Icon(
+                        visitor['icon'] as IconData, 
+                        color: visitor['brandColor'] as Color? ?? Theme.of(context).colorScheme.primary, 
+                        size: 32
+                      )
+                    : null,
               ),
             ),
           ),
@@ -277,6 +299,16 @@ class VisitorUtils {
             _buildDetailRow(context, textTheme, label: 'Guest Count', value: visitor['maxGuestCount'].toString()),
           if (visitor['isPrivate'] == true)
             _buildDetailRow(context, textTheme, label: 'Entry Mode', value: 'Surprise / Secret Delivery', isHighlight: true),
+          if (visitor['passCode'] != null && visitor['passCode'].toString().isNotEmpty)
+            _buildDetailRow(context, textTheme, label: 'Digital Pass Code', value: visitor['passCode'] as String, isHighlight: true),
+          if (visitor['departmentName'] != null && visitor['departmentName'].toString().isNotEmpty)
+            _buildDetailRow(context, textTheme, label: 'Department / Unit', value: visitor['departmentName'] as String),
+          if (visitor['cabinCode'] != null && visitor['cabinCode'].toString().isNotEmpty)
+            _buildDetailRow(context, textTheme, label: 'Cabin Code', value: visitor['cabinCode'] as String),
+          if (visitor['deskCode'] != null && visitor['deskCode'].toString().isNotEmpty)
+            _buildDetailRow(context, textTheme, label: 'Desk Code', value: visitor['deskCode'] as String),
+          if (visitor['deliveryAction'] != null && visitor['deliveryAction'].toString().isNotEmpty)
+            _buildDetailRow(context, textTheme, label: 'Delivery Action', value: (visitor['deliveryAction'] as String).replaceAll('_', ' ')),
             
           _buildDetailRow(context, textTheme, label: 'Gate Access Status', value: visitor['status'] as String, isStatus: true),
           _buildDetailRow(context, textTheme, label: 'Arrival Date', value: visitor['date'] as String),
