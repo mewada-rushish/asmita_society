@@ -78,4 +78,20 @@ class EnvConfig {
   static String get societyDocuments => '$baseUrl/app-api/society/documents';
   static String get supportTickets => '$baseUrl/app-api/support-tickets';
   static String get userPreferences => '$baseUrl/app-api/preferences';
+
+  /// Industrial Visitor Management Endpoints (Property ID 114)
+  static String get industrialVisits => '$baseUrl/app-api/industrial/visits';
+  static String get industrialGuardDraft => '$baseUrl/app-api/industrial/guard/draft';
+  static String get industrialGuardDrafts => '$baseUrl/app-api/industrial/guard/drafts';
+  static String get industrialDelivery => '$baseUrl/app-api/industrial/visits/delivery';
+  static String industrialHandover(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/confirm-handover';
+  static String industrialAction(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/action';
+  static String industrialAcknowledge(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/acknowledge';
+  static String industrialOverride(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/override';
+  static String industrialCheckIn(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/check-in';
+  static String industrialCheckOut(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/check-out';
+  static String get industrialGuardClockIn => '$baseUrl/app-api/industrial/guard/duty/clock-in';
+  static String get industrialGuardClockOut => '$baseUrl/app-api/industrial/guard/duty/clock-out';
+  static String get industrialSettings => '$baseUrl/app-api/industrial/settings';
+  static String get industrialOutageMode => '$baseUrl/app-api/industrial/outage-mode';
 }

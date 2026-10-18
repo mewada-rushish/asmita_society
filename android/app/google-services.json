@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "413031281650",
+    "project_id": "society-app-ceb4d",
+    "storage_bucket": "society-app-ceb4d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:413031281650:android:528c2c63314e3744bab16b",
+        "android_client_info": {
+          "package_name": "com.asmita.app.asmita_society"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCt8i8MLvvKWCPm7dYqXLSEK6EDOG9TVVM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

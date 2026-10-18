@@ -13,6 +13,11 @@ import '../../../visitor_management/bloc/guard_gate_bloc.dart';
 import '../../../visitor_management/bloc/guard_gate_event.dart';
 import '../../../visitor_management/bloc/guard_gate_state.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
+import '../../../visitor_management/presentation/screens/guard_pass_check_in_screen.dart';
+import '../../../visitor_management/presentation/screens/guard_vehicle_draft_screen.dart';
+import '../../../visitor_management/presentation/screens/guard_delivery_entry_screen.dart';
+import '../../../visitor_management/presentation/widgets/manual_override_dialog.dart';
+import '../../../visitor_management/data/models/industrial_visit_model.dart';
 
 class GuardDashboardView extends StatefulWidget {
   final VoidCallback onNavigateToMenu;
@@ -32,6 +37,7 @@ class GuardDashboardView extends StatefulWidget {
 
 class _GuardDashboardViewState extends State<GuardDashboardView> {
   final TextEditingController _codeController = TextEditingController();
+  int _selectedGateId = 1;
 
   @override
   void initState() {
@@ -281,6 +287,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            _buildGatePostSelector(),
                             _buildSearchSection(state.isSubmitting),
                             const SizedBox(height: 24),
                             _buildNewVisitorAction(context),
@@ -344,6 +351,184 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGatePostSelector() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Gate Assignment',
+                style: TextStyle(fontFamily: 'Montserrat', fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AsmitaPalette.successGreen.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.fiber_manual_record, color: AsmitaPalette.successGreen, size: 10),
+                    SizedBox(width: 4),
+                    Text('On Duty', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AsmitaPalette.successGreen)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ChoiceChip(
+                  label: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.directions_walk, size: 16),
+                      SizedBox(width: 6),
+                      Text('Gate 1 (Pedestrian)'),
+                    ],
+                  ),
+                  selected: _selectedGateId == 1,
+                  selectedColor: AsmitaPalette.deepNavy,
+                  labelStyle: TextStyle(
+                    color: _selectedGateId == 1 ? Colors.white : AsmitaPalette.textDark,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                  onSelected: (val) {
+                    if (val) setState(() => _selectedGateId = 1);
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ChoiceChip(
+                  label: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.directions_car, size: 16),
+                      SizedBox(width: 6),
+                      Text('Gate 2 (Parking)'),
+                    ],
+                  ),
+                  selected: _selectedGateId == 2,
+                  selectedColor: AsmitaPalette.deepNavy,
+                  labelStyle: TextStyle(
+                    color: _selectedGateId == 2 ? Colors.white : AsmitaPalette.textDark,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                  onSelected: (val) {
+                    if (val) setState(() => _selectedGateId = 2);
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          if (_selectedGateId == 1) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const GuardPassCheckInScreen(gateId: 1),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.qr_code_scanner, size: 16, color: AsmitaPalette.deepNavy),
+                    label: const Text('Verify Pass', style: TextStyle(fontSize: 12, color: AsmitaPalette.deepNavy)),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AsmitaPalette.deepNavy),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const GuardDeliveryEntryScreen(gateId: 1),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.local_shipping, size: 16, color: AsmitaPalette.deepNavy),
+                    label: const Text('Delivery Intake', style: TextStyle(fontSize: 12, color: AsmitaPalette.deepNavy)),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AsmitaPalette.deepNavy),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () {
+                ManualOverrideDialog.show(
+                  context,
+                  visit: const IndustrialVisitModel(
+                    id: 0,
+                    requestNumber: 'OVERRIDE',
+                    propertyId: 114,
+                    visitorName: 'Manual Guest',
+                    status: IndustrialVisitStatus.awaitingHost,
+                  ),
+                  shiftOverridesUsed: 1,
+                  shiftCap: 5,
+                  onConfirmOverride: (reason, photo) {
+                    AsmitaToast.show(context, message: 'Supervisor override executed.', type: AsmitaToastType.success);
+                  },
+                );
+              },
+              icon: const Icon(Icons.shield_outlined, size: 16, color: AsmitaPalette.actionRed),
+              label: const Text('Manual Security Override (Cap: 5)', style: TextStyle(fontSize: 12, color: AsmitaPalette.actionRed)),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AsmitaPalette.actionRed),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+            ),
+          ] else ...[
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const GuardVehicleDraftScreen(gateId: 2),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.qr_code, color: Colors.white, size: 18),
+              label: const Text('Generate Vehicle Draft Slip (QR)'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AsmitaPalette.deepNavy,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ],
         ],
       ),
     );
