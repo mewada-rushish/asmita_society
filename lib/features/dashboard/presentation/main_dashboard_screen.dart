@@ -11,9 +11,14 @@ import 'screens/view_more_screen.dart';
 import 'views/owner_dashboard_view.dart';
 import 'views/tenant_dashboard_view.dart';
 import 'views/guard_dashboard_view.dart';
+import 'views/director_dashboard_view.dart';
+import 'views/employee_dashboard_view.dart';
+import 'views/receptionist_dashboard_view.dart';
+import 'views/facility_staff_dashboard_view.dart';
 import 'screens/guard_history_screen.dart';
 import 'screens/guard_checked_in_screen.dart';
 import '../../visitor_management/presentation/screens/guard_qr_scanner_screen.dart';
+import '../../visitor_management/presentation/screens/department_delegation_screen.dart';
 import 'package:asmita_society/features/services/presentation/screens/daily_help_screen.dart';
 import 'screens/search_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -192,11 +197,36 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
           onNavigateToSearch: _navigateToSearch,
         );
       case 'guard':
+      case 'security':
         return GuardDashboardView(
           onNavigateToMenu: () => setState(() => _currentIndex = 4),
           onNavigateToHistory: () => setState(() => _currentIndex = 3),
           onNavigateToScanner: () => setState(() => _currentIndex = 5),
         );
+      case 'director':
+        return DirectorDashboardView(
+          onContactReceptionist: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Contacting Floor Receptionist...')),
+            );
+          },
+        );
+      case 'employee':
+      case 'staff':
+      case 'host':
+        return EmployeeDashboardView(
+          onOpenDelegation: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const DepartmentDelegationScreen()),
+            );
+          },
+        );
+      case 'receptionist':
+        return const ReceptionistDashboardView();
+      case 'facility':
+      case 'facility_staff':
+        return const FacilityStaffDashboardView();
       default:
         return Center(child: Text('Role Architecture: $role'));
     }
