@@ -51,3 +51,4 @@ app.*.map.json
 android/app/google-services-template.json
 firebase.json
 GoogleService-Info.plist
+google-services.json
