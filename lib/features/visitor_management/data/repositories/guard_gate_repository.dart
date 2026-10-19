@@ -77,7 +77,10 @@ class GuardGateRepository {
       final response = await _dio.post(EnvConfig.createVisitorEntry, data: payload);
       final data = response.data;
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return (data is Map<String, dynamic>) ? data : {};
+        if (data is Map<String, dynamic>) {
+          return (data['entry'] is Map<String, dynamic>) ? (data['entry'] as Map<String, dynamic>) : data;
+        }
+        return {};
       } else {
         final errorMsg = data is Map ? (data['message'] ?? data['error']) : null;
         throw Exception(errorMsg ?? 'Failed to create walk-in visitor');
@@ -159,6 +162,8 @@ class GuardGateRepository {
             'record_type': 'WALK_IN',
           }));
         }
+      } else {
+        throw Exception(walkInsResp.data is Map ? (walkInsResp.data['message'] ?? 'Failed to fetch walk-ins') : 'Failed to fetch walk-ins');
       }
 
       if (gateLogsResp != null && gateLogsResp.statusCode == 200) {

@@ -220,6 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             builder: (context, state) {
                               final isLoading = state is AuthLoading;
                               final buttonActive = _isDirty; // Active color once typing starts
+                              final primaryColor = Theme.of(context).colorScheme.primary;
                               return Semantics(
                                 button: true,
                                 label: 'Login Button',
@@ -229,7 +230,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   height: 56,
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: buttonActive ? Theme.of(context).colorScheme.primary : Theme.of(context).disabledColor,
+                                      backgroundColor: buttonActive
+                                          ? primaryColor
+                                          : primaryColor.withValues(alpha: 0.38),
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(16),
@@ -240,7 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ? const SizedBox(
                                           height: 24, 
                                           width: 24, 
-                                          child: AsmitaLoadingIndicator(color: Colors.white, size: 24)
+                                          child: AsmitaLoadingIndicator(color: Colors.white, size: 24),
                                         )
                                       : Row(
                                           mainAxisAlignment: MainAxisAlignment.center,
@@ -248,13 +251,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                             Text(
                                               'Login',
                                               style: TextStyle(
-                                                color: buttonActive ? Colors.white : Colors.grey.shade500,
+                                                color: buttonActive ? Colors.white : Colors.white.withValues(alpha: 0.85),
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w600,
+                                                letterSpacing: 0.3,
                                               ),
                                             ),
                                             const SizedBox(width: 8),
-                                            Icon(Icons.arrow_forward_rounded, color: buttonActive ? Colors.white : Colors.grey.shade500, size: 20),
+                                            Icon(
+                                              Icons.arrow_forward_rounded,
+                                              color: buttonActive ? Colors.white : Colors.white.withValues(alpha: 0.85),
+                                              size: 20,
+                                            ),
                                           ],
                                         ),
                                   ),

@@ -239,14 +239,26 @@ class _OtpScreenState extends State<OtpScreen> {
                             builder: (context, state) {
                               final isLoading = state is AuthLoading;
                               final isComplete = _otp.length == 6;
+                              final primaryColor = Theme.of(context).colorScheme.primary;
                               return SizedBox(
                                 width: double.infinity, height: 56,
                                 child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(backgroundColor: isComplete ? Theme.of(context).colorScheme.primary : Theme.of(context).disabledColor, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: isComplete ? primaryColor : primaryColor.withValues(alpha: 0.38), 
+                                    elevation: 0, 
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  ),
                                   onPressed: isLoading || !isComplete ? null : _verifyOtp,
                                   child: isLoading 
                                     ? SizedBox(height: 24, width: 24, child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.onPrimary, size: 24))
-                                    : Text('Verify Secure Code', style: TextStyle(color: isComplete ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).disabledColor, fontSize: 16, fontWeight: FontWeight.w600)),
+                                    : Text(
+                                        'Verify Secure Code', 
+                                        style: TextStyle(
+                                          color: isComplete ? Theme.of(context).colorScheme.onPrimary : Colors.white.withValues(alpha: 0.85), 
+                                          fontSize: 16, 
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                 ),
                               );
                             },
