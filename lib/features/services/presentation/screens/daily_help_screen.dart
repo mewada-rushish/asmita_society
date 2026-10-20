@@ -443,10 +443,17 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
               children: [
                 Row(
                   children: [
-                    Text(item.name, style: textTheme.titleLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                    Flexible(
+                      child: Text(
+                        item.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.titleLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.bodyLarge?.color),
+                      ),
+                    ),
                     if (item.kycStatus == 'Approved' || item.kycStatus == 'Verified') ...[
-                      SizedBox(width: 4),
-                      Icon(Icons.verified_rounded, color: Colors.green, size: 14),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.verified_rounded, color: Colors.green, size: 14),
                     ]
                   ],
                 ),

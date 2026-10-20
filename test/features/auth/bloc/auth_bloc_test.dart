@@ -250,6 +250,9 @@ void main() {
           (_) async =>
               '{"id":1, "full_name":"Test User", "primary_role":"owner", "account_type":"app"}',
         );
+        when(
+          () => mockSecureStorageService.getUserRole(),
+        ).thenAnswer((_) async => 'owner');
         return authBloc;
       },
       act: (bloc) => bloc.add(AuthCheckRequested()),

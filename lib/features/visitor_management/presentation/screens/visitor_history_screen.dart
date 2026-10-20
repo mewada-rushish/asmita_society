@@ -810,12 +810,12 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
           // Aligned Unified Header Structure matches Dashboard Layouts seamlessly
           const AsmitaPrimaryHeader(),
 
-          if (widget.onBack != null || Navigator.canPop(context))
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (widget.onBack != null || Navigator.canPop(context))
                   GestureDetector(
                     onTap: () {
                       if (widget.onBack != null) {
@@ -826,7 +826,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                     },
                     behavior: HitTestBehavior.opaque,
                     child: Padding(
-                      padding: EdgeInsets.only(
+                      padding: const EdgeInsets.only(
                         right: 12.0,
                         top: 4.0,
                         bottom: 4.0,
@@ -838,29 +838,29 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                       ),
                     ),
                   ),
-                  Expanded(
-                    child: Text(
-                      'Visitor History',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.filter_list_rounded,
+                Expanded(
+                  child: Text(
+                    'Visitor History',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
                       color: Theme.of(context).colorScheme.primary,
                     ),
-                    onPressed: _showFilterModal,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
                   ),
-                ],
-              ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.filter_list_rounded,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  onPressed: _showFilterModal,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
             ),
+          ),
 
           // Active filters chip area (optional, to show applied filters)
           if (_selectedStatus != null || _startDate != null || _endDate != null)

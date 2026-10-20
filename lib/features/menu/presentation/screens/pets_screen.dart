@@ -78,7 +78,7 @@ class PetsScreen extends ConsumerWidget {
                           sliver: SliverGrid(
                             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
-                              childAspectRatio: 0.85,
+                              childAspectRatio: 0.80,
                               crossAxisSpacing: 16,
                               mainAxisSpacing: 16,
                             ),
@@ -95,7 +95,7 @@ class PetsScreen extends ConsumerWidget {
                 },
                 loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
                 error: (error, _) => Center(
-                  child: Text('Error: ', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
+                  child: Text('Error: $error', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
                 ),
               ),
             ),
@@ -230,16 +230,16 @@ class PetsScreen extends ConsumerWidget {
     final confirm = await showCupertinoDialog<bool>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
-        title: Text('Delete Pet'),
-        content: Text('Are you sure you want to remove ?'),
+        title: const Text('Delete Pet'),
+        content: Text('Are you sure you want to remove ${pet.name}?'),
         actions: [
           CupertinoDialogAction(
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
             onPressed: () => Navigator.pop(ctx, false),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
-            child: Text('Delete'),
+            child: const Text('Delete'),
             onPressed: () => Navigator.pop(ctx, true),
           ),
         ],
@@ -249,7 +249,7 @@ class PetsScreen extends ConsumerWidget {
     if (confirm == true) {
       final success = await ref.read(petsProvider.notifier).deletePet(pet.id);
       if (success && context.mounted) {
-        AsmitaToast.show(context, message: ' deleted', type: AsmitaToastType.success);
+        AsmitaToast.show(context, message: '${pet.name} deleted', type: AsmitaToastType.success);
       }
     }
   }
@@ -279,9 +279,11 @@ class PetsScreen extends ConsumerWidget {
                 color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -436,6 +438,7 @@ class PetsScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
+              ),
               ),
             );
           }

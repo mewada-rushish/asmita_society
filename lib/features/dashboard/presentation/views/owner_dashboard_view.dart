@@ -62,14 +62,17 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authState = context.read<AuthBloc>().state;
-      int residentId = 1;
-      if (authState is AuthAuthenticated) {
-        residentId = authState.user.userId;
-      }
-      context.read<VisitorBloc>().add(
-        LoadMyHistory(residentId: residentId, isRefresh: true),
-      );
+      if (!mounted) return;
+      try {
+        final authState = context.read<AuthBloc>().state;
+        int residentId = 1;
+        if (authState is AuthAuthenticated) {
+          residentId = authState.user.userId;
+        }
+        context.read<VisitorBloc>().add(
+          LoadMyHistory(residentId: residentId, isRefresh: true),
+        );
+      } catch (_) {}
     });
   }
 
@@ -111,6 +114,19 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
 
   @override
   Widget build(BuildContext context) {
+    String userInitials = 'RM';
+    try {
+      final authState = context.watch<AuthBloc>().state;
+      if (authState is AuthAuthenticated && authState.user.fullName.trim().isNotEmpty) {
+        final parts = authState.user.fullName.trim().split(RegExp(r'\s+'));
+        if (parts.length >= 2) {
+          userInitials = '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+        } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
+          userInitials = parts[0][0].toUpperCase();
+        }
+      }
+    } catch (_) {}
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
@@ -221,7 +237,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
             left: 0,
             right: 0,
             child: AsmitaPrimaryHeader(
-              userInitials: 'RM',
+              userInitials: userInitials,
               onSearchPressed: widget.onNavigateToSearch,
               onChatPressed: widget.onNavigateToCommunity,
             ),

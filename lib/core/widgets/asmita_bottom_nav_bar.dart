@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../utils/property_role_resolver.dart';
 
 class AsmitaBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -68,7 +69,7 @@ class AsmitaBottomNavBar extends StatelessWidget {
   }
 
   List<int> _getVisibleIndices() {
-    if (userRole?.toLowerCase() == 'guard') {
+    if (PropertyRoleResolver.normalizeRole(userRole) == 'guard') {
       return [0, 6, 3, 5, 4]; // Home, Checked In, History, Scan, Menu
     }
     return [0, 1, 2, 3, 4]; // All tabs

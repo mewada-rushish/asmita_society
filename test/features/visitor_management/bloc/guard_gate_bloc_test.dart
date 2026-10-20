@@ -64,8 +64,6 @@ void main() {
         const GuardGateState(status: GuardGateStatus.loaded, expectedInvites: [], isSubmitting: false, successMessage: 'Check-in successful!', isLoadingExpected: false),
         const GuardGateState(status: GuardGateStatus.loading, expectedInvites: [], isSubmitting: false, successMessage: 'Check-in successful!', isLoadingExpected: false),
         const GuardGateState(status: GuardGateStatus.loaded, expectedInvites: [], historyRecords: [], isSubmitting: false, successMessage: 'Check-in successful!', isLoadingExpected: false),
-        const GuardGateState(status: GuardGateStatus.loading, expectedInvites: [], historyRecords: [], isSubmitting: false, successMessage: 'Check-in successful!', isLoadingExpected: false),
-        const GuardGateState(status: GuardGateStatus.loaded, expectedInvites: [], historyRecords: [], checkedInVisitors: [], isSubmitting: false, successMessage: 'Check-in successful!', isLoadingExpected: false),
       ],
     );
 
@@ -148,8 +146,6 @@ void main() {
         const GuardGateState(status: GuardGateStatus.success, isSubmitting: false, successMessage: 'Walk-in visitor logged successfully!'),
         const GuardGateState(status: GuardGateStatus.loading, isSubmitting: false, successMessage: 'Walk-in visitor logged successfully!'),
         const GuardGateState(status: GuardGateStatus.loaded, isSubmitting: false, successMessage: 'Walk-in visitor logged successfully!', historyRecords: []),
-        const GuardGateState(status: GuardGateStatus.loading, isSubmitting: false, successMessage: 'Walk-in visitor logged successfully!', historyRecords: []),
-        const GuardGateState(status: GuardGateStatus.loaded, isSubmitting: false, successMessage: 'Walk-in visitor logged successfully!', historyRecords: [], checkedInVisitors: []),
       ],
     );
 

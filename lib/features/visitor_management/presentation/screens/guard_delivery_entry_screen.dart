@@ -183,6 +183,7 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<int>(
+                  isExpanded: true,
                   initialValue: _selectedRecipientUserId,
                   decoration: InputDecoration(
                     hintText: 'Select registered HQ Employee',
@@ -192,7 +193,11 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
                   items: _sampleRecipients.map((r) {
                     return DropdownMenuItem<int>(
                       value: r['id'] as int,
-                      child: Text(r['name'] as String, style: const TextStyle(fontSize: 13)),
+                      child: Text(
+                        r['name'] as String,
+                        style: const TextStyle(fontSize: 13),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     );
                   }).toList(),
                   onChanged: (val) {

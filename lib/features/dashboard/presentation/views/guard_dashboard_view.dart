@@ -55,14 +55,12 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
     final code = _codeController.text.trim();
     if (code.length == 6) {
       context.read<GuardGateBloc>().add(SearchInviteByCode(code));
-    }
-    if (code.length != 6) {
+    } else {
       AsmitaToast.show(
         context,
         message: 'Please enter a 6-digit access code',
         type: AsmitaToastType.error,
       );
-      return;
     }
   }
 
@@ -136,13 +134,14 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                   border: Border.all(color: Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: rows.length,
-                  separatorBuilder: (context, index) =>
-                      const Divider(height: 1, color: Colors.black12),
-                  itemBuilder: (context, index) => rows[index],
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (int i = 0; i < rows.length; i++) ...[
+                      if (i > 0) const Divider(height: 1, color: Colors.black12),
+                      rows[i],
+                    ],
+                  ],
                 ),
               );
             },
@@ -168,7 +167,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                 invite['record_type'] == 'PRE_APPROVED';
             context.read<GuardGateBloc>().add(
               CheckInPreApprovedVisitor(
-                invite['id'].toString(),
+                invite['id']?.toString() ?? '0',
                 isPreApproved: isPreApproved,
               ),
             );
@@ -396,14 +395,12 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
             children: [
               Expanded(
                 child: ChoiceChip(
-                  label: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.directions_walk, size: 16),
-                      SizedBox(width: 6),
-                      Text('Gate 1 (Pedestrian)'),
-                    ],
+                  avatar: Icon(
+                    Icons.directions_walk,
+                    size: 16,
+                    color: _selectedGateId == 1 ? Colors.white : AsmitaPalette.textDark,
                   ),
+                  label: const Text('Gate 1 (Pedestrian)', overflow: TextOverflow.ellipsis),
                   selected: _selectedGateId == 1,
                   selectedColor: AsmitaPalette.deepNavy,
                   labelStyle: TextStyle(
@@ -419,14 +416,12 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
               const SizedBox(width: 10),
               Expanded(
                 child: ChoiceChip(
-                  label: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.directions_car, size: 16),
-                      SizedBox(width: 6),
-                      Text('Gate 2 (Parking)'),
-                    ],
+                  avatar: Icon(
+                    Icons.directions_car,
+                    size: 16,
+                    color: _selectedGateId == 2 ? Colors.white : AsmitaPalette.textDark,
                   ),
+                  label: const Text('Gate 2 (Parking)', overflow: TextOverflow.ellipsis),
                   selected: _selectedGateId == 2,
                   selectedColor: AsmitaPalette.deepNavy,
                   labelStyle: TextStyle(
@@ -805,7 +800,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                 ),
                 const SizedBox(width: 12),
                 state.isSubmitting &&
-                        state.submittingVisitorId == invite['id'].toString()
+                        state.submittingVisitorId == (invite['id']?.toString() ?? '')
                     ? const SizedBox(
                         width: 28,
                         height: 28,

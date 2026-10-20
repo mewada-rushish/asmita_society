@@ -22,7 +22,9 @@ import '../../visitor_management/presentation/screens/department_delegation_scre
 import 'package:asmita_society/features/services/presentation/screens/daily_help_screen.dart';
 import 'screens/search_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/utils/property_role_resolver.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
+import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/services/bloc/daily_help_bloc.dart';
 import 'package:asmita_society/features/services/bloc/daily_help_event.dart';
 import 'package:asmita_society/features/services/data/repositories/daily_help_repository.dart';
@@ -108,20 +110,22 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
 
   // Dynamically builds the view list cleanly to keep callback bindings alive on state mutations
   List<Widget> _buildScreens() {
+    final normalized = PropertyRoleResolver.normalizeRole(widget.userRole);
+    final isResidential = normalized == 'owner' || normalized == 'tenant';
     return [
       _resolveRoleBasedHomeView(widget.userRole), // Index 0: Home view
-      widget.userRole.toLowerCase() == 'guard'
-          ? const SizedBox.shrink()
-          : ServicesScreen( // Index 1: Services Grid
+      isResidential
+          ? ServicesScreen( // Index 1: Services Grid
               onNavigateToSearch: _navigateToSearch,
               onNavigateToCommunity: () => setState(() => _currentIndex = 2),
-            ),
-      widget.userRole.toLowerCase() == 'guard'
-          ? const SizedBox.shrink()
-          : CommunityScreen( // Index 2: Society Chat
+            )
+          : const SizedBox.shrink(),
+      isResidential
+          ? CommunityScreen( // Index 2: Society Chat
               onNavigateToSearch: _navigateToSearch,
               onNavigateToCommunity: () => setState(() => _currentIndex = 2),
-            ),
+            )
+          : const SizedBox.shrink(),
       _resolveRoleBasedHistoryView(widget.userRole),               // Index 3: Gate Records (History)
       MenuScreen(
         userRole: widget.userRole,
@@ -135,7 +139,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   }
 
   Widget _resolveRoleBasedCheckedInView(String role) {
-    if (role.toLowerCase() == 'guard') {
+    if (PropertyRoleResolver.normalizeRole(role) == 'guard') {
       return const GuardCheckedInScreen();
     }
     return const SizedBox.shrink();
@@ -143,12 +147,9 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
 
 
   Widget _resolveRoleBasedHomeView(String role) {
-    switch (role.toLowerCase()) {
+    final normalized = PropertyRoleResolver.normalizeRole(role);
+    switch (normalized) {
       case 'owner':
-      case 'chairman':
-      case 'secretary':
-      case 'treasurer':
-      case 'committee':
         return OwnerDashboardView(
           onNavigateToCommunity: () {
             setState(() {
@@ -197,7 +198,6 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
           onNavigateToSearch: _navigateToSearch,
         );
       case 'guard':
-      case 'security':
         return GuardDashboardView(
           onNavigateToMenu: () => setState(() => _currentIndex = 4),
           onNavigateToHistory: () => setState(() => _currentIndex = 3),
@@ -212,9 +212,10 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
           },
         );
       case 'employee':
-      case 'staff':
-      case 'host':
+        final authState = context.watch<AuthBloc>().state;
+        final user = authState is AuthAuthenticated ? authState.user : null;
         return EmployeeDashboardView(
+          employeeName: (user != null && user.fullName.isNotEmpty) ? user.fullName : 'Aditi Sharma',
           onOpenDelegation: () {
             Navigator.push(
               context,
@@ -225,7 +226,6 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       case 'receptionist':
         return const ReceptionistDashboardView();
       case 'facility':
-      case 'facility_staff':
         return const FacilityStaffDashboardView();
       default:
         return Center(child: Text('Role Architecture: $role'));
@@ -234,7 +234,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
 
 
   Widget _resolveRoleBasedQrScanner(String role) {
-    if (role.toLowerCase() == 'guard') {
+    if (PropertyRoleResolver.normalizeRole(role) == 'guard') {
       return GuardQrScannerScreen(
         isActive: _currentIndex == 5,
         onScanComplete: () => setState(() => _currentIndex = 0),
@@ -244,7 +244,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   }
 
   Widget _resolveRoleBasedHistoryView(String role) {
-    if (role.toLowerCase() == 'guard') {
+    if (PropertyRoleResolver.normalizeRole(role) == 'guard') {
       return const GuardHistoryScreen();
     }
     return VisitorHistoryScreen(onBack: () => setState(() => _currentIndex = 0));

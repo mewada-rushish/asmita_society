@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../core/widgets/asmita_toast.dart';
+import '../../../core/utils/property_role_resolver.dart';
 import '../../dashboard/presentation/main_dashboard_screen.dart'; // Added dashboard routing import
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -86,10 +87,11 @@ class _OtpScreenState extends State<OtpScreen> {
               message: 'Identity verified successfully.',
               type: AsmitaToastType.success,
             );
+            final normalizedRole = PropertyRoleResolver.normalizeRole(state.sessionRole);
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
-                builder: (_) => MainDashboardScreen(userRole: state.sessionRole), // Fixed placeholder navigation to match architecture roles
+                builder: (_) => MainDashboardScreen(userRole: normalizedRole),
               ),
               (route) => false,
             );
@@ -108,6 +110,8 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
             );
           } else if (state is AuthError) {
+            setState(() => _otp = '');
+            FocusScope.of(context).requestFocus(_focusNode);
             AsmitaToast.show(
               context,
               message: state.message,
