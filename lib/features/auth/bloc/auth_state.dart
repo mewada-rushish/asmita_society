@@ -8,13 +8,21 @@ abstract class AuthState extends Equatable {
   List<Object?> get props => [];
 }
 
-class AuthInitial extends AuthState {}
+class AuthInitial extends AuthState {
+  const AuthInitial();
+}
 
-class AuthLoading extends AuthState {}
+class AuthLoading extends AuthState {
+  const AuthLoading();
+}
 
-class AuthUnauthenticated extends AuthState {}
+class AuthUnauthenticated extends AuthState {
+  const AuthUnauthenticated();
+}
 
-class AuthNeedsOnboarding extends AuthState {}
+class AuthNeedsOnboarding extends AuthState {
+  const AuthNeedsOnboarding();
+}
 
 class AuthOtpSent extends AuthState {
   final String mobile;
@@ -42,9 +50,13 @@ class AuthRegistrationRequired extends AuthState {
   List<Object?> get props => [mobile];
 }
 
-class AuthPendingApproval extends AuthState {}
+class AuthPendingApproval extends AuthState {
+  const AuthPendingApproval();
+}
 
-class AuthApprovedNeedsLogin extends AuthState {}
+class AuthApprovedNeedsLogin extends AuthState {
+  const AuthApprovedNeedsLogin();
+}
 
 class AuthError extends AuthState {
   final String message;

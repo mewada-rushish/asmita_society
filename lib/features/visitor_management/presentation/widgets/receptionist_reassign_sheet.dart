@@ -58,8 +58,8 @@ class _ReceptionistReassignSheetState extends State<ReceptionistReassignSheet> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -99,6 +99,7 @@ class _ReceptionistReassignSheetState extends State<ReceptionistReassignSheet> {
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<int>(
+              isExpanded: true,
               initialValue: _selectedExecutiveId,
               decoration: InputDecoration(
                 hintText: 'Select Executive / Director',
@@ -108,7 +109,11 @@ class _ReceptionistReassignSheetState extends State<ReceptionistReassignSheet> {
               items: _directors.map((d) {
                 return DropdownMenuItem<int>(
                   value: d['id'] as int,
-                  child: Text('${d['name']} (${d['floor']})', style: const TextStyle(fontSize: 13)),
+                  child: Text(
+                    '${d['name']} (${d['floor']})',
+                    style: const TextStyle(fontSize: 13),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 );
               }).toList(),
               onChanged: (val) => setState(() => _selectedExecutiveId = val),

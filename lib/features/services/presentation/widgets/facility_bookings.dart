@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'asmita_facility_booking_wizard.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
@@ -74,7 +75,7 @@ class FacilityBookings extends StatelessWidget {
                   crossAxisCount: 2,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  childAspectRatio: 1.4,
+                  childAspectRatio: 1.35,
                 ),
                 itemCount: displayAmenities.length,
                 itemBuilder: (context, index) {
@@ -89,13 +90,13 @@ class FacilityBookings extends StatelessWidget {
                 },
               ),
             if (amenities.length > 4) ...[
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Center(
                 child: InkWell(
                   onTap: () => _showAllFacilitiesSheet(context, amenities),
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -111,7 +112,7 @@ class FacilityBookings extends StatelessWidget {
               ),
             ],
             if (myBookings.isNotEmpty) ...[
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               Text(
                 'My Bookings',
                 style: textTheme.titleLarge?.copyWith(
@@ -119,19 +120,88 @@ class FacilityBookings extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: myBookings.length,
                 itemBuilder: (context, index) {
                   final booking = myBookings[index];
-                  return Card(
-                    margin: EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      title: Text(booking.amenity?.name ?? 'Facility'),
-                      subtitle: Text('${booking.bookingDate != null ? booking.bookingDate!.toLocal().toString().split(' ')[0] : ''} - Status: ${booking.bookingStatus}'),
-                      trailing: Icon(Icons.chevron_right),
+                  final status = booking.bookingStatus.toUpperCase();
+                  final isApproved = status.contains('CONFIRM') || status.contains('APPROV');
+                  final isRejected = status.contains('CANCEL') || status.contains('REJECT');
+                  final badgeColor = isApproved
+                      ? AsmitaPalette.successGreen
+                      : (isRejected ? AsmitaPalette.actionRed : const Color(0xFFF59E0B));
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Theme.of(context).dividerColor, width: 1.2),
+                    ),
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            getIconForFacility(booking.amenity?.name ?? ''),
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                booking.amenity?.name ?? 'Facility',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                booking.bookingDate != null
+                                    ? '${booking.bookingDate!.toLocal().toString().split(' ')[0]} • Status: ${booking.bookingStatus}'
+                                    : 'Status: ${booking.bookingStatus}',
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).textTheme.bodySmall?.color,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: badgeColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: badgeColor.withValues(alpha: 0.3)),
+                          ),
+                          child: Text(
+                            booking.bookingStatus,
+                            style: TextStyle(
+                              color: badgeColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Montserrat',
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -164,7 +234,7 @@ class FacilityBookings extends StatelessWidget {
           crossAxisCount: 2,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio: 1.4,
+          childAspectRatio: 1.35,
         ),
         itemCount: allFacilities.length,
         itemBuilder: (context, index) {
@@ -215,7 +285,7 @@ class _ServiceCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
         ),
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -226,6 +296,8 @@ class _ServiceCard extends StatelessWidget {
               children: [
                 Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: textTheme.titleLarge?.copyWith(fontSize: 13, fontWeight: FontWeight.w700),
                 ),
                 SizedBox(height: 2),

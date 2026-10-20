@@ -132,6 +132,7 @@ class _ManualOverrideDialogState extends State<ManualOverrideDialog> {
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               initialValue: _selectedReason,
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -140,7 +141,11 @@ class _ManualOverrideDialogState extends State<ManualOverrideDialog> {
               items: _auditReasons.map((r) {
                 return DropdownMenuItem<String>(
                   value: r['code'],
-                  child: Text(r['label']!, style: const TextStyle(fontSize: 13)),
+                  child: Text(
+                    r['label']!,
+                    style: const TextStyle(fontSize: 13),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 );
               }).toList(),
               onChanged: isCapExhausted ? null : (val) => setState(() => _selectedReason = val ?? 'SMS_GATEWAY_DOWN'),

@@ -43,14 +43,16 @@ class TenantsScreen extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           FloatingActionButton(
+            key: const Key('request_history_fab'),
             heroTag: 'request_history_fab',
             onPressed: () => _onHistoryRequestFabTapped(context, ref),
             backgroundColor: Theme.of(context).colorScheme.primary,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Icon(Icons.history, color: Theme.of(context).colorScheme.surface),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           FloatingActionButton(
+            key: const Key('add_tenant_fab'),
             heroTag: 'add_tenant_fab',
             onPressed: () => _showAddEditSheet(context, ref),
             backgroundColor: Theme.of(context).colorScheme.primary,
@@ -98,7 +100,7 @@ class TenantsScreen extends ConsumerWidget {
                           sliver: SliverGrid(
                             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
-                              childAspectRatio: 0.85,
+                              childAspectRatio: 0.80,
                               crossAxisSpacing: 16,
                               mainAxisSpacing: 16,
                             ),

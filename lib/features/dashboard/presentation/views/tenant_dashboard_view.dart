@@ -62,14 +62,17 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authState = context.read<AuthBloc>().state;
-      int residentId = 1;
-      if (authState is AuthAuthenticated) {
-        residentId = authState.user.userId;
-      }
-      context.read<VisitorBloc>().add(
-        LoadMyHistory(residentId: residentId, isRefresh: true),
-      );
+      if (!mounted) return;
+      try {
+        final authState = context.read<AuthBloc>().state;
+        int residentId = 1;
+        if (authState is AuthAuthenticated) {
+          residentId = authState.user.userId;
+        }
+        context.read<VisitorBloc>().add(
+          LoadMyHistory(residentId: residentId, isRefresh: true),
+        );
+      } catch (_) {}
     });
   }
 
@@ -111,6 +114,19 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
 
   @override
   Widget build(BuildContext context) {
+    String userInitials = 'KM';
+    try {
+      final authState = context.watch<AuthBloc>().state;
+      if (authState is AuthAuthenticated && authState.user.fullName.trim().isNotEmpty) {
+        final parts = authState.user.fullName.trim().split(RegExp(r'\s+'));
+        if (parts.length >= 2) {
+          userInitials = '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+        } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
+          userInitials = parts[0][0].toUpperCase();
+        }
+      }
+    } catch (_) {}
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
@@ -216,7 +232,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
             left: 0,
             right: 0,
             child: AsmitaPrimaryHeader(
-              userInitials: 'KM',
+              userInitials: userInitials,
               onSearchPressed: widget.onNavigateToSearch,
               onChatPressed: widget.onNavigateToCommunity,
             ),
@@ -560,22 +576,31 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                Row(
-                  children: [
-                    Text(
-                      'View All',
-                      style: textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.secondary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                InkWell(
+                  onTap: () {
+                    if (widget.onNavigateToHistory != null) {
+                      widget.onNavigateToHistory!();
+                    }
+                  },
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  child: Row(
+                    children: [
+                      Text(
+                        'View All',
+                        style: textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.secondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: Theme.of(context).colorScheme.secondary,
-                      size: 16,
-                    ),
-                  ],
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: Theme.of(context).colorScheme.secondary,
+                        size: 16,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
