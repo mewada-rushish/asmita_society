@@ -46,9 +46,10 @@ app.*.map.json
 # Workspace Rules for Agents
 /.agents/
 
-# Firebase Service Accounts
-# Note: android/app/google-services.json is tracked so Gradle build succeeds out of the box
+# Firebase Service Accounts & Credentials
+android/app/google-services.json
 android/app/google-services-template.json
+android/app/google-services.json.*
 firebase.json
 GoogleService-Info.plist
 google-services.json
