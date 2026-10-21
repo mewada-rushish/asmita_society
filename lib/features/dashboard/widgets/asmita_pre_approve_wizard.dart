@@ -186,9 +186,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     List<FlatMapping> selectedFlats = List.from(_selectedFlatMappings);
 
     if (selectedFlats.isEmpty && user.flatMappings.isNotEmpty && !widget.isGuardMode) {
-      if (user.flatMappings.length == 1) {
-        selectedFlats = [user.flatMappings.first];
-      }
+      selectedFlats = [user.flatMappings.first];
     }
 
     if (selectedFlats.isEmpty) {
