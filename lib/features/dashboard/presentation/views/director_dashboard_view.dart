@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
@@ -207,8 +208,14 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: RefreshIndicator(
+      body: Column(
+        children: [
+          const AsmitaPrimaryHeader(
+            subtitleOverride: 'Executive Office',
+            allowPropertySwitching: false,
+          ),
+          Expanded(
+            child: RefreshIndicator(
           onRefresh: () async {
             if (widget.visits == null) {
               context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
@@ -313,7 +320,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                     ],
                   ),
                 ),
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
@@ -110,21 +111,29 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
 
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          body: SafeArea(
-            child: RefreshIndicator(
-              color: AsmitaPalette.deepNavy,
-              onRefresh: () async {
-                context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
-              },
-              child: isLoading
-                  ? const Center(
-                      child: AsmitaLoadingIndicator(
-                        color: AsmitaPalette.deepNavy,
-                        size: 32,
-                      ),
-                    )
-                  : _buildScrollBody(context, state.visits, isLoading: state.status == IndustrialVisitBlocStatus.loading),
-            ),
+          body: Column(
+            children: [
+              const AsmitaPrimaryHeader(
+                subtitleOverride: 'Host Desk',
+                allowPropertySwitching: false,
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  color: AsmitaPalette.deepNavy,
+                  onRefresh: () async {
+                    context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+                  },
+                  child: isLoading
+                      ? const Center(
+                          child: AsmitaLoadingIndicator(
+                            color: AsmitaPalette.deepNavy,
+                            size: 32,
+                          ),
+                        )
+                      : _buildScrollBody(context, state.visits, isLoading: state.status == IndustrialVisitBlocStatus.loading),
+                ),
+              ),
+            ],
           ),
         );
       },
