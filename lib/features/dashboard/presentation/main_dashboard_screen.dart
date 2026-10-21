@@ -28,6 +28,9 @@ import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/services/bloc/daily_help_bloc.dart';
 import 'package:asmita_society/features/services/bloc/daily_help_event.dart';
 import 'package:asmita_society/features/services/data/repositories/daily_help_repository.dart';
+import '../../../core/di/injection_container.dart' as di;
+import '../../visitor_management/bloc/industrial_visit_bloc.dart';
+import '../../visitor_management/data/repositories/industrial_visit_repository.dart';
 
 class MainDashboardScreen extends StatefulWidget {
   final String userRole;
@@ -198,37 +201,61 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
           onNavigateToSearch: _navigateToSearch,
         );
       case 'guard':
-        return GuardDashboardView(
-          onNavigateToMenu: () => setState(() => _currentIndex = 4),
-          onNavigateToHistory: () => setState(() => _currentIndex = 3),
-          onNavigateToScanner: () => setState(() => _currentIndex = 5),
+        return _wrapWithIndustrialBloc(
+          context,
+          GuardDashboardView(
+            onNavigateToMenu: () => setState(() => _currentIndex = 4),
+            onNavigateToHistory: () => setState(() => _currentIndex = 3),
+            onNavigateToScanner: () => setState(() => _currentIndex = 5),
+          ),
         );
       case 'director':
-        return DirectorDashboardView(
-          onContactReceptionist: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Contacting Floor Receptionist...')),
-            );
-          },
+        return _wrapWithIndustrialBloc(
+          context,
+          DirectorDashboardView(
+            onContactReceptionist: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Contacting Floor Receptionist...')),
+              );
+            },
+          ),
         );
       case 'employee':
         final authState = context.watch<AuthBloc>().state;
         final user = authState is AuthAuthenticated ? authState.user : null;
-        return EmployeeDashboardView(
-          employeeName: (user != null && user.fullName.isNotEmpty) ? user.fullName : 'Aditi Sharma',
-          onOpenDelegation: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const DepartmentDelegationScreen()),
-            );
-          },
+        return _wrapWithIndustrialBloc(
+          context,
+          EmployeeDashboardView(
+            employeeName: (user != null && user.fullName.isNotEmpty) ? user.fullName : 'Aditi Sharma',
+            onOpenDelegation: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const DepartmentDelegationScreen()),
+              );
+            },
+          ),
         );
       case 'receptionist':
-        return const ReceptionistDashboardView();
+        return _wrapWithIndustrialBloc(context, const ReceptionistDashboardView());
       case 'facility':
-        return const FacilityStaffDashboardView();
+        return _wrapWithIndustrialBloc(context, const FacilityStaffDashboardView());
       default:
         return Center(child: Text('Role Architecture: $role'));
+    }
+  }
+
+  Widget _wrapWithIndustrialBloc(BuildContext context, Widget child) {
+    di.registerIndustrialDependencies();
+    try {
+      context.read<IndustrialVisitBloc>();
+      return child;
+    } catch (_) {
+      return BlocProvider<IndustrialVisitBloc>(
+        create: (_) => IndustrialVisitBloc(
+          repository: di.sl<IndustrialVisitRepository>(),
+        ),
+        child: child,
+      );
     }
   }
 

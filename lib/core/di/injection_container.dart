@@ -69,7 +69,19 @@ Future<void> init() async {
     () => SearchRepository(dio: sl<AsmitaDioClient>().dio),
   );
 
-  sl.registerLazySingleton<IndustrialVisitRepository>(
-    () => IndustrialVisitRepository(dio: sl<AsmitaDioClient>().dio),
-  );
+  registerIndustrialDependencies();
+}
+
+void registerIndustrialDependencies() {
+  if (!sl.isRegistered<SecureStorageService>()) {
+    sl.registerLazySingleton<SecureStorageService>(() => SecureStorageService());
+  }
+  if (!sl.isRegistered<AsmitaDioClient>()) {
+    sl.registerLazySingleton<AsmitaDioClient>(() => AsmitaDioClient(sl<SecureStorageService>()));
+  }
+  if (!sl.isRegistered<IndustrialVisitRepository>()) {
+    sl.registerLazySingleton<IndustrialVisitRepository>(
+      () => IndustrialVisitRepository(dio: sl<AsmitaDioClient>().dio),
+    );
+  }
 }

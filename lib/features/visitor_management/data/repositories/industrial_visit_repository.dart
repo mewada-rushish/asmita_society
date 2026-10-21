@@ -9,17 +9,17 @@ class IndustrialVisitRepository {
   IndustrialVisitRepository({required this.dio});
 
   /// Fetches industrial visit requests with optional filters
+  /// Fetches industrial visit requests with optional filters
   Future<List<IndustrialVisitModel>> getVisits({
     String? status,
     String? arrivalMode,
     int? departmentId,
     int? hostUserId,
-    int propertyId = 114,
+    int? propertyId,
   }) async {
     try {
-      final queryParams = <String, dynamic>{
-        'property_id': propertyId,
-      };
+      final queryParams = <String, dynamic>{};
+      if (propertyId != null) queryParams['property_id'] = propertyId;
       if (status != null && status.isNotEmpty) queryParams['status'] = status;
       if (arrivalMode != null && arrivalMode.isNotEmpty) queryParams['arrival_mode'] = arrivalMode;
       if (departmentId != null) queryParams['department_id'] = departmentId;
@@ -50,17 +50,19 @@ class IndustrialVisitRepository {
     required String vehicleNumber,
     required String visitorName,
     required int gateId,
-    int propertyId = 114,
+    int? propertyId,
   }) async {
     try {
+      final payload = <String, dynamic>{
+        'vehicle_number': vehicleNumber,
+        'visitor_name': visitorName,
+        'gate_id': gateId,
+      };
+      if (propertyId != null) payload['property_id'] = propertyId;
+
       final response = await dio.post(
         EnvConfig.industrialGuardDraft,
-        data: {
-          'vehicle_number': vehicleNumber,
-          'visitor_name': visitorName,
-          'gate_id': gateId,
-          'property_id': propertyId,
-        },
+        data: payload,
       );
       return response.data as Map<String, dynamic>;
     } catch (e) {
@@ -70,11 +72,14 @@ class IndustrialVisitRepository {
   }
 
   /// Lists active vehicle draft slips at Gate 2
-  Future<List<dynamic>> getActiveVehicleDrafts({int propertyId = 114}) async {
+  Future<List<dynamic>> getActiveVehicleDrafts({int? propertyId}) async {
     try {
+      final queryParams = <String, dynamic>{};
+      if (propertyId != null) queryParams['property_id'] = propertyId;
+
       final response = await dio.get(
         EnvConfig.industrialGuardDrafts,
-        queryParameters: {'property_id': propertyId},
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
       final data = response.data;
       return (data['data'] ?? data['drafts'] ?? []) as List<dynamic>;
@@ -90,20 +95,22 @@ class IndustrialVisitRepository {
     required String recipientName,
     int? recipientUserId,
     String? photoBase64,
-    int propertyId = 114,
+    int? propertyId,
     int gateId = 1,
   }) async {
     try {
+      final payload = <String, dynamic>{
+        'delivery_company': deliveryCompany,
+        'recipient_name': recipientName,
+        'recipient_user_id': recipientUserId,
+        'photo_base64': photoBase64,
+        'gate_id': gateId,
+      };
+      if (propertyId != null) payload['property_id'] = propertyId;
+
       final response = await dio.post(
         EnvConfig.industrialDelivery,
-        data: {
-          'delivery_company': deliveryCompany,
-          'recipient_name': recipientName,
-          'recipient_user_id': recipientUserId,
-          'photo_base64': photoBase64,
-          'property_id': propertyId,
-          'gate_id': gateId,
-        },
+        data: payload,
       );
       final data = response.data;
       final visitJson = (data['visit'] ?? data['data'] ?? data) as Map<String, dynamic>;
@@ -245,14 +252,16 @@ class IndustrialVisitRepository {
   }
 
   /// Guard Duty Clock-In
-  Future<Map<String, dynamic>> clockInDuty({required int gateId, int propertyId = 114}) async {
+  Future<Map<String, dynamic>> clockInDuty({required int gateId, int? propertyId}) async {
     try {
+      final payload = <String, dynamic>{
+        'gate_id': gateId,
+      };
+      if (propertyId != null) payload['property_id'] = propertyId;
+
       final response = await dio.post(
         EnvConfig.industrialGuardClockIn,
-        data: {
-          'gate_id': gateId,
-          'property_id': propertyId,
-        },
+        data: payload,
       );
       return response.data as Map<String, dynamic>;
     } catch (e) {
@@ -262,11 +271,14 @@ class IndustrialVisitRepository {
   }
 
   /// Guard Duty Clock-Out
-  Future<Map<String, dynamic>> clockOutDuty({int propertyId = 114}) async {
+  Future<Map<String, dynamic>> clockOutDuty({int? propertyId}) async {
     try {
+      final payload = <String, dynamic>{};
+      if (propertyId != null) payload['property_id'] = propertyId;
+
       final response = await dio.post(
         EnvConfig.industrialGuardClockOut,
-        data: {'property_id': propertyId},
+        data: payload.isNotEmpty ? payload : null,
       );
       return response.data as Map<String, dynamic>;
     } catch (e) {
@@ -276,11 +288,14 @@ class IndustrialVisitRepository {
   }
 
   /// Fetches industrial property settings
-  Future<Map<String, dynamic>> getSettings({int propertyId = 114}) async {
+  Future<Map<String, dynamic>> getSettings({int? propertyId}) async {
     try {
+      final queryParams = <String, dynamic>{};
+      if (propertyId != null) queryParams['property_id'] = propertyId;
+
       final response = await dio.get(
         EnvConfig.industrialSettings,
-        queryParameters: {'property_id': propertyId},
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
       return (response.data['data'] ?? response.data['settings'] ?? response.data) as Map<String, dynamic>;
     } catch (e) {
@@ -294,17 +309,19 @@ class IndustrialVisitRepository {
     required bool enabled,
     int durationMinutes = 60,
     String? reason,
-    int propertyId = 114,
+    int? propertyId,
   }) async {
     try {
+      final payload = <String, dynamic>{
+        'enabled': enabled,
+        'duration_minutes': durationMinutes,
+      };
+      if (reason != null) payload['reason'] = reason;
+      if (propertyId != null) payload['property_id'] = propertyId;
+
       final response = await dio.post(
         EnvConfig.industrialOutageMode,
-        data: {
-          'enabled': enabled,
-          'duration_minutes': durationMinutes,
-          'reason': reason,
-          'property_id': propertyId,
-        },
+        data: payload,
       );
       return response.data as Map<String, dynamic>;
     } catch (e) {
