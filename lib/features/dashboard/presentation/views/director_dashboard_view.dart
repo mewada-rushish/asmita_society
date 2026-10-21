@@ -513,6 +513,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     List<IndustrialVisitModel> visits, {
     required bool isLoading,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final pendingCount = visits.where((v) => v.isPending).length;
     final approvedCount = visits.where((v) => v.status == IndustrialVisitStatus.approved).length;
     final checkedInCount = visits.where((v) => v.status == IndustrialVisitStatus.checkedIn).length;
@@ -573,12 +574,13 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
+                              Text(
                                 'Executive Visitors',
                                 style: TextStyle(
                                   fontFamily: 'Montserrat',
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
+                                  color: isDark ? Colors.white : AsmitaPalette.textDark,
                                 ),
                               ),
                               Text(
@@ -997,16 +999,14 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         border: Border.all(
           color: isPending
               ? AsmitaPalette.actionRed.withValues(alpha: 0.4)
-              : Theme.of(context).dividerColor,
+              : (isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey),
           width: isPending ? 1.5 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: isPending
-                ? AsmitaPalette.actionRed.withValues(alpha: 0.05)
-                : Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
             blurRadius: 8,
-            offset: const Offset(0, 3),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -1021,19 +1021,33 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: isPending
-                          ? AsmitaPalette.actionRed.withValues(alpha: 0.12)
-                          : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-                      child: Text(
-                        visit.visitorName.isNotEmpty ? visit.visitorName[0].toUpperCase() : 'V',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontWeight: FontWeight.bold,
-                          color: isPending ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy,
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: isPending
+                            ? AsmitaPalette.actionRed.withValues(alpha: isDark ? 0.2 : 0.1)
+                            : AsmitaPalette.deepNavy.withValues(alpha: isDark ? 0.2 : 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isPending
+                              ? AsmitaPalette.actionRed.withValues(alpha: 0.3)
+                              : AsmitaPalette.deepNavy.withValues(alpha: 0.15),
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          visit.visitorName.isNotEmpty ? visit.visitorName[0].toUpperCase() : 'V',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: isPending
+                                ? AsmitaPalette.actionRed
+                                : (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy),
+                          ),
                         ),
                       ),
                     ),
@@ -1047,74 +1061,125 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                               Flexible(
                                 child: Text(
                                   visit.visitorName,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Montserrat',
-                                    fontSize: 14,
+                                    fontSize: 15,
                                     fontWeight: FontWeight.bold,
+                                    color: isDark ? Colors.white : Colors.black,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              if (visit.passCode != null) ...[
+                              if (visit.passCode != null && visit.passCode!.isNotEmpty) ...[
                                 const SizedBox(width: 6),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                                   decoration: BoxDecoration(
-                                    color: AsmitaPalette.deepNavy.withValues(alpha: 0.07),
+                                    color: AsmitaPalette.deepNavy.withValues(alpha: isDark ? 0.25 : 0.08),
                                     borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: AsmitaPalette.deepNavy.withValues(alpha: isDark ? 0.4 : 0.2),
+                                    ),
                                   ),
                                   child: Text(
                                     '#${visit.passCode}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontFamily: 'Montserrat',
                                       fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: AsmitaPalette.deepNavy,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
+                                      letterSpacing: 0.5,
                                     ),
                                   ),
                                 ),
                               ],
                             ],
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            visit.deliveryCompany ?? visit.purpose ?? 'VIP Guest',
-                            style: const TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              Icon(
+                                visit.deliveryCompany != null
+                                    ? Icons.local_shipping_outlined
+                                    : (visit.isPreApproved ? Icons.star_outline_rounded : Icons.person_outline_rounded),
+                                size: 13,
+                                color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  visit.deliveryCompany ?? visit.purpose ?? 'Guest Visitor',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         color: isPending
-                            ? AsmitaPalette.actionRed.withValues(alpha: 0.12)
+                            ? AsmitaPalette.actionRed.withValues(alpha: isDark ? 0.2 : 0.1)
                             : statusBg,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        isPending ? 'Pending Approval' : visit.status.label,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: isPending ? AsmitaPalette.actionRed : statusText,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isPending
+                              ? AsmitaPalette.actionRed.withValues(alpha: 0.35)
+                              : statusText.withValues(alpha: 0.3),
                         ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isPending ? Icons.warning_amber_rounded : visit.status.iconData,
+                            size: 11,
+                            color: isPending ? AsmitaPalette.actionRed : statusText,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            isPending ? 'Pending' : visit.status.label,
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: isPending ? AsmitaPalette.actionRed : statusText,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
-                const Divider(height: 1),
-                const SizedBox(height: 8),
+                Divider(
+                  height: 18,
+                  thickness: 1,
+                  color: isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey,
+                ),
+                const SizedBox(height: 4),
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.access_time_rounded, size: 13, color: AsmitaPalette.textLight),
+                        Icon(
+                          Icons.schedule_rounded,
+                          size: 13,
+                          color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           visit.checkInAt != null
@@ -1122,22 +1187,80 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                               : (visit.createdAt != null
                                   ? DateFormat('hh:mm a').format(visit.createdAt!)
                                   : 'Scheduled'),
-                          style: const TextStyle(fontSize: 11, color: AsmitaPalette.textLight),
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                          ),
                         ),
                       ],
                     ),
                     if (visit.vehicleNumber != null && visit.vehicleNumber!.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: (isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey).withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.directions_car_rounded,
+                              size: 12,
+                              color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              visit.vehicleNumber!,
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                                color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (visit.departmentName != null && visit.departmentName!.isNotEmpty)
                       Row(
                         children: [
-                          const Icon(Icons.directions_car_rounded, size: 13, color: AsmitaPalette.textLight),
+                          Icon(
+                            Icons.business_rounded,
+                            size: 12,
+                            color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                          ),
                           const SizedBox(width: 4),
                           Text(
-                            visit.vehicleNumber!,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
+                            visit.departmentName!,
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
                             ),
+                          ),
+                        ],
+                      )
+                    else
+                      Row(
+                        children: [
+                          Text(
+                            'View Pass',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            size: 14,
+                            color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
                           ),
                         ],
                       ),
