@@ -59,6 +59,27 @@ class SecureStorageService {
     return val != null ? int.tryParse(val) : null;
   }
 
+  static const String _approvalSoundKey = 'pref_approval_sound';
+  static const String _notificationSoundKey = 'pref_notification_sound';
+
+  Future<void> saveApprovalSound(String sound) async {
+    await _storage.write(key: _approvalSoundKey, value: sound);
+  }
+
+  Future<String> getApprovalSound() async {
+    final val = await _storage.read(key: _approvalSoundKey);
+    return val ?? 'asmita_alert_1';
+  }
+
+  Future<void> saveNotificationSound(String sound) async {
+    await _storage.write(key: _notificationSoundKey, value: sound);
+  }
+
+  Future<String> getNotificationSound() async {
+    final val = await _storage.read(key: _notificationSoundKey);
+    return val ?? 'asmita_notification_1';
+  }
+
   Future<void> clearSession() async {
     await _storage.delete(key: _tokenKey);
     await _storage.delete(key: _roleKey);

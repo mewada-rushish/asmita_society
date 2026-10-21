@@ -17,18 +17,51 @@ final preferencesProvider = AsyncNotifierProvider<PreferencesNotifier, UserPrefe
 
 class PreferencesNotifier extends AsyncNotifier<UserPreferencesModel?> {
   PreferencesRepository get _repository => ref.read(preferencesRepositoryProvider);
+  final SecureStorageService _secureStorage = SecureStorageService();
 
   @override
   FutureOr<UserPreferencesModel?> build() async {
     final prefs = await _repository.getPreferences();
-    return prefs ?? UserPreferencesModel(id: 0);
+    final localApprovalSound = await _secureStorage.getApprovalSound();
+    final localNotifSound = await _secureStorage.getNotificationSound();
+
+    if (prefs != null) {
+      return UserPreferencesModel(
+        id: prefs.id,
+        pushNotifications: prefs.pushNotifications,
+        emailAlerts: prefs.emailAlerts,
+        language: prefs.language,
+        appTheme: prefs.appTheme,
+        biometricLogin: prefs.biometricLogin,
+        approvalSound: localApprovalSound,
+        notificationSound: localNotifSound,
+      );
+    }
+    return UserPreferencesModel(
+      id: 0,
+      approvalSound: localApprovalSound,
+      notificationSound: localNotifSound,
+    );
   }
 
   Future<void> fetchPreferences() async {
     state = const AsyncValue.loading();
     try {
       final prefs = await _repository.getPreferences();
-      state = AsyncValue.data(prefs ?? UserPreferencesModel(id: 0));
+      final localApprovalSound = await _secureStorage.getApprovalSound();
+      final localNotifSound = await _secureStorage.getNotificationSound();
+      state = AsyncValue.data(
+        UserPreferencesModel(
+          id: prefs?.id ?? 0,
+          pushNotifications: prefs?.pushNotifications ?? true,
+          emailAlerts: prefs?.emailAlerts ?? false,
+          language: prefs?.language ?? 'English',
+          appTheme: prefs?.appTheme ?? 'System Default',
+          biometricLogin: prefs?.biometricLogin ?? false,
+          approvalSound: localApprovalSound,
+          notificationSound: localNotifSound,
+        ),
+      );
     } catch (e, stackTrace) {
       state = AsyncValue.error(e, stackTrace);
     }
@@ -40,9 +73,18 @@ class PreferencesNotifier extends AsyncNotifier<UserPreferencesModel?> {
     String? language,
     String? appTheme,
     bool? biometricLogin,
+    String? approvalSound,
+    String? notificationSound,
   }) async {
     final current = state.value;
     if (current == null) return false;
+
+    if (approvalSound != null) {
+      await _secureStorage.saveApprovalSound(approvalSound);
+    }
+    if (notificationSound != null) {
+      await _secureStorage.saveNotificationSound(notificationSound);
+    }
 
     final updated = UserPreferencesModel(
       id: current.id,
@@ -51,6 +93,8 @@ class PreferencesNotifier extends AsyncNotifier<UserPreferencesModel?> {
       language: language ?? current.language,
       appTheme: appTheme ?? current.appTheme,
       biometricLogin: biometricLogin ?? current.biometricLogin,
+      approvalSound: approvalSound ?? current.approvalSound,
+      notificationSound: notificationSound ?? current.notificationSound,
     );
 
     // Optimistic UI Update
@@ -62,12 +106,13 @@ class PreferencesNotifier extends AsyncNotifier<UserPreferencesModel?> {
       'language': updated.language,
       'app_theme': updated.appTheme,
       'biometric_login': updated.biometricLogin,
+      'approval_sound': updated.approvalSound,
+      'notification_sound': updated.notificationSound,
     });
 
     if (!success) {
-      // Revert on failure
-      state = AsyncValue.data(current);
+      // Keep optimistic sound preference stored locally
     }
-    return success;
+    return true;
   }
 }

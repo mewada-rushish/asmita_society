@@ -68,6 +68,8 @@ flutter:
     - assets/icons/
     - assets/images/
     - assets/images/logos/
+    - assets/audio/notifications/approvals/
+    - assets/audio/notifications/campaigns/
 
   fonts:
     - family: Montserrat
