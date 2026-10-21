@@ -468,23 +468,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           AsmitaPrimaryHeader(
             subtitleOverride: 'Executive Office • 8th Floor',
             allowPropertySwitching: false,
-            trailingActions: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.support_agent_rounded, size: 20, color: AsmitaPalette.deepNavy),
-                  ),
-                  tooltip: 'Floor Hotlines',
-                  onPressed: () => _handleContactReceptionist(context),
-                ),
-              ],
-            ),
+            onHotlinePressed: () => _handleContactReceptionist(context),
           ),
 
           // 2. Scrollable Body

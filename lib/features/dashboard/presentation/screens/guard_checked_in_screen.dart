@@ -98,9 +98,8 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
         children: [
           AsmitaPrimaryHeader(
             subtitleOverride: 'Checked In Visitors',
+            showBackButton: true,
             allowPropertySwitching: false,
-            onProfilePressed: () {},
-            trailingActions: const SizedBox(),
           ),
           Expanded(
             child: BlocConsumer<GuardGateBloc, GuardGateState>(
