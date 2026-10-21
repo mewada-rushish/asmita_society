@@ -372,6 +372,23 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
+        onPressed: () => _showPreApproveModal(context),
+        backgroundColor: AsmitaPalette.deepNavy,
+        foregroundColor: Colors.white,
+        elevation: 3,
+        icon: const Icon(Icons.add_rounded, size: 20),
+        label: const Text(
+          'Schedule',
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            letterSpacing: 0.3,
+          ),
+        ),
+      ),
       body: Column(
         children: [
           // 1. Unified Primary Asmita Header (Property Consistent)
@@ -380,28 +397,6 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             allowPropertySwitching: false,
             showBackButton: widget.onBack != null || Navigator.canPop(context),
             onBackPressed: widget.onBack,
-            extraAction: ElevatedButton.icon(
-              onPressed: () => _showPreApproveModal(context),
-              icon: const Icon(Icons.add_rounded, size: 14),
-              label: const Text(
-                'Schedule',
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AsmitaPalette.deepNavy,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                elevation: 0,
-                visualDensity: VisualDensity.compact,
-              ),
-            ),
           ),
 
           // 2. Scrollable Content Body with Bloc Consumer
