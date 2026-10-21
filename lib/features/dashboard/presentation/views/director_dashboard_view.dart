@@ -526,25 +526,45 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                           ),
                           const SizedBox(height: 10),
 
-                          // Filter Chips
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
+                          // Fitted Segmented Filter Bar (Zero cropping, 100% responsive width)
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: Theme.of(context).dividerColor),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.03),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
                             child: Row(
                               children: [
-                                _filterChip('ALL', 'All Visitors (${visits.length})'),
-                                const SizedBox(width: 8),
-                                _filterChip(
-                                  'PENDING',
-                                  'Pending ($pendingCount)',
-                                  highlightColor: AsmitaPalette.actionRed,
+                                _segmentedTab(
+                                  'ALL',
+                                  'All',
+                                  count: visits.length,
                                 ),
-                                const SizedBox(width: 8),
-                                _filterChip('APPROVED', 'Approved ($approvedCount)'),
-                                const SizedBox(width: 8),
-                                _filterChip(
+                                _segmentedTab(
+                                  'PENDING',
+                                  'Pending',
+                                  count: pendingCount,
+                                  alertColor: AsmitaPalette.actionRed,
+                                ),
+                                _segmentedTab(
+                                  'APPROVED',
+                                  'Approved',
+                                  count: approvedCount,
+                                  alertColor: const Color(0xFF1E88E5),
+                                ),
+                                _segmentedTab(
                                   'INSIDE',
-                                  'Inside HQ ($checkedInCount)',
-                                  highlightColor: AsmitaPalette.successGreen,
+                                  'Inside',
+                                  count: checkedInCount,
+                                  alertColor: AsmitaPalette.successGreen,
                                 ),
                               ],
                             ),
@@ -754,32 +774,82 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     );
   }
 
-  Widget _filterChip(String code, String label, {Color? highlightColor}) {
+  Widget _segmentedTab(
+    String code,
+    String label, {
+    int? count,
+    Color? alertColor,
+  }) {
     final isSelected = _selectedFilter == code;
-    final effectiveColor = highlightColor ?? AsmitaPalette.deepNavy;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final highlight = alertColor ?? AsmitaPalette.deepNavy;
+    final hasBadge = count != null && count > 0;
 
-    return InkWell(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        setState(() => _selectedFilter = code);
-      },
-      borderRadius: BorderRadius.circular(20),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? effectiveColor : Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? effectiveColor : Theme.of(context).dividerColor,
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          setState(() => _selectedFilter = code);
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+          decoration: BoxDecoration(
+            color: isSelected ? highlight : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: highlight.withValues(alpha: 0.25),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
           ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                      color: isSelected
+                          ? Colors.white
+                          : (isDark ? Colors.white70 : AsmitaPalette.textDark),
+                    ),
+                  ),
+                ),
+              ),
+              if (hasBadge) ...[
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? Colors.white.withValues(alpha: 0.25)
+                        : highlight.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '$count',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? Colors.white : highlight,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),
