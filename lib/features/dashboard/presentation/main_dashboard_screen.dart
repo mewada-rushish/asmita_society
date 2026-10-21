@@ -17,6 +17,8 @@ import 'views/receptionist_dashboard_view.dart';
 import 'views/facility_staff_dashboard_view.dart';
 import 'screens/guard_history_screen.dart';
 import 'screens/guard_checked_in_screen.dart';
+import 'screens/industrial_visits_screen.dart';
+import 'screens/industrial_directory_screen.dart';
 import '../../visitor_management/presentation/screens/guard_qr_scanner_screen.dart';
 import '../../visitor_management/presentation/screens/department_delegation_screen.dart';
 import 'package:asmita_society/features/services/presentation/screens/daily_help_screen.dart';
@@ -122,13 +124,16 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
               onNavigateToSearch: _navigateToSearch,
               onNavigateToCommunity: () => setState(() => _currentIndex = 2),
             )
-          : const SizedBox.shrink(),
+          : _wrapWithIndustrialBloc(
+              context,
+              IndustrialVisitsScreen(onBack: () => setState(() => _currentIndex = 0)),
+            ),
       isResidential
           ? CommunityScreen( // Index 2: Society Chat
               onNavigateToSearch: _navigateToSearch,
               onNavigateToCommunity: () => setState(() => _currentIndex = 2),
             )
-          : const SizedBox.shrink(),
+          : IndustrialDirectoryScreen(onBack: () => setState(() => _currentIndex = 0)),
       _resolveRoleBasedHistoryView(widget.userRole),               // Index 3: Gate Records (History)
       MenuScreen(
         userRole: widget.userRole,
@@ -212,13 +217,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       case 'director':
         return _wrapWithIndustrialBloc(
           context,
-          DirectorDashboardView(
-            onContactReceptionist: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Contacting Floor Receptionist...')),
-              );
-            },
-          ),
+          const DirectorDashboardView(),
         );
       case 'employee':
         final authState = context.watch<AuthBloc>().state;
@@ -271,7 +270,12 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   }
 
   Widget _resolveRoleBasedHistoryView(String role) {
-    if (PropertyRoleResolver.normalizeRole(role) == 'guard') {
+    final normalized = PropertyRoleResolver.normalizeRole(role);
+    if (normalized == 'guard' ||
+        normalized == 'director' ||
+        normalized == 'employee' ||
+        normalized == 'receptionist' ||
+        normalized == 'facility') {
       return const GuardHistoryScreen();
     }
     return VisitorHistoryScreen(onBack: () => setState(() => _currentIndex = 0));
