@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
@@ -290,20 +291,6 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text(
-          'Facility & Operations HQ',
-          style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: AsmitaPalette.deepNavy,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => _handleRefresh(context),
-          ),
-        ],
-      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddTaskDialog(context),
         backgroundColor: AsmitaPalette.deepNavy,
@@ -311,19 +298,25 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
         icon: const Icon(Icons.add_task),
         label: const Text('New Task', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            _handleRefresh(context);
-          },
-          child: isLoading
-              ? const Center(
-                  child: AsmitaLoadingIndicator(
-                    color: AsmitaPalette.deepNavy,
-                    size: 32,
-                  ),
-                )
-              : SingleChildScrollView(
+      body: Column(
+        children: [
+          const AsmitaPrimaryHeader(
+            subtitleOverride: 'Facility & Operations HQ',
+            allowPropertySwitching: false,
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                _handleRefresh(context);
+              },
+              child: isLoading
+                  ? const Center(
+                      child: AsmitaLoadingIndicator(
+                        color: AsmitaPalette.deepNavy,
+                        size: 32,
+                      ),
+                    )
+                  : SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -511,7 +504,9 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
                     ],
                   ),
                 ),
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }

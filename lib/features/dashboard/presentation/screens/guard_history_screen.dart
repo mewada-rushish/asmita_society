@@ -69,9 +69,8 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
         children: [
           AsmitaPrimaryHeader(
             subtitleOverride: 'Gate History',
+            showBackButton: true,
             allowPropertySwitching: false,
-            onProfilePressed: () {},
-            trailingActions: const SizedBox(),
           ),
           Expanded(
             child: BlocBuilder<GuardGateBloc, GuardGateState>(

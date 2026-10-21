@@ -374,22 +374,10 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
-          // 1. Unified Primary Asmita Header
-          AsmitaPrimaryHeader(
+          // 1. Unified Primary Asmita Header (Property Consistent)
+          const AsmitaPrimaryHeader(
             subtitleOverride: 'Visits & Approvals',
             allowPropertySwitching: false,
-            trailingActions: IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.add, size: 20, color: AsmitaPalette.deepNavy),
-              ),
-              tooltip: 'Schedule Visitor',
-              onPressed: () => _showPreApproveModal(context),
-            ),
           ),
 
           // 2. Screen App Bar / Title Header Bar

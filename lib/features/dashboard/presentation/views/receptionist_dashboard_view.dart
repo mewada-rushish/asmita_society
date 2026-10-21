@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
@@ -149,110 +150,126 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView>
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: AsmitaPalette.deepNavy,
-        foregroundColor: Colors.white,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Reception Desk Operations',
-              style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              'Ground & Floor Visitor Coordination',
-              style: TextStyle(fontSize: 11, color: Colors.white70),
-            ),
-          ],
-        ),
-        actions: [
-          // On-Duty Switch
-          Row(
-            children: [
-              Text(
-                _isOnDuty ? 'On Duty' : 'Away',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+      body: Column(
+        children: [
+          // 1. Unified Primary Asmita Header (Property Consistent)
+          AsmitaPrimaryHeader(
+            subtitleOverride: 'Reception Desk • Ground Floor',
+            allowPropertySwitching: false,
+            extraAction: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(16),
               ),
-              Switch(
-                value: _isOnDuty,
-                activeThumbColor: AsmitaPalette.successGreen,
-                onChanged: _handleToggleDuty,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _isOnDuty ? 'On Duty' : 'Away',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: _isOnDuty ? AsmitaPalette.successGreen : AsmitaPalette.textLight,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Switch(
+                    value: _isOnDuty,
+                    activeThumbColor: AsmitaPalette.successGreen,
+                    onChanged: _handleToggleDuty,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-            ],
+            ),
           ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white60,
-          tabs: [
-            Tab(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.people_outline, size: 16),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      'Waiting List (${waitingList.length})',
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Tab(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.notification_important_outlined, size: 16),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      'Floor Alerts (${floorAlerts.length})',
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-      body: isLoading
-          ? const Center(
-              child: AsmitaLoadingIndicator(
-                color: AsmitaPalette.deepNavy,
-                size: 32,
-              ),
-            )
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                // Tab 1: Ground Waiting List
-                RefreshIndicator(
-                  color: AsmitaPalette.deepNavy,
-                  onRefresh: () async {
-                    context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
-                  },
-                  child: _buildVisitList(context, waitingList, isAlertTab: false),
-                ),
 
-                // Tab 2: Floor Alerts
-                RefreshIndicator(
-                  color: AsmitaPalette.deepNavy,
-                  onRefresh: () async {
-                    context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
-                  },
-                  child: _buildVisitList(context, floorAlerts, isAlertTab: true),
+          // 2. Tab Bar Header
+          Container(
+            color: Theme.of(context).colorScheme.surface,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: Theme.of(context).colorScheme.primary,
+              unselectedLabelColor: AsmitaPalette.textLight,
+              indicatorColor: AsmitaPalette.deepNavy,
+              indicatorWeight: 3,
+              labelStyle: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+              tabs: [
+                Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.people_outline, size: 16),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Waiting List (${waitingList.length})',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.notification_important_outlined, size: 16),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Floor Alerts (${floorAlerts.length})',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
+          ),
+
+          // 3. Tab Body
+          Expanded(
+            child: isLoading
+                ? const Center(
+                    child: AsmitaLoadingIndicator(
+                      color: AsmitaPalette.deepNavy,
+                      size: 32,
+                    ),
+                  )
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      // Tab 1: Ground Waiting List
+                      RefreshIndicator(
+                        color: AsmitaPalette.deepNavy,
+                        onRefresh: () async {
+                          context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+                        },
+                        child: _buildVisitList(context, waitingList, isAlertTab: false),
+                      ),
+
+                      // Tab 2: Floor Alerts
+                      RefreshIndicator(
+                        color: AsmitaPalette.deepNavy,
+                        onRefresh: () async {
+                          context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+                        },
+                        child: _buildVisitList(context, floorAlerts, isAlertTab: true),
+                      ),
+                    ],
+                  ),
+          ),
+        ],
+      ),
     );
   }
 

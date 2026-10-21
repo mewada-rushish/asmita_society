@@ -336,18 +336,8 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
               subtitleOverride: 'Security Guard',
               allowPropertySwitching: false,
               onProfilePressed: widget.onNavigateToMenu,
-              trailingActions: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.history,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    onPressed: widget.onNavigateToHistory,
-                  ),
-                ],
-              ),
+              onHistoryPressed: widget.onNavigateToHistory,
+              onScannerPressed: widget.onNavigateToScanner,
             ),
           ),
         ],

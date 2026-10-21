@@ -264,6 +264,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
             right: 0,
             child: const AsmitaPrimaryHeader(
               subtitleOverride: 'Campus Directory & Support',
+              showBackButton: true,
               allowPropertySwitching: false,
             ),
           ),
