@@ -74,10 +74,7 @@ class _BiometricLockWrapperState extends ConsumerState<BiometricLockWrapper> {
     final prefsState = ref.watch(preferencesProvider);
     
     if (prefsState.isLoading && !prefsState.hasValue) {
-      debugPrint('Biometrics - Waiting for preferences to load...');
-      return Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-      );
+      return widget.child;
     }
 
     final isBiometricEnabled = prefsState.value?.biometricLogin ?? false;

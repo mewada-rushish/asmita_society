@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/preferences_repository.dart';
 import '../../data/models/user_preferences_model.dart';
@@ -21,27 +22,55 @@ class PreferencesNotifier extends AsyncNotifier<UserPreferencesModel?> {
 
   @override
   FutureOr<UserPreferencesModel?> build() async {
-    final prefs = await _repository.getPreferences();
+    // 1. Instantly load local cached settings so app startup is never blocked
+    final localBiometric = await _secureStorage.getBiometricLogin();
+    final localLanguage = await _secureStorage.getLanguage();
+    final localTheme = await _secureStorage.getAppTheme();
     final localApprovalSound = await _secureStorage.getApprovalSound();
     final localNotifSound = await _secureStorage.getNotificationSound();
 
-    if (prefs != null) {
-      return UserPreferencesModel(
-        id: prefs.id,
-        pushNotifications: prefs.pushNotifications,
-        emailAlerts: prefs.emailAlerts,
-        language: prefs.language,
-        appTheme: prefs.appTheme,
-        biometricLogin: prefs.biometricLogin,
-        approvalSound: localApprovalSound,
-        notificationSound: localNotifSound,
-      );
-    }
+    // 2. Asynchronously sync fresh preferences from remote in the background
+    unawaited(_syncRemotePreferences());
+
     return UserPreferencesModel(
       id: 0,
+      pushNotifications: true,
+      emailAlerts: false,
+      language: localLanguage ?? 'English',
+      appTheme: localTheme ?? 'System Default',
+      biometricLogin: localBiometric,
       approvalSound: localApprovalSound,
       notificationSound: localNotifSound,
     );
+  }
+
+  Future<void> _syncRemotePreferences() async {
+    try {
+      final prefs = await _repository.getPreferences();
+      if (prefs != null) {
+        await _secureStorage.saveLanguage(prefs.language);
+        await _secureStorage.saveAppTheme(prefs.appTheme);
+        await _secureStorage.saveBiometricLogin(prefs.biometricLogin);
+
+        final localApprovalSound = await _secureStorage.getApprovalSound();
+        final localNotifSound = await _secureStorage.getNotificationSound();
+
+        state = AsyncValue.data(
+          UserPreferencesModel(
+            id: prefs.id,
+            pushNotifications: prefs.pushNotifications,
+            emailAlerts: prefs.emailAlerts,
+            language: prefs.language,
+            appTheme: prefs.appTheme,
+            biometricLogin: prefs.biometricLogin,
+            approvalSound: localApprovalSound,
+            notificationSound: localNotifSound,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Background preferences sync error: $e');
+    }
   }
 
   Future<void> fetchPreferences() async {
@@ -84,6 +113,15 @@ class PreferencesNotifier extends AsyncNotifier<UserPreferencesModel?> {
     }
     if (notificationSound != null) {
       await _secureStorage.saveNotificationSound(notificationSound);
+    }
+    if (biometricLogin != null) {
+      await _secureStorage.saveBiometricLogin(biometricLogin);
+    }
+    if (language != null) {
+      await _secureStorage.saveLanguage(language);
+    }
+    if (appTheme != null) {
+      await _secureStorage.saveAppTheme(appTheme);
     }
 
     final updated = UserPreferencesModel(

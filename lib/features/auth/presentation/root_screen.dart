@@ -58,7 +58,15 @@ class _RootScreenState extends State<RootScreen> {
         }
 
         return Scaffold(
-          backgroundColor: Theme.of(context).colorScheme.primary,
+          backgroundColor: const Color(0xFFF8F8FB),
+          body: Center(
+            child: Image.asset(
+              'assets/images/native_splash.png',
+              width: 200,
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+          ),
         );
       },
     );
