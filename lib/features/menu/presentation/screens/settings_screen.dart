@@ -15,6 +15,7 @@ import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/l10n/app_localizations.dart';
 import 'package:asmita_society/features/menu/presentation/providers/preferences_provider.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:just_audio/just_audio.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -60,8 +61,26 @@ class SettingsScreen extends ConsumerWidget {
                             Icons.email_rounded, 
                             'Email Alerts', 
                             prefs.emailAlerts, 
-                            false,
+                            true,
                             (val) => ref.read(preferencesProvider.notifier).updatePreference(emailAlerts: val)
+                          ),
+                          _buildActionRow(
+                            context,
+                            textTheme,
+                            Icons.notification_important_rounded,
+                            'Approval Alert Sound',
+                            prefs.approvalSound == 'asmita_alert_2' ? 'AsmitA Alert 2' : 'AsmitA Alert 1 (Default)',
+                            true,
+                            () => _showApprovalSoundPicker(context, ref, prefs.approvalSound),
+                          ),
+                          _buildActionRow(
+                            context,
+                            textTheme,
+                            Icons.volume_up_rounded,
+                            'Notification Sound',
+                            prefs.notificationSound == 'asmita_notification_2' ? 'AsmitA Notification 2' : 'AsmitA Notification 1 (Default)',
+                            false,
+                            () => _showNotificationSoundPicker(context, ref, prefs.notificationSound),
                           ),
                         ],
                       ),
@@ -282,6 +301,150 @@ class SettingsScreen extends ConsumerWidget {
             ),
           );
         }
+      ),
+    );
+  }
+
+  void _showApprovalSoundPicker(BuildContext context, WidgetRef ref, String currentSound) {
+    final sounds = [
+      {
+        'key': 'asmita_alert_1',
+        'label': 'AsmitA Alert 1 (Default)',
+        'asset': 'assets/audio/notifications/approvals/AsmitA Alert 1.wav'
+      },
+      {
+        'key': 'asmita_alert_2',
+        'label': 'AsmitA Alert 2',
+        'asset': 'assets/audio/notifications/approvals/AsmitA Alert 2.wav'
+      },
+    ];
+    final player = AudioPlayer();
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (modalContext) => SafeArea(
+        child: CupertinoActionSheet(
+          title: const Text('Select Approval Alert Sound'),
+          message: const Text('Plays when visitors request entry at the gate'),
+          actions: sounds.map((s) {
+            final key = s['key']!;
+            final label = s['label']!;
+            final asset = s['asset']!;
+            final isSelected = key == currentSound;
+            return CupertinoActionSheetAction(
+              onPressed: () async {
+                try {
+                  await player.setAsset(asset);
+                  await player.play();
+                } catch (_) {}
+                if (key != currentSound) {
+                  ref.read(preferencesProvider.notifier).updatePreference(approvalSound: key);
+                  if (context.mounted) {
+                    AsmitaToast.show(context, message: 'Approval sound: $label', type: AsmitaToastType.success);
+                  }
+                }
+                if (modalContext.mounted) {
+                  Navigator.pop(modalContext);
+                }
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (isSelected)
+                    Icon(Icons.check_circle_rounded, size: 18, color: Theme.of(context).colorScheme.primary),
+                  if (isSelected) const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyLarge?.color,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          cancelButton: CupertinoActionSheetAction(
+            onPressed: () {
+              player.dispose();
+              Navigator.pop(modalContext);
+            },
+            isDestructiveAction: true,
+            child: const Text('Cancel'),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showNotificationSoundPicker(BuildContext context, WidgetRef ref, String currentSound) {
+    final sounds = [
+      {
+        'key': 'asmita_notification_1',
+        'label': 'AsmitA Notification 1 (Default)',
+        'asset': 'assets/audio/notifications/campaigns/AsmitA Notifications 1.wav'
+      },
+      {
+        'key': 'asmita_notification_2',
+        'label': 'AsmitA Notification 2',
+        'asset': 'assets/audio/notifications/campaigns/AsmitA Notifications 2.wav'
+      },
+    ];
+    final player = AudioPlayer();
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (modalContext) => SafeArea(
+        child: CupertinoActionSheet(
+          title: const Text('Select Notification Sound'),
+          message: const Text('Plays for society announcements and general updates'),
+          actions: sounds.map((s) {
+            final key = s['key']!;
+            final label = s['label']!;
+            final asset = s['asset']!;
+            final isSelected = key == currentSound;
+            return CupertinoActionSheetAction(
+              onPressed: () async {
+                try {
+                  await player.setAsset(asset);
+                  await player.play();
+                } catch (_) {}
+                if (key != currentSound) {
+                  ref.read(preferencesProvider.notifier).updatePreference(notificationSound: key);
+                  if (context.mounted) {
+                    AsmitaToast.show(context, message: 'Notification sound: $label', type: AsmitaToastType.success);
+                  }
+                }
+                if (modalContext.mounted) {
+                  Navigator.pop(modalContext);
+                }
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (isSelected)
+                    Icon(Icons.check_circle_rounded, size: 18, color: Theme.of(context).colorScheme.primary),
+                  if (isSelected) const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyLarge?.color,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          cancelButton: CupertinoActionSheetAction(
+            onPressed: () {
+              player.dispose();
+              Navigator.pop(modalContext);
+            },
+            isDestructiveAction: true,
+            child: const Text('Cancel'),
+          ),
+        ),
       ),
     );
   }

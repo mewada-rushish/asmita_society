@@ -30,6 +30,13 @@ class FirebaseMessagingService {
       sound: true,
     );
 
+    // Ensure foreground notifications display alerts and play sounds on iOS
+    await _firebaseMessaging.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
     // Initialize local notifications
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -83,6 +90,14 @@ class FirebaseMessagingService {
         sound: RawResourceAndroidNotificationSound('asmita_escalation'),
       ),
       const AndroidNotificationChannel(
+        'escalation_channel',
+        'Urgent Escalations',
+        description: 'Urgent visitor escalation alerts.',
+        importance: Importance.max,
+        playSound: true,
+        sound: RawResourceAndroidNotificationSound('asmita_alert_urgent'),
+      ),
+      const AndroidNotificationChannel(
         'asmita_guard_alerts',
         'Security Guard Gate Alerts',
         description: 'Targeted vehicle approvals and unattended gate failover alerts.',
@@ -92,19 +107,35 @@ class FirebaseMessagingService {
       ),
       const AndroidNotificationChannel(
         'approval_channel',
-        'Visitor Approvals',
-        description: 'Used for visitor entry approvals.',
+        'Visitor Approvals (Default)',
+        description: 'Used for visitor entry approvals with default sound.',
         importance: Importance.max,
         playSound: true,
         sound: RawResourceAndroidNotificationSound('asmita_alert_1'),
       ),
       const AndroidNotificationChannel(
+        'approval_channel_2',
+        'Visitor Approvals (Alert 2)',
+        description: 'Used for visitor entry approvals with alternative alert sound.',
+        importance: Importance.max,
+        playSound: true,
+        sound: RawResourceAndroidNotificationSound('asmita_alert_2'),
+      ),
+      const AndroidNotificationChannel(
         'campaign_channel',
-        'Campaigns & Announcements',
-        description: 'Used for society announcements and campaigns.',
+        'Campaigns & Announcements (Default)',
+        description: 'Used for society announcements with default sound.',
         importance: Importance.defaultImportance,
         playSound: true,
         sound: RawResourceAndroidNotificationSound('asmita_notification_1'),
+      ),
+      const AndroidNotificationChannel(
+        'campaign_channel_2',
+        'Campaigns & Announcements (Sound 2)',
+        description: 'Used for society announcements with alternative sound.',
+        importance: Importance.defaultImportance,
+        playSound: true,
+        sound: RawResourceAndroidNotificationSound('asmita_notification_2'),
       ),
     ];
 
@@ -153,7 +184,7 @@ class FirebaseMessagingService {
     }
   }
 
-  void _handleForegroundMessage(RemoteMessage message) {
+  Future<void> _handleForegroundMessage(RemoteMessage message) async {
     debugPrint('Got a message whilst in the foreground!');
     debugPrint('Message data: ${message.data}');
 
@@ -167,34 +198,59 @@ class FirebaseMessagingService {
       debugPrint('Message also contained a notification: ${message.notification}');
       
       final notification = message.notification;
-      final android = message.notification?.android;
       
-      if (notification != null && android != null) {
-        final eventType = message.data['event']?.toString() ?? message.data['eventType']?.toString();
-        String channelId = 'approval_channel';
-        String channelName = 'Visitor Approvals';
-        String soundName = 'asmita_alert_1';
+      if (notification != null) {
+        final eventType = message.data['event']?.toString() ??
+            message.data['eventType']?.toString() ??
+            message.data['event_type']?.toString() ??
+            message.data['notification_type']?.toString() ??
+            '';
 
-        if (eventType == 'VISITOR_REQUEST') {
-          channelId = 'asmita_visitor_requests';
-          channelName = 'Visitor Entry Requests';
-          soundName = 'asmita_request';
+        final userApprovalSound = await _secureStorage.getApprovalSound();
+        final userNotifSound = await _secureStorage.getNotificationSound();
+
+        final isApproval = eventType == 'VISITOR_REQUEST' ||
+            eventType == 'VISITOR_ARRIVAL' ||
+            eventType == 'VISITOR_SUBMITTED' ||
+            eventType == 'VISITOR_AWAITING_HOST' ||
+            eventType == 'VISITOR_ASSIGNED' ||
+            eventType == 'visitor_approval';
+
+        final isEscalation = eventType == 'ESCALATION' || eventType == 'VISITOR_ESCALATED';
+
+        String channelId;
+        String channelName;
+        String soundName;
+
+        if (isApproval) {
+          channelId = userApprovalSound == 'asmita_alert_2' ? 'approval_channel_2' : 'approval_channel';
+          channelName = 'Visitor Approvals';
+          soundName = userApprovalSound;
+        } else if (isEscalation) {
+          channelId = 'escalation_channel';
+          channelName = 'Urgent Escalations';
+          soundName = userApprovalSound == 'asmita_alert_2' ? 'asmita_alert_2' : 'asmita_alert_urgent';
         } else if (eventType == 'VISITOR_APPROVED') {
           channelId = 'asmita_visitor_approvals';
           channelName = 'Visitor Entry Approvals';
           soundName = 'asmita_approval';
-        } else if (eventType == 'VISITOR_REJECTED' || eventType == 'PASS_REVOKED') {
+        } else if (eventType == 'VISITOR_REJECTED' ||
+            eventType == 'PASS_REVOKED' ||
+            eventType == 'VISITOR_CANCELLED') {
           channelId = 'asmita_visitor_rejections';
           channelName = 'Visitor Entry Rejections';
           soundName = 'asmita_rejection';
-        } else if (eventType == 'ESCALATION') {
-          channelId = 'asmita_visitor_escalations';
-          channelName = 'Visitor Escalation Alerts';
-          soundName = 'asmita_escalation';
-        } else if (eventType == 'GUARD_DUTY_FAILOVER' || eventType == 'VEHICLE_APPROVED') {
+        } else if (eventType == 'GUARD_DUTY_FAILOVER' ||
+            eventType == 'VEHICLE_APPROVED' ||
+            eventType == 'guard_approval_alert') {
           channelId = 'asmita_guard_alerts';
           channelName = 'Security Guard Gate Alerts';
           soundName = 'asmita_guard';
+        } else {
+          // General / Campaign / Announcement notification
+          channelId = userNotifSound == 'asmita_notification_2' ? 'campaign_channel_2' : 'campaign_channel';
+          channelName = 'Campaigns & Announcements';
+          soundName = userNotifSound;
         }
         
         _localNotifications.show(
