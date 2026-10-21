@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/asmita_select_field.dart';
 import '../../data/models/industrial_visit_model.dart';
 
 /// Modal dialog for security supervisor to execute a manual override:
@@ -126,26 +127,39 @@ class _ManualOverrideDialogState extends State<ManualOverrideDialog> {
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              'Audited Reason Code (Mandatory):',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              isExpanded: true,
-              initialValue: _selectedReason,
-              decoration: InputDecoration(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
+            AsmitaSelectField<String>(
+              label: 'Audited Reason Code (Mandatory):',
+              hint: 'Select Reason Code',
+              value: _selectedReason,
+              enabled: !isCapExhausted,
+              prefixIcon: Icons.verified_user_outlined,
+              sheetTitle: 'Select Audit Reason Code',
+              sheetSubtitle: 'Supervisor attested reason for manual entry bypass',
               items: _auditReasons.map((r) {
-                return DropdownMenuItem<String>(
-                  value: r['code'],
-                  child: Text(
-                    r['label']!,
-                    style: const TextStyle(fontSize: 13),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                IconData icon;
+                Color iconColor;
+                switch (r['code']) {
+                  case 'SMS_GATEWAY_DOWN':
+                    icon = Icons.signal_wifi_bad_rounded;
+                    iconColor = AsmitaPalette.actionRed;
+                    break;
+                  case 'EMERGENCY_SERVICES':
+                    icon = Icons.local_hospital_rounded;
+                    iconColor = AsmitaPalette.actionRed;
+                    break;
+                  case 'GOVERNMENT_OFFICIAL':
+                    icon = Icons.gavel_rounded;
+                    iconColor = AsmitaPalette.deepNavy;
+                    break;
+                  default:
+                    icon = Icons.verified_user_rounded;
+                    iconColor = AsmitaPalette.successGreen;
+                }
+                return AsmitaSelectItem<String>(
+                  value: r['code']!,
+                  label: r['label']!,
+                  icon: icon,
+                  iconColor: iconColor,
                 );
               }).toList(),
               onChanged: isCapExhausted ? null : (val) => setState(() => _selectedReason = val ?? 'SMS_GATEWAY_DOWN'),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/asmita_select_field.dart';
 import '../../data/models/industrial_visit_model.dart';
 
 /// Modal sheet for receptionist to:
@@ -93,27 +94,20 @@ class _ReceptionistReassignSheetState extends State<ReceptionistReassignSheet> {
               ],
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Assign Executive / Host:',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<int>(
-              isExpanded: true,
-              initialValue: _selectedExecutiveId,
-              decoration: InputDecoration(
-                hintText: 'Select Executive / Director',
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
+            AsmitaSelectField<int>(
+              label: 'Assign Executive / Host:',
+              hint: 'Select Executive / Director',
+              value: _selectedExecutiveId,
+              prefixIcon: Icons.badge_outlined,
+              sheetTitle: 'Select Executive Host',
+              sheetSubtitle: 'Choose the director or executive hosting this visit',
               items: _directors.map((d) {
-                return DropdownMenuItem<int>(
+                return AsmitaSelectItem<int>(
                   value: d['id'] as int,
-                  child: Text(
-                    '${d['name']} (${d['floor']})',
-                    style: const TextStyle(fontSize: 13),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  label: d['name'] as String,
+                  subtitle: d['floor'] as String,
+                  icon: Icons.person_outline_rounded,
+                  iconColor: AsmitaPalette.deepNavy,
                 );
               }).toList(),
               onChanged: (val) => setState(() => _selectedExecutiveId = val),
