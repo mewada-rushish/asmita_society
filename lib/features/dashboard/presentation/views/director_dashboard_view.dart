@@ -466,7 +466,6 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         children: [
           // 1. Unified Primary Asmita Header with Society & Profile Hook
           AsmitaPrimaryHeader(
-            subtitleOverride: 'Executive Office • 8th Floor',
             allowPropertySwitching: false,
             onHotlinePressed: () => _handleContactReceptionist(context),
           ),

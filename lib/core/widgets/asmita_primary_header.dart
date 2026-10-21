@@ -358,7 +358,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
       builder: (context, authState) {
         String? role;
         String societyName = 'AsmitA Society';
-        String flatDetails = 'A Wing - 101';
+        String flatDetails = '';
         String initials = userInitials;
 
         if (authState is AuthAuthenticated) {
@@ -373,14 +373,14 @@ class AsmitaPrimaryHeader extends StatelessWidget {
             flatDetails = subtitleOverride!;
           } else if (user.flatMappings.isNotEmpty) {
             final mapping = user.flatMappings.first;
-            flatDetails = '${mapping.towerName} - ${mapping.flatNumber}';
-          } else if (user.systemRole?.isNotEmpty == true || user.primaryRole.isNotEmpty) {
-            flatDetails = user.systemRole?.isNotEmpty == true
-                ? user.systemRole!
-                : user.primaryRole;
-            if (flatDetails.isNotEmpty) {
-              flatDetails = flatDetails.substring(0, 1).toUpperCase() +
-                  flatDetails.substring(1).toLowerCase();
+            final tower = mapping.towerName.trim();
+            final flat = mapping.flatNumber.trim();
+            if (tower.isNotEmpty && flat.isNotEmpty) {
+              flatDetails = '$tower • $flat';
+            } else if (flat.isNotEmpty) {
+              flatDetails = flat;
+            } else if (tower.isNotEmpty) {
+              flatDetails = tower;
             }
           }
 
@@ -413,17 +413,22 @@ class AsmitaPrimaryHeader extends StatelessWidget {
           }
         }
 
-        if (subtitleOverride == null) {
+        // Only fall back to role titles if flatDetails was not provided or retrieved from user.flatMappings
+        if (flatDetails.isEmpty) {
           if (isGuard) {
             flatDetails = 'Campus Security • On Duty';
           } else if (normalizedRole == 'director') {
-            flatDetails = 'Executive Office • 8th Floor';
+            flatDetails = 'Executive Suite';
           } else if (normalizedRole == 'employee') {
             flatDetails = 'Corporate Host Desk';
           } else if (normalizedRole == 'receptionist') {
-            flatDetails = 'Front Desk • Ground Floor';
+            flatDetails = 'Front Desk & Reception';
           } else if (normalizedRole == 'facility') {
-            flatDetails = 'Facility & Logistics Dock';
+            flatDetails = 'Facility Operations';
+          } else {
+            flatDetails = role?.isNotEmpty == true
+                ? role!.toUpperCase()
+                : (isIndustrial ? 'Workplace Member' : 'A Wing - 101');
           }
         }
 

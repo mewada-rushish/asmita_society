@@ -154,7 +154,6 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView>
         children: [
           // 1. Unified Primary Asmita Header (Property Consistent)
           AsmitaPrimaryHeader(
-            subtitleOverride: 'Reception Desk • Ground Floor',
             allowPropertySwitching: false,
             extraAction: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
