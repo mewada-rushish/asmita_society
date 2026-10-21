@@ -634,7 +634,9 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                           () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const AsmitaSearchScreen(),
+                                  builder: (_) => AsmitaSearchScreen(
+                                    onBack: () => Navigator.pop(context),
+                                  ),
                                 ),
                               ),
                       borderRadius: BorderRadius.circular(20),
@@ -667,7 +669,9 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                           () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const AsmitaSearchScreen(),
+                                  builder: (_) => AsmitaSearchScreen(
+                                    onBack: () => Navigator.pop(context),
+                                  ),
                                 ),
                               ),
                       borderRadius: BorderRadius.circular(20),
