@@ -375,95 +375,36 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       body: Column(
         children: [
           // 1. Unified Primary Asmita Header (Property Consistent)
-          const AsmitaPrimaryHeader(
-            subtitleOverride: 'Visits & Approvals',
+          AsmitaPrimaryHeader(
+            subtitleOverride: 'Visits & Passes',
             allowPropertySwitching: false,
-          ),
-
-          // 2. Screen App Bar / Title Header Bar
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-            ),
-            child: Row(
-              children: [
-                if (widget.onBack != null || Navigator.canPop(context))
-                  InkWell(
-                    onTap: () {
-                      if (widget.onBack != null) {
-                        widget.onBack!();
-                      } else {
-                        Navigator.maybePop(context);
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      margin: const EdgeInsets.only(right: 12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Theme.of(context).dividerColor),
-                      ),
-                      child: Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 16,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Visits & Passes',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Live campus entry records & host approvals',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AsmitaPalette.textLight,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
+            showBackButton: widget.onBack != null || Navigator.canPop(context),
+            onBackPressed: widget.onBack,
+            extraAction: ElevatedButton.icon(
+              onPressed: () => _showPreApproveModal(context),
+              icon: const Icon(Icons.add_rounded, size: 14),
+              label: const Text(
+                'Schedule',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
                 ),
-                ElevatedButton.icon(
-                  onPressed: () => _showPreApproveModal(context),
-                  icon: const Icon(Icons.add_rounded, size: 16),
-                  label: const Text(
-                    'Schedule',
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AsmitaPalette.deepNavy,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    elevation: 1,
-                  ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AsmitaPalette.deepNavy,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              ],
+                elevation: 0,
+                visualDensity: VisualDensity.compact,
+              ),
             ),
           ),
 
-          // 3. Scrollable Content Body with Bloc Consumer
+          // 2. Scrollable Content Body with Bloc Consumer
           Expanded(
             child: BlocConsumer<IndustrialVisitBloc, IndustrialVisitState>(
               listener: (context, state) {
@@ -634,9 +575,11 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
 
                     // Visitor Items or Empty State
                     if (filteredVisits.isEmpty)
-                      SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: _buildEmptyState(context),
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 20, 16, 120),
+                          child: _buildEmptyState(context),
+                        ),
                       )
                     else
                       SliverPadding(
@@ -889,28 +832,28 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(22),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 emptyIcon,
-                size: 48,
+                size: 42,
                 color: AsmitaPalette.deepNavy,
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
             Text(
               emptyTitle,
               style: const TextStyle(
                 fontFamily: 'Montserrat',
-                fontSize: 18,
+                fontSize: 17,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -918,19 +861,26 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             Text(
               emptySubtitle,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: AsmitaPalette.textLight),
+              style: const TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 18),
             ElevatedButton.icon(
               onPressed: () => _showPreApproveModal(context),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Schedule Visitor'),
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text(
+                'Schedule Visitor',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AsmitaPalette.deepNavy,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 2,
+                elevation: 1,
               ),
             ),
           ],

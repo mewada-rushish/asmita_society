@@ -149,7 +149,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

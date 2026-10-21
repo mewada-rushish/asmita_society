@@ -278,6 +278,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView>
       return Center(
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 100),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -295,7 +296,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView>
 
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       itemCount: list.length,
       itemBuilder: (context, index) {
         final visit = list[index];

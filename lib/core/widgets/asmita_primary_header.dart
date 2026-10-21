@@ -33,6 +33,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
   final Widget? extraAction;
   final bool allowPropertySwitching;
   final VoidCallback? onProfilePressed;
+  final VoidCallback? onBackPressed;
   final AsmitaPropertyType? propertyType;
 
   const AsmitaPrimaryHeader({
@@ -44,6 +45,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
     this.onHistoryPressed,
     this.onScannerPressed,
     this.showBackButton = false,
+    this.onBackPressed,
     this.backgroundColor,
     this.bottomPadding = 12.0,
     this.subtitleOverride,
@@ -452,7 +454,13 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(right: 12.0),
                     child: InkWell(
-                      onTap: () => Navigator.pop(context),
+                      onTap: () {
+                        if (onBackPressed != null) {
+                          onBackPressed!();
+                        } else {
+                          Navigator.maybePop(context);
+                        }
+                      },
                       borderRadius: BorderRadius.circular(20),
                       child: const Padding(
                         padding: EdgeInsets.all(4.0),
