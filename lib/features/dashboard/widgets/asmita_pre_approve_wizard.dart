@@ -19,6 +19,7 @@ import '../../visitor_management/bloc/guard_gate_state.dart';
 import '../../visitor_management/presentation/screens/invite_pass_screen.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
+import 'package:asmita_society/core/utils/property_role_resolver.dart';
 class AsmitaPreApproveWizard extends StatefulWidget {
   final bool isGuardMode;
 
@@ -183,6 +184,15 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     if (authState is! AuthAuthenticated) return;
 
     final user = authState.user;
+    if (!widget.isGuardMode && !PropertyRoleResolver.canIssuePasses(user)) {
+      AsmitaToast.show(
+        context,
+        message: 'Your role does not have permission to issue visitor passes.',
+        type: AsmitaToastType.error,
+      );
+      return;
+    }
+
     List<FlatMapping> selectedFlats = List.from(_selectedFlatMappings);
 
     if (selectedFlats.isEmpty && user.flatMappings.isNotEmpty && !widget.isGuardMode) {

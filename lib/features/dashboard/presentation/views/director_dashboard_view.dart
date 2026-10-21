@@ -9,6 +9,9 @@ import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
+import '../../../../core/utils/property_role_resolver.dart';
+import '../../../auth/bloc/auth_bloc.dart';
+import '../../../auth/bloc/auth_state.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
@@ -65,6 +68,16 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   }
 
   void _showPreApproveModal(BuildContext context) {
+    final authState = context.read<AuthBloc>().state;
+    final user = authState is AuthAuthenticated ? authState.user : null;
+    if (!PropertyRoleResolver.canIssuePasses(user)) {
+      AsmitaToast.show(
+        context,
+        message: 'Your role does not have permission to issue visitor passes.',
+        type: AsmitaToastType.error,
+      );
+      return;
+    }
     showDialog(
       context: context,
       builder: (context) => const AsmitaDialog(
@@ -75,6 +88,16 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   }
 
   void _handleDecide(BuildContext context, int visitId, String action) {
+    final authState = context.read<AuthBloc>().state;
+    final user = authState is AuthAuthenticated ? authState.user : null;
+    if (!PropertyRoleResolver.canApproveVisits(user)) {
+      AsmitaToast.show(
+        context,
+        message: 'Your role does not have permission to decide visits.',
+        type: AsmitaToastType.error,
+      );
+      return;
+    }
     if (widget.onDecideVisit != null) {
       widget.onDecideVisit!(visitId, action);
     } else {

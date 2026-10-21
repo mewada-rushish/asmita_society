@@ -43,12 +43,12 @@ class MenuScreen extends StatelessWidget {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
         String resolvedRole = userRole;
-        if (authState is AuthAuthenticated) {
-          final user = authState.user;
-          if (user.systemRole?.isNotEmpty == true) {
-            resolvedRole = user.systemRole!;
-          } else if (user.primaryRole.isNotEmpty) {
-            resolvedRole = user.primaryRole;
+        final currentUser = authState is AuthAuthenticated ? authState.user : null;
+        if (currentUser != null) {
+          if (currentUser.systemRole?.isNotEmpty == true) {
+            resolvedRole = currentUser.systemRole!;
+          } else if (currentUser.primaryRole.isNotEmpty) {
+            resolvedRole = currentUser.primaryRole;
           }
         }
 
@@ -136,11 +136,12 @@ class MenuScreen extends StatelessWidget {
                           title: 'My Household',
                           items: [
                             _buildMenuItem(context, Icons.people_outline_rounded, 'Family Members'),
-                            if (normalized != 'tenant')
+                            if (PropertyRoleResolver.canManageMembers(currentUser, role: resolvedRole))
                               _buildMenuItem(context, Icons.group_add_outlined, 'Tenants'),
                             if (normalized == 'tenant')
                               _buildMenuItem(context, Icons.security_rounded, 'Access Requests'),
-                            _buildMenuItem(context, Icons.directions_car_filled_outlined, 'Vehicles'),
+                            if (PropertyRoleResolver.canManageVehicles(currentUser, role: resolvedRole))
+                              _buildMenuItem(context, Icons.directions_car_filled_outlined, 'Vehicles'),
                             _buildMenuItem(context, Icons.pets_rounded, 'Pets'),
                           ],
                         ),
