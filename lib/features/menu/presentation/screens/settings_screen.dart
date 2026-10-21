@@ -206,9 +206,15 @@ class SettingsScreen extends ConsumerWidget {
       child: Row(
         children: [
           Icon(icon, color: Theme.of(context).iconTheme.color, size: 22),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
-            child: Text(title, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+            child: Text(
+              title,
+              style: textTheme.bodyLarge?.copyWith(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           Switch(
             value: value,
@@ -231,13 +237,32 @@ class SettingsScreen extends ConsumerWidget {
         child: Row(
           children: [
             Icon(icon, color: iconColor ?? Theme.of(context).iconTheme.color, size: 22),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(title, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: textColor)),
+            const SizedBox(width: 14),
+            Text(
+              title,
+              style: textTheme.bodyLarge?.copyWith(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
             ),
+            const SizedBox(width: 12),
             if (trailingText.isNotEmpty) ...[
-              Text(trailingText, style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodySmall?.color)),
+              Expanded(
+                child: Text(
+                  trailingText,
+                  textAlign: TextAlign.end,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontSize: 13,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
+                ),
+              ),
               const SizedBox(width: 8),
+            ] else ...[
+              const Spacer(),
             ],
             Icon(Icons.arrow_forward_ios_rounded, size: 14, color: iconColor ?? Theme.of(context).iconTheme.color),
           ],
