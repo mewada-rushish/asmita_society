@@ -18,6 +18,7 @@ import 'features/visitor_management/bloc/guard_gate_bloc.dart';
 import 'core/di/injection_container.dart' as di;
 import 'core/services/firebase_messaging_service.dart';
 import 'features/visitor_management/bloc/visitor_bloc.dart';
+import 'features/visitor_management/bloc/industrial_visit_bloc.dart';
 import 'features/services/bloc/amenities_bloc.dart';
 import 'features/services/bloc/amenities_event.dart';
 import 'features/services/bloc/daily_help_bloc.dart';
@@ -156,6 +157,9 @@ class AsmitaApp extends ConsumerWidget {
         ),
         BlocProvider<QuickActionsBloc>(
           create: (context) => QuickActionsBloc()..add(LoadQuickActions()),
+        ),
+        BlocProvider<IndustrialVisitBloc>(
+          create: (context) => IndustrialVisitBloc(repository: di.sl()),
         ),
       ],
       child: MaterialApp(

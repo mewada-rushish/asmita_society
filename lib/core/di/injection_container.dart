@@ -11,6 +11,7 @@ import '../../features/services/data/repositories/amenities_repository.dart';
 import '../../features/services/data/repositories/daily_help_repository.dart';
 import '../../features/dashboard/data/repositories/search_repository.dart';
 import '../../features/visitor_management/data/repositories/guard_gate_repository.dart';
+import '../../features/visitor_management/data/repositories/industrial_visit_repository.dart';
 
 final sl = GetIt.instance;
 
@@ -66,5 +67,9 @@ Future<void> init() async {
 
   sl.registerLazySingleton<SearchRepository>(
     () => SearchRepository(dio: sl<AsmitaDioClient>().dio),
+  );
+
+  sl.registerLazySingleton<IndustrialVisitRepository>(
+    () => IndustrialVisitRepository(dio: sl<AsmitaDioClient>().dio),
   );
 }
