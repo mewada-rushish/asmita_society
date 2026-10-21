@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
@@ -68,14 +69,21 @@ class AsmitaPrimaryHeader extends StatelessWidget {
             context,
             icon: Icons.support_agent_rounded,
             title: 'Floor 8 Reception Desk',
-            subtitle: 'Ext: 101 • Dedicated Executive & Visitor Desk',
-            onCall: () {
+            subtitle: '+91 98201 10101 • Dedicated Executive & Visitor Desk',
+            onCall: () async {
               Navigator.pop(context);
-              AsmitaToast.show(
-                context,
-                message: 'Connecting to Reception (Ext 101)...',
-                type: AsmitaToastType.info,
-              );
+              final uri = Uri.parse('tel:+919820110101');
+              try {
+                await url_launcher.launchUrl(uri);
+              } catch (_) {
+                if (context.mounted) {
+                  AsmitaToast.show(
+                    context,
+                    message: 'Calling Reception: +91 98201 10101',
+                    type: AsmitaToastType.info,
+                  );
+                }
+              }
             },
           ),
           const SizedBox(height: 8),
@@ -83,14 +91,21 @@ class AsmitaPrimaryHeader extends StatelessWidget {
             context,
             icon: Icons.shield_outlined,
             title: 'Gate 1 Security Control',
-            subtitle: 'Ext: 104 • Main Entrance & Vehicle Dock',
-            onCall: () {
+            subtitle: '+91 98201 10104 • Main Entrance & Vehicle Dock',
+            onCall: () async {
               Navigator.pop(context);
-              AsmitaToast.show(
-                context,
-                message: 'Connecting to Gate 1 Control (Ext 104)...',
-                type: AsmitaToastType.info,
-              );
+              final uri = Uri.parse('tel:+919820110104');
+              try {
+                await url_launcher.launchUrl(uri);
+              } catch (_) {
+                if (context.mounted) {
+                  AsmitaToast.show(
+                    context,
+                    message: 'Calling Gate 1 Control: +91 98201 10104',
+                    type: AsmitaToastType.info,
+                  );
+                }
+              }
             },
           ),
           const SizedBox(height: 8),
@@ -98,14 +113,21 @@ class AsmitaPrimaryHeader extends StatelessWidget {
             context,
             icon: Icons.local_hospital_outlined,
             title: 'Campus Emergency Response',
-            subtitle: 'Ext: 999 • Rapid Response Team',
-            onCall: () {
+            subtitle: '+91 98201 10911 • Rapid Emergency Response Team',
+            onCall: () async {
               Navigator.pop(context);
-              AsmitaToast.show(
-                context,
-                message: 'Connecting to Emergency Response (Ext 999)...',
-                type: AsmitaToastType.info,
-              );
+              final uri = Uri.parse('tel:+919820110911');
+              try {
+                await url_launcher.launchUrl(uri);
+              } catch (_) {
+                if (context.mounted) {
+                  AsmitaToast.show(
+                    context,
+                    message: 'Calling Emergency Response: +91 98201 10911',
+                    type: AsmitaToastType.info,
+                  );
+                }
+              }
             },
           ),
           const SizedBox(height: 12),
