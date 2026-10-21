@@ -12,9 +12,12 @@ import '../../bloc/visitor_state.dart';
 import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_state.dart';
 import 'package:intl/intl.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import '../../../dashboard/widgets/asmita_pre_approve_wizard.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
+import '../../data/models/invite_model.dart';
+import 'invite_pass_screen.dart';
 
 class VisitorHistoryScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -90,7 +93,9 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
         : <String, dynamic>{};
     final isPreApproved = item['record_type'] == 'PRE_APPROVED';
 
-    final name = item['visitor_name'] ?? item['title'] ?? 'Unknown';
+    final name = (item['visitor_name'] != null && item['visitor_name'].toString().trim().isNotEmpty)
+        ? item['visitor_name'].toString().trim()
+        : (item['title'] ?? (isPreApproved ? 'VIP Guest' : 'Unknown'));
     final company = item['company_name'] ?? item['purpose'] ?? 'Visitor';
     final category = isPreApproved
         ? (item['invite_type'] ?? 'Invite')
@@ -179,19 +184,15 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
       brandColor = Colors.black;
     }
 
-    // Default title is name, but for Cab/Delivery/Guest it should be the company/purpose
+    // Default title is name, but for Cab/Delivery it should be the company/purpose
     String titleText = name;
     if (category.toString().toLowerCase() == 'delivery' ||
-        category.toString().toLowerCase() == 'cab' ||
-        icon != Icons.person_rounded ||
-        name.toLowerCase().contains('invite')) {
+        category.toString().toLowerCase() == 'cab') {
       titleText = company;
-      // Clean up cases where company name might be empty or redundant
-      if (titleText.toLowerCase().contains('invite')) {
-        titleText = titleText
-            .replaceAll(RegExp(r' invite', caseSensitive: false), '')
-            .trim();
-      }
+    } else if (titleText.toLowerCase().contains('invite')) {
+      titleText = company.isNotEmpty && company != 'Visitor'
+          ? company
+          : (isPreApproved ? 'VIP Guest' : titleText);
     }
 
     String subtitleText = isPreApproved
@@ -227,6 +228,10 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
       'maxGuestCount': item['max_guest_count'],
       'isPrivate': item['is_private'] == true,
       'isOutsideSchedule': isOutsideSchedule,
+      'passCode': item['pass_code']?.toString(),
+      'qrCode': item['qr_code']?.toString(),
+      'isPreApproved': isPreApproved,
+      'rawItem': item,
     };
   }
 
@@ -297,6 +302,29 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
               ),
             ),
           ),
+          if (visitor['passCode'] != null && visitor['passCode'].toString().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  'PASS CODE: #${visitor['passCode']}',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
       child: SingleChildScrollView(
@@ -405,6 +433,66 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                 label: 'Outbound Timestamp',
                 value: visitor['exitTime'] as String,
               ),
+
+            if (visitor['qrCode'] != null && visitor['qrCode'].toString().isNotEmpty) ...[
+              const SizedBox(height: 18),
+              Center(
+                child: Container(
+                  width: 170,
+                  height: 170,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                  ),
+                  child: QrImageView(
+                    data: visitor['qrCode'].toString(),
+                    version: QrVersions.auto,
+                    size: 146.0,
+                    eyeStyle: QrEyeStyle(
+                      eyeShape: QrEyeShape.square,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    dataModuleStyle: QrDataModuleStyle(
+                      dataModuleShape: QrDataModuleShape.square,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  final raw = visitor['rawItem'];
+                  if (raw is Map) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => InvitePassScreen(
+                          invite: PreApprovedInvite.fromJson(
+                            Map<String, dynamic>.from(raw),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.share_rounded, size: 16),
+                label: const Text(
+                  'View & Share Pass',
+                  style: TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.surface,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
           ],
         ),
       ),
@@ -1065,19 +1153,53 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            item['titleText'] as String,
-                                            style: textTheme.titleLarge
-                                                ?.copyWith(
-                                                  fontFamily: 'Montserrat',
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: Theme.of(
-                                                    context,
-                                                  ).colorScheme.primary,
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  item['titleText'] as String,
+                                                  style: textTheme.titleLarge
+                                                      ?.copyWith(
+                                                        fontFamily: 'Montserrat',
+                                                        fontSize: 15,
+                                                        fontWeight: FontWeight.w800,
+                                                        color: Theme.of(
+                                                          context,
+                                                        ).colorScheme.primary,
+                                                      ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                              ),
+                                              if (item['passCode'] != null &&
+                                                  item['passCode'].toString().isNotEmpty) ...[
+                                                const SizedBox(width: 6),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 7,
+                                                    vertical: 2,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: (item['brandColor'] as Color)
+                                                        .withValues(alpha: 0.1),
+                                                    borderRadius: BorderRadius.circular(6),
+                                                    border: Border.all(
+                                                      color: (item['brandColor'] as Color)
+                                                          .withValues(alpha: 0.3),
+                                                    ),
+                                                  ),
+                                                  child: Text(
+                                                    'PASS #${item['passCode']}',
+                                                    style: TextStyle(
+                                                      fontFamily: 'Montserrat',
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: item['brandColor'] as Color,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
@@ -1146,33 +1268,47 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                                         ],
                                       ),
                                     ),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Text(
-                                          item['entryTime'] as String,
-                                          style: textTheme.bodyLarge?.copyWith(
-                                            fontFamily: 'Poppins',
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
-                                          ),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              item['entryTime'] as String,
+                                              style: textTheme.bodyLarge?.copyWith(
+                                                fontFamily: 'Poppins',
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              item['date'] as String,
+                                              style: textTheme.bodyMedium?.copyWith(
+                                                fontFamily: 'Poppins',
+                                                fontSize: 11,
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          item['date'] as String,
-                                          style: textTheme.bodyMedium?.copyWith(
-                                            fontFamily: 'Poppins',
-                                            fontSize: 11,
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
-                                            fontWeight: FontWeight.w600,
+                                        if (item['qrCode'] != null &&
+                                            item['qrCode'].toString().isNotEmpty) ...[
+                                          const SizedBox(width: 8),
+                                          Icon(
+                                            Icons.qr_code_2_rounded,
+                                            size: 24,
+                                            color: Theme.of(context).colorScheme.primary,
                                           ),
-                                        ),
+                                        ],
                                       ],
                                     ),
                                   ],

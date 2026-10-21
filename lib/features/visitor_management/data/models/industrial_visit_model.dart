@@ -23,6 +23,7 @@ enum IndustrialVisitStatus {
       case 'ASSIGNED':
         return IndustrialVisitStatus.assigned;
       case 'APPROVED':
+      case 'ACTIVE':
         return IndustrialVisitStatus.approved;
       case 'REJECTED':
         return IndustrialVisitStatus.rejected;
@@ -35,6 +36,7 @@ enum IndustrialVisitStatus {
       case 'COLLECTED':
         return IndustrialVisitStatus.collected;
       case 'CHECKED_IN':
+      case 'INSIDE':
         return IndustrialVisitStatus.checkedIn;
       case 'CHECKED_OUT':
         return IndustrialVisitStatus.checkedOut;
@@ -267,6 +269,7 @@ class IndustrialVisitModel {
   final String? deliveryCompany;
   final bool heldAtGate;
   final bool isBatched;
+  final bool isPreApproved;
   final DateTime? createdAt;
   final DateTime? checkInAt;
   final DateTime? checkOutAt;
@@ -299,6 +302,7 @@ class IndustrialVisitModel {
     this.deliveryCompany,
     this.heldAtGate = false,
     this.isBatched = false,
+    this.isPreApproved = false,
     this.createdAt,
     this.checkInAt,
     this.checkOutAt,
@@ -339,6 +343,7 @@ class IndustrialVisitModel {
       deliveryCompany: json['delivery_company']?.toString(),
       heldAtGate: json['held_at_gate'] == true,
       isBatched: json['is_batched'] == true,
+      isPreApproved: json['is_pre_approved'] == true || json['isPreApproved'] == true,
       createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null,
       checkInAt: json['check_in_at'] != null ? DateTime.tryParse(json['check_in_at'].toString()) : null,
       checkOutAt: json['check_out_at'] != null ? DateTime.tryParse(json['check_out_at'].toString()) : null,

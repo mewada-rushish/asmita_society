@@ -8,8 +8,7 @@ class IndustrialVisitRepository {
 
   IndustrialVisitRepository({required this.dio});
 
-  /// Fetches industrial visit requests with optional filters
-  /// Fetches industrial visit requests with optional filters
+  /// Fetches industrial visit requests with optional filters and merges pre-approved VIP invites
   Future<List<IndustrialVisitModel>> getVisits({
     String? status,
     String? arrivalMode,
@@ -25,17 +24,97 @@ class IndustrialVisitRepository {
       if (departmentId != null) queryParams['department_id'] = departmentId;
       if (hostUserId != null) queryParams['host_user_id'] = hostUserId;
 
-      final response = await dio.get(
-        EnvConfig.industrialVisits,
-        queryParameters: queryParams,
-      );
+      // Query both industrial visits and resident pre-approved VIP invites
+      final results = await Future.wait([
+        dio.get(
+          EnvConfig.industrialVisits,
+          queryParameters: queryParams,
+        ).catchError((e) {
+          debugPrint('[IndustrialVisitRepository] visits error: $e');
+          return Response(requestOptions: RequestOptions(), statusCode: 500);
+        }),
+        dio.get(
+          EnvConfig.myPreApprovedInvites,
+        ).catchError((e) {
+          debugPrint('[IndustrialVisitRepository] pre-approved invites error: $e');
+          return Response(requestOptions: RequestOptions(), statusCode: 500);
+        }),
+      ]);
 
-      final data = response.data;
-      if (response.statusCode == 200 && data != null) {
-        final list = (data['data'] ?? data['visits'] ?? data) as List<dynamic>;
-        return list.map((item) => IndustrialVisitModel.fromJson(item as Map<String, dynamic>)).toList();
+      final visitResp = results[0];
+      final inviteResp = results[1];
+
+      final List<IndustrialVisitModel> visits = [];
+      final Set<String> seenKeys = {};
+
+      if (visitResp.statusCode == 200 && visitResp.data != null) {
+        final data = visitResp.data;
+        final list = (data['data'] ?? data['visits'] ?? (data is List ? data : [])) as List<dynamic>;
+        for (final item in list) {
+          if (item is Map<String, dynamic>) {
+            final v = IndustrialVisitModel.fromJson(item);
+            visits.add(v);
+            if (v.passCode != null && v.passCode!.isNotEmpty) {
+              seenKeys.add(v.passCode!);
+            }
+            seenKeys.add('REQ-${v.id}');
+          }
+        }
       }
-      return [];
+
+      if (inviteResp.statusCode == 200 && inviteResp.data != null) {
+        final data = inviteResp.data;
+        final list = (data['invites'] ?? data['data'] ?? (data is List ? data : [])) as List<dynamic>;
+        for (final item in list) {
+          if (item is Map<String, dynamic>) {
+            final passCode = item['pass_code']?.toString();
+            final id = int.tryParse(item['id']?.toString() ?? '') ?? 0;
+            if (passCode != null && seenKeys.contains(passCode)) continue;
+            if (seenKeys.contains('REQ-$id')) continue;
+
+            final rawStatus = item['status']?.toString().toLowerCase();
+            IndustrialVisitStatus vStatus = IndustrialVisitStatus.approved;
+            if (rawStatus == 'used' || rawStatus == 'inside') {
+              vStatus = IndustrialVisitStatus.checkedIn;
+            } else if (rawStatus == 'cancelled' || rawStatus == 'expired') {
+              vStatus = IndustrialVisitStatus.rejected;
+            }
+
+            final name = (item['visitor_name'] != null && item['visitor_name'].toString().trim().isNotEmpty)
+                ? item['visitor_name'].toString().trim()
+                : (item['company_name'] ?? item['title'] ?? 'VIP Guest').toString();
+
+            visits.add(IndustrialVisitModel(
+              id: id,
+              requestNumber: 'VIP-${passCode ?? id}',
+              propertyId: int.tryParse(item['society_id']?.toString() ?? '') ?? (propertyId ?? 115),
+              visitorName: name,
+              visitorMobile: item['mobile_number']?.toString(),
+              arrivalMode: 'PEDESTRIAN',
+              vehicleNumber: item['vehicle_number']?.toString(),
+              status: vStatus,
+              statusToken: item['qr_code']?.toString(),
+              passCode: passCode,
+              passCodeExpiresAt: DateTime.tryParse(item['valid_to']?.toString() ?? ''),
+              purpose: item['purpose']?.toString() ?? item['title']?.toString() ?? 'VIP Visit',
+              deliveryCompany: item['company_name']?.toString() ?? 'VIP Guest',
+              departmentName: 'Executive Suite',
+              notes: '${item['invite_type'] ?? "Guest"} Pass',
+              createdAt: DateTime.tryParse(item['created_at']?.toString() ?? '') ?? DateTime.now(),
+              checkInAt: rawStatus == 'used' ? DateTime.tryParse(item['updated_at']?.toString() ?? '') : null,
+              isPreApproved: true,
+            ));
+          }
+        }
+      }
+
+      visits.sort((a, b) {
+        final dateA = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final dateB = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return dateB.compareTo(dateA);
+      });
+
+      return visits;
     } on DioException catch (e) {
       debugPrint('[IndustrialVisitRepository] getVisits Dio error: ${e.message}');
       rethrow;

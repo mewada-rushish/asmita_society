@@ -94,4 +94,8 @@ class EnvConfig {
   static String get industrialGuardClockOut => '$baseUrl/app-api/industrial/guard/duty/clock-out';
   static String get industrialSettings => '$baseUrl/app-api/industrial/settings';
   static String get industrialOutageMode => '$baseUrl/app-api/industrial/outage-mode';
+
+  /// Department Delegation Endpoints
+  static String get candidateDelegates => '$baseUrl/app-api/masters/departments/candidate-delegates';
+  static String get assignDepartmentDelegate => '$baseUrl/app-api/masters/departments/delegate';
 }

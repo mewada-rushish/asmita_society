@@ -291,6 +291,12 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
     final flat = selectedFlats.first;
 
+    final enteredName = _visitorNameController.text.trim();
+    final enteredMobile = _mobileNumberController.text.trim();
+    final visitorName = enteredName.isNotEmpty
+        ? enteredName
+        : (_selectedCategory == 'Guest' ? 'VIP Guest' : '$_selectedCategory Guest');
+
     final payload = {
       'society_id': user.societyId,
       'tower_id': flat.towerId,
@@ -300,14 +306,14 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           ? 'Guest'
           : _selectedCategory,
       'invite_sub_type': isOnce ? 'ONCE' : 'FREQUENT',
-      'title': '$_selectedCategory Invite',
-      'visitor_name': '', // Form doesn't have this field currently
-      'mobile_number': '',
+      'title': enteredName.isNotEmpty ? '$enteredName Pass' : '$_selectedCategory Invite',
+      'visitor_name': visitorName,
+      'mobile_number': enteredMobile,
       'company_name': _selectedCategory == 'Guest'
-          ? 'Guest'
+          ? (enteredName.isNotEmpty ? enteredName : 'VIP Guest')
           : (_selectedCategory == 'Cab' ? 'Cab' : _selectedCompany),
       'vehicle_number': _cabNoController.text.trim(),
-      'purpose': _selectedCategory,
+      'purpose': _selectedCategory == 'Guest' ? 'VIP Visit' : _selectedCategory,
       'max_guest_count': _selectedCategory == 'Guest' ? _guestCount : 1,
       'valid_from': _selectedCategory == 'Guest'
           ? combinedStartTime.toIso8601String()
@@ -399,8 +405,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 _currentStep = 2;
               });
             } else {
-              Navigator.pushReplacement(
-                context,
+              final rootNav = Navigator.of(context, rootNavigator: true);
+              rootNav.pop(true);
+              rootNav.push(
                 MaterialPageRoute(
                   builder: (context) => InvitePassScreen(invite: state.invite),
                 ),
@@ -1125,6 +1132,66 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           const SizedBox(height: 24),
         ],
         if (_selectedCategory == 'Guest') ...[
+          TextField(
+            controller: _visitorNameController,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(
+              labelText: 'Guest / Visitor Name (Optional)',
+              hintText: 'e.g., John Doe / Partner',
+              labelStyle: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 13,
+                color: AsmitaPalette.textLight,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AsmitaPalette.actionRed),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+            ),
+            style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _mobileNumberController,
+            keyboardType: TextInputType.phone,
+            maxLength: 10,
+            decoration: InputDecoration(
+              labelText: 'Mobile Number (Optional)',
+              counterText: '',
+              hintText: '10-digit number',
+              labelStyle: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 13,
+                color: AsmitaPalette.textLight,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AsmitaPalette.actionRed),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+            ),
+            style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
+          ),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
@@ -1548,6 +1615,66 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         ],
 
         if (_selectedCategory == 'Guest') ...[
+          TextField(
+            controller: _visitorNameController,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(
+              labelText: 'Guest / Visitor Name (Optional)',
+              hintText: 'e.g., John Doe / Partner',
+              labelStyle: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 13,
+                color: AsmitaPalette.textLight,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AsmitaPalette.actionRed),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+            ),
+            style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _mobileNumberController,
+            keyboardType: TextInputType.phone,
+            maxLength: 10,
+            decoration: InputDecoration(
+              labelText: 'Mobile Number (Optional)',
+              counterText: '',
+              hintText: '10-digit number',
+              labelStyle: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 13,
+                color: AsmitaPalette.textLight,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AsmitaPalette.actionRed),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+            ),
+            style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
+          ),
+          const SizedBox(height: 16),
           _buildBottomSheetTrigger(
             label: 'Arrival Time',
             value: _selectedTime.format(context),

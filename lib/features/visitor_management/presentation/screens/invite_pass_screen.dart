@@ -52,10 +52,32 @@ class InvitePassScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    invite.companyName ?? 'Visitor',
+                    invite.visitorName?.isNotEmpty == true
+                        ? invite.visitorName!
+                        : (invite.companyName ?? invite.title ?? 'VIP Visitor'),
                     style: textTheme.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(height: 24),
+                  if (invite.passCode != null && invite.passCode!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'PASS CODE: #${invite.passCode}',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
                   Container(
                     width: 200,
                     height: 200,
@@ -79,9 +101,13 @@ class InvitePassScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   Divider(color: Theme.of(context).dividerColor, thickness: 1.5),
                   const SizedBox(height: 16),
+                  if (invite.passCode != null && invite.passCode!.isNotEmpty) ...[
+                    _buildPassDetailRow(context, 'Pass Code', '#${invite.passCode}'),
+                    const SizedBox(height: 12),
+                  ],
                   _buildPassDetailRow(context, 'Valid Until', _formatDate(invite.validTo?.toIso8601String())),
                   const SizedBox(height: 12),
-                  _buildPassDetailRow(context, 'Unit', 'Flat ${invite.unitId}'),
+                  _buildPassDetailRow(context, 'Unit / Suite', 'Unit ${invite.unitId}'),
                   const SizedBox(height: 12),
                   _buildPassDetailRow(context, 'Pass Type', invite.inviteType),
                 ],
