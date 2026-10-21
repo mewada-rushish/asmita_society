@@ -617,7 +617,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             context,
             label: 'Total',
             count: totalCount,
-            icon: Icons.people_alt_outlined,
+            icon: Icons.groups_rounded,
             accentColor: AsmitaPalette.deepNavy,
             filterKey: 'ALL',
           ),
@@ -640,7 +640,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             context,
             label: 'Approved',
             count: approvedCount,
-            icon: Icons.verified_outlined,
+            icon: Icons.verified_rounded,
             accentColor: const Color(0xFF1E88E5),
             filterKey: 'APPROVED',
           ),
@@ -651,7 +651,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             context,
             label: 'Inside',
             count: insideCount,
-            icon: Icons.meeting_room_outlined,
+            icon: Icons.meeting_room_rounded,
             accentColor: AsmitaPalette.successGreen,
             filterKey: 'INSIDE',
           ),
@@ -680,7 +680,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       borderRadius: BorderRadius.circular(14),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
               ? accentColor.withValues(alpha: isDark ? 0.25 : 0.12)
@@ -699,25 +699,47 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
           ],
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: 15, color: accentColor),
-                if (showPulse) ...[
-                  const SizedBox(width: 3),
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: accentColor,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ],
-              ],
+            // Premium Squircle Icon Container
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: isDark ? 0.22 : 0.10),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: accentColor.withValues(alpha: isSelected ? 0.45 : 0.18),
+                  width: 1.0,
+                ),
+              ),
+              child: Center(
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(icon, color: accentColor, size: 18),
+                    if (showPulse)
+                      Positioned(
+                        right: -3,
+                        top: -3,
+                        child: Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: accentColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.surface,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
               '$count',
               style: TextStyle(
@@ -731,9 +753,10 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             Text(
               label,
               style: TextStyle(
+                fontFamily: 'Montserrat',
                 fontSize: 10,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: AsmitaPalette.textLight,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? accentColor : AsmitaPalette.textLight,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
