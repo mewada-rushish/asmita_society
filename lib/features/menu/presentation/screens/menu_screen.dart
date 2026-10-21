@@ -10,10 +10,7 @@ import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_bloc.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_event.dart';
 import 'package:asmita_society/features/visitor_management/presentation/screens/department_delegation_screen.dart';
-import 'package:asmita_society/features/dashboard/presentation/screens/industrial_visits_screen.dart';
 import 'package:asmita_society/features/dashboard/presentation/screens/industrial_directory_screen.dart';
-import 'package:asmita_society/features/dashboard/presentation/screens/guard_history_screen.dart';
-import 'package:asmita_society/features/dashboard/presentation/screens/guard_checked_in_screen.dart';
 
 import 'committee_members_screen.dart';
 import 'documents_screen.dart';
@@ -106,39 +103,29 @@ class MenuScreen extends StatelessWidget {
                           title: _getIndustrialSectionTitle(normalized),
                           items: [
                             _buildMenuItem(context, Icons.swap_horiz_rounded, 'Department Delegation'),
-                            _buildMenuItem(context, Icons.badge_outlined, 'Passes & Approvals'),
-                            _buildMenuItem(context, Icons.contact_phone_outlined, 'Campus Directory & Hotlines'),
                             _buildMenuItem(context, Icons.directions_car_filled_outlined, 'Workplace Vehicles'),
+                            _buildMenuItem(context, Icons.notifications_active_outlined, 'Notification & Sound Alerts'),
+                            _buildMenuItem(context, Icons.fingerprint_rounded, 'Security & Biometric Access'),
                           ],
                         ),
                         const SizedBox(height: 16),
                         _buildMenuSection(
                           context,
-                          title: 'Campus & Company Info',
+                          title: 'Company & Compliance',
                           items: [
                             _buildMenuItem(context, Icons.gavel_rounded, 'Workplace Rules & Compliance'),
-                            _buildMenuItem(context, Icons.description_outlined, 'Policies & Documents'),
-                            _buildMenuItem(context, Icons.emergency_rounded, 'Campus Emergency Protocols'),
+                            _buildMenuItem(context, Icons.description_outlined, 'Policies & Corporate Documents'),
                           ],
                         ),
                         const SizedBox(height: 16),
                       ] else if (isGuard) ...[
                         _buildMenuSection(
                           context,
-                          title: 'Gate Operations',
+                          title: 'Guard Settings',
                           items: [
-                            _buildMenuItem(context, Icons.history_rounded, 'Gate Records History'),
-                            _buildMenuItem(context, Icons.people_outline_rounded, 'Checked-In Visitors'),
-                            _buildMenuItem(context, Icons.qr_code_scanner_rounded, 'QR Pass Scanner'),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _buildMenuSection(
-                          context,
-                          title: 'Security Protocols',
-                          items: [
+                            _buildMenuItem(context, Icons.notifications_active_outlined, 'Guard Shift & Audio Alerts'),
                             _buildMenuItem(context, Icons.security_rounded, 'Gate Rules & Safety Protocols'),
-                            _buildMenuItem(context, Icons.emergency_rounded, 'Emergency Contacts'),
+                            _buildMenuItem(context, Icons.emergency_rounded, 'Campus Emergency Hotline'),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -202,14 +189,14 @@ class MenuScreen extends StatelessWidget {
   String _getIndustrialSectionTitle(String normalizedRole) {
     switch (normalizedRole) {
       case 'director':
-        return 'Executive Administration';
+        return 'Executive Settings';
       case 'receptionist':
-        return 'Front Desk & Lobby Control';
+        return 'Front Desk Settings';
       case 'facility':
-        return 'Facility Operations & Logistics';
+        return 'Facility Operations Settings';
       case 'employee':
       default:
-        return 'Workplace & Host Desk';
+        return 'Workplace Settings';
     }
   }
 
@@ -465,6 +452,7 @@ class MenuScreen extends StatelessWidget {
             break;
           case 'Important Documents':
           case 'Policies & Documents':
+          case 'Policies & Corporate Documents':
             screen = const DocumentsScreen();
             break;
           case 'Family Members':
@@ -486,30 +474,15 @@ class MenuScreen extends StatelessWidget {
           case 'Department Delegation':
             screen = const DepartmentDelegationScreen(departmentName: 'General HQ');
             break;
+          case 'Campus Emergency Hotline':
           case 'Campus Directory & Hotlines':
           case 'Campus Emergency Protocols':
           case 'Emergency Contacts':
             screen = const IndustrialDirectoryScreen();
             break;
-          case 'Passes & Approvals':
-            if (onNavigateToTab != null) {
-              onNavigateToTab!(1);
-              return;
-            }
-            screen = const IndustrialVisitsScreen();
-            break;
-          case 'Gate Records History':
-            screen = const GuardHistoryScreen();
-            break;
-          case 'Checked-In Visitors':
-            screen = const GuardCheckedInScreen();
-            break;
-          case 'QR Pass Scanner':
-            if (onNavigateToTab != null) {
-              onNavigateToTab!(5);
-              return;
-            }
-            return;
+          case 'Notification & Sound Alerts':
+          case 'Guard Shift & Audio Alerts':
+          case 'Security & Biometric Access':
           case 'Settings':
             screen = const SettingsScreen();
             break;
