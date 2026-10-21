@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
+import '../../../../core/widgets/asmita_select_field.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
@@ -154,19 +155,43 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
                   ),
                 ),
                 const SizedBox(height: 14),
-                DropdownButtonFormField<String>(
-                  initialValue: selectedCategory,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Category',
-                    border: OutlineInputBorder(),
-                  ),
+                AsmitaSelectField<String>(
+                  label: 'Category',
+                  hint: 'Select Category',
+                  value: selectedCategory,
+                  prefixIcon: Icons.category_outlined,
+                  sheetTitle: 'Select Task Category',
                   items: const [
-                    DropdownMenuItem(value: 'Climate & Power', child: Text('Climate & Power')),
-                    DropdownMenuItem(value: 'Security Systems', child: Text('Security Systems')),
-                    DropdownMenuItem(value: 'AV & IT Facilities', child: Text('AV & IT Facilities')),
-                    DropdownMenuItem(value: 'Sanitation & Hygiene', child: Text('Sanitation & Hygiene')),
-                    DropdownMenuItem(value: 'Power Backup', child: Text('Power Backup')),
+                    AsmitaSelectItem(
+                      value: 'Climate & Power',
+                      label: 'Climate & Power',
+                      icon: Icons.ac_unit_rounded,
+                      iconColor: Colors.blue,
+                    ),
+                    AsmitaSelectItem(
+                      value: 'Security Systems',
+                      label: 'Security Systems',
+                      icon: Icons.security_rounded,
+                      iconColor: AsmitaPalette.actionRed,
+                    ),
+                    AsmitaSelectItem(
+                      value: 'AV & IT Facilities',
+                      label: 'AV & IT Facilities',
+                      icon: Icons.computer_rounded,
+                      iconColor: AsmitaPalette.deepNavy,
+                    ),
+                    AsmitaSelectItem(
+                      value: 'Sanitation & Hygiene',
+                      label: 'Sanitation & Hygiene',
+                      icon: Icons.cleaning_services_rounded,
+                      iconColor: AsmitaPalette.successGreen,
+                    ),
+                    AsmitaSelectItem(
+                      value: 'Power Backup',
+                      label: 'Power Backup',
+                      icon: Icons.battery_charging_full_rounded,
+                      iconColor: Colors.amber,
+                    ),
                   ],
                   onChanged: (val) {
                     if (val != null) {
@@ -175,17 +200,34 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
                   },
                 ),
                 const SizedBox(height: 14),
-                DropdownButtonFormField<String>(
-                  initialValue: selectedPriority,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Priority',
-                    border: OutlineInputBorder(),
-                  ),
+                AsmitaSelectField<String>(
+                  label: 'Priority',
+                  hint: 'Select Priority',
+                  value: selectedPriority,
+                  prefixIcon: Icons.flag_outlined,
+                  sheetTitle: 'Select Task Priority',
                   items: const [
-                    DropdownMenuItem(value: 'High Priority', child: Text('High Priority')),
-                    DropdownMenuItem(value: 'Normal', child: Text('Normal')),
-                    DropdownMenuItem(value: 'Scheduled', child: Text('Scheduled')),
+                    AsmitaSelectItem(
+                      value: 'High Priority',
+                      label: 'High Priority',
+                      subtitle: 'Urgent attention required',
+                      icon: Icons.priority_high_rounded,
+                      iconColor: AsmitaPalette.actionRed,
+                    ),
+                    AsmitaSelectItem(
+                      value: 'Normal',
+                      label: 'Normal',
+                      subtitle: 'Standard operational queue',
+                      icon: Icons.schedule_rounded,
+                      iconColor: AsmitaPalette.deepNavy,
+                    ),
+                    AsmitaSelectItem(
+                      value: 'Scheduled',
+                      label: 'Scheduled',
+                      subtitle: 'Planned periodic maintenance',
+                      icon: Icons.event_available_rounded,
+                      iconColor: AsmitaPalette.successGreen,
+                    ),
                   ],
                   onChanged: (val) {
                     if (val != null) {

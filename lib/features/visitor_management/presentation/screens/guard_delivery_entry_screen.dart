@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/asmita_select_field.dart';
 import '../../bloc/industrial_visit_bloc.dart';
 import '../../bloc/industrial_visit_event.dart';
 import '../../bloc/industrial_visit_state.dart';
@@ -142,22 +143,21 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Courier Dropdown
-                Text(
-                  'Courier / Delivery Partner:',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedCourier,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.local_shipping, color: AsmitaPalette.deepNavy),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
+                // Courier Selector
+                AsmitaSelectField<String>(
+                  label: 'Courier / Delivery Partner:',
+                  hint: 'Select Delivery Partner',
+                  value: _selectedCourier,
+                  prefixIcon: Icons.local_shipping_outlined,
+                  sheetTitle: 'Select Courier Partner',
+                  sheetSubtitle: 'Choose or search courier provider',
+                  showSearch: true,
                   items: _commonCouriers.map((c) {
-                    return DropdownMenuItem<String>(
+                    return AsmitaSelectItem<String>(
                       value: c,
-                      child: Text(c, style: const TextStyle(fontSize: 14)),
+                      label: c,
+                      icon: c == 'Other' ? Icons.more_horiz_rounded : Icons.local_shipping_rounded,
+                      iconColor: (c == 'Swiggy' || c == 'Zomato') ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy,
                     );
                   }).toList(),
                   onChanged: (val) => setState(() => _selectedCourier = val ?? 'Amazon'),
@@ -177,27 +177,24 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
                 const SizedBox(height: 16),
 
                 // Quick Recipient Picker
-                Text(
-                  'Quick Recipient Selector:',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<int>(
-                  isExpanded: true,
-                  initialValue: _selectedRecipientUserId,
-                  decoration: InputDecoration(
-                    hintText: 'Select registered HQ Employee',
-                    prefixIcon: const Icon(Icons.badge, color: AsmitaPalette.deepNavy),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
+                AsmitaSelectField<int>(
+                  label: 'Quick Recipient Selector:',
+                  hint: 'Select registered HQ Employee',
+                  value: _selectedRecipientUserId,
+                  prefixIcon: Icons.badge_outlined,
+                  sheetTitle: 'Select Recipient Employee',
+                  sheetSubtitle: 'Choose executive or team lead receiving the package',
                   items: _sampleRecipients.map((r) {
-                    return DropdownMenuItem<int>(
+                    final name = r['name'] as String;
+                    final parts = name.split(' (');
+                    final mainName = parts[0];
+                    final dept = parts.length > 1 ? parts[1].replaceAll(')', '') : null;
+                    return AsmitaSelectItem<int>(
                       value: r['id'] as int,
-                      child: Text(
-                        r['name'] as String,
-                        style: const TextStyle(fontSize: 13),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      label: mainName,
+                      subtitle: dept,
+                      icon: Icons.person_outline_rounded,
+                      iconColor: AsmitaPalette.deepNavy,
                     );
                   }).toList(),
                   onChanged: (val) {
