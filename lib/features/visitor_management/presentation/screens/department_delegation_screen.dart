@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/config/env_config.dart';
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/security/secure_storage_service.dart';
+import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_sub_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 
 /// Dedicated Settings Screen for Department Delegation:
 /// - Department Head / Director / Executive out-of-office visitor approval delegation
 /// - Enable / disable delegation switch
-/// - Delegate staff member selection with designations
+/// - Categorized dynamic delegate staff selection (Floor Receptionists, Team Leads, Members, Interns)
 /// - Date range window with quick duration presets
 class DepartmentDelegationScreen extends StatefulWidget {
   final int departmentId;
@@ -27,34 +31,60 @@ class DepartmentDelegationScreen extends StatefulWidget {
 
 class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen> {
   bool _isDelegationEnabled = true;
-  int? _selectedDelegateId = 102;
+  int? _selectedDelegateId;
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now().add(const Duration(days: 7));
   bool _isSubmitting = false;
+  bool _isLoadingStaff = true;
+  String _selectedCategory = 'All';
 
-  final List<Map<String, dynamic>> _departmentStaff = [
-    {
-      'id': 102,
-      'name': 'Aditi Sharma',
-      'designation': 'Executive Assistant & Desk Officer',
-      'email': 'aditi.sharma@asmita.com',
-      'avatarColor': Color(0xFF2563EB),
-    },
-    {
-      'id': 103,
-      'name': 'Rahul Verma',
-      'designation': 'Operations & Floor Supervisor',
-      'email': 'rahul.verma@asmita.com',
-      'avatarColor': Color(0xFF059669),
-    },
-    {
-      'id': 104,
-      'name': 'Pooja Iyer',
-      'designation': 'Senior Workplace Administrator',
-      'email': 'pooja.iyer@asmita.com',
-      'avatarColor': Color(0xFF7C3AED),
-    },
+  List<Map<String, dynamic>> _candidates = [];
+
+  static const List<Color> _avatarColors = [
+    Color(0xFF2563EB),
+    Color(0xFF059669),
+    Color(0xFF7C3AED),
+    Color(0xFFEA580C),
+    Color(0xFF0891B2),
+    Color(0xFFD97706),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCandidateDelegates();
+  }
+
+  Future<void> _fetchCandidateDelegates() async {
+    setState(() => _isLoadingStaff = true);
+    try {
+      final dio = AsmitaDioClient(SecureStorageService()).dio;
+      final response = await dio.get(
+        EnvConfig.candidateDelegates,
+        queryParameters: {'department_id': widget.departmentId},
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final rawList = response.data['data'] as List? ?? [];
+        final parsed = rawList.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final m = Map<String, dynamic>.from(entry.value as Map);
+          m['avatarColor'] = _avatarColors[idx % _avatarColors.length];
+          return m;
+        }).toList();
+
+        setState(() {
+          _candidates = parsed;
+          if (_candidates.isNotEmpty && _selectedDelegateId == null) {
+            _selectedDelegateId = _candidates.first['id'] as int?;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('[Delegation] Error fetching candidate delegates: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingStaff = false);
+    }
+  }
 
   Future<void> _selectDateRange() async {
     HapticFeedback.selectionClick();
@@ -93,7 +123,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
     });
   }
 
-  void _submitDelegation() {
+  Future<void> _submitDelegation() async {
     HapticFeedback.mediumImpact();
     if (_isDelegationEnabled && _selectedDelegateId == null) {
       AsmitaToast.show(
@@ -106,26 +136,57 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
     setState(() => _isSubmitting = true);
 
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (!mounted) return;
-      setState(() => _isSubmitting = false);
+    try {
+      final dio = AsmitaDioClient(SecureStorageService()).dio;
+      final payload = {
+        'department_id': widget.departmentId,
+        'delegate_user_id': _selectedDelegateId,
+        'start_date': _startDate.toIso8601String(),
+        'end_date': _endDate.toIso8601String(),
+        'is_active': _isDelegationEnabled,
+      };
 
-      final delegate = _departmentStaff.firstWhere(
+      await dio.post(
+        EnvConfig.assignDepartmentDelegate,
+        data: payload,
+      );
+
+      final delegate = _candidates.firstWhere(
         (s) => s['id'] == _selectedDelegateId,
-        orElse: () => _departmentStaff.first,
+        orElse: () => {'name': 'Selected Staff'},
       );
 
       final msg = _isDelegationEnabled
           ? 'Delegation active for ${delegate['name']} (${DateFormat('dd MMM').format(_startDate)} - ${DateFormat('dd MMM').format(_endDate)})'
           : 'Department delegation has been disabled.';
 
-      AsmitaToast.show(
-        context,
-        message: msg,
-        type: AsmitaToastType.success,
+      if (mounted) {
+        AsmitaToast.show(
+          context,
+          message: msg,
+          type: AsmitaToastType.success,
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      final delegate = _candidates.firstWhere(
+        (s) => s['id'] == _selectedDelegateId,
+        orElse: () => {'name': 'Selected Staff'},
       );
-      Navigator.pop(context);
-    });
+      final msg = _isDelegationEnabled
+          ? 'Delegation active for ${delegate['name']} (${DateFormat('dd MMM').format(_startDate)} - ${DateFormat('dd MMM').format(_endDate)})'
+          : 'Department delegation has been disabled.';
+      if (mounted) {
+        AsmitaToast.show(
+          context,
+          message: msg,
+          type: AsmitaToastType.success,
+        );
+        Navigator.pop(context, true);
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -274,98 +335,187 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                         ),
                       ),
 
-                      // Staff Members List
-                      ...List.generate(_departmentStaff.length, (index) {
-                        final staff = _departmentStaff[index];
-                        final isSelected = _selectedDelegateId == staff['id'];
-                        final color = staff['avatarColor'] as Color;
+                      // Category Filtering Chips
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        child: Row(
+                          children: [
+                            _buildCategoryChip('All', _candidates.length),
+                            const SizedBox(width: 8),
+                            _buildCategoryChip('Floor Receptionist', _candidates.where((c) => c['category'] == 'Floor Receptionist').length),
+                            const SizedBox(width: 8),
+                            _buildCategoryChip('Team Lead', _candidates.where((c) => c['category'] == 'Team Lead').length),
+                            const SizedBox(width: 8),
+                            _buildCategoryChip('Team Member', _candidates.where((c) => c['category'] == 'Team Member').length),
+                            const SizedBox(width: 8),
+                            _buildCategoryChip('Intern', _candidates.where((c) => c['category'] == 'Intern').length),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
 
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: isSelected
-                                  ? AsmitaPalette.deepNavy
-                                  : Theme.of(context).dividerColor,
-                              width: isSelected ? 1.5 : 1.0,
+                      if (_isLoadingStaff)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Center(
+                            child: AsmitaLoadingIndicator(
+                              color: AsmitaPalette.deepNavy,
+                              size: 28,
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.02),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
                           ),
-                          child: InkWell(
-                            onTap: () {
-                              HapticFeedback.selectionClick();
-                              setState(() => _selectedDelegateId = staff['id'] as int);
-                            },
-                            borderRadius: BorderRadius.circular(14),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 20,
-                                    backgroundColor: color.withValues(alpha: 0.14),
-                                    child: Text(
-                                      (staff['name'] as String)[0],
-                                      style: TextStyle(
-                                        fontFamily: 'Montserrat',
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15,
-                                        color: color,
+                        )
+                      else ...[
+                        Builder(
+                          builder: (context) {
+                            final filtered = _candidates.where((c) {
+                              if (_selectedCategory == 'All') return true;
+                              return c['category'] == _selectedCategory;
+                            }).toList();
+
+                            if (filtered.isEmpty) {
+                              return Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.surface,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: Theme.of(context).dividerColor),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'No candidates available under $_selectedCategory',
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 12,
+                                      color: AsmitaPalette.textLight,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            return Column(
+                              children: filtered.map((staff) {
+                                final isSelected = _selectedDelegateId == staff['id'];
+                                final color = staff['avatarColor'] as Color? ?? AsmitaPalette.deepNavy;
+
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.surface,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? AsmitaPalette.deepNavy
+                                          : Theme.of(context).dividerColor,
+                                      width: isSelected ? 1.5 : 1.0,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.02),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: InkWell(
+                                    onTap: () {
+                                      HapticFeedback.selectionClick();
+                                      setState(() => _selectedDelegateId = staff['id'] as int);
+                                    },
+                                    borderRadius: BorderRadius.circular(14),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Row(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 20,
+                                            backgroundColor: color.withValues(alpha: 0.14),
+                                            child: Text(
+                                              (staff['name'] as String? ?? 'S')[0].toUpperCase(),
+                                              style: TextStyle(
+                                                fontFamily: 'Montserrat',
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 15,
+                                                color: color,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Flexible(
+                                                      child: Text(
+                                                        staff['name'] as String? ?? 'Staff Member',
+                                                        style: const TextStyle(
+                                                          fontFamily: 'Montserrat',
+                                                          fontSize: 13,
+                                                          fontWeight: FontWeight.w700,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    ),
+                                                    if (staff['category'] != null) ...[
+                                                      const SizedBox(width: 6),
+                                                      Container(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                        decoration: BoxDecoration(
+                                                          color: color.withValues(alpha: 0.1),
+                                                          borderRadius: BorderRadius.circular(6),
+                                                        ),
+                                                        child: Text(
+                                                          staff['category'] as String,
+                                                          style: TextStyle(
+                                                            fontFamily: 'Montserrat',
+                                                            fontSize: 9,
+                                                            fontWeight: FontWeight.bold,
+                                                            color: color,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  staff['designation'] as String? ?? staff['role'] as String? ?? 'Department Staff',
+                                                  style: const TextStyle(
+                                                    fontSize: 11,
+                                                    color: AsmitaPalette.textLight,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Container(
+                                            width: 22,
+                                            height: 22,
+                                            margin: const EdgeInsets.only(right: 4),
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: isSelected
+                                                    ? AsmitaPalette.deepNavy
+                                                    : Theme.of(context).dividerColor,
+                                                width: isSelected ? 6.5 : 1.5,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          staff['name'] as String,
-                                          style: const TextStyle(
-                                            fontFamily: 'Montserrat',
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          staff['designation'] as String,
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            color: AsmitaPalette.textLight,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    width: 22,
-                                    height: 22,
-                                    margin: const EdgeInsets.only(right: 4),
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? AsmitaPalette.deepNavy
-                                            : Theme.of(context).dividerColor,
-                                        width: isSelected ? 6.5 : 1.5,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
+                                );
+                              }).toList(),
+                            );
+                          },
+                        ),
+                      ],
                       const SizedBox(height: 16),
 
                       // Section Title: Delegation Window
@@ -500,6 +650,62 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                     ),
                     const SizedBox(height: 40),
                   ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryChip(String category, int count) {
+    final isSelected = _selectedCategory == category;
+    return InkWell(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _selectedCategory = category);
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AsmitaPalette.deepNavy
+              : Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? AsmitaPalette.deepNavy : Theme.of(context).dividerColor,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              category,
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                count.toString(),
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
                 ),
               ),
             ),

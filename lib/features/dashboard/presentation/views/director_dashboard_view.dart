@@ -13,11 +13,14 @@ import '../../../../core/utils/property_role_resolver.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
+import '../../../visitor_management/bloc/visitor_bloc.dart';
+import '../../../visitor_management/bloc/visitor_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
 import '../../../visitor_management/presentation/widgets/acknowledge_action_button.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 /// Director Role Dashboard:
 /// - Executive overview and real-time visitor KPI metrics
@@ -67,7 +70,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     }
   }
 
-  void _showPreApproveModal(BuildContext context) {
+  Future<void> _showPreApproveModal(BuildContext context) async {
     final authState = context.read<AuthBloc>().state;
     final user = authState is AuthAuthenticated ? authState.user : null;
     if (!PropertyRoleResolver.canIssuePasses(user)) {
@@ -78,13 +81,21 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
       );
       return;
     }
-    showDialog(
+    await showDialog(
       context: context,
       builder: (context) => const AsmitaDialog(
         title: 'Issue VIP Pass',
         content: AsmitaPreApproveWizard(),
       ),
     );
+
+    if (!context.mounted) return;
+    context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+    if (user != null) {
+      context.read<VisitorBloc>().add(
+        LoadMyHistory(residentId: user.userId, isRefresh: true),
+      );
+    }
   }
 
   void _handleDecide(BuildContext context, int visitId, String action) {
@@ -343,6 +354,36 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                     ? DateFormat('dd MMM, hh:mm a').format(visit.createdAt!)
                     : 'Scheduled Visit'),
           ),
+
+          if (visit.statusToken != null && visit.statusToken!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Center(
+              child: Container(
+                width: 170,
+                height: 170,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: QrImageView(
+                  data: visit.statusToken!,
+                  version: QrVersions.auto,
+                  size: 146.0,
+                  eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: AsmitaPalette.deepNavy),
+                  dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: AsmitaPalette.deepNavy),
+                ),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 20),
 

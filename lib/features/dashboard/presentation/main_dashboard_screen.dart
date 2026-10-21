@@ -271,11 +271,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
 
   Widget _resolveRoleBasedHistoryView(String role) {
     final normalized = PropertyRoleResolver.normalizeRole(role);
-    if (normalized == 'guard' ||
-        normalized == 'director' ||
-        normalized == 'employee' ||
-        normalized == 'receptionist' ||
-        normalized == 'facility') {
+    if (normalized == 'guard') {
       return const GuardHistoryScreen();
     }
     return VisitorHistoryScreen(onBack: () => setState(() => _currentIndex = 0));

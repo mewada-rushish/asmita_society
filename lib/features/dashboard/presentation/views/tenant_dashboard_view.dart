@@ -84,7 +84,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
     super.dispose();
   }
 
-  void _showPreApproveModal(BuildContext context) {
+  Future<void> _showPreApproveModal(BuildContext context) async {
     final authState = context.read<AuthBloc>().state;
     final user = authState is AuthAuthenticated ? authState.user : null;
     if (!PropertyRoleResolver.canIssuePasses(user)) {
@@ -95,13 +95,20 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
       );
       return;
     }
-    showDialog(
+    await showDialog(
       context: context,
       builder: (context) => const AsmitaDialog(
         title: 'Pre-Approve Entry',
         content: AsmitaPreApproveWizard(), // Plugs in our dynamic wizard safely
       ),
     );
+
+    if (!context.mounted) return;
+    if (user != null) {
+      context.read<VisitorBloc>().add(
+        LoadMyHistory(residentId: user.userId, isRefresh: true),
+      );
+    }
   }
 
   void _showRaiseAlertModal(BuildContext context) {
