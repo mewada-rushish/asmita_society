@@ -72,7 +72,13 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
                 children: [
                   IconButton(
                     icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.primary, size: 20),
-                    onPressed: widget.onBack,
+                    onPressed: () {
+                      if (widget.onBack != null) {
+                        widget.onBack!();
+                      } else {
+                        Navigator.of(context).maybePop();
+                      }
+                    },
                   ),
                   Expanded(
                     child: Container(
