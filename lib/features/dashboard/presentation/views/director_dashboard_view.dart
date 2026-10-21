@@ -493,10 +493,6 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Hero Welcome Banner
-                          _buildExecutiveBanner(context),
-                          const SizedBox(height: 16),
-
                           // Executive KPI Stat Cards
                           _buildKpiRow(
                             context,
@@ -565,83 +561,6 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                         ],
                       ),
                     ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildExecutiveBanner(BuildContext context) {
-    final now = DateTime.now();
-    final dateStr = DateFormat('EEEE, d MMMM').format(now);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AsmitaPalette.deepNavy, Color(0xFF1E293B)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AsmitaPalette.deepNavy.withValues(alpha: 0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  'EXECUTIVE GATEWAY',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-              ),
-              Text(
-                dateStr,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Executive Office & VIP Suite',
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            'Pre-approve high-priority visitors & oversee live floor arrivals.',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.8),
             ),
           ),
         ],
