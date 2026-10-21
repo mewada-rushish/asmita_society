@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
+
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
+import '../../../../core/widgets/asmita_dialog.dart';
+import '../../../../core/widgets/asmita_bottom_sheet.dart';
+import '../../widgets/asmita_pre_approve_wizard.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
@@ -11,9 +17,10 @@ import '../../../visitor_management/data/models/industrial_visit_model.dart';
 import '../../../visitor_management/presentation/widgets/acknowledge_action_button.dart';
 
 /// Director Role Dashboard:
-/// - Executive overview and visitor KPI metrics
-/// - Personal VIP visitor log
-/// - Quick direct contact button to floor receptionist
+/// - Executive overview and real-time visitor KPI metrics
+/// - Personal VIP visitor log with expedited approval/rejection
+/// - Quick direct contact hotlines to floor receptionist & security gate
+/// - VIP Pre-approval & pass scheduling wizard integration
 class DirectorDashboardView extends StatefulWidget {
   final List<IndustrialVisitModel>? visits;
   final VoidCallback? onContactReceptionist;
@@ -34,6 +41,7 @@ class DirectorDashboardView extends StatefulWidget {
 
 class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   final Set<int> _acknowledgedIds = {};
+  String _selectedFilter = 'ALL';
 
   @override
   void initState() {
@@ -56,6 +64,16 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     }
   }
 
+  void _showPreApproveModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const AsmitaDialog(
+        title: 'Issue VIP Pass',
+        content: AsmitaPreApproveWizard(),
+      ),
+    );
+  }
+
   void _handleDecide(BuildContext context, int visitId, String action) {
     if (widget.onDecideVisit != null) {
       widget.onDecideVisit!(visitId, action);
@@ -76,91 +94,320 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   }
 
   void _showContactReceptionistSheet(BuildContext context) {
-    showModalBottomSheet<void>(
+    showAsmitaBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      title: 'Campus Support Hotlines',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildHotlineTile(
+            context,
+            icon: Icons.support_agent_rounded,
+            title: 'Floor 8 Reception Desk',
+            subtitle: 'Ext: 101 • Dedicated Executive Support',
+            onCall: () {
+              Navigator.pop(context);
+              AsmitaToast.show(
+                context,
+                message: 'Connecting to Floor Reception (Ext 101)...',
+                type: AsmitaToastType.info,
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          _buildHotlineTile(
+            context,
+            icon: Icons.shield_outlined,
+            title: 'Gate 1 Security Control',
+            subtitle: 'Ext: 104 • Main Campus Gate & VIP Escort',
+            onCall: () {
+              Navigator.pop(context);
+              AsmitaToast.show(
+                context,
+                message: 'Connecting to Gate 1 Control (Ext 104)...',
+                type: AsmitaToastType.info,
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          _buildHotlineTile(
+            context,
+            icon: Icons.local_hospital_outlined,
+            title: 'Facility Emergency Desk',
+            subtitle: 'Ext: 999 • Rapid Response Team',
+            onCall: () {
+              Navigator.pop(context);
+              AsmitaToast.show(
+                context,
+                message: 'Connecting to Emergency Response (Ext 999)...',
+                type: AsmitaToastType.info,
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+        ],
       ),
-      builder: (bottomSheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+    );
+  }
+
+  Widget _buildHotlineTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onCall,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: AsmitaPalette.deepNavy, size: 22),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(fontSize: 11, color: AsmitaPalette.textLight),
+        ),
+        trailing: ElevatedButton.icon(
+          onPressed: onCall,
+          icon: const Icon(Icons.phone, size: 14),
+          label: const Text('Call', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AsmitaPalette.deepNavy,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showVisitDetailsModal(BuildContext context, IndustrialVisitModel visit) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isPending = visit.isPending;
+
+    showAsmitaBottomSheet(
+      context: context,
+      title: 'Executive VIP Guest Pass',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AsmitaPalette.deepNavy, Color(0xFF1E293B)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Floor Support Hotline',
-                      style: Theme.of(bottomSheetContext).textTheme.titleMedium?.copyWith(
-                            fontFamily: 'Montserrat',
-                            fontWeight: FontWeight.bold,
-                            color: AsmitaPalette.deepNavy,
-                          ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(bottomSheetContext),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ListTile(
-                  leading: const CircleAvatar(
-                    backgroundColor: AsmitaPalette.deepNavy,
-                    child: Icon(Icons.support_agent_rounded, color: Colors.white),
-                  ),
-                  title: const Text('Main Reception Desk', style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Ext: 101 • Ground Floor Lobby'),
-                  trailing: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(bottomSheetContext);
-                      AsmitaToast.show(
-                        context,
-                        message: 'Calling Main Reception (Ext 101)...',
-                        type: AsmitaToastType.info,
-                      );
-                    },
-                    icon: const Icon(Icons.phone, size: 16),
-                    label: const Text('Call'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AsmitaPalette.deepNavy,
-                      foregroundColor: Colors.white,
+                CircleAvatar(
+                  radius: 26,
+                  backgroundColor: Colors.white.withValues(alpha: 0.15),
+                  child: Text(
+                    visit.visitorName.isNotEmpty ? visit.visitorName[0].toUpperCase() : 'V',
+                    style: const TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      color: Colors.white,
                     ),
                   ),
                 ),
-                const Divider(),
-                ListTile(
-                  leading: const CircleAvatar(
-                    backgroundColor: AsmitaPalette.deepNavy,
-                    child: Icon(Icons.shield_outlined, color: Colors.white),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        visit.visitorName,
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        visit.deliveryCompany ?? visit.purpose ?? 'VIP Visitor',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ],
                   ),
-                  title: const Text('Gate 1 Security Control', style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Ext: 104 • Pedestrian Gate'),
-                  trailing: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(bottomSheetContext);
-                      AsmitaToast.show(
-                        context,
-                        message: 'Calling Gate 1 Control (Ext 104)...',
-                        type: AsmitaToastType.info,
-                      );
-                    },
-                    icon: const Icon(Icons.phone, size: 16),
-                    label: const Text('Call'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AsmitaPalette.deepNavy,
-                      foregroundColor: Colors.white,
+                ),
+                if (visit.passCode != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                     ),
+                    child: Text(
+                      'PASS #${visit.passCode}',
+                      style: const TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          _buildModalRow(
+            context,
+            icon: Icons.flag_outlined,
+            label: 'Pass Status',
+            value: visit.status.label,
+            badgeColor: visit.status.textColor(isDark),
+            badgeBg: visit.status.fillColor(isDark),
+          ),
+          _buildModalRow(
+            context,
+            icon: Icons.domain_rounded,
+            label: 'Host Office',
+            value: visit.departmentName ?? 'Executive Office',
+          ),
+          if (visit.visitorMobile != null && visit.visitorMobile!.isNotEmpty)
+            _buildModalRow(
+              context,
+              icon: Icons.phone_outlined,
+              label: 'Mobile',
+              value: visit.visitorMobile!,
+            ),
+          if (visit.vehicleNumber != null && visit.vehicleNumber!.isNotEmpty)
+            _buildModalRow(
+              context,
+              icon: Icons.directions_car_outlined,
+              label: 'Vehicle Plate',
+              value: visit.vehicleNumber!,
+            ),
+          _buildModalRow(
+            context,
+            icon: Icons.access_time_rounded,
+            label: 'Arrival Time',
+            value: visit.checkInAt != null
+                ? DateFormat('dd MMM, hh:mm a').format(visit.checkInAt!)
+                : (visit.createdAt != null
+                    ? DateFormat('dd MMM, hh:mm a').format(visit.createdAt!)
+                    : 'Scheduled Visit'),
+          ),
+
+          const SizedBox(height: 20),
+
+          if (isPending) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _handleDecide(context, visit.id, 'REJECT');
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AsmitaPalette.actionRed,
+                      side: const BorderSide(color: AsmitaPalette.actionRed, width: 1.5),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Decline Pass', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _handleDecide(context, visit.id, 'APPROVE');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AsmitaPalette.successGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Approve Priority Entry', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
             ),
+          ],
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModalRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+    Color? badgeColor,
+    Color? badgeBg,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
           ),
-        );
-      },
+          const SizedBox(width: 10),
+          Text(label, style: const TextStyle(fontSize: 13, color: AsmitaPalette.textLight)),
+          const Spacer(),
+          if (badgeColor != null && badgeBg != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: badgeBg,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                value,
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: badgeColor),
+              ),
+            )
+          else
+            Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            ),
+        ],
+      ),
     );
   }
 
@@ -206,120 +453,134 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     final approvedCount = visits.where((v) => v.status == IndustrialVisitStatus.approved).length;
     final checkedInCount = visits.where((v) => v.status == IndustrialVisitStatus.checkedIn).length;
 
+    final filteredVisits = visits.where((v) {
+      if (_selectedFilter == 'PENDING' && !v.isPending) return false;
+      if (_selectedFilter == 'APPROVED' && v.status != IndustrialVisitStatus.approved) return false;
+      if (_selectedFilter == 'INSIDE' && v.status != IndustrialVisitStatus.checkedIn) return false;
+      return true;
+    }).toList();
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
-          const AsmitaPrimaryHeader(
-            subtitleOverride: 'Executive Office',
+          // 1. Unified Primary Asmita Header with Society & Profile Hook
+          AsmitaPrimaryHeader(
+            subtitleOverride: 'Executive Office • 8th Floor',
             allowPropertySwitching: false,
+            trailingActions: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.support_agent_rounded, size: 20, color: AsmitaPalette.deepNavy),
+                  ),
+                  tooltip: 'Floor Hotlines',
+                  onPressed: () => _handleContactReceptionist(context),
+                ),
+              ],
+            ),
           ),
+
+          // 2. Scrollable Body
           Expanded(
             child: RefreshIndicator(
-          onRefresh: () async {
-            if (widget.visits == null) {
-              context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
-            }
-          },
-          child: isLoading
-              ? const Center(
-                  child: AsmitaLoadingIndicator(
-                    color: AsmitaPalette.deepNavy,
-                    size: 32,
-                  ),
-                )
-              : SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Header
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              color: AsmitaPalette.deepNavy,
+              onRefresh: () async {
+                if (widget.visits == null) {
+                  context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+                }
+              },
+              child: isLoading
+                  ? const Center(
+                      child: AsmitaLoadingIndicator(
+                        color: AsmitaPalette.deepNavy,
+                        size: 32,
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Executive Office',
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                        fontFamily: 'Montserrat',
-                                        fontWeight: FontWeight.bold,
-                                        color: AsmitaPalette.deepNavy,
-                                      ),
+                          // Hero Welcome Banner
+                          _buildExecutiveBanner(context),
+                          const SizedBox(height: 16),
+
+                          // Executive KPI Stat Cards
+                          _buildKpiRow(
+                            context,
+                            pendingCount: pendingCount,
+                            approvedCount: approvedCount,
+                            checkedInCount: checkedInCount,
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Quick Action Bar
+                          _buildQuickActionBar(context),
+                          const SizedBox(height: 20),
+
+                          // Section Header with Filter Chips
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Executive Visitors',
+                                style: TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                const SizedBox(height: 2),
-                                const Text(
-                                  'Director Operations & VIP Gateways',
-                                  style: TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+                              ),
+                              Text(
+                                '${filteredVisits.length} of ${visits.length} Total',
+                                style: const TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+
+                          // Filter Chips
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                _filterChip('ALL', 'All Visitors (${visits.length})'),
+                                const SizedBox(width: 8),
+                                _filterChip(
+                                  'PENDING',
+                                  'Pending ($pendingCount)',
+                                  highlightColor: AsmitaPalette.actionRed,
+                                ),
+                                const SizedBox(width: 8),
+                                _filterChip('APPROVED', 'Approved ($approvedCount)'),
+                                const SizedBox(width: 8),
+                                _filterChip(
+                                  'INSIDE',
+                                  'Inside HQ ($checkedInCount)',
+                                  highlightColor: AsmitaPalette.successGreen,
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          // Quick Call to Floor Receptionist
-                          ElevatedButton.icon(
-                            onPressed: () => _handleContactReceptionist(context),
-                            icon: const Icon(Icons.support_agent_rounded, size: 16, color: Colors.white),
-                            label: const Text('Receptionist', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AsmitaPalette.deepNavy,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                            ),
-                          ),
+                          const SizedBox(height: 14),
+
+                          // Visitor List or Empty State
+                          if (filteredVisits.isEmpty)
+                            _buildEmptyState(context)
+                          else
+                            ...filteredVisits.map((visit) => _visitorCard(context, visit)),
+
+                          const SizedBox(height: 120),
                         ],
                       ),
-                      const SizedBox(height: 20),
-
-                      // KPI Row
-                      Row(
-                        children: [
-                          _kpiCard(context, 'Pending', pendingCount.toString(), AsmitaPalette.actionRed, Icons.hourglass_top),
-                          const SizedBox(width: 10),
-                          _kpiCard(context, 'Approved', approvedCount.toString(), AsmitaPalette.successGreen, Icons.verified_user),
-                          const SizedBox(width: 10),
-                          _kpiCard(context, 'Inside HQ', checkedInCount.toString(), AsmitaPalette.deepNavy, Icons.business),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Executive Visitor History / Feed Header
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Executive Visitors',
-                            style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            '${visits.length} Total Visits',
-                            style: const TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      if (visits.isEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(vertical: 40),
-                          alignment: Alignment.center,
-                          child: Column(
-                            children: [
-                              Icon(Icons.person_pin_outlined, size: 48, color: AsmitaPalette.textLight.withValues(alpha: 0.5)),
-                              const SizedBox(height: 12),
-                              const Text('No pending executive visitor appointments.', style: TextStyle(color: AsmitaPalette.textLight)),
-                            ],
-                          ),
-                        )
-                      else
-                        ...visits.map((visit) => _visitorCard(context, visit)),
-                    ],
-                  ),
-                ),
+                    ),
             ),
           ),
         ],
@@ -327,131 +588,540 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     );
   }
 
-  Widget _kpiCard(BuildContext context, String label, String value, Color color, IconData icon) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
+  Widget _buildExecutiveBanner(BuildContext context) {
+    final now = DateTime.now();
+    final dateStr = DateFormat('EEEE, d MMMM').format(now);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AsmitaPalette.deepNavy, Color(0xFF1E293B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.bold, color: color),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AsmitaPalette.deepNavy.withValues(alpha: 0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  'EXECUTIVE GATEWAY',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+              Text(
+                dateStr,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Executive Office & VIP Suite',
+            style: TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
-            const SizedBox(height: 2),
-            Text(label, style: const TextStyle(fontSize: 11, color: AsmitaPalette.textLight)),
-          ],
+          ),
+          const SizedBox(height: 3),
+          Text(
+            'Pre-approve high-priority visitors & oversee live floor arrivals.',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKpiRow(
+    BuildContext context, {
+    required int pendingCount,
+    required int approvedCount,
+    required int checkedInCount,
+  }) {
+    return Row(
+      children: [
+        _kpiCard(
+          context,
+          label: 'Pending',
+          value: '$pendingCount',
+          color: AsmitaPalette.actionRed,
+          icon: Icons.hourglass_top_rounded,
+          filterKey: 'PENDING',
+          showPulse: pendingCount > 0,
+        ),
+        const SizedBox(width: 8),
+        _kpiCard(
+          context,
+          label: 'Approved',
+          value: '$approvedCount',
+          color: const Color(0xFF1E88E5),
+          icon: Icons.verified_user_outlined,
+          filterKey: 'APPROVED',
+        ),
+        const SizedBox(width: 8),
+        _kpiCard(
+          context,
+          label: 'Inside HQ',
+          value: '$checkedInCount',
+          color: AsmitaPalette.successGreen,
+          icon: Icons.meeting_room_outlined,
+          filterKey: 'INSIDE',
+        ),
+      ],
+    );
+  }
+
+  Widget _kpiCard(
+    BuildContext context, {
+    required String label,
+    required String value,
+    required Color color,
+    required IconData icon,
+    required String filterKey,
+    bool showPulse = false,
+  }) {
+    final isSelected = _selectedFilter == filterKey;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          setState(() {
+            _selectedFilter = isSelected ? 'ALL' : filterKey;
+          });
+        },
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? color.withValues(alpha: isDark ? 0.25 : 0.12)
+                : Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected ? color : Theme.of(context).dividerColor,
+              width: isSelected ? 1.5 : 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, color: color, size: 18),
+                  if (showPulse) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                value,
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? color : Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: const TextStyle(fontSize: 11, color: AsmitaPalette.textLight),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  Widget _buildQuickActionBar(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () => _showPreApproveModal(context),
+            icon: const Icon(Icons.add_moderator_outlined, size: 18),
+            label: const Text(
+              'Issue VIP Pass',
+              style: TextStyle(fontFamily: 'Montserrat', fontSize: 13, fontWeight: FontWeight.bold),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AsmitaPalette.deepNavy,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 2,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        OutlinedButton.icon(
+          onPressed: () => _handleContactReceptionist(context),
+          icon: const Icon(Icons.support_agent_rounded, size: 18),
+          label: const Text('Hotlines', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AsmitaPalette.deepNavy,
+            side: const BorderSide(color: AsmitaPalette.deepNavy, width: 1.2),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _filterChip(String code, String label, {Color? highlightColor}) {
+    final isSelected = _selectedFilter == code;
+    final effectiveColor = highlightColor ?? AsmitaPalette.deepNavy;
+
+    return InkWell(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _selectedFilter = code);
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? effectiveColor : Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? effectiveColor : Theme.of(context).dividerColor,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 24),
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Theme.of(context).dividerColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.verified_user_outlined,
+              size: 44,
+              color: AsmitaPalette.deepNavy,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'No Pending Appointments',
+            style: TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Your executive visitor queue is clear. Issue a pre-approved pass for VIP guests with priority gate clearance.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+          ),
+          const SizedBox(height: 18),
+          ElevatedButton.icon(
+            onPressed: () => _showPreApproveModal(context),
+            icon: const Icon(Icons.add, size: 16),
+            label: const Text('Issue VIP Pass'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AsmitaPalette.deepNavy,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _visitorCard(BuildContext context, IndustrialVisitModel visit) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isPending = visit.isPending;
     final isAck = _acknowledgedIds.contains(visit.id);
 
-    return Card(
-      elevation: 0,
+    final statusBg = visit.status.fillColor(isDark);
+    final statusText = visit.status.textColor(isDark);
+
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Theme.of(context).dividerColor),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isPending
+              ? AsmitaPalette.actionRed.withValues(alpha: 0.4)
+              : Theme.of(context).dividerColor,
+          width: isPending ? 1.5 : 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isPending
+                ? AsmitaPalette.actionRed.withValues(alpha: 0.05)
+                : Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showVisitDetailsModal(context, visit),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
-                  child: Text(
-                    visit.visitorName.isNotEmpty ? visit.visitorName[0] : 'V',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: AsmitaPalette.deepNavy),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        visit.visitorName,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: isPending
+                          ? AsmitaPalette.actionRed.withValues(alpha: 0.12)
+                          : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                      child: Text(
+                        visit.visitorName.isNotEmpty ? visit.visitorName[0].toUpperCase() : 'V',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontWeight: FontWeight.bold,
+                          color: isPending ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy,
+                        ),
                       ),
-                      Text(
-                        '${visit.departmentName ?? "Executive Office"} • ${visit.requestNumber}',
-                        style: const TextStyle(fontSize: 11, color: AsmitaPalette.textLight),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  visit.visitorName,
+                                  style: const TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (visit.passCode != null) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AsmitaPalette.deepNavy.withValues(alpha: 0.07),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '#${visit.passCode}',
+                                    style: const TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: AsmitaPalette.deepNavy,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            visit.deliveryCompany ?? visit.purpose ?? 'VIP Guest',
+                            style: const TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isPending
+                            ? AsmitaPalette.actionRed.withValues(alpha: 0.12)
+                            : statusBg,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        isPending ? 'Pending Approval' : visit.status.label,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: isPending ? AsmitaPalette.actionRed : statusText,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                const Divider(height: 1),
+                const SizedBox(height: 8),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.access_time_rounded, size: 13, color: AsmitaPalette.textLight),
+                        const SizedBox(width: 4),
+                        Text(
+                          visit.checkInAt != null
+                              ? DateFormat('hh:mm a').format(visit.checkInAt!)
+                              : (visit.createdAt != null
+                                  ? DateFormat('hh:mm a').format(visit.createdAt!)
+                                  : 'Scheduled'),
+                          style: const TextStyle(fontSize: 11, color: AsmitaPalette.textLight),
+                        ),
+                      ],
+                    ),
+                    if (visit.vehicleNumber != null && visit.vehicleNumber!.isNotEmpty)
+                      Row(
+                        children: [
+                          const Icon(Icons.directions_car_rounded, size: 13, color: AsmitaPalette.textLight),
+                          const SizedBox(width: 4),
+                          Text(
+                            visit.vehicleNumber!,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+
+                if (isPending) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => _handleDecide(context, visit.id, 'REJECT'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AsmitaPalette.actionRed,
+                            side: const BorderSide(color: AsmitaPalette.actionRed),
+                            padding: const EdgeInsets.symmetric(vertical: 9),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: const Text('Decline', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => _handleDecide(context, visit.id, 'APPROVE'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AsmitaPalette.successGreen,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 9),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: const Text('Approve Priority', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                        ),
                       ),
                     ],
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: visit.status.badgeColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    visit.status.label,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: visit.status.badgeColor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (visit.purpose != null && visit.purpose!.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(
-                'Purpose: ${visit.purpose}',
-                style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
-              ),
-            ],
-            if (visit.isPending) ...[
-              const Divider(height: 20),
-              Wrap(
-                alignment: WrapAlignment.end,
-                spacing: 8,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
+                ] else if (visit.status == IndustrialVisitStatus.approved && !isAck) ...[
+                  const SizedBox(height: 10),
                   AcknowledgeActionButton(
                     onAcknowledge: () => _handleAcknowledge(context, visit.id),
                     isAcknowledged: isAck,
                   ),
-                  OutlinedButton(
-                    onPressed: () => _handleDecide(context, visit.id, 'REJECT'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AsmitaPalette.actionRed,
-                      side: const BorderSide(color: AsmitaPalette.actionRed),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('Reject', style: TextStyle(fontSize: 12)),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => _handleDecide(context, visit.id, 'APPROVE'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AsmitaPalette.successGreen,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('Approve', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  ),
                 ],
-              ),
-            ],
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );
