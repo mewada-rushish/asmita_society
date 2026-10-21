@@ -662,7 +662,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           label: 'Pending',
           value: '$pendingCount',
           color: AsmitaPalette.actionRed,
-          icon: Icons.hourglass_top_rounded,
+          icon: Icons.pending_actions_rounded,
           filterKey: 'PENDING',
           showPulse: pendingCount > 0,
         ),
@@ -672,7 +672,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           label: 'Approved',
           value: '$approvedCount',
           color: const Color(0xFF1E88E5),
-          icon: Icons.verified_user_outlined,
+          icon: Icons.verified_rounded,
           filterKey: 'APPROVED',
         ),
         const SizedBox(width: 8),
@@ -681,7 +681,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           label: 'Inside HQ',
           value: '$checkedInCount',
           color: AsmitaPalette.successGreen,
-          icon: Icons.meeting_room_outlined,
+          icon: Icons.meeting_room_rounded,
           filterKey: 'INSIDE',
         ),
       ],
@@ -708,15 +708,15 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
             _selectedFilter = isSelected ? 'ALL' : filterKey;
           });
         },
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
           decoration: BoxDecoration(
             color: isSelected
                 ? color.withValues(alpha: isDark ? 0.25 : 0.12)
                 : Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isSelected ? color : Theme.of(context).dividerColor,
               width: isSelected ? 1.5 : 1.0,
@@ -724,44 +724,71 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, color: color, size: 18),
-                  if (showPulse) ...[
-                    const SizedBox(width: 4),
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ],
-                ],
+              // Premium Squircle Icon Container
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: isDark ? 0.22 : 0.10),
+                  borderRadius: BorderRadius.circular(11),
+                  border: Border.all(
+                    color: color.withValues(alpha: isSelected ? 0.45 : 0.18),
+                    width: 1.0,
+                  ),
+                ),
+                child: Center(
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Icon(icon, color: color, size: 20),
+                      if (showPulse)
+                        Positioned(
+                          right: -3,
+                          top: -3,
+                          child: Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.surface,
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Text(
                 value,
                 style: TextStyle(
                   fontFamily: 'Montserrat',
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w800,
                   color: isSelected ? color : Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 label,
-                style: const TextStyle(fontSize: 11, color: AsmitaPalette.textLight),
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? color : AsmitaPalette.textLight,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
