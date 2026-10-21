@@ -62,6 +62,9 @@ class UserModel {
   final String? profilePictureUrl;
   final String? societyName;
   final List<FlatMapping> flatMappings;
+  final Map<String, bool> permissions;
+  final String? roleScope;
+  final int? rolePower;
 
   UserModel({
     required this.userId,
@@ -77,7 +80,26 @@ class UserModel {
     this.profilePictureUrl,
     this.societyName,
     this.flatMappings = const [],
+    this.permissions = const {},
+    this.roleScope,
+    this.rolePower,
   });
+
+  /// Dynamic capability check based on backend platform settings
+  bool hasPermission(String key) => permissions[key] ?? false;
+
+  bool get canManageVisitors => hasPermission('canManageVisitors');
+  bool get canManageServiceBookings => hasPermission('canManageServiceBookings');
+  bool get canManagePayments => hasPermission('canManagePayments');
+  bool get canManageNotices => hasPermission('canManageNotices');
+  bool get canManageMembers => hasPermission('canManageMembers');
+  bool get canManageUsers => hasPermission('canManageUsers');
+  bool get canManageDomesticStaff => hasPermission('canManageDomesticStaff');
+  bool get canManageVehicleTracking => hasPermission('canManageVehicleTracking');
+  bool get canManageFormsPolicies => hasPermission('canManageFormsPolicies');
+  bool get canManageFeedback => hasPermission('canManageFeedback');
+  bool get canManagePolling => hasPermission('canManagePolling');
+  bool get canIssuePasses => canManageVisitors;
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     var mappings = <FlatMapping>[];
@@ -85,6 +107,14 @@ class UserModel {
       mappings = (json['user_flat_mapping'] as List).map((m) => FlatMapping.fromJson(m)).toList();
     } else if (json['flat_mappings'] != null && json['flat_mappings'] is List) {
       mappings = (json['flat_mappings'] as List).map((m) => FlatMapping.fromJson(m)).toList();
+    }
+
+    final parsedPermissions = <String, bool>{};
+    final permsRaw = json['permissions'] ?? json['role_permissions'];
+    if (permsRaw is Map) {
+      permsRaw.forEach((k, v) {
+        parsedPermissions[k.toString()] = v == true;
+      });
     }
 
     return UserModel(
@@ -105,6 +135,11 @@ class UserModel {
       profilePictureUrl: json['profile_picture_url']?.toString(),
       societyName: json['society_name']?.toString(),
       flatMappings: mappings,
+      permissions: parsedPermissions,
+      roleScope: json['role_scope']?.toString() ?? json['scope']?.toString(),
+      rolePower: json['role_power'] is int
+          ? json['role_power'] as int
+          : int.tryParse(json['role_power']?.toString() ?? json['power']?.toString() ?? ''),
     );
   }
 
@@ -123,6 +158,9 @@ class UserModel {
       'profile_picture_url': profilePictureUrl,
       'society_name': societyName,
       'user_flat_mapping': flatMappings.map((m) => m.toJson()).toList(),
+      'permissions': permissions,
+      'role_scope': roleScope,
+      'role_power': rolePower,
     };
   }
 
@@ -140,6 +178,9 @@ class UserModel {
     String? profilePictureUrl,
     String? societyName,
     List<FlatMapping>? flatMappings,
+    Map<String, bool>? permissions,
+    String? roleScope,
+    int? rolePower,
   }) {
     return UserModel(
       userId: userId ?? this.userId,
@@ -155,6 +196,9 @@ class UserModel {
       profilePictureUrl: profilePictureUrl ?? this.profilePictureUrl,
       societyName: societyName ?? this.societyName,
       flatMappings: flatMappings ?? this.flatMappings,
+      permissions: permissions ?? this.permissions,
+      roleScope: roleScope ?? this.roleScope,
+      rolePower: rolePower ?? this.rolePower,
     );
   }
 }

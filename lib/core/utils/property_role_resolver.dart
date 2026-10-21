@@ -1,3 +1,5 @@
+import '../../features/auth/data/models/user_model.dart';
+
 /// Universal Property & Role Resolver for AsmitA
 /// 
 /// Maps arbitrary database role strings (e.g. "Security Guard", "Plant Manager",
@@ -126,5 +128,98 @@ class PropertyRoleResolver {
       default:
         return rawRole;
     }
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // DYNAMIC CAPABILITY RESOLVERS (PORTAL APP_SETTINGS AWARE)
+  // ─────────────────────────────────────────────────────────
+
+  /// Checks whether a user has permission to manage visitors / issue passes.
+  /// Dynamically consults portal-configured permissions if loaded;
+  /// gracefully falls back to role heuristic when permissions are not present.
+  static bool canIssuePasses(UserModel? user, {String? role}) {
+    if (user != null && user.permissions.isNotEmpty) {
+      return user.canIssuePasses;
+    }
+    final normalized = normalizeRole(role ?? user?.primaryRole);
+    return normalized != 'guard';
+  }
+
+  /// Checks whether a user has permission to approve or reject gate visitor requests.
+  static bool canApproveVisits(UserModel? user, {String? role}) {
+    if (user != null && user.permissions.isNotEmpty) {
+      return user.canManageVisitors;
+    }
+    final normalized = normalizeRole(role ?? user?.primaryRole);
+    return normalized == 'owner' ||
+        normalized == 'tenant' ||
+        normalized == 'director' ||
+        normalized == 'employee';
+  }
+
+  /// Checks whether a user can manage facility / maintenance operations.
+  static bool canManageFacilityTasks(UserModel? user, {String? role}) {
+    if (user != null && user.permissions.isNotEmpty) {
+      return user.hasPermission('canManageFacilityTasks') ||
+          user.canManageServiceBookings;
+    }
+    final normalized = normalizeRole(role ?? user?.primaryRole);
+    return normalized == 'facility' || normalized == 'director';
+  }
+
+  /// Checks whether a user has member/resident management privileges.
+  static bool canManageMembers(UserModel? user, {String? role}) {
+    if (user != null && user.permissions.isNotEmpty) {
+      return user.canManageMembers || user.canManageUsers;
+    }
+    final normalized = normalizeRole(role ?? user?.primaryRole);
+    return normalized == 'director' || normalized == 'owner';
+  }
+
+  /// Checks whether a user can manage domestic staff / helpers.
+  static bool canManageDomesticStaff(UserModel? user, {String? role}) {
+    if (user != null && user.permissions.isNotEmpty) {
+      return user.canManageDomesticStaff;
+    }
+    final normalized = normalizeRole(role ?? user?.primaryRole);
+    return normalized == 'owner' ||
+        normalized == 'tenant' ||
+        normalized == 'director';
+  }
+
+  /// Checks whether a user can manage vehicle tracking & parking.
+  static bool canManageVehicles(UserModel? user, {String? role}) {
+    if (user != null && user.permissions.isNotEmpty) {
+      return user.canManageVehicleTracking;
+    }
+    final normalized = normalizeRole(role ?? user?.primaryRole);
+    return normalized != 'receptionist';
+  }
+
+  /// Checks whether a user can manage society notices and announcements.
+  static bool canManageNotices(UserModel? user, {String? role}) {
+    if (user != null && user.permissions.isNotEmpty) {
+      return user.canManageNotices;
+    }
+    final normalized = normalizeRole(role ?? user?.primaryRole);
+    return normalized == 'director' || normalized == 'owner';
+  }
+
+  /// Checks whether a user can manage society payments / dues.
+  static bool canManagePayments(UserModel? user, {String? role}) {
+    if (user != null && user.permissions.isNotEmpty) {
+      return user.canManagePayments;
+    }
+    final normalized = normalizeRole(role ?? user?.primaryRole);
+    return normalized != 'guard';
+  }
+
+  /// Checks whether a user can book services / amenities.
+  static bool canManageServiceBookings(UserModel? user, {String? role}) {
+    if (user != null && user.permissions.isNotEmpty) {
+      return user.canManageServiceBookings;
+    }
+    final normalized = normalizeRole(role ?? user?.primaryRole);
+    return normalized != 'guard';
   }
 }
