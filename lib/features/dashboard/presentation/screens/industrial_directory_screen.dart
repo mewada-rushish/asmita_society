@@ -54,6 +54,8 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
@@ -72,12 +74,13 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Campus Hotline Section Header
-                  const Text(
+                  Text(
                     'Campus Intercom & Hotlines',
                     style: TextStyle(
                       fontFamily: 'Montserrat',
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : AsmitaPalette.textDark,
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -150,32 +153,39 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(10),
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.swap_horiz_rounded,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
                                   ),
-                                  child: const Icon(
-                                    Icons.swap_horiz_rounded,
-                                    color: Colors.white,
-                                    size: 20,
+                                  const SizedBox(width: 10),
+                                  const Expanded(
+                                    child: Text(
+                                      'Visitor Approval Delegation',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 10),
-                                const Text(
-                                  'Visitor Approval Delegation',
-                                  style: TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             Switch(
                               value: _isDelegationActive,
                               activeThumbColor: Colors.white,
@@ -230,12 +240,13 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                   const SizedBox(height: 24),
 
                   // Department Directory
-                  const Text(
+                  Text(
                     'Campus Departments',
                     style: TextStyle(
                       fontFamily: 'Montserrat',
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : AsmitaPalette.textDark,
                     ),
                   ),
                   const SizedBox(height: 14),

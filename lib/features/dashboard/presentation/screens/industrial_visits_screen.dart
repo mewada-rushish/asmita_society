@@ -1017,19 +1017,33 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
               children: [
                 // Top Row: Avatar + Name + Status Pill
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: isPending
-                          ? AsmitaPalette.actionRed.withValues(alpha: 0.12)
-                          : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-                      child: Text(
-                        visit.visitorName.isNotEmpty ? visit.visitorName[0].toUpperCase() : 'V',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontWeight: FontWeight.bold,
-                          color: isPending ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy,
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: isPending
+                            ? AsmitaPalette.actionRed.withValues(alpha: isDark ? 0.2 : 0.1)
+                            : AsmitaPalette.deepNavy.withValues(alpha: isDark ? 0.2 : 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isPending
+                              ? AsmitaPalette.actionRed.withValues(alpha: 0.3)
+                              : AsmitaPalette.deepNavy.withValues(alpha: 0.15),
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          visit.visitorName.isNotEmpty ? visit.visitorName[0].toUpperCase() : 'V',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: isPending
+                                ? AsmitaPalette.actionRed
+                                : (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy),
+                          ),
                         ),
                       ),
                     ),
@@ -1043,30 +1057,35 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                               Flexible(
                                 child: Text(
                                   visit.visitorName,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Montserrat',
                                     fontWeight: FontWeight.bold,
                                     fontSize: 15,
+                                    color: isDark ? Colors.white : Colors.black,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              if (visit.passCode != null) ...[
+                              if (visit.passCode != null && visit.passCode!.isNotEmpty) ...[
                                 const SizedBox(width: 6),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                                   decoration: BoxDecoration(
-                                    color: AsmitaPalette.deepNavy.withValues(alpha: 0.07),
+                                    color: AsmitaPalette.deepNavy.withValues(alpha: isDark ? 0.25 : 0.08),
                                     borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: AsmitaPalette.deepNavy.withValues(alpha: isDark ? 0.4 : 0.2),
+                                    ),
                                   ),
                                   child: Text(
                                     '#${visit.passCode}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontFamily: 'Montserrat',
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
-                                      color: AsmitaPalette.deepNavy,
+                                      color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
+                                      letterSpacing: 0.5,
                                     ),
                                   ),
                                 ),
@@ -1079,9 +1098,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                               Icon(
                                 visit.deliveryCompany != null
                                     ? Icons.local_shipping_outlined
-                                    : Icons.business_outlined,
+                                    : (visit.isPreApproved ? Icons.star_outline_rounded : Icons.person_outline_rounded),
                                 size: 13,
-                                color: AsmitaPalette.textLight,
+                                color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
                               ),
                               const SizedBox(width: 4),
                               Flexible(
@@ -1090,7 +1109,12 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                                       visit.purpose ??
                                       visit.departmentName ??
                                       'Guest Visitor',
-                                  style: const TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                                  ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -1105,9 +1129,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         color: isPending
-                            ? AsmitaPalette.actionRed.withValues(alpha: 0.12)
+                            ? AsmitaPalette.actionRed.withValues(alpha: isDark ? 0.2 : 0.1)
                             : statusBgColor,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: isPending
                               ? AsmitaPalette.actionRed.withValues(alpha: 0.35)
@@ -1119,13 +1143,14 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                         children: [
                           Icon(
                             isPending ? Icons.warning_amber_rounded : visit.status.iconData,
-                            size: 12,
+                            size: 11,
                             color: isPending ? AsmitaPalette.actionRed : statusTextColor,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             statusLabel,
                             style: TextStyle(
+                              fontFamily: 'Montserrat',
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                               color: isPending ? AsmitaPalette.actionRed : statusTextColor,
@@ -1137,9 +1162,13 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 12),
-                const Divider(height: 1),
                 const SizedBox(height: 10),
+                Divider(
+                  height: 18,
+                  thickness: 1,
+                  color: isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey,
+                ),
+                const SizedBox(height: 4),
 
                 // Info Meta Row: Department, Vehicle, Expected Time
                 Row(
@@ -1147,7 +1176,11 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.access_time_rounded, size: 14, color: AsmitaPalette.textLight),
+                        Icon(
+                          Icons.schedule_rounded,
+                          size: 13,
+                          color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           visit.checkInAt != null
@@ -1155,46 +1188,82 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                               : (visit.createdAt != null
                                   ? DateFormat('hh:mm a').format(visit.createdAt!)
                                   : 'Scheduled'),
-                          style: const TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                          ),
                         ),
                       ],
                     ),
                     if (visit.departmentName != null && visit.departmentName!.isNotEmpty)
                       Row(
                         children: [
-                          const Icon(Icons.apartment_outlined, size: 14, color: AsmitaPalette.textLight),
+                          Icon(
+                            Icons.business_rounded,
+                            size: 12,
+                            color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             visit.departmentName!,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AsmitaPalette.textLight,
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 11,
                               fontWeight: FontWeight.w500,
+                              color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
                             ),
                           ),
                         ],
-                      ),
-                    if (visit.vehicleNumber != null && visit.vehicleNumber!.isNotEmpty)
+                      )
+                    else if (visit.vehicleNumber != null && visit.vehicleNumber!.isNotEmpty)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+                          color: (isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey).withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.directions_car_rounded, size: 11, color: AsmitaPalette.textLight),
+                            Icon(
+                              Icons.directions_car_rounded,
+                              size: 12,
+                              color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               visit.vehicleNumber!,
-                              style: const TextStyle(
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 0.5,
+                                color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
                               ),
                             ),
                           ],
                         ),
+                      )
+                    else
+                      Row(
+                        children: [
+                          Text(
+                            'View Pass',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            size: 14,
+                            color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
+                          ),
+                        ],
                       ),
                   ],
                 ),
