@@ -479,11 +479,6 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                   );
                 }
 
-                final visits = state.visits;
-                final pendingCount = visits.where((v) => v.isPending).length;
-                final approvedCount = visits.where((v) => v.status == IndustrialVisitStatus.approved).length;
-                final insideCount = visits.where((v) => v.status == IndustrialVisitStatus.checkedIn).length;
-
                 final filteredVisits = state.visits.where((v) {
                   if (_selectedFilter == 'PENDING' && !v.isPending) {
                     return false;
@@ -564,60 +559,11 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       ),
                     ),
 
-                    // Top KPI Stat Metrics Cards
+                    // Top KPI Stat Metrics Cards (Interactive Filter Cards)
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
+                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 14),
                         child: _buildKpiMetrics(context, state.visits),
-                      ),
-                    ),
-
-                    // Fitted Segmented Filter Bar (Zero cropping, 100% responsive width)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Theme.of(context).dividerColor),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.03),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              _segmentedTab(
-                                'ALL',
-                                'All',
-                                count: visits.length,
-                              ),
-                              _segmentedTab(
-                                'PENDING',
-                                'Pending',
-                                count: pendingCount,
-                                alertColor: AsmitaPalette.actionRed,
-                              ),
-                              _segmentedTab(
-                                'APPROVED',
-                                'Approved',
-                                count: approvedCount,
-                                alertColor: const Color(0xFF1E88E5),
-                              ),
-                              _segmentedTab(
-                                'INSIDE',
-                                'Inside',
-                                count: insideCount,
-                                alertColor: AsmitaPalette.successGreen,
-                              ),
-                            ],
-                          ),
-                        ),
                       ),
                     ),
 
@@ -815,87 +761,6 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     );
   }
 
-  Widget _segmentedTab(
-    String code,
-    String label, {
-    int? count,
-    Color? alertColor,
-  }) {
-    final isSelected = _selectedFilter == code;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final highlight = alertColor ?? AsmitaPalette.deepNavy;
-    final hasBadge = count != null && count > 0;
-
-    return Expanded(
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          setState(() => _selectedFilter = code);
-        },
-        borderRadius: BorderRadius.circular(10),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
-          decoration: BoxDecoration(
-            color: isSelected ? highlight : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: highlight.withValues(alpha: 0.25),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                      color: isSelected
-                          ? Colors.white
-                          : (isDark ? Colors.white70 : AsmitaPalette.textDark),
-                    ),
-                  ),
-                ),
-              ),
-              if (hasBadge) ...[
-                const SizedBox(width: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? Colors.white.withValues(alpha: 0.25)
-                        : highlight.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '$count',
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.white : highlight,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildEmptyState(BuildContext context) {
     String emptyTitle = 'No Visitors Found';

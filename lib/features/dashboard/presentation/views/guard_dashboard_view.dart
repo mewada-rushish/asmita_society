@@ -17,6 +17,8 @@ import '../../../../core/widgets/asmita_toast.dart';
 import '../../../visitor_management/bloc/guard_gate_bloc.dart';
 import '../../../visitor_management/bloc/guard_gate_event.dart';
 import '../../../visitor_management/bloc/guard_gate_state.dart';
+import '../../../auth/bloc/auth_bloc.dart';
+import '../../../auth/bloc/auth_state.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
 import '../../../visitor_management/presentation/screens/guard_pass_check_in_screen.dart';
 import '../../../visitor_management/presentation/screens/guard_vehicle_draft_screen.dart';
@@ -48,6 +50,15 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
   void initState() {
     super.initState();
     context.read<GuardGateBloc>().add(LoadExpectedInvites());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AuthAuthenticated) {
+        AsmitaPreApproveWizard.loadSocietyFlats(authState.user.societyId);
+        AsmitaPreApproveWizard.loadSocietyEmployees(authState.user.societyId);
+        AsmitaPreApproveWizard.loadSocietyDepartments(authState.user.societyId);
+      }
+    });
   }
 
   @override
