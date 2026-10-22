@@ -275,61 +275,158 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
   }
 
   Widget _approvalCard(BuildContext context, IndustrialVisitModel visit) {
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Theme.of(context).dividerColor),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1.1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black.withValues(alpha: 0.3) : const Color(0x0A0F172A),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
-                  child: Icon(
-                    visit.isDelivery ? Icons.local_shipping_outlined : Icons.person_outline,
-                    color: AsmitaPalette.deepNavy,
+                // Squircle Avatar
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: visit.isDelivery
+                          ? const [Color(0xFFD97706), Color(0xFFF59E0B)]
+                          : const [Color(0xFF1E3A8A), Color(0xFF2563EB)],
+                    ),
+                    borderRadius: BorderRadius.circular(13),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (visit.isDelivery ? const Color(0xFFF59E0B) : const Color(0xFF2563EB))
+                            .withValues(alpha: 0.25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Icon(
+                      visit.isDelivery ? Icons.local_shipping_rounded : Icons.person_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         visit.isDelivery ? '${visit.deliveryCompany} Delivery' : visit.visitorName,
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
+                      const SizedBox(height: 3),
                       Text(
-                        '${visit.isDelivery ? "Package Delivery" : (visit.purpose ?? "Meeting")} • ${visit.requestNumber}',
-                        style: const TextStyle(fontSize: 11, color: AsmitaPalette.textLight),
+                        visit.isDelivery ? 'Package Dropoff' : (visit.purpose ?? 'Guest Meeting'),
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          color: isDark ? AsmitaPalette.textDarkModeMuted : const Color(0xFF64748B),
+                        ),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(
-                    color: visit.status.badgeColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6),
+                    color: visit.status.fillColor(isDark),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: visit.status.textColor(isDark).withValues(alpha: 0.25),
+                    ),
                   ),
                   child: Text(
-                    visit.status.label,
+                    visit.status.label.toUpperCase(),
                     style: TextStyle(
+                      fontFamily: 'Montserrat',
                       fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: visit.status.badgeColor,
+                      fontWeight: FontWeight.w800,
+                      color: visit.status.textColor(isDark),
+                      letterSpacing: 0.4,
                     ),
                   ),
                 ),
               ],
             ),
-            const Divider(height: 20),
+
+            // Inset meta row
+            Container(
+              margin: const EdgeInsets.only(top: 13),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.tag_rounded,
+                    size: 13,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    visit.requestNumber,
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white70 : const Color(0xFF334155),
+                    ),
+                  ),
+                  const Spacer(),
+                  if (visit.passCode != null && visit.passCode!.isNotEmpty)
+                    Text(
+                      'PASS: #${visit.passCode}',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 14),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -342,12 +439,21 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
                         onActionSelected: (action) => _handleDecide(context, visit.id, action),
                       );
                     },
-                    icon: const Icon(Icons.touch_app, size: 16, color: Colors.white),
-                    label: const Text('Delivery Options'),
+                    icon: const Icon(Icons.touch_app_rounded, size: 16, color: Colors.white),
+                    label: const Text(
+                      'Delivery Options',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AsmitaPalette.deepNavy,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      elevation: 1,
                     ),
                   ),
                 ] else ...[
@@ -359,20 +465,41 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
                     onPressed: () => _handleDecide(context, visit.id, 'REJECT'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AsmitaPalette.actionRed,
-                      side: const BorderSide(color: AsmitaPalette.actionRed),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      side: BorderSide(
+                        color: AsmitaPalette.actionRed.withValues(alpha: 0.8),
+                        width: 1.2,
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
-                    child: const Text('Reject'),
+                    child: const Text(
+                      'Reject',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  ElevatedButton(
+                  ElevatedButton.icon(
                     onPressed: () => _handleDecide(context, visit.id, 'APPROVE'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AsmitaPalette.successGreen,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    icon: const Icon(Icons.check_rounded, size: 16),
+                    label: const Text(
+                      'Approve',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                    child: const Text('Approve'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AsmitaPalette.deepNavy,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      elevation: 1,
+                    ),
                   ),
                 ],
               ],

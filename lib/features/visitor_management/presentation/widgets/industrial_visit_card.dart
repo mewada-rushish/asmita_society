@@ -57,16 +57,17 @@ class IndustrialVisitCard extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(18),
         side: BorderSide(
-          color: Theme.of(context).dividerColor.withValues(alpha: isDark ? 0.2 : 0.8),
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1.1,
         ),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(18),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -78,15 +79,31 @@ class IndustrialVisitCard extends StatelessWidget {
                 children: [
                   // Visitor Photo / Avatar
                   Container(
-                    width: 46,
-                    height: 46,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.grey[800] : Colors.grey[100],
-                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: visit.isDelivery
+                            ? const [Color(0xFFD97706), Color(0xFFF59E0B)]
+                            : (visit.isPreApproved
+                                ? const [Color(0xFF1E293B), Color(0xFF27347B)]
+                                : const [Color(0xFF1E3A8A), Color(0xFF2563EB)]),
+                      ),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: Theme.of(context).dividerColor,
+                        color: Colors.white.withValues(alpha: 0.18),
                         width: 1,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (visit.isDelivery ? const Color(0xFFF59E0B) : const Color(0xFF2563EB))
+                              .withValues(alpha: 0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: visit.visitorPhotoUrl != null && visit.visitorPhotoUrl!.isNotEmpty
@@ -384,11 +401,21 @@ class IndustrialVisitCard extends StatelessWidget {
 
   Widget _fallbackAvatar() {
     return Center(
-      child: Icon(
-        visit.isDelivery ? Icons.local_shipping_outlined : Icons.person_outline,
-        size: 24,
-        color: AsmitaPalette.deepNavy,
-      ),
+      child: visit.isDelivery
+          ? const Icon(
+              Icons.local_shipping_rounded,
+              size: 22,
+              color: Colors.white,
+            )
+          : Text(
+              visit.visitorName.isNotEmpty ? visit.visitorName[0].toUpperCase() : 'V',
+              style: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
     );
   }
 
