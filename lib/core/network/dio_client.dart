@@ -15,115 +15,125 @@ class AsmitaDioClient {
     dio.options.receiveTimeout = const Duration(seconds: 30);
     dio.httpClientAdapter = IOHttpClientAdapter(
       createHttpClient: () {
-        // Strategy 1: Native system CA root verification (ISRG Root X1 / Let's Encrypt / DigiCert)
         // Automatically validates trusted CA-signed certificates across automated renewals with zero maintenance.
         return HttpClient(context: SecurityContext(withTrustedRoots: true));
       },
     );
-    
+
     dio.options.headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
 
-    dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final publicPaths = [
-          '/app-api/auth/otp/initiate', 
-          '/app-api/auth/otp/verify', 
-          '/app-api/auth/otp/register'
-        ];
-        final isPublic = publicPaths.any((path) => options.path.contains(path));
-
-        if (!isPublic) {
-          final token = await secureStorage.getToken();
-          if (token != null && token.isNotEmpty) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          final societyId = await secureStorage.getSocietyId();
-          if (societyId != null) {
-            options.headers['x-society-id'] = societyId.toString();
-          }
-        }
-        return handler.next(options);
-      },
-      onError: (DioException e, handler) async {
-        if (e.response?.statusCode == 401) {
-          // Clear session on 401 Unauthorized
-          await secureStorage.clearSession();
-          final customError = DioException(
-            requestOptions: e.requestOptions,
-            response: e.response,
-            type: e.type,
-            error: 'Session expired. Please log in again.',
-            message: 'Session expired. Please log in again.',
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final publicPaths = [
+            '/app-api/auth/otp/initiate',
+            '/app-api/auth/otp/verify',
+            '/app-api/auth/otp/register',
+          ];
+          final isPublic = publicPaths.any(
+            (path) => options.path.contains(path),
           );
-          return handler.next(customError);
-        }
 
-        // Extract user-friendly message from backend JSON
-        String? friendlyMessage;
-        if (e.response?.data != null) {
-          if (e.response!.data is Map) {
-            final data = e.response!.data as Map;
-            friendlyMessage = data['message']?.toString() ?? data['error']?.toString();
-          } else if (e.response!.data is String && (e.response!.data as String).isNotEmpty) {
-            friendlyMessage = e.response!.data.toString();
+          if (!isPublic) {
+            final token = await secureStorage.getToken();
+            if (token != null && token.isNotEmpty) {
+              options.headers['Authorization'] = 'Bearer $token';
+            }
+            final societyId = await secureStorage.getSocietyId();
+            if (societyId != null) {
+              options.headers['x-society-id'] = societyId.toString();
+            }
           }
-        }
-
-        if (friendlyMessage == null || friendlyMessage.isEmpty) {
-          switch (e.type) {
-            case DioExceptionType.connectionTimeout:
-            case DioExceptionType.sendTimeout:
-            case DioExceptionType.receiveTimeout:
-              friendlyMessage = 'Connection timed out. Please check your internet connection.';
-              break;
-            case DioExceptionType.connectionError:
-              friendlyMessage = 'Unable to connect to server. Please check your network.';
-              break;
-            default:
-              if (e.response?.statusCode == 500) {
-                friendlyMessage = 'Server error occurred. Please try again.';
-              } else if (e.response?.statusCode == 404) {
-                friendlyMessage = 'Requested resource was not found.';
-              } else if (e.response?.statusCode == 403) {
-                friendlyMessage = 'Permission denied for this action.';
-              }
-              break;
+          return handler.next(options);
+        },
+        onError: (DioException e, handler) async {
+          if (e.response?.statusCode == 401) {
+            // Clear session on 401 Unauthorized
+            await secureStorage.clearSession();
+            final customError = DioException(
+              requestOptions: e.requestOptions,
+              response: e.response,
+              type: e.type,
+              error: 'Session expired. Please log in again.',
+              message: 'Session expired. Please log in again.',
+            );
+            return handler.next(customError);
           }
-        }
 
-        final isExpectedHttpError = e.response?.statusCode == 400 ||
-                                    e.response?.statusCode == 401 || 
-                                    e.response?.statusCode == 403 || 
-                                    e.response?.statusCode == 404;
+          // Extract user-friendly message from backend JSON
+          String? friendlyMessage;
+          if (e.response?.data != null) {
+            if (e.response!.data is Map) {
+              final data = e.response!.data as Map;
+              friendlyMessage =
+                  data['message']?.toString() ?? data['error']?.toString();
+            } else if (e.response!.data is String &&
+                (e.response!.data as String).isNotEmpty) {
+              friendlyMessage = e.response!.data.toString();
+            }
+          }
 
-        if (e.type != DioExceptionType.connectionTimeout && 
-            e.type != DioExceptionType.receiveTimeout && 
-            e.type != DioExceptionType.sendTimeout &&
-            e.type != DioExceptionType.connectionError &&
-            e.type != DioExceptionType.unknown &&
-            !isExpectedHttpError) {
-          FirebaseCrashlytics.instance.recordError(
-            e,
-            e.stackTrace,
-            reason: 'Network request failure: ${e.requestOptions.path}',
-          );
-        }
+          if (friendlyMessage == null || friendlyMessage.isEmpty) {
+            switch (e.type) {
+              case DioExceptionType.connectionTimeout:
+              case DioExceptionType.sendTimeout:
+              case DioExceptionType.receiveTimeout:
+                friendlyMessage =
+                    'Connection timed out. Please check your internet connection.';
+                break;
+              case DioExceptionType.connectionError:
+                friendlyMessage =
+                    'Unable to connect to server. Please check your network.';
+                break;
+              default:
+                if (e.response?.statusCode == 500) {
+                  friendlyMessage = 'Server error occurred. Please try again.';
+                } else if (e.response?.statusCode == 404) {
+                  friendlyMessage = 'Requested resource was not found.';
+                } else if (e.response?.statusCode == 403) {
+                  friendlyMessage = 'Permission denied for this action.';
+                }
+                break;
+            }
+          }
 
-        if (friendlyMessage != null && friendlyMessage.isNotEmpty) {
-          return handler.next(DioException(
-            requestOptions: e.requestOptions,
-            response: e.response,
-            type: e.type,
-            error: friendlyMessage,
-            message: friendlyMessage,
-          ));
-        }
+          final isExpectedHttpError =
+              e.response?.statusCode == 400 ||
+              e.response?.statusCode == 401 ||
+              e.response?.statusCode == 403 ||
+              e.response?.statusCode == 404;
 
-        return handler.next(e);
-      },
-    ));
+          if (e.type != DioExceptionType.connectionTimeout &&
+              e.type != DioExceptionType.receiveTimeout &&
+              e.type != DioExceptionType.sendTimeout &&
+              e.type != DioExceptionType.connectionError &&
+              e.type != DioExceptionType.unknown &&
+              !isExpectedHttpError) {
+            FirebaseCrashlytics.instance.recordError(
+              e,
+              e.stackTrace,
+              reason: 'Network request failure: ${e.requestOptions.path}',
+            );
+          }
+
+          if (friendlyMessage != null && friendlyMessage.isNotEmpty) {
+            return handler.next(
+              DioException(
+                requestOptions: e.requestOptions,
+                response: e.response,
+                type: e.type,
+                error: friendlyMessage,
+                message: friendlyMessage,
+              ),
+            );
+          }
+
+          return handler.next(e);
+        },
+      ),
+    );
   }
 }
