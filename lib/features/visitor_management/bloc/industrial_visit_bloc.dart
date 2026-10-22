@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/repositories/industrial_visit_repository.dart';
 import 'industrial_visit_event.dart';
@@ -39,7 +40,7 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
     } catch (e) {
       emit(state.copyWith(
         status: IndustrialVisitBlocStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _parseError(e),
       ));
     }
   }
@@ -70,7 +71,7 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
     } catch (e) {
       emit(state.copyWith(
         status: IndustrialVisitBlocStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _parseError(e),
       ));
     }
   }
@@ -90,7 +91,7 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
     } catch (e) {
       emit(state.copyWith(
         status: IndustrialVisitBlocStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _parseError(e),
       ));
     }
   }
@@ -116,7 +117,7 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
     } catch (e) {
       emit(state.copyWith(
         status: IndustrialVisitBlocStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _parseError(e),
       ));
     }
   }
@@ -141,7 +142,7 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
     } catch (e) {
       emit(state.copyWith(
         status: IndustrialVisitBlocStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _parseError(e),
       ));
     }
   }
@@ -167,7 +168,7 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
     } catch (e) {
       emit(state.copyWith(
         status: IndustrialVisitBlocStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _parseError(e),
       ));
     }
   }
@@ -191,7 +192,7 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
     } catch (e) {
       emit(state.copyWith(
         status: IndustrialVisitBlocStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _parseError(e),
       ));
     }
   }
@@ -219,7 +220,7 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
     } catch (e) {
       emit(state.copyWith(
         status: IndustrialVisitBlocStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _parseError(e),
       ));
     }
   }
@@ -241,7 +242,7 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
     } catch (e) {
       emit(state.copyWith(
         status: IndustrialVisitBlocStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _parseError(e),
       ));
     }
   }
@@ -262,7 +263,7 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
     } catch (e) {
       emit(state.copyWith(
         status: IndustrialVisitBlocStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _parseError(e),
       ));
     }
   }
@@ -283,8 +284,15 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
     } catch (e) {
       emit(state.copyWith(
         status: IndustrialVisitBlocStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _parseError(e),
       ));
     }
+  }
+
+  String _parseError(dynamic e) {
+    if (e is DioException) {
+      return e.message ?? e.error?.toString() ?? 'Operation failed';
+    }
+    return e.toString().replaceAll('Exception: ', '');
   }
 }

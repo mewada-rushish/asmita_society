@@ -22,7 +22,8 @@ class AmenitiesRepository {
       }
       return [];
     } on DioException catch (e) {
-      throw Exception('Failed to load amenities: ${e.response?.data ?? e.message}');
+      final msg = _extractError(e, 'Failed to load amenities');
+      throw Exception(msg);
     }
   }
 
@@ -39,7 +40,8 @@ class AmenitiesRepository {
       }
       return [];
     } on DioException catch (e) {
-      throw Exception('Failed to load my bookings: ${e.response?.data ?? e.message}');
+      final msg = _extractError(e, 'Failed to load my bookings');
+      throw Exception(msg);
     }
   }
 
@@ -64,7 +66,16 @@ class AmenitiesRepository {
       });
       return response.data['success'] == true;
     } on DioException catch (e) {
-      throw Exception(e.response?.data['error'] ?? 'Failed to book amenity');
+      final msg = _extractError(e, 'Failed to book amenity');
+      throw Exception(msg);
     }
+  }
+
+  String _extractError(DioException e, String fallback) {
+    if (e.response?.data is Map) {
+      final data = e.response!.data as Map;
+      return data['message']?.toString() ?? data['error']?.toString() ?? e.message ?? fallback;
+    }
+    return e.message ?? fallback;
   }
 }

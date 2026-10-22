@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:dio/dio.dart';
+import '../../../../core/network/dio_client.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/security/secure_storage_service.dart';
 import '../../../../core/constants/design_system.dart';
@@ -112,12 +112,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       if (authState is AuthAuthenticated) {
         final societyId = authState.user.societyId;
         final secureStorage = SecureStorageService();
-        final token = await secureStorage.getToken();
+        final client = AsmitaDioClient(secureStorage).dio;
         
         // Fetch towers first to map tower_name
-        final towersResponse = await Dio().get(
+        final towersResponse = await client.get(
           '${EnvConfig.towers}?society_id=$societyId',
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
         );
         final Map<int, String> towerNames = {};
         if (towersResponse.statusCode == 200 && towersResponse.data['success'] == true) {
@@ -128,9 +127,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           }
         }
 
-        final response = await Dio().get(
+        final response = await client.get(
           '${EnvConfig.baseUrl}/api/flats/society/$societyId',
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
         );
         if (response.statusCode == 200) {
           dynamic data = response.data;

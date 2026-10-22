@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:dio/dio.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
@@ -237,7 +238,8 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
     } catch (e) {
       if (mounted) {
         setState(() => _isClosing = false);
-        AsmitaToast.show(context, message: 'Failed to submit booking: $e', type: AsmitaToastType.error);
+        final errorMsg = e is DioException ? (e.message ?? 'Failed to submit booking') : e.toString().replaceAll('Exception: ', '');
+        AsmitaToast.show(context, message: errorMsg, type: AsmitaToastType.error);
       }
       developer.log('Error creating payload: $e', name: 'BookingWizard', error: e);
     }
