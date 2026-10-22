@@ -882,7 +882,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top Row: Avatar + Identity/Type + Status Badge
+                // Top Row: Avatar + Identity/Type
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -909,17 +909,15 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    _buildStatusBadge(context, visit, isDark, isPending),
                   ],
                 ),
 
-                // Inset Executive Meta Footer
-                _buildExecutiveFooter(context, visit, isDark),
+                // Inset Executive Meta Data Table (Time, Location, Key, Status)
+                _buildExecutiveFooter(context, visit, isDark, isPending),
 
-                // Decision Actions
+                // Decision Actions for Pending Visits
                 if (isPending) ...[
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(
@@ -977,16 +975,25 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       ),
                     ],
                   ),
-                ] else if (visit.status == IndustrialVisitStatus.approved && !isAck) ...[
-                  const SizedBox(height: 12),
-                  AcknowledgeActionButton(
+                ],
+
+                // Acknowledge Action Button
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: AcknowledgeActionButton(
                     isAcknowledged: isAck,
                     onAcknowledge: () {
                       setState(() => _acknowledgedIds.add(visit.id));
                       context.read<IndustrialVisitBloc>().add(AcknowledgeVisitEvent(visit.id));
+                      AsmitaToast.show(
+                        context,
+                        message: 'Visitor pass #${visit.passCode ?? visit.id} acknowledged',
+                        type: AsmitaToastType.success,
+                      );
                     },
                   ),
-                ],
+                ),
               ],
             ),
           ),
@@ -1296,6 +1303,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     BuildContext context,
     IndustrialVisitModel visit,
     bool isDark,
+    bool isPending,
   ) {
     final arrivalTime = visit.checkInAt != null
         ? DateFormat('hh:mm a').format(visit.checkInAt!)
@@ -1307,175 +1315,262 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     final hasPassCode = visit.passCode != null && visit.passCode!.isNotEmpty;
     final hasVehicle = visit.vehicleNumber != null && visit.vehicleNumber!.isNotEmpty;
 
+    final mutedColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final dividerColor = isDark ? const Color(0xFF334155).withValues(alpha: 0.6) : const Color(0xFFE2E8F0);
+
     return Container(
       margin: const EdgeInsets.only(top: 13),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.7) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155).withValues(alpha: 0.6) : const Color(0xFFE2E8F0),
+          color: dividerColor,
           width: 1,
         ),
       ),
-      child: Row(
+      child: Column(
         children: [
-          // Time info
-          Expanded(
-            child: Row(
-              children: [
-                Icon(
-                  Icons.schedule_rounded,
-                  size: 14,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                ),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        visit.checkInAt != null ? 'ENTERED' : 'SCHEDULED',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                      Text(
-                        arrivalTime,
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Divider
-          Container(
-            width: 1,
-            height: 24,
-            margin: const EdgeInsets.symmetric(horizontal: 8),
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-          ),
-
-          // Destination or Vehicle
-          Expanded(
-            child: Row(
-              children: [
-                Icon(
-                  hasVehicle ? Icons.directions_car_filled_rounded : Icons.apartment_rounded,
-                  size: 14,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                ),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        hasVehicle ? 'VEHICLE' : 'LOCATION',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                      Text(
-                        hasVehicle ? visit.vehicleNumber! : destinationName,
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Security Pass Code Ticket
-          if (hasPassCode) ...[
-            const SizedBox(width: 4),
-            InkWell(
-              onTap: () {
-                Clipboard.setData(ClipboardData(text: visit.passCode!));
-                HapticFeedback.selectionClick();
-                AsmitaToast.show(
-                  context,
-                  message: 'Pass code #${visit.passCode} copied to clipboard',
-                  type: AsmitaToastType.success,
-                );
-              },
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF0F172A) : Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
-                ),
+          // Row 1: Entered/Scheduled Time & Location/Vehicle
+          Row(
+            children: [
+              // Time
+              Expanded(
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.vpn_key_rounded,
-                      size: 11,
-                      color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
+                      Icons.schedule_rounded,
+                      size: 14,
+                      color: mutedColor,
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '#${visit.passCode}',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
-                        color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            visit.checkInAt != null ? 'ENTERED' : 'SCHEDULED',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w700,
+                              color: mutedColor,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            arrivalTime,
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
+
+              // Vertical Divider
+              Container(
+                width: 1,
+                height: 26,
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                color: dividerColor,
+              ),
+
+              // Destination or Vehicle
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(
+                      hasVehicle ? Icons.directions_car_filled_rounded : Icons.apartment_rounded,
+                      size: 14,
+                      color: mutedColor,
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            hasVehicle ? 'VEHICLE' : 'LOCATION',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w700,
+                              color: mutedColor,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            hasVehicle ? visit.vehicleNumber! : destinationName,
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // Horizontal Divider
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Divider(
+              height: 1,
+              thickness: 1,
+              color: dividerColor,
             ),
-          ] else ...[
-            const SizedBox(width: 4),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 12,
-              color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
-            ),
-          ],
+          ),
+
+          // Row 2: Access Key (Left) & Status (Right) in matching format
+          Row(
+            children: [
+              // Access Key
+              Expanded(
+                child: InkWell(
+                  onTap: hasPassCode
+                      ? () {
+                          Clipboard.setData(ClipboardData(text: visit.passCode!));
+                          HapticFeedback.selectionClick();
+                          AsmitaToast.show(
+                            context,
+                            message: 'Pass code #${visit.passCode} copied to clipboard',
+                            type: AsmitaToastType.success,
+                          );
+                        }
+                      : null,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.vpn_key_rounded,
+                        size: 14,
+                        color: mutedColor,
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'ACCESS KEY',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w700,
+                                color: mutedColor,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    hasPassCode ? '#${visit.passCode}' : 'N/A',
+                                    style: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (hasPassCode) ...[
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    Icons.copy_rounded,
+                                    size: 10,
+                                    color: mutedColor,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Vertical Divider
+              Container(
+                width: 1,
+                height: 26,
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                color: dividerColor,
+              ),
+
+              // Status
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(
+                      isPending
+                          ? Icons.pending_rounded
+                          : (visit.status == IndustrialVisitStatus.checkedIn
+                              ? Icons.meeting_room_rounded
+                              : (visit.status == IndustrialVisitStatus.approved
+                                  ? Icons.verified_rounded
+                                  : Icons.info_outline_rounded)),
+                      size: 14,
+                      color: mutedColor,
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'STATUS',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w700,
+                              color: mutedColor,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: _buildStatusBadge(context, visit, isDark, isPending),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
