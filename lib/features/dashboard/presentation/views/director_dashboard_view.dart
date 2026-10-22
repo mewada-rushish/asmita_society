@@ -1148,7 +1148,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           child: Image.network(
             visit.visitorPhotoUrl!,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _buildAvatarFallback(context, visit, isDark, isPending),
+            errorBuilder: (_, _, _) => _buildAvatarFallback(context, visit, isDark, isPending),
           ),
         ),
       );

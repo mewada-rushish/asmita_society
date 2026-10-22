@@ -1152,7 +1152,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
           child: Image.network(
             visit.visitorPhotoUrl!,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _buildAvatarFallback(context, visit, isDark, isPending),
+            errorBuilder: (_, _, _) => _buildAvatarFallback(context, visit, isDark, isPending),
           ),
         ),
       );
@@ -1612,6 +1612,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             ),
           ],
         ],
+      ),
     );
   }
 }
