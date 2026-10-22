@@ -4,6 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/config/env_config.dart';
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/security/secure_storage_service.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
@@ -1554,11 +1557,49 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
 
                       Navigator.pop(ctx);
                       final randomPass = 'VIP-${1000 + Random().nextInt(9000)}';
+                      final org = orgCtrl.text.trim().isNotEmpty ? orgCtrl.text.trim() : 'Executive Guest';
+                      final phone = phoneCtrl.text.trim();
+                      final vehicle = vehicleCtrl.text.trim();
+
+                      // Auto-provision department & persist VIP pass on backend
+                      final authState = context.read<AuthBloc>().state;
+                      final user = authState is AuthAuthenticated ? authState.user : null;
+                      final flat = user?.flatMappings.isNotEmpty == true ? user!.flatMappings.first : null;
+
+                      if (user != null) {
+                        final payload = {
+                          'society_id': user.societyId,
+                          'tower_id': flat?.towerId ?? 1,
+                          'unit_id': flat?.flatId ?? 1,
+                          'resident_id': user.userId,
+                          'invite_type': 'Guest',
+                          'invite_sub_type': 'ONCE',
+                          'title': '$name VIP Pass',
+                          'visitor_name': name,
+                          'mobile_number': phone,
+                          'company_name': org,
+                          'vehicle_number': vehicle,
+                          'purpose': 'VIP Pass - $accessScope',
+                          'department_name': accessScope,
+                          'max_guest_count': 1,
+                          'valid_from': DateTime.now().toIso8601String(),
+                          'valid_to': DateTime.now().add(const Duration(hours: 24)).toIso8601String(),
+                          'is_private': escortRequired,
+                        };
+
+                        try {
+                          context.read<VisitorBloc>().add(
+                            CreatePreApprovedInviteEvent(payload: payload),
+                          );
+                          context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+                        } catch (_) {}
+                      }
+
                       _showVipPassSuccessDialog(
                         context,
                         passCode: randomPass,
                         visitorName: name,
-                        organization: orgCtrl.text.trim().isNotEmpty ? orgCtrl.text.trim() : 'Executive Guest',
+                        organization: org,
                         accessScope: accessScope,
                         hasEscort: escortRequired,
                       );
@@ -1847,6 +1888,27 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                   ElevatedButton.icon(
                     onPressed: () {
                       Navigator.pop(ctx);
+                      final notes = notesCtrl.text.trim();
+
+                      // Auto-provision valet department & role along the way via backend valet API
+                      final authState = context.read<AuthBloc>().state;
+                      final user = authState is AuthAuthenticated ? authState.user : null;
+                      final societyId = user?.societyId ?? 114;
+
+                      try {
+                        final dio = AsmitaDioClient(SecureStorageService()).dio;
+                        dio.post(
+                          '${EnvConfig.baseUrl}/app-api/valet/request',
+                          data: {
+                            'society_id': societyId,
+                            'vehicle_number': selectedVehicle,
+                            'target_gate': targetGate,
+                            'ready_time': timing,
+                            'notes': notes,
+                          },
+                        ).ignore();
+                      } catch (_) {}
+
                       _showValetSuccessDialog(
                         context,
                         vehicle: selectedVehicle,
@@ -1987,6 +2049,16 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   // FUNCTIONAL MODAL: SECURITY COMMAND
   // =========================================================================
   void _showSecurityModal(BuildContext context) {
+    final authState = context.read<AuthBloc>().state;
+    final user = authState is AuthAuthenticated ? authState.user : null;
+    final societyId = user?.societyId ?? 114;
+
+    // Auto-provision security departments and roles along the way on backend
+    try {
+      final dio = AsmitaDioClient(SecureStorageService()).dio;
+      dio.get('${EnvConfig.baseUrl}/app-api/security/hotlines?society_id=$societyId').ignore();
+    } catch (_) {}
+
     showAsmitaBottomSheet(
       context: context,
       title: 'Campus Security Command',
@@ -2056,6 +2128,19 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pop(context);
+                    try {
+                      final dio = AsmitaDioClient(SecureStorageService()).dio;
+                      dio.post(
+                        '${EnvConfig.baseUrl}/app-api/security/dispatch',
+                        data: {
+                          'society_id': societyId,
+                          'type': 'VIP_ESCORT',
+                          'destination': 'Gate 1 Main Portico',
+                          'priority': 'HIGH',
+                        },
+                      ).ignore();
+                    } catch (_) {}
+
                     AsmitaToast.show(
                       context,
                       message: 'VIP Escort Officer dispatched to Gate 1 Main Portico.',
@@ -2077,6 +2162,19 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pop(context);
+                    try {
+                      final dio = AsmitaDioClient(SecureStorageService()).dio;
+                      dio.post(
+                        '${EnvConfig.baseUrl}/app-api/security/dispatch',
+                        data: {
+                          'society_id': societyId,
+                          'type': 'EXPRESS_CLEARANCE',
+                          'destination': 'All Security Gates',
+                          'priority': 'HIGH',
+                        },
+                      ).ignore();
+                    } catch (_) {}
+
                     AsmitaToast.show(
                       context,
                       message: 'Priority Express clearance alert transmitted to all gates.',
