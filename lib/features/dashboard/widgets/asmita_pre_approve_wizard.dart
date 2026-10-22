@@ -172,7 +172,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   List<FlatMapping> _selectedFlatMappings = [];
   int? _selectedTowerId;
   List<FlatMapping> _societyFlats = [];
-  bool _isLoadingFlats = false;
 
   // Host Employee Selection State (for Industrial / Commercial campus check-ins)
   Map<String, dynamic>? _selectedEmployee;
@@ -305,7 +304,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       if (mounted) {
         setState(() {
           _societyFlats = List.from(AsmitaPreApproveWizard._cachedSocietyFlats[societyId]!);
-          _isLoadingFlats = false;
           final towers = _getTowers();
           if (towers.length == 1) {
             _selectedTowerId = towers.first['id'] as int;
@@ -315,12 +313,10 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       return;
     }
 
-    if (mounted) setState(() => _isLoadingFlats = true);
     final flats = await AsmitaPreApproveWizard.loadSocietyFlats(societyId);
     if (!mounted) return;
     setState(() {
       _societyFlats = List.from(flats);
-      _isLoadingFlats = false;
       final towers = _getTowers();
       if (towers.length == 1) {
         _selectedTowerId = towers.first['id'] as int;
@@ -414,8 +410,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               'society_id': user.societyId,
               'tower_id': flat.towerId,
               'unit_id': flat.flatId,
-              if (hostId != null) 'host_user_id': hostId,
-              if (deptId != null) 'department_id': deptId,
+              'host_user_id': ?hostId,
+              'department_id': ?deptId,
               'visitor_name': _visitorNameController.text.trim(),
               'visitor_phone': _mobileNumberController.text.trim(),
               'purpose': _selectedCategory == 'Visiting Help'
@@ -431,8 +427,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               'society_id': user.societyId,
               'tower_id': 1,
               'unit_id': 1,
-              if (hostId != null) 'host_user_id': hostId,
-              if (deptId != null) 'department_id': deptId,
+              'host_user_id': ?hostId,
+              'department_id': ?deptId,
               'visitor_name': _visitorNameController.text.trim(),
               'visitor_phone': _mobileNumberController.text.trim(),
               'purpose': _selectedCategory == 'Visiting Help'
