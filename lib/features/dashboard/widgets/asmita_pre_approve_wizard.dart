@@ -26,6 +26,136 @@ class AsmitaPreApproveWizard extends StatefulWidget {
 
   const AsmitaPreApproveWizard({super.key, this.isGuardMode = false});
 
+  // Global static cache for society flats so opening the dialog is instant
+  static final Map<int, List<FlatMapping>> _cachedSocietyFlats = {};
+  static final Map<int, Future<List<FlatMapping>>> _activeFlatRequests = {};
+
+  /// Static method to prefetch or retrieve cached flats for a society
+  static Future<List<FlatMapping>> loadSocietyFlats(int? societyId) async {
+    if (societyId == null) return <FlatMapping>[];
+    if (_cachedSocietyFlats.containsKey(societyId) &&
+        _cachedSocietyFlats[societyId]!.isNotEmpty) {
+      return _cachedSocietyFlats[societyId]!;
+    }
+    if (_activeFlatRequests.containsKey(societyId)) {
+      return _activeFlatRequests[societyId]!;
+    }
+
+    final future = Future<List<FlatMapping>>(() async {
+      try {
+        final secureStorage = SecureStorageService();
+        final client = AsmitaDioClient(secureStorage).dio;
+
+        // Fetch towers first to map tower_name
+        final towersResponse = await client.get(
+          '${EnvConfig.towers}?society_id=$societyId',
+        );
+        final Map<int, String> towerNames = {};
+        if (towersResponse.statusCode == 200 && towersResponse.data['success'] == true) {
+          final List<dynamic> towersJson = towersResponse.data['data'];
+          for (var t in towersJson) {
+            final tId = t['tower_id'] is int
+                ? t['tower_id']
+                : int.tryParse(t['tower_id'].toString()) ?? 0;
+            towerNames[tId] = t['tower_name']?.toString() ?? 'Tower $tId';
+          }
+        }
+
+        final response = await client.get(
+          '${EnvConfig.baseUrl}/api/flats/society/$societyId',
+        );
+        if (response.statusCode == 200) {
+          dynamic data = response.data;
+          if (data is String) {
+            data = jsonDecode(data);
+          }
+
+          final List<dynamic> flatsJson = data is List ? data : (data['flats'] ?? []);
+          final flats = flatsJson
+              .map((f) {
+                final tId = f['tower_id'] is int
+                    ? f['tower_id']
+                    : int.tryParse(f['tower_id']?.toString() ?? '0') ?? 0;
+                return FlatMapping(
+                  mappingId: 0,
+                  flatId: f['flat_id'] is int
+                      ? f['flat_id']
+                      : int.tryParse(f['flat_id']?.toString() ?? '0') ?? 0,
+                  flatNumber: f['flat_number']?.toString() ?? '',
+                  towerId: tId,
+                  towerName: towerNames[tId] ?? 'Tower $tId',
+                  ownershipType: 'tenant',
+                );
+              })
+              .toList();
+
+          _cachedSocietyFlats[societyId] = flats;
+          return flats;
+        }
+      } catch (e) {
+        debugPrint('Error fetching flats: $e');
+      } finally {
+        _activeFlatRequests.remove(societyId);
+      }
+      return <FlatMapping>[];
+    });
+
+    _activeFlatRequests[societyId] = future;
+    return future;
+  }
+
+  // Global static cache for society employees & departments
+  static final Map<int, List<Map<String, dynamic>>> _cachedSocietyEmployees = {};
+  static final Map<int, List<Map<String, dynamic>>> _cachedSocietyDepartments = {};
+
+  static Future<List<Map<String, dynamic>>> loadSocietyEmployees(int? societyId) async {
+    if (societyId == null) return [];
+    if (_cachedSocietyEmployees.containsKey(societyId) &&
+        _cachedSocietyEmployees[societyId]!.isNotEmpty) {
+      return _cachedSocietyEmployees[societyId]!;
+    }
+    try {
+      final secureStorage = SecureStorageService();
+      final client = AsmitaDioClient(secureStorage).dio;
+      final response = await client.get(
+        '${EnvConfig.baseUrl}/api/public/visitor/hosts?society_id=$societyId',
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final List<dynamic> list = response.data['data'] ?? response.data['hosts'] ?? [];
+        final employees = list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        _cachedSocietyEmployees[societyId] = employees;
+        return employees;
+      }
+    } catch (e) {
+      debugPrint('Error fetching employees: $e');
+    }
+    return [];
+  }
+
+  static Future<List<Map<String, dynamic>>> loadSocietyDepartments(int? societyId) async {
+    if (societyId == null) return [];
+    if (_cachedSocietyDepartments.containsKey(societyId) &&
+        _cachedSocietyDepartments[societyId]!.isNotEmpty) {
+      return _cachedSocietyDepartments[societyId]!;
+    }
+    try {
+      final secureStorage = SecureStorageService();
+      final client = AsmitaDioClient(secureStorage).dio;
+      final response = await client.get(
+        '${EnvConfig.baseUrl}/api/public/visitor/departments?society_id=$societyId',
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final List<dynamic> list = response.data['departments'] ?? response.data['data'] ?? [];
+        final depts = list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        _cachedSocietyDepartments[societyId] = depts;
+        return depts;
+      }
+    } catch (e) {
+      debugPrint('Error fetching departments: $e');
+    }
+    return [];
+  }
+
   @override
   State<AsmitaPreApproveWizard> createState() => _AsmitaPreApproveWizardState();
 }
@@ -43,6 +173,12 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   int? _selectedTowerId;
   List<FlatMapping> _societyFlats = [];
   bool _isLoadingFlats = false;
+
+  // Host Employee Selection State (for Industrial / Commercial campus check-ins)
+  Map<String, dynamic>? _selectedEmployee;
+  List<Map<String, dynamic>> _societyEmployees = [];
+  List<Map<String, dynamic>> _societyDepartments = [];
+  bool _isLoadingEmployees = false;
 
   List<Map<String, dynamic>> _getTowers() {
     final towers = <int, String>{};
@@ -109,70 +245,87 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       if (!_tabController.indexIsChanging) setState(() {});
     });
     if (widget.isGuardMode) {
-      _fetchSocietyFlats();
-    }
-  }
-
-  Future<void> _fetchSocietyFlats() async {
-    setState(() => _isLoadingFlats = true);
-    try {
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
         final societyId = authState.user.societyId;
-        final secureStorage = SecureStorageService();
-        final client = AsmitaDioClient(secureStorage).dio;
-        
-        // Fetch towers first to map tower_name
-        final towersResponse = await client.get(
-          '${EnvConfig.towers}?society_id=$societyId',
-        );
-        final Map<int, String> towerNames = {};
-        if (towersResponse.statusCode == 200 && towersResponse.data['success'] == true) {
-          final List<dynamic> towersJson = towersResponse.data['data'];
-          for (var t in towersJson) {
-            final tId = t['tower_id'] is int ? t['tower_id'] : int.tryParse(t['tower_id'].toString()) ?? 0;
-            towerNames[tId] = t['tower_name']?.toString() ?? 'Tower $tId';
+        if (societyId != null &&
+            AsmitaPreApproveWizard._cachedSocietyFlats.containsKey(societyId) &&
+            AsmitaPreApproveWizard._cachedSocietyFlats[societyId]!.isNotEmpty) {
+          _societyFlats = List.from(AsmitaPreApproveWizard._cachedSocietyFlats[societyId]!);
+          final towers = _getTowers();
+          if (towers.length == 1) {
+            _selectedTowerId = towers.first['id'] as int;
           }
+        } else {
+          _fetchSocietyFlats();
         }
-
-        final response = await client.get(
-          '${EnvConfig.baseUrl}/api/flats/society/$societyId',
-        );
-        if (response.statusCode == 200) {
-          dynamic data = response.data;
-          if (data is String) {
-            data = jsonDecode(data);
-          }
-          
-          final List<dynamic> flatsJson = data is List ? data : (data['flats'] ?? []);
-          
-          setState(() {
-            _societyFlats = flatsJson
-                .map((f) {
-                  final tId = f['tower_id'] is int ? f['tower_id'] : int.tryParse(f['tower_id']?.toString() ?? '0') ?? 0;
-                  return FlatMapping(
-                    mappingId: 0,
-                    flatId: f['flat_id'] is int ? f['flat_id'] : int.tryParse(f['flat_id']?.toString() ?? '0') ?? 0,
-                    flatNumber: f['flat_number']?.toString() ?? '',
-                    towerId: tId,
-                    towerName: towerNames[tId] ?? 'Tower $tId',
-                    ownershipType: 'tenant', // Dummy value
-                  );
-                })
-                .toList();
-
-            final towers = _getTowers();
-            if (towers.length == 1) {
-              _selectedTowerId = towers.first['id'] as int;
-            }
-          });
-        }
+        _fetchSocietyEmployees(societyId);
+      } else {
+        _fetchSocietyFlats();
       }
-    } catch (e) {
-      debugPrint('Error fetching flats: $e');
-    } finally {
-      setState(() => _isLoadingFlats = false);
     }
+  }
+
+  Future<void> _fetchSocietyEmployees(int? societyId) async {
+    if (societyId == null) return;
+    if (AsmitaPreApproveWizard._cachedSocietyEmployees.containsKey(societyId) &&
+        AsmitaPreApproveWizard._cachedSocietyEmployees[societyId]!.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _societyEmployees = List.from(AsmitaPreApproveWizard._cachedSocietyEmployees[societyId]!);
+          _societyDepartments = List.from(AsmitaPreApproveWizard._cachedSocietyDepartments[societyId] ?? []);
+          _isLoadingEmployees = false;
+        });
+      }
+      return;
+    }
+
+    if (mounted) setState(() => _isLoadingEmployees = true);
+    final results = await Future.wait([
+      AsmitaPreApproveWizard.loadSocietyEmployees(societyId),
+      AsmitaPreApproveWizard.loadSocietyDepartments(societyId),
+    ]);
+
+    if (!mounted) return;
+    setState(() {
+      _societyEmployees = List.from(results[0]);
+      _societyDepartments = List.from(results[1]);
+      _isLoadingEmployees = false;
+    });
+  }
+
+  Future<void> _fetchSocietyFlats() async {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is! AuthAuthenticated) return;
+    final societyId = authState.user.societyId;
+    if (societyId == null) return;
+
+    if (AsmitaPreApproveWizard._cachedSocietyFlats.containsKey(societyId) &&
+        AsmitaPreApproveWizard._cachedSocietyFlats[societyId]!.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _societyFlats = List.from(AsmitaPreApproveWizard._cachedSocietyFlats[societyId]!);
+          _isLoadingFlats = false;
+          final towers = _getTowers();
+          if (towers.length == 1) {
+            _selectedTowerId = towers.first['id'] as int;
+          }
+        });
+      }
+      return;
+    }
+
+    if (mounted) setState(() => _isLoadingFlats = true);
+    final flats = await AsmitaPreApproveWizard.loadSocietyFlats(societyId);
+    if (!mounted) return;
+    setState(() {
+      _societyFlats = List.from(flats);
+      _isLoadingFlats = false;
+      final towers = _getTowers();
+      if (towers.length == 1) {
+        _selectedTowerId = towers.first['id'] as int;
+      }
+    });
   }
 
   @override
@@ -210,10 +363,12 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       selectedFlats = [user.flatMappings.first];
     }
 
-    if (selectedFlats.isEmpty) {
+    if (selectedFlats.isEmpty && _selectedEmployee == null) {
       AsmitaToast.show(
         context,
-        message: 'Please select at least one flat.',
+        message: widget.isGuardMode
+            ? 'Please select a host / employee to visit.'
+            : 'Please select at least one flat.',
         type: AsmitaToastType.error,
       );
       return;
@@ -251,21 +406,44 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         return;
       }
       
-      final payloads = selectedFlats.map((flat) => {
-        'society_id': user.societyId,
-        'tower_id': flat.towerId,
-        'unit_id': flat.flatId,
-        'visitor_name': _visitorNameController.text.trim(),
-        'visitor_phone': _mobileNumberController.text.trim(),
-        'purpose': _selectedCategory == 'Visiting Help'
-            ? 'Help'
-            : _selectedCategory,
-        'company_name': _selectedCategory == 'Guest'
-            ? 'Guest'
-            : (_selectedCategory == 'Cab' ? 'Cab' : _selectedCompany),
-        'vehicle_number': _cabNoController.text.trim(),
-        'no_of_visitors': _selectedCategory == 'Guest' ? _guestCount : 1,
-      }).toList();
+      final hostId = _selectedEmployee != null ? (_selectedEmployee!['user_id'] ?? _selectedEmployee!['id']) : null;
+      final deptId = _selectedEmployee != null ? _selectedEmployee!['department_id'] : null;
+
+      final payloads = selectedFlats.isNotEmpty
+          ? selectedFlats.map((flat) => {
+              'society_id': user.societyId,
+              'tower_id': flat.towerId,
+              'unit_id': flat.flatId,
+              if (hostId != null) 'host_user_id': hostId,
+              if (deptId != null) 'department_id': deptId,
+              'visitor_name': _visitorNameController.text.trim(),
+              'visitor_phone': _mobileNumberController.text.trim(),
+              'purpose': _selectedCategory == 'Visiting Help'
+                  ? 'Help'
+                  : _selectedCategory,
+              'company_name': _selectedCategory == 'Guest'
+                  ? 'Guest'
+                  : (_selectedCategory == 'Cab' ? 'Cab' : _selectedCompany),
+              'vehicle_number': _cabNoController.text.trim(),
+              'no_of_visitors': _selectedCategory == 'Guest' ? _guestCount : 1,
+            }).toList()
+          : [{
+              'society_id': user.societyId,
+              'tower_id': 1,
+              'unit_id': 1,
+              if (hostId != null) 'host_user_id': hostId,
+              if (deptId != null) 'department_id': deptId,
+              'visitor_name': _visitorNameController.text.trim(),
+              'visitor_phone': _mobileNumberController.text.trim(),
+              'purpose': _selectedCategory == 'Visiting Help'
+                  ? 'Help'
+                  : _selectedCategory,
+              'company_name': _selectedCategory == 'Guest'
+                  ? 'Guest'
+                  : (_selectedCategory == 'Cab' ? 'Cab' : _selectedCompany),
+              'vehicle_number': _cabNoController.text.trim(),
+              'no_of_visitors': _selectedCategory == 'Guest' ? _guestCount : 1,
+            }];
       context.read<GuardGateBloc>().add(SubmitWalkInVisitor(payloads));
       return;
     }
@@ -538,8 +716,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           Builder(
             builder: (context) {
               final towers = _getTowers();
-              final hasMultipleTowers = towers.length > 1;
-              final towerId = _effectiveTowerId;
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -548,43 +724,50 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        hasMultipleTowers ? 'Select Tower & Flat' : 'Select Flat / Unit',
-                        style: const TextStyle(
+                      const Text(
+                        'Select Host / Employee',
+                        style: TextStyle(
                           fontFamily: 'Montserrat',
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: AsmitaPalette.textDark,
                         ),
                       ),
-                      if (!hasMultipleTowers && towers.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.apartment_rounded, size: 12, color: AsmitaPalette.deepNavy),
-                              const SizedBox(width: 4),
-                              Text(
-                                towers.first['name'],
-                                style: const TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: AsmitaPalette.deepNavy,
+                      if (towers.isNotEmpty)
+                        GestureDetector(
+                          onTap: towers.length > 1 ? _showTowerPicker : null,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.apartment_rounded, size: 12, color: AsmitaPalette.deepNavy),
+                                const SizedBox(width: 4),
+                                Text(
+                                  towers.first['name'],
+                                  style: const TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: AsmitaPalette.deepNavy,
+                                  ),
                                 ),
-                              ),
-                            ],
+                                if (towers.length > 1) ...[
+                                  const SizedBox(width: 2),
+                                  const Icon(Icons.arrow_drop_down, size: 14, color: AsmitaPalette.deepNavy),
+                                ],
+                              ],
+                            ),
                           ),
                         ),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  if (_isLoadingFlats)
+                  if (_isLoadingEmployees)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 8.0),
                       child: Center(
@@ -594,105 +777,88 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                         ),
                       ),
                     )
-                  else if (hasMultipleTowers)
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: GestureDetector(
-                            onTap: _showTowerPicker,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(color: AsmitaPalette.borderGrey),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      towerId != null
-                                          ? towers.firstWhere((t) => t['id'] == towerId, orElse: () => <String, dynamic>{'name': 'Tower'})['name']
-                                          : 'Tower',
-                                      style: TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 14,
-                                        color: towerId != null ? AsmitaPalette.textDark : Colors.grey.shade600,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  const Icon(Icons.arrow_drop_down_rounded, color: AsmitaPalette.deepNavy),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          flex: 3,
-                          child: GestureDetector(
-                            onTap: towerId == null ? null : _showFlatPicker,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                              decoration: BoxDecoration(
-                                color: towerId == null ? Colors.grey.shade100 : Colors.white,
-                                border: Border.all(color: AsmitaPalette.borderGrey),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      _selectedFlatMappings.isNotEmpty ? _selectedFlatMappings.map((e) => e.flatNumber).join(', ') : 'Flat',
-                                      style: TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 14,
-                                        color: _selectedFlatMappings.isNotEmpty ? AsmitaPalette.textDark : Colors.grey.shade600,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  Icon(
-                                    Icons.arrow_drop_down_rounded, 
-                                    color: towerId == null ? Colors.grey : AsmitaPalette.deepNavy,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
                   else
-                    // Single building / tower: direct full-width flat selector
                     GestureDetector(
-                      onTap: _showFlatPicker,
+                      onTap: _showEmployeePicker,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          border: Border.all(color: AsmitaPalette.borderGrey),
+                          border: Border.all(
+                            color: _selectedEmployee != null ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey,
+                            width: _selectedEmployee != null ? 1.5 : 1.0,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
-                              child: Text(
-                                _selectedFlatMappings.isNotEmpty
-                                    ? _selectedFlatMappings.map((e) => e.flatNumber).join(', ')
-                                    : 'Select Flat / Unit',
-                                style: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 14,
-                                  color: _selectedFlatMappings.isNotEmpty ? AsmitaPalette.textDark : Colors.grey.shade600,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                              child: _selectedEmployee != null
+                                  ? Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 18,
+                                          backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                                          child: Text(
+                                            (_selectedEmployee!['full_name'] ?? _selectedEmployee!['name'] ?? 'E')
+                                                .toString()
+                                                .trim()
+                                                .split(' ')
+                                                .map((p) => p.isNotEmpty ? p[0] : '')
+                                                .take(2)
+                                                .join('')
+                                                .toUpperCase(),
+                                            style: const TextStyle(
+                                              fontFamily: 'Montserrat',
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: AsmitaPalette.deepNavy,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                _selectedEmployee!['full_name'] ?? _selectedEmployee!['name'] ?? '',
+                                                style: const TextStyle(
+                                                  fontFamily: 'Montserrat',
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AsmitaPalette.textDark,
+                                                ),
+                                              ),
+                                              Text(
+                                                '${_selectedEmployee!['department_name'] ?? _selectedEmployee!['department'] ?? 'General Staff'}${_selectedEmployee!['email_id'] != null && _selectedEmployee!['email_id'].toString().isNotEmpty ? " • ${_selectedEmployee!['email_id']}" : ""}',
+                                                style: TextStyle(
+                                                  fontFamily: 'Poppins',
+                                                  fontSize: 12,
+                                                  color: Colors.grey.shade600,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : Row(
+                                      children: [
+                                        Icon(Icons.search, size: 18, color: Colors.grey.shade500),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Search employee (name, email, dept)...',
+                                          style: TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 13,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                             ),
                             const Icon(
                               Icons.arrow_drop_down_rounded,
@@ -918,7 +1084,325 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     );
   }
 
+  void _showEmployeePicker() {
+    String searchQuery = '';
+    String selectedDept = 'All';
+
+    // Extract unique department list
+    final List<String> deptNames = ['All'];
+    for (final d in _societyDepartments) {
+      final name = d['name']?.toString() ?? d['department_name']?.toString();
+      if (name != null && name.trim().isNotEmpty && !deptNames.contains(name.trim())) {
+        deptNames.add(name.trim());
+      }
+    }
+    for (final emp in _societyEmployees) {
+      final name = emp['department_name']?.toString() ?? emp['department']?.toString();
+      if (name != null && name.trim().isNotEmpty && !deptNames.contains(name.trim())) {
+        deptNames.add(name.trim());
+      }
+    }
+
+    showAsmitaBottomSheet(
+      context: context,
+      title: 'Select Host / Employee',
+      child: StatefulBuilder(
+        builder: (context, setModalState) {
+          final filteredEmployees = _societyEmployees.where((emp) {
+            final empDept = (emp['department_name'] ?? emp['department'] ?? '').toString().trim().toLowerCase();
+            final matchesDept = selectedDept == 'All' ||
+                empDept == selectedDept.toLowerCase() ||
+                (emp['department_id'] != null &&
+                    _societyDepartments.any((d) =>
+                        d['id'] == emp['department_id'] &&
+                        d['name']?.toString().toLowerCase() == selectedDept.toLowerCase()));
+
+            if (!matchesDept) return false;
+
+            if (searchQuery.isEmpty) return true;
+            final name = (emp['full_name'] ?? emp['name'] ?? '').toString().toLowerCase();
+            final email = (emp['email_id'] ?? emp['email'] ?? '').toString().toLowerCase();
+            final role = (emp['primary_role'] ?? emp['role'] ?? '').toString().toLowerCase();
+            return name.contains(searchQuery) ||
+                email.contains(searchQuery) ||
+                empDept.contains(searchQuery) ||
+                role.contains(searchQuery);
+          }).toList();
+
+          return SizedBox(
+            height: MediaQuery.of(context).size.height * 0.72,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Department Tabs
+                if (deptNames.length > 1) ...[
+                  SizedBox(
+                    height: 38,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: deptNames.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 8),
+                      itemBuilder: (context, index) {
+                        final dept = deptNames[index];
+                        final isSelected = selectedDept == dept;
+                        return InkWell(
+                          onTap: () {
+                            setModalState(() {
+                              selectedDept = dept;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected ? AsmitaPalette.deepNavy : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isSelected ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey,
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              dept,
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 12.5,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                color: isSelected ? Colors.white : AsmitaPalette.textDark,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                // Search Bar
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search by name, email, department...',
+                    hintStyle: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 13.5,
+                      color: Colors.grey.shade500,
+                    ),
+                    prefixIcon: const Icon(Icons.search, color: AsmitaPalette.deepNavy),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onChanged: (val) {
+                    setModalState(() {
+                      searchQuery = val.trim().toLowerCase();
+                    });
+                  },
+                ),
+                const SizedBox(height: 10),
+
+                // Count & Filter Reset
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${filteredEmployees.length} ${filteredEmployees.length == 1 ? "Employee" : "Employees"}',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    if (selectedDept != 'All')
+                      GestureDetector(
+                        onTap: () => setModalState(() => selectedDept = 'All'),
+                        child: Text(
+                          'Show all departments',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // Employee Cards List
+                Expanded(
+                  child: filteredEmployees.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.person_search_outlined, size: 48, color: Colors.grey.shade300),
+                                const SizedBox(height: 12),
+                                Text(
+                                  searchQuery.isNotEmpty
+                                      ? 'No employees found matching "$searchQuery"'
+                                      : 'No employees listed in $selectedDept',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 13,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: filteredEmployees.length,
+                          separatorBuilder: (_, _) => const SizedBox(height: 8),
+                          itemBuilder: (context, index) {
+                            final emp = filteredEmployees[index];
+                            final empId = emp['user_id'] ?? emp['id'];
+                            final isSelected = _selectedEmployee != null &&
+                                (_selectedEmployee!['user_id'] ?? _selectedEmployee!['id']) == empId;
+
+                            final name = emp['full_name'] ?? emp['name'] ?? 'Employee';
+                            final email = emp['email_id'] ?? emp['email'] ?? '';
+                            final dept = emp['department_name'] ?? emp['department'] ?? 'General Staff';
+
+                            final initials = name.trim().split(' ').map((p) => p.isNotEmpty ? p[0] : '').take(2).join('').toUpperCase();
+
+                            return InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _selectedEmployee = emp;
+                                });
+                                Navigator.pop(context);
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? AsmitaPalette.deepNavy.withValues(alpha: 0.05) : Colors.white,
+                                  border: Border.all(
+                                    color: isSelected ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey,
+                                    width: isSelected ? 1.5 : 1.0,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 20,
+                                      backgroundColor: isSelected
+                                          ? AsmitaPalette.deepNavy
+                                          : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                                      child: Text(
+                                        initials.isNotEmpty ? initials : 'E',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            name,
+                                            style: const TextStyle(
+                                              fontFamily: 'Montserrat',
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: AsmitaPalette.textDark,
+                                            ),
+                                          ),
+                                          if (email.isNotEmpty) ...[
+                                            const SizedBox(height: 3),
+                                            Row(
+                                              children: [
+                                                Icon(Icons.mail_outline_rounded, size: 12, color: Colors.grey.shade600),
+                                                const SizedBox(width: 4),
+                                                Expanded(
+                                                  child: Text(
+                                                    email,
+                                                    style: TextStyle(
+                                                      fontFamily: 'Poppins',
+                                                      fontSize: 12,
+                                                      color: Colors.grey.shade600,
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                          const SizedBox(height: 5),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                                            decoration: BoxDecoration(
+                                              color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(
+                                                  Icons.business_outlined,
+                                                  size: 11,
+                                                  color: AsmitaPalette.deepNavy,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  dept,
+                                                  style: const TextStyle(
+                                                    fontFamily: 'Montserrat',
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: AsmitaPalette.deepNavy,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      const Icon(
+                                        Icons.check_circle_rounded,
+                                        color: AsmitaPalette.deepNavy,
+                                        size: 20,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   void _showFlatPicker() {
+    if (widget.isGuardMode) {
+      _showEmployeePicker();
+      return;
+    }
+
     final towerId = _effectiveTowerId;
     if (towerId == null) return;
     

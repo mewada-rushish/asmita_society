@@ -6,6 +6,8 @@ import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
+import '../../../auth/bloc/auth_bloc.dart';
+import '../../../auth/bloc/auth_state.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
@@ -50,6 +52,26 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
         if (!mounted) return;
         try {
           context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+        } catch (_) {}
+        try {
+          final authState = context.read<AuthBloc>().state;
+          if (authState is AuthAuthenticated) {
+            AsmitaPreApproveWizard.loadSocietyFlats(authState.user.societyId);
+            AsmitaPreApproveWizard.loadSocietyEmployees(authState.user.societyId);
+            AsmitaPreApproveWizard.loadSocietyDepartments(authState.user.societyId);
+          }
+        } catch (_) {}
+      });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        try {
+          final authState = context.read<AuthBloc>().state;
+          if (authState is AuthAuthenticated) {
+            AsmitaPreApproveWizard.loadSocietyFlats(authState.user.societyId);
+            AsmitaPreApproveWizard.loadSocietyEmployees(authState.user.societyId);
+            AsmitaPreApproveWizard.loadSocietyDepartments(authState.user.societyId);
+          }
         } catch (_) {}
       });
     }
