@@ -206,12 +206,23 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       return;
     }
 
+    final isIndustrial = PropertyRoleResolver.isIndustrialContext(user);
+
     if (widget.isGuardMode) {
-      if (_visitorNameController.text.trim().isEmpty ||
-          _mobileNumberController.text.trim().isEmpty) {
+      if (_visitorNameController.text.trim().isEmpty) {
         AsmitaToast.show(
           context,
-          message: 'Please enter visitor name and mobile number.',
+          message: isIndustrial
+              ? 'Visitor Name is mandatory for industrial campus check-ins.'
+              : 'Please enter visitor name.',
+          type: AsmitaToastType.error,
+        );
+        return;
+      }
+      if (_mobileNumberController.text.trim().isEmpty) {
+        AsmitaToast.show(
+          context,
+          message: 'Please enter visitor mobile number.',
           type: AsmitaToastType.error,
         );
         return;
@@ -290,6 +301,15 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     final flat = selectedFlats.first;
 
     final enteredName = _visitorNameController.text.trim();
+    if (isIndustrial && enteredName.isEmpty) {
+      AsmitaToast.show(
+        context,
+        message: 'Visitor Name is mandatory for industrial campus pre-approvals.',
+        type: AsmitaToastType.error,
+      );
+      return;
+    }
+
     final enteredMobile = _mobileNumberController.text.trim();
     final visitorName = enteredName.isNotEmpty
         ? enteredName
@@ -1452,6 +1472,10 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   }
 
   Widget _buildOnceLayout() {
+    final authState = context.read<AuthBloc>().state;
+    final user = authState is AuthAuthenticated ? authState.user : null;
+    final isIndustrial = PropertyRoleResolver.isIndustrialContext(user);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1612,13 +1636,13 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           const SizedBox(height: 20),
         ],
 
-        if (_selectedCategory == 'Guest') ...[
+        if (isIndustrial || _selectedCategory == 'Guest') ...[
           TextField(
             controller: _visitorNameController,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
-              labelText: 'Guest / Visitor Name (Optional)',
-              hintText: 'e.g., John Doe / Partner',
+              labelText: isIndustrial ? 'Visitor Name *' : 'Guest / Visitor Name (Optional)',
+              hintText: isIndustrial ? 'Full legal or corporate visitor name' : 'e.g., John Doe / Partner',
               labelStyle: const TextStyle(
                 fontFamily: 'Montserrat',
                 fontSize: 13,
