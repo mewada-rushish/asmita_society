@@ -886,7 +886,6 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     final authState = context.read<AuthBloc>().state;
     String currentUserName = 'Resident';
     if (authState is AuthAuthenticated) {
