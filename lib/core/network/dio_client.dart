@@ -5,7 +5,6 @@ import '../config/env_config.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'package:dio/io.dart';
-import 'package:crypto/crypto.dart';
 
 class AsmitaDioClient {
   final Dio dio;
@@ -17,22 +16,9 @@ class AsmitaDioClient {
     dio.options.receiveTimeout = const Duration(seconds: 30);
     dio.httpClientAdapter = IOHttpClientAdapter(
       createHttpClient: () {
-        // withTrustedRoots: true enables native system CA verification for Let's Encrypt / standard TLS
-        final client = HttpClient(context: SecurityContext(withTrustedRoots: true));
-        client.badCertificateCallback = (X509Certificate cert, String host, int port) {
-          if (host == 'admin.myasmita.com') {
-            const expectedHashes = [
-              '0208bd9c57a3eee92e7b3bf05991dac2c9fd792d010df7da097bbe5a98c4a158', // Current Let's Encrypt cert
-              '8214e3b5f14e0e56df8ca5f49513ca3ff4c4de07b48c4b13756502f4f121ed45', // Mac / iOS
-              'ee5f7abd6981bb0255632cd8f49283451b4b18844d12040b44ee00f07b8fe2c6', // Android previous
-            ];
-            final actualHash = sha256.convert(cert.der).toString();
-            debugPrint('Certificate Pinning: Actual: $actualHash');
-            return expectedHashes.contains(actualHash);
-          }
-          return false;
-        };
-        return client;
+        // Strategy 1: Native system CA root verification (ISRG Root X1 / Let's Encrypt / DigiCert)
+        // Automatically validates trusted CA-signed certificates across automated renewals with zero maintenance.
+        return HttpClient(context: SecurityContext(withTrustedRoots: true));
       },
     );
     
