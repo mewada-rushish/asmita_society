@@ -66,6 +66,7 @@ class UserModel {
   final String? roleScope;
   final int? rolePower;
   final String? propertyType;
+  final Map<String, dynamic>? roleDetails;
 
   UserModel({
     required this.userId,
@@ -85,10 +86,24 @@ class UserModel {
     this.roleScope,
     this.rolePower,
     this.propertyType,
+    this.roleDetails,
   });
 
   /// Dynamic capability check based on backend platform settings
   bool hasPermission(String key) => permissions[key] ?? false;
+
+  String get cabinCode => roleDetails?['cabin_code']?.toString() ?? '';
+  String get deskCode => roleDetails?['desk_code']?.toString() ?? '';
+  String get designation =>
+      roleDetails?['designation']?.toString() ??
+      roleDetails?['leadership_role']?.toString() ??
+      primaryRole;
+  String get departmentName {
+    if (flatMappings.isNotEmpty && flatMappings.first.flatNumber.isNotEmpty) {
+      return flatMappings.first.flatNumber;
+    }
+    return roleDetails?['department_name']?.toString() ?? 'Department';
+  }
 
   bool get canManageVisitors => hasPermission('canManageVisitors');
   bool get canManageServiceBookings => hasPermission('canManageServiceBookings');
@@ -143,6 +158,7 @@ class UserModel {
           ? json['role_power'] as int
           : int.tryParse(json['role_power']?.toString() ?? json['power']?.toString() ?? ''),
       propertyType: json['property_type']?.toString() ?? json['property_profile']?.toString(),
+      roleDetails: json['role_details'] is Map ? Map<String, dynamic>.from(json['role_details'] as Map) : null,
     );
   }
 
@@ -165,6 +181,7 @@ class UserModel {
       'role_scope': roleScope,
       'role_power': rolePower,
       'property_type': propertyType,
+      'role_details': roleDetails,
     };
   }
 

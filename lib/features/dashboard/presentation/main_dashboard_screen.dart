@@ -225,7 +225,11 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         return _wrapWithIndustrialBloc(
           context,
           EmployeeDashboardView(
-            employeeName: (user != null && user.fullName.isNotEmpty) ? user.fullName : 'Aditi Sharma',
+            employeeName: (user != null && user.fullName.isNotEmpty) ? user.fullName : 'IT HOD',
+            departmentName: user?.departmentName ?? '201 (IT)',
+            cabinNumber: (user?.cabinCode != null && user!.cabinCode.isNotEmpty) ? user.cabinCode : 'CAB-IT-01',
+            deskNumber: (user?.deskCode != null && user!.deskCode.isNotEmpty) ? user.deskCode : 'Desk 1',
+            designation: user?.designation ?? 'Head of Department (HOD)',
             onOpenDelegation: () {
               Navigator.push(
                 context,
