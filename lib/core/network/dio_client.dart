@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import '../security/secure_storage_service.dart';
 import '../config/env_config.dart';
-import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'package:dio/io.dart';
 
