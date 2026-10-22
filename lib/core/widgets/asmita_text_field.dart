@@ -10,6 +10,8 @@ class AsmitaTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final bool readOnly;
   final int? maxLength;
+  final int? maxLines;
+  final int? minLines;
   final TextCapitalization textCapitalization;
   final ValueChanged<String>? onChanged;
   final FormFieldValidator<String>? validator;
@@ -23,6 +25,8 @@ class AsmitaTextField extends StatelessWidget {
     this.keyboardType,
     this.readOnly = false,
     this.maxLength,
+    this.maxLines = 1,
+    this.minLines,
     this.textCapitalization = TextCapitalization.none,
     this.onChanged,
     this.validator,
@@ -55,6 +59,8 @@ class AsmitaTextField extends StatelessWidget {
           keyboardType: keyboardType,
           readOnly: readOnly,
           maxLength: maxLength,
+          maxLines: maxLines,
+          minLines: minLines,
           textCapitalization: textCapitalization,
           onChanged: onChanged,
           validator: validator,

@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/security/secure_storage_service.dart';
@@ -202,6 +204,45 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
   final TextEditingController _visitorNameController = TextEditingController();
   final TextEditingController _mobileNumberController = TextEditingController();
+  final TextEditingController _purposeController = TextEditingController();
+  final TextEditingController _orderIdController = TextEditingController();
+
+  File? _capturedVisitorPhoto;
+  String? _capturedVisitorPhotoBase64;
+  bool _isCapturingPhoto = false;
+
+  Future<void> _takeLiveVisitorPhoto() async {
+    setState(() => _isCapturingPhoto = true);
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 80,
+      );
+      if (picked != null) {
+        final bytes = await picked.readAsBytes();
+        final b64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+        setState(() {
+          _capturedVisitorPhoto = File(picked.path);
+          _capturedVisitorPhotoBase64 = b64;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        AsmitaToast.show(
+          context,
+          message: 'Camera capture error: $e',
+          type: AsmitaToastType.error,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isCapturingPhoto = false);
+      }
+    }
+  }
 
   bool _surpriseDelivery = false;
   bool _secureCabMode = false;
@@ -331,6 +372,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     _cabNoController.dispose();
     _visitorNameController.dispose();
     _mobileNumberController.dispose();
+    _purposeController.dispose();
+    _orderIdController.dispose();
     super.dispose();
   }
 
@@ -401,44 +444,70 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         );
         return;
       }
+
+      if (_purposeController.text.trim().isEmpty) {
+        AsmitaToast.show(
+          context,
+          message: 'Please enter the purpose of visit.',
+          type: AsmitaToastType.error,
+        );
+        return;
+      }
+
+      if (_selectedCategory == 'Cab' && _cabNoController.text.trim().isEmpty) {
+        AsmitaToast.show(
+          context,
+          message: 'Please enter vehicle registration number for cab entries.',
+          type: AsmitaToastType.error,
+        );
+        return;
+      }
       
       final hostId = _selectedEmployee != null ? (_selectedEmployee!['user_id'] ?? _selectedEmployee!['id']) : null;
       final deptId = _selectedEmployee != null ? _selectedEmployee!['department_id'] : null;
+
+      final purposeText = _purposeController.text.trim().isNotEmpty
+          ? _purposeController.text.trim()
+          : (_selectedCategory == 'Visiting Help' ? 'Help' : _selectedCategory);
 
       final payloads = selectedFlats.isNotEmpty
           ? selectedFlats.map((flat) => {
               'society_id': user.societyId,
               'tower_id': flat.towerId,
               'unit_id': flat.flatId,
-              'host_user_id': ?hostId,
-              'department_id': ?deptId,
+              'host_user_id': hostId,
+              'department_id': deptId,
               'visitor_name': _visitorNameController.text.trim(),
               'visitor_phone': _mobileNumberController.text.trim(),
-              'purpose': _selectedCategory == 'Visiting Help'
-                  ? 'Help'
-                  : _selectedCategory,
+              'purpose': purposeText,
               'company_name': _selectedCategory == 'Guest'
                   ? 'Guest'
                   : (_selectedCategory == 'Cab' ? 'Cab' : _selectedCompany),
-              'vehicle_number': _cabNoController.text.trim(),
-              'no_of_visitors': _selectedCategory == 'Guest' ? _guestCount : 1,
+              'vehicle_number': _cabNoController.text.trim().toUpperCase(),
+              'no_of_visitors': _guestCount,
+              'number_of_visitors': _guestCount,
+              'photo_base64': _capturedVisitorPhotoBase64,
+              'selfie_base64': _capturedVisitorPhotoBase64,
+              'delivery_order_id': _orderIdController.text.trim(),
             }).toList()
           : [{
               'society_id': user.societyId,
               'tower_id': 1,
               'unit_id': 1,
-              'host_user_id': ?hostId,
-              'department_id': ?deptId,
+              'host_user_id': hostId,
+              'department_id': deptId,
               'visitor_name': _visitorNameController.text.trim(),
               'visitor_phone': _mobileNumberController.text.trim(),
-              'purpose': _selectedCategory == 'Visiting Help'
-                  ? 'Help'
-                  : _selectedCategory,
+              'purpose': purposeText,
               'company_name': _selectedCategory == 'Guest'
                   ? 'Guest'
                   : (_selectedCategory == 'Cab' ? 'Cab' : _selectedCompany),
-              'vehicle_number': _cabNoController.text.trim(),
-              'no_of_visitors': _selectedCategory == 'Guest' ? _guestCount : 1,
+              'vehicle_number': _cabNoController.text.trim().toUpperCase(),
+              'no_of_visitors': _guestCount,
+              'number_of_visitors': _guestCount,
+              'photo_base64': _capturedVisitorPhotoBase64,
+              'selfie_base64': _capturedVisitorPhotoBase64,
+              'delivery_order_id': _orderIdController.text.trim(),
             }];
       context.read<GuardGateBloc>().add(SubmitWalkInVisitor(payloads));
       return;
@@ -1115,15 +1184,26 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
             if (!matchesDept) return false;
 
-            if (searchQuery.isEmpty) return true;
-            final name = (emp['full_name'] ?? emp['name'] ?? '').toString().toLowerCase();
-            final email = (emp['email_id'] ?? emp['email'] ?? '').toString().toLowerCase();
-            final role = (emp['primary_role'] ?? emp['role'] ?? '').toString().toLowerCase();
-            return name.contains(searchQuery) ||
-                email.contains(searchQuery) ||
-                empDept.contains(searchQuery) ||
-                role.contains(searchQuery);
+            final hasSearch = searchQuery.trim().length >= 2;
+            final isDeptSelected = selectedDept != 'All';
+
+            // Zero results until searched: if no department filter is active and query < 2 chars, do not show any list
+            if (!hasSearch && !isDeptSelected) return false;
+
+            if (hasSearch) {
+              final name = (emp['full_name'] ?? emp['name'] ?? '').toString().toLowerCase();
+              final email = (emp['email_id'] ?? emp['email'] ?? '').toString().toLowerCase();
+              final role = (emp['primary_role'] ?? emp['role'] ?? '').toString().toLowerCase();
+              return name.contains(searchQuery) ||
+                  email.contains(searchQuery) ||
+                  empDept.contains(searchQuery) ||
+                  role.contains(searchQuery);
+            }
+
+            return true;
           }).toList();
+
+          final bool showTypePrompt = searchQuery.trim().length < 2 && selectedDept == 'All';
 
           return SizedBox(
             height: MediaQuery.of(context).size.height * 0.72,
@@ -1206,7 +1286,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '${filteredEmployees.length} ${filteredEmployees.length == 1 ? "Employee" : "Employees"}',
+                      showTypePrompt
+                          ? 'Search to view employees'
+                          : '${filteredEmployees.length} ${filteredEmployees.length == 1 ? "Employee" : "Employees"}',
                       style: TextStyle(
                         fontFamily: 'Montserrat',
                         fontSize: 12,
@@ -1240,17 +1322,25 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.person_search_outlined, size: 48, color: Colors.grey.shade300),
+                                Icon(
+                                  showTypePrompt
+                                      ? Icons.search_rounded
+                                      : Icons.person_search_outlined,
+                                  size: 48,
+                                  color: Colors.grey.shade300,
+                                ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  searchQuery.isNotEmpty
-                                      ? 'No employees found matching "$searchQuery"'
-                                      : 'No employees listed in $selectedDept',
+                                  showTypePrompt
+                                      ? 'Type at least 2 characters to search employee directory'
+                                      : (searchQuery.isNotEmpty
+                                          ? 'No employees found matching "$searchQuery"'
+                                          : 'No employees listed in $selectedDept'),
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 13,
-                                    color: Colors.grey,
+                                    color: Colors.grey.shade600,
                                   ),
                                 ),
                               ],
@@ -1832,26 +1922,455 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           maxLength: 10,
         ),
         const SizedBox(height: 16),
+        _buildWalkInEmployeeField(),
+        const SizedBox(height: 16),
+        _buildLivePhotoSection(),
+        const SizedBox(height: 16),
+        AsmitaTextField(
+          controller: _purposeController,
+          label: 'Purpose of Visit*',
+          hint: 'e.g. Official Meeting, Delivery, Interview',
+          icon: Icons.notes_rounded,
+          minLines: 5,
+          maxLines: 5,
+          textCapitalization: TextCapitalization.sentences,
+        ),
+        const SizedBox(height: 16),
         if (_selectedCategory == 'Delivery') ...[
           _buildCompanyDropdown(),
           const SizedBox(height: 16),
-        ],
-        if (_selectedCategory == 'Cab' || _selectedCategory == 'Delivery') ...[
           AsmitaTextField(
-            controller: _cabNoController,
-            label: 'Vehicle Number (Optional)',
-            hint: 'e.g., MH 04 AB 1234',
-            icon: Icons.directions_car_outlined,
+            controller: _orderIdController,
+            label: 'Delivery / Order ID (Optional)',
+            hint: 'e.g. AMZ-982143',
+            icon: Icons.local_shipping_outlined,
             textCapitalization: TextCapitalization.characters,
           ),
           const SizedBox(height: 16),
         ],
-        if (_selectedCategory == 'Guest') ...[
-          _buildGuestCountSelector(),
-          const SizedBox(height: 16),
-        ],
+        AsmitaTextField(
+          controller: _cabNoController,
+          label: _selectedCategory == 'Cab'
+              ? 'Vehicle Number*'
+              : 'Vehicle Number (Optional)',
+          hint: 'e.g., MH 04 AB 1234',
+          icon: Icons.directions_car_outlined,
+          textCapitalization: TextCapitalization.characters,
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AsmitaPalette.borderGrey),
+          ),
+          child: _buildGuestCountSelector(),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AsmitaPalette.deepNavy.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.verified_user_outlined,
+                size: 16,
+                color: AsmitaPalette.deepNavy,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Data collected for visitor management and gate security verification in accordance with DPDP regulations.',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 11,
+                    color: Colors.grey.shade700,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: 24),
         _buildActionButtons(),
+      ],
+    );
+  }
+
+  Widget _buildWalkInEmployeeField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Person to Meet / Host Employee*',
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AsmitaPalette.textDark,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (_selectedEmployee != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(
+                color: AsmitaPalette.deepNavy,
+                width: 1.5,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                  child: Text(
+                    (_selectedEmployee!['full_name'] ?? _selectedEmployee!['name'] ?? 'E')
+                        .toString()
+                        .trim()
+                        .split(' ')
+                        .map((p) => p.isNotEmpty ? p[0] : '')
+                        .take(2)
+                        .join('')
+                        .toUpperCase(),
+                    style: const TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: AsmitaPalette.deepNavy,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _selectedEmployee!['full_name'] ?? _selectedEmployee!['name'] ?? '',
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AsmitaPalette.textDark,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          if (_selectedEmployee!['role'] != null || _selectedEmployee!['designation'] != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              margin: const EdgeInsets.only(right: 6),
+                              decoration: BoxDecoration(
+                                color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                _selectedEmployee!['role'] ?? _selectedEmployee!['designation'] ?? '',
+                                style: const TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: AsmitaPalette.deepNavy,
+                                ),
+                              ),
+                            ),
+                          Expanded(
+                            child: Text(
+                              _selectedEmployee!['department_name'] ?? _selectedEmployee!['department'] ?? 'Staff',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 11,
+                                color: Colors.grey.shade600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (_selectedEmployee!['email_id'] != null && _selectedEmployee!['email_id'].toString().isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          _selectedEmployee!['email_id'].toString(),
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 11,
+                            color: Colors.grey.shade500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: _showEmployeePicker,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text(
+                    'Change',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AsmitaPalette.actionRed,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          GestureDetector(
+            onTap: _showEmployeePicker,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: AsmitaPalette.borderGrey, width: 1.0),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.search, size: 20, color: Colors.grey.shade500),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Search employee directory (name, email, role)...',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 13,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.arrow_drop_down_rounded, color: AsmitaPalette.deepNavy),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildLivePhotoSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Live Security Photo*',
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AsmitaPalette.textDark,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.blue.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'Gate Verification',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blue,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'A clear front-facing photo is required for gate check-in verification',
+          style: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 11,
+            color: Colors.grey.shade600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (_capturedVisitorPhoto != null)
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.green.shade400, width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.green.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    _capturedVisitorPhoto!,
+                    width: 64,
+                    height: 64,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: const [
+                          Icon(Icons.check_circle, size: 16, color: Colors.green),
+                          SizedBox(width: 4),
+                          Text(
+                            'Photo Captured',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Front-facing photo verified',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _isCapturingPhoto ? null : _takeLiveVisitorPhoto,
+                  icon: const Icon(Icons.refresh_rounded, size: 14),
+                  label: const Text('Retake'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AsmitaPalette.deepNavy,
+                    side: const BorderSide(color: AsmitaPalette.borderGrey),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    textStyle: const TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          GestureDetector(
+            onTap: _isCapturingPhoto ? null : _takeLiveVisitorPhoto,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AsmitaPalette.borderGrey,
+                  width: 1.2,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child: _isCapturingPhoto
+                        ? const Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AsmitaPalette.actionRed,
+                              ),
+                            ),
+                          )
+                        : const Icon(
+                            Icons.camera_alt_outlined,
+                            color: AsmitaPalette.deepNavy,
+                            size: 22,
+                          ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Take Live Security Photo *',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AsmitaPalette.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Tap to open camera and take photo',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 11,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Colors.grey,
+                  ),
+                ],
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -1871,11 +2390,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         const Text(
-          'Number of Guests:',
+          'No. of Visitors*',
           style: TextStyle(
             fontFamily: 'Poppins',
             fontSize: 13,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             color: AsmitaPalette.textDark,
           ),
         ),
@@ -1904,7 +2423,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 color: AsmitaPalette.actionRed,
               ),
               onPressed: () {
-                if (_guestCount < 20) setState(() => _guestCount++);
+                if (_guestCount < 99) setState(() => _guestCount++);
               },
             ),
           ],
@@ -1926,14 +2445,21 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           ),
           elevation: 2,
         ),
-        child: const Text(
-          'Submit Request',
-          style: TextStyle(
-            fontFamily: 'Montserrat',
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Text(
+              'Generate Digital Gate Pass',
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(width: 8),
+            Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
+          ],
         ),
       ),
     );
