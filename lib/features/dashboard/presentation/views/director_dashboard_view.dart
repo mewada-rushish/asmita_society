@@ -804,38 +804,23 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   }
 
   Widget _buildQuickActionBar(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () => _showPreApproveModal(context),
-            icon: const Icon(Icons.add_moderator_outlined, size: 18),
-            label: const Text(
-              'Issue VIP Pass',
-              style: TextStyle(fontFamily: 'Montserrat', fontSize: 13, fontWeight: FontWeight.bold),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AsmitaPalette.deepNavy,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 13),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              elevation: 2,
-            ),
-          ),
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () => _showPreApproveModal(context),
+        icon: const Icon(Icons.add_moderator_outlined, size: 18),
+        label: const Text(
+          'Issue VIP Pass',
+          style: TextStyle(fontFamily: 'Montserrat', fontSize: 13, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(width: 10),
-        OutlinedButton.icon(
-          onPressed: () => _handleContactReceptionist(context),
-          icon: const Icon(Icons.support_agent_rounded, size: 18),
-          label: const Text('Hotlines', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AsmitaPalette.deepNavy,
-            side: const BorderSide(color: AsmitaPalette.deepNavy, width: 1.2),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AsmitaPalette.deepNavy,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 13),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 2,
         ),
-      ],
+      ),
     );
   }
 
