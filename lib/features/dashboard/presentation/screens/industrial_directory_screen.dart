@@ -126,11 +126,10 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 14),
 
-                  // Host Delegation Card
+                  // Host Delegation Card (Compact Executive Bar)
                   Container(
-                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [
@@ -138,106 +137,136 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                           Color(0xFF1B2D5A),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.1),
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: AsmitaPalette.deepNavy.withValues(alpha: 0.25),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+                          color: AsmitaPalette.deepNavy.withValues(alpha: 0.18),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: const Icon(
-                                      Icons.swap_horiz_rounded,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  const Expanded(
-                                    child: Text(
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(14),
+                      child: InkWell(
+                        onTap: _openDelegationScreen,
+                        borderRadius: BorderRadius.circular(14),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.14),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.swap_horiz_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text(
                                       'Visitor Approval Delegation',
                                       style: TextStyle(
                                         fontFamily: 'Montserrat',
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
-                                        fontSize: 14,
+                                        fontSize: 13,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(height: 2),
+                                    Row(
+                                      children: [
+                                        if (_isDelegationActive) ...[
+                                          Container(
+                                            width: 6,
+                                            height: 6,
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFF34D399),
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 5),
+                                        ],
+                                        Flexible(
+                                          child: Text(
+                                            _isDelegationActive
+                                                ? 'Active • Routing to department'
+                                                : 'Tap to configure team routing',
+                                            style: TextStyle(
+                                              fontFamily: 'Poppins',
+                                              fontSize: 11,
+                                              color: _isDelegationActive
+                                                  ? const Color(0xFF34D399)
+                                                  : Colors.white60,
+                                              fontWeight: _isDelegationActive
+                                                  ? FontWeight.w600
+                                                  : FontWeight.normal,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Switch(
-                              value: _isDelegationActive,
-                              activeThumbColor: Colors.white,
-                              activeTrackColor: const Color(0xFFD97706),
-                              onChanged: (val) {
-                                setState(() => _isDelegationActive = val);
-                                AsmitaToast.show(
-                                  context,
-                                  message: val
-                                      ? 'Delegation Active: Approvals routed to department team'
-                                      : 'Delegation Deactivated: You receive direct notifications',
-                                  type: val ? AsmitaToastType.success : AsmitaToastType.info,
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Route your incoming visitor requests to other department members when you are in meetings or away from your desk.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white70,
-                            height: 1.4,
+                              const SizedBox(width: 6),
+                              IconButton(
+                                onPressed: _openDelegationScreen,
+                                icon: const Icon(
+                                  Icons.tune_rounded,
+                                  color: Colors.white70,
+                                  size: 18,
+                                ),
+                                tooltip: 'Configure Members',
+                                visualDensity: VisualDensity.compact,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                              ),
+                              Transform.scale(
+                                scale: 0.82,
+                                child: Switch(
+                                  value: _isDelegationActive,
+                                  activeThumbColor: Colors.white,
+                                  activeTrackColor: const Color(0xFFD97706),
+                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  onChanged: (val) {
+                                    setState(() => _isDelegationActive = val);
+                                    AsmitaToast.show(
+                                      context,
+                                      message: val
+                                          ? 'Delegation Active: Approvals routed to department team'
+                                          : 'Delegation Deactivated: You receive direct notifications',
+                                      type: val ? AsmitaToastType.success : AsmitaToastType.info,
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton.icon(
-                            onPressed: _openDelegationScreen,
-                            icon: const Icon(Icons.settings, size: 14, color: Colors.white),
-                            label: const Text(
-                              'Configure Team Members',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            style: TextButton.styleFrom(
-                              backgroundColor: Colors.white.withValues(alpha: 0.12),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 18),
 
                   // Department Directory
                   Text(
