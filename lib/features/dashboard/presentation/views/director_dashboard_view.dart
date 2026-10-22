@@ -12,6 +12,8 @@ import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
+import '../../../../core/widgets/asmita_text_field.dart';
+import '../../../../core/widgets/asmita_select_field.dart';
 import '../../../../core/utils/property_role_resolver.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
@@ -22,7 +24,6 @@ import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
-import '../../../visitor_management/presentation/widgets/acknowledge_action_button.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:math';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
@@ -51,9 +52,6 @@ class DirectorDashboardView extends StatefulWidget {
 }
 
 class _DirectorDashboardViewState extends State<DirectorDashboardView> {
-  final Set<int> _acknowledgedIds = {};
-  String _selectedFilter = 'ALL';
-
   @override
   void initState() {
     super.initState();
@@ -118,17 +116,8 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
       widget.onDecideVisit!(visitId, action);
     } else {
       context.read<IndustrialVisitBloc>().add(
-            DecideVisitEvent(visitId: visitId, action: action),
-          );
-    }
-  }
-
-  void _handleAcknowledge(BuildContext context, int visitId) {
-    setState(() => _acknowledgedIds.add(visitId));
-    if (widget.onAcknowledgeVisit != null) {
-      widget.onAcknowledgeVisit!(visitId);
-    } else {
-      context.read<IndustrialVisitBloc>().add(AcknowledgeVisitEvent(visitId));
+        DecideVisitEvent(visitId: visitId, action: action),
+      );
     }
   }
 
@@ -224,19 +213,27 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         trailing: ElevatedButton.icon(
           onPressed: onCall,
           icon: const Icon(Icons.phone, size: 14),
-          label: const Text('Call', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          label: const Text(
+            'Call',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: AsmitaPalette.deepNavy,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         ),
       ),
     );
   }
 
-  void _showVisitDetailsModal(BuildContext context, IndustrialVisitModel visit) {
+  void _showVisitDetailsModal(
+    BuildContext context,
+    IndustrialVisitModel visit,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isPending = visit.isPending;
 
@@ -250,11 +247,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AsmitaPalette.deepNavy, Color(0xFF1E293B)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: AsmitaPalette.deepNavy,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -263,7 +256,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                   radius: 26,
                   backgroundColor: Colors.white.withValues(alpha: 0.15),
                   child: Text(
-                    visit.visitorName.isNotEmpty ? visit.visitorName[0].toUpperCase() : 'V',
+                    visit.visitorName.isNotEmpty
+                        ? visit.visitorName[0].toUpperCase()
+                        : 'V',
                     style: const TextStyle(
                       fontFamily: 'Montserrat',
                       fontWeight: FontWeight.bold,
@@ -299,11 +294,16 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                 ),
                 if (visit.passCode != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Text(
                       'PASS #${visit.passCode}',
@@ -356,8 +356,8 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
             value: visit.checkInAt != null
                 ? DateFormat('dd MMM, hh:mm a').format(visit.checkInAt!)
                 : (visit.createdAt != null
-                    ? DateFormat('dd MMM, hh:mm a').format(visit.createdAt!)
-                    : 'Scheduled Visit'),
+                      ? DateFormat('dd MMM, hh:mm a').format(visit.createdAt!)
+                      : 'Scheduled Visit'),
           ),
 
           if (visit.statusToken != null && visit.statusToken!.isNotEmpty) ...[
@@ -383,8 +383,14 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                   data: visit.statusToken!,
                   version: QrVersions.auto,
                   size: 146.0,
-                  eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: AsmitaPalette.deepNavy),
-                  dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: AsmitaPalette.deepNavy),
+                  eyeStyle: const QrEyeStyle(
+                    eyeShape: QrEyeShape.square,
+                    color: AsmitaPalette.deepNavy,
+                  ),
+                  dataModuleStyle: const QrDataModuleStyle(
+                    dataModuleShape: QrDataModuleShape.square,
+                    color: AsmitaPalette.deepNavy,
+                  ),
                 ),
               ),
             ),
@@ -403,11 +409,19 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AsmitaPalette.actionRed,
-                      side: const BorderSide(color: AsmitaPalette.actionRed, width: 1.5),
+                      side: const BorderSide(
+                        color: AsmitaPalette.actionRed,
+                        width: 1.5,
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: const Text('Decline Pass', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Decline Pass',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -421,9 +435,14 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                       backgroundColor: AsmitaPalette.successGreen,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: const Text('Approve Priority Entry', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Approve Priority Entry',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],
@@ -453,10 +472,20 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
               color: Theme.of(context).dividerColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+            child: Icon(
+              icon,
+              size: 16,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
           const SizedBox(width: 10),
-          Text(label, style: const TextStyle(fontSize: 13, color: AsmitaPalette.textLight)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AsmitaPalette.textLight,
+            ),
+          ),
           const Spacer(),
           if (badgeColor != null && badgeBg != null)
             Container(
@@ -467,7 +496,11 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
               ),
               child: Text(
                 value,
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: badgeColor),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: badgeColor,
+                ),
               ),
             )
           else
@@ -505,7 +538,8 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         }
       },
       builder: (context, state) {
-        final isLoading = state.status == IndustrialVisitBlocStatus.loading &&
+        final isLoading =
+            state.status == IndustrialVisitBlocStatus.loading &&
             state.visits.isEmpty;
 
         return _buildScaffold(context, state.visits, isLoading: isLoading);
@@ -518,17 +552,13 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     List<IndustrialVisitModel> visits, {
     required bool isLoading,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final pendingCount = visits.where((v) => v.isPending).length;
-    final approvedCount = visits.where((v) => v.status == IndustrialVisitStatus.approved).length;
-    final checkedInCount = visits.where((v) => v.status == IndustrialVisitStatus.checkedIn).length;
-
-    final filteredVisits = visits.where((v) {
-      if (_selectedFilter == 'PENDING' && !v.isPending) return false;
-      if (_selectedFilter == 'APPROVED' && v.status != IndustrialVisitStatus.approved) return false;
-      if (_selectedFilter == 'INSIDE' && v.status != IndustrialVisitStatus.checkedIn) return false;
-      return true;
-    }).toList();
+    final approvedCount = visits
+        .where((v) => v.status == IndustrialVisitStatus.approved)
+        .length;
+    final checkedInCount = visits
+        .where((v) => v.status == IndustrialVisitStatus.checkedIn)
+        .length;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -546,7 +576,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
               color: AsmitaPalette.deepNavy,
               onRefresh: () async {
                 if (widget.visits == null) {
-                  context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+                  context.read<IndustrialVisitBloc>().add(
+                    const LoadIndustrialVisits(),
+                  );
                 }
               },
               child: isLoading
@@ -558,7 +590,10 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                     )
                   : SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -577,80 +612,6 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
 
                           // 2-Column Waiting Grid (Who is Waiting, Waiting Since)
                           _buildWaitingGrid(context, visits),
-                          const SizedBox(height: 20),
-
-                          // Section Header with Filter Chips
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Executive Visitors',
-                                style: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: isDark ? Colors.white : AsmitaPalette.textDark,
-                                ),
-                              ),
-                              Text(
-                                '${filteredVisits.length} of ${visits.length} Total',
-                                style: const TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-
-                          // Fitted Segmented Filter Bar (Zero cropping, 100% responsive width)
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: Theme.of(context).dividerColor),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.03),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                _segmentedTab(
-                                  'ALL',
-                                  'All',
-                                  count: visits.length,
-                                ),
-                                _segmentedTab(
-                                  'PENDING',
-                                  'Pending',
-                                  count: pendingCount,
-                                  alertColor: AsmitaPalette.actionRed,
-                                ),
-                                _segmentedTab(
-                                  'APPROVED',
-                                  'Approved',
-                                  count: approvedCount,
-                                  alertColor: const Color(0xFF1E88E5),
-                                ),
-                                _segmentedTab(
-                                  'INSIDE',
-                                  'Inside',
-                                  count: checkedInCount,
-                                  alertColor: AsmitaPalette.successGreen,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-
-                          // Visitor List or Empty State
-                          if (filteredVisits.isEmpty)
-                            _buildEmptyState(context)
-                          else
-                            ...filteredVisits.map((visit) => _visitorCard(context, visit)),
-
                           const SizedBox(height: 120),
                         ],
                       ),
@@ -676,7 +637,6 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           value: '$pendingCount',
           color: AsmitaPalette.actionRed,
           icon: Icons.pending_actions_rounded,
-          filterKey: 'PENDING',
           showPulse: pendingCount > 0,
         ),
         const SizedBox(width: 8),
@@ -684,9 +644,8 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           context,
           label: 'Approved',
           value: '$approvedCount',
-          color: const Color(0xFF1E88E5),
+          color: AsmitaPalette.deepNavy,
           icon: Icons.verified_rounded,
-          filterKey: 'APPROVED',
         ),
         const SizedBox(width: 8),
         _kpiCard(
@@ -695,7 +654,6 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           value: '$checkedInCount',
           color: AsmitaPalette.successGreen,
           icon: Icons.meeting_room_rounded,
-          filterKey: 'INSIDE',
         ),
       ],
     );
@@ -707,257 +665,237 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     required String value,
     required Color color,
     required IconData icon,
-    required String filterKey,
     bool showPulse = false,
   }) {
-    final isSelected = _selectedFilter == filterKey;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Expanded(
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          setState(() {
-            _selectedFilter = isSelected ? 'ALL' : filterKey;
-          });
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? color.withValues(alpha: isDark ? 0.25 : 0.12)
-                : Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected ? color : Theme.of(context).dividerColor,
-              width: isSelected ? 1.5 : 1.0,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Theme.of(context).dividerColor,
+            width: 1.0,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Premium Squircle Icon Container
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: isDark ? 0.22 : 0.10),
-                  borderRadius: BorderRadius.circular(11),
-                  border: Border.all(
-                    color: color.withValues(alpha: isSelected ? 0.45 : 0.18),
-                    width: 1.0,
-                  ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Premium Squircle Icon Container
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: isDark ? 0.25 : 0.10),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: color.withValues(alpha: 0.2),
+                  width: 1.0,
                 ),
-                child: Center(
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Icon(icon, color: color, size: 20),
-                      if (showPulse)
-                        Positioned(
-                          right: -3,
-                          top: -3,
-                          child: Container(
-                            width: 7,
-                            height: 7,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Theme.of(context).colorScheme.surface,
-                                width: 1.5,
-                              ),
+              ),
+              child: Center(
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(icon, color: color, size: 20),
+                    if (showPulse)
+                      Positioned(
+                        right: -3,
+                        top: -3,
+                        child: Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.surface,
+                              width: 1.5,
                             ),
                           ),
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                value,
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: isSelected ? color : Theme.of(context).colorScheme.onSurface,
-                ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: isDark
+                    ? AsmitaPalette.textDarkModeMain
+                    : AsmitaPalette.textDark,
               ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? color : AsmitaPalette.textLight,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: isDark
+                    ? AsmitaPalette.textDarkModeMuted
+                    : AsmitaPalette.textLight,
               ),
-            ],
-          ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // =========================================================================
-  // 4-ICON EXECUTIVE ACTION GRID
-  // =========================================================================
   Widget _buildFourIconGrid(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final actions = [
       _ExecutiveActionItem(
         title: 'Pre-Approve',
-        subtitle: 'Meetings & Guests',
         icon: Icons.event_available_rounded,
-        gradientColors: const [Color(0xFF4F46E5), Color(0xFF3730A3)],
+        containerColor: isDark
+            ? AsmitaPalette.surfaceDark
+            : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+        iconColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
         onTap: () => _showPreApproveModal(context),
       ),
       _ExecutiveActionItem(
         title: 'Issue VIP Pass',
-        subtitle: 'Priority Clearance',
         icon: Icons.workspace_premium_rounded,
-        gradientColors: const [Color(0xFFD97706), Color(0xFFB45309)],
+        containerColor: isDark
+            ? AsmitaPalette.surfaceDark
+            : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+        iconColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
         onTap: () => _showVipPassModal(context),
       ),
       _ExecutiveActionItem(
         title: 'Car Valet',
-        subtitle: 'Take Out to gate',
         icon: Icons.directions_car_filled_rounded,
-        gradientColors: const [Color(0xFF0284C7), Color(0xFF0369A1)],
+        containerColor: isDark
+            ? AsmitaPalette.surfaceDark
+            : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+        iconColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
         onTap: () => _showCarValetModal(context),
       ),
       _ExecutiveActionItem(
         title: 'Security',
-        subtitle: 'Gate & Escort Desk',
         icon: Icons.shield_rounded,
-        gradientColors: const [Color(0xFFDC2626), Color(0xFF991B1B)],
+        containerColor: isDark
+            ? AsmitaPalette.surfaceDark
+            : AsmitaPalette.actionRed.withValues(alpha: 0.08),
+        iconColor: AsmitaPalette.actionRed,
         onTap: () => _showSecurityModal(context),
       ),
     ];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(child: _buildActionTile(context, actions[0], isDark)),
-            const SizedBox(width: 10),
-            Expanded(child: _buildActionTile(context, actions[1], isDark)),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(child: _buildActionTile(context, actions[2], isDark)),
-            const SizedBox(width: 10),
-            Expanded(child: _buildActionTile(context, actions[3], isDark)),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionTile(
-    BuildContext context,
-    _ExecutiveActionItem item,
-    bool isDark,
-  ) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          item.onTap();
-        },
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-              width: 1,
+        border: Border.all(color: Theme.of(context).dividerColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Quick Actions',
+            style: textTheme.titleLarge?.copyWith(
+              fontFamily: 'Montserrat',
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: isDark
+                  ? AsmitaPalette.textDarkModeMain
+                  : AsmitaPalette.textDark,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: item.gradientColors,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: actions.map((action) {
+              return Expanded(
+                child: InkWell(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    action.onTap();
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 54,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          color: action.containerColor,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Theme.of(context).dividerColor,
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Theme.of(
+                                context,
+                              ).shadowColor.withValues(alpha: 0.02),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          action.icon,
+                          color: action.iconColor,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        action.title,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontFamily: 'Montserrat',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? AsmitaPalette.textDarkModeMain
+                              : AsmitaPalette.textDark,
+                        ),
+                      ),
+                    ],
                   ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: item.gradientColors.first.withValues(alpha: 0.3),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                 ),
-                child: Icon(item.icon, color: Colors.white, size: 20),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      item.title,
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12.5,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      item.subtitle,
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 10,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              );
+            }).toList(),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -965,257 +903,284 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   // =========================================================================
   // 2-COLUMN WAITING GRID (Who is Waiting & Waiting Since)
   // =========================================================================
-  Widget _buildWaitingGrid(BuildContext context, List<IndustrialVisitModel> visits) {
+  // =========================================================================
+  // WAITING QUEUE (When empty: indicates no one's waiting. When waiting: Name, Waiting Since, and Queue Waiting After Them)
+  // =========================================================================
+  Widget _buildWaitingGrid(
+    BuildContext context,
+    List<IndustrialVisitModel> visits,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final waitingVisits = visits.where((v) => v.isPending || v.heldAtGate).toList();
+    final waitingVisits = visits
+        .where((v) => v.isPending || v.heldAtGate)
+        .toList();
 
-    String waitingSinceDuration = '0 mins';
-    String waitingSinceTime = 'Queue Clear';
-    if (waitingVisits.isNotEmpty) {
-      IndustrialVisitModel oldest = waitingVisits.first;
-      for (final v in waitingVisits) {
-        final t = v.checkInAt ?? v.createdAt;
-        final ot = oldest.checkInAt ?? oldest.createdAt;
-        if (t != null && ot != null && t.isBefore(ot)) {
-          oldest = v;
-        }
-      }
-      final oldestTime = oldest.checkInAt ?? oldest.createdAt ?? DateTime.now();
-      final diff = DateTime.now().difference(oldestTime);
-      if (diff.inMinutes < 60) {
-        waitingSinceDuration = '${diff.inMinutes.clamp(1, 999)} mins';
-      } else {
-        waitingSinceDuration = '${diff.inHours}h ${diff.inMinutes % 60}m';
-      }
-      waitingSinceTime = DateFormat('hh:mm a').format(oldestTime);
+    // Sort by oldest arrival first
+    waitingVisits.sort((a, b) {
+      final aTime = a.checkInAt ?? a.createdAt ?? DateTime.now();
+      final bTime = b.checkInAt ?? b.createdAt ?? DateTime.now();
+      return aTime.compareTo(bTime);
+    });
+
+    // If no one is waiting, show a clean label to indicate no one's waiting
+    if (waitingVisits.isEmpty) {
+      return _buildEmptyWaitingCard(context, isDark);
     }
+
+    // When there is waiting: show Name, waiting since, and queue waiting after them
+    final firstVisit = waitingVisits.first;
+    final firstTime = firstVisit.checkInAt ?? firstVisit.createdAt ?? DateTime.now();
+    final diff = DateTime.now().difference(firstTime);
+    final String waitingSinceDuration;
+    if (diff.inMinutes < 60) {
+      waitingSinceDuration = '${diff.inMinutes.clamp(1, 999)} mins';
+    } else {
+      waitingSinceDuration = '${diff.inHours}h ${diff.inMinutes % 60}m';
+    }
+    final waitingSinceTime = DateFormat('hh:mm a').format(firstTime);
+
+    final queueAfterThem = waitingVisits.skip(1).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
-            // Left Column: Who is Waiting
+            // Left Column: Who is Waiting (Name)
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: waitingVisits.isNotEmpty
-                        ? const Color(0xFF2563EB).withValues(alpha: 0.4)
-                        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                    width: waitingVisits.isNotEmpty ? 1.5 : 1.0,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+              child: InkWell(
+                onTap: () => _showVisitDetailsModal(context, firstVisit),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Theme.of(context).dividerColor,
+                      width: 1.0,
                     ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2563EB).withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.people_alt_rounded,
-                            color: Color(0xFF2563EB),
-                            size: 18,
-                          ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.15 : 0.03,
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: waitingVisits.isNotEmpty
-                                ? const Color(0xFF2563EB).withValues(alpha: 0.12)
-                                : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            waitingVisits.isNotEmpty ? '${waitingVisits.length} Waiting' : 'Clear',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: waitingVisits.isNotEmpty
-                                  ? const Color(0xFF2563EB)
-                                  : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AsmitaPalette.deepNavy.withValues(
+                                alpha: 0.08,
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.people_alt_rounded,
+                              color: AsmitaPalette.deepNavy,
+                              size: 18,
                             ),
                           ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${waitingVisits.length} Waiting',
+                              style: const TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: AsmitaPalette.deepNavy,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Who is Waiting',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? AsmitaPalette.textDarkModeMuted
+                              : AsmitaPalette.textLight,
+                          letterSpacing: 0.3,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Who is Waiting',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                        letterSpacing: 0.3,
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      waitingVisits.isNotEmpty
-                          ? waitingVisits.first.visitorName
-                          : 'No visitors waiting',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      const SizedBox(height: 4),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          firstVisit.visitorName,
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: isDark
+                                ? AsmitaPalette.textDarkModeMain
+                                : AsmitaPalette.textDark,
+                          ),
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      waitingVisits.isNotEmpty
-                          ? (waitingVisits.first.departmentName ?? 'At Reception Gate')
-                          : 'Lobby & gates clear',
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 11,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      const SizedBox(height: 2),
+                      Text(
+                        firstVisit.departmentName ?? (firstVisit.purpose ?? 'VIP Visitor'),
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 11,
+                          color: isDark
+                              ? AsmitaPalette.textDarkModeMuted
+                              : AsmitaPalette.textLight,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 12),
             // Right Column: Waiting Since
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: waitingVisits.isNotEmpty
-                        ? const Color(0xFFD97706).withValues(alpha: 0.4)
-                        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                    width: waitingVisits.isNotEmpty ? 1.5 : 1.0,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+              child: InkWell(
+                onTap: () => _showVisitDetailsModal(context, firstVisit),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Theme.of(context).dividerColor,
+                      width: 1.0,
                     ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFD97706).withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.timer_outlined,
-                            color: Color(0xFFD97706),
-                            size: 18,
-                          ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.15 : 0.03,
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: waitingVisits.isNotEmpty
-                                ? const Color(0xFFFEF3C7)
-                                : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            waitingVisits.isNotEmpty ? 'Active Wait' : '0m',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: waitingVisits.isNotEmpty
-                                  ? const Color(0xFFB45309)
-                                  : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AsmitaPalette.deepNavy.withValues(
+                                alpha: 0.08,
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.timer_outlined,
+                              color: AsmitaPalette.deepNavy,
+                              size: 18,
                             ),
                           ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AsmitaPalette.actionRed.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              'Active Wait',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: AsmitaPalette.actionRed,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Waiting Since',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? AsmitaPalette.textDarkModeMuted
+                              : AsmitaPalette.textLight,
+                          letterSpacing: 0.3,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Waiting Since',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                        letterSpacing: 0.3,
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      waitingVisits.isNotEmpty ? waitingSinceDuration : '0 mins',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: waitingVisits.isNotEmpty
-                            ? const Color(0xFFD97706)
-                            : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                      const SizedBox(height: 4),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          waitingSinceDuration,
+                          style: const TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AsmitaPalette.deepNavy,
+                          ),
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      waitingVisits.isNotEmpty
-                          ? 'Arrival: $waitingSinceTime'
-                          : 'Reception queue empty',
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 11,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Arrival: $waitingSinceTime',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 11,
+                          color: isDark
+                              ? AsmitaPalette.textDarkModeMuted
+                              : AsmitaPalette.textLight,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ],
         ),
 
-        // Live Actionable Waiting Queue Rows if visitors exist
-        if (waitingVisits.isNotEmpty) ...[
-          const SizedBox(height: 14),
+        // Queue waiting after them
+        const SizedBox(height: 14),
+        if (queueAfterThem.isNotEmpty) ...[
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-              ),
+              border: Border.all(color: Theme.of(context).dividerColor),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1229,35 +1194,119 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                           width: 8,
                           height: 8,
                           decoration: const BoxDecoration(
-                            color: Color(0xFFD97706),
+                            color: AsmitaPalette.actionRed,
                             shape: BoxShape.circle,
                           ),
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Awaiting Admission (${waitingVisits.length})',
+                          'Queue Waiting After Them (${queueAfterThem.length})',
                           style: TextStyle(
                             fontFamily: 'Montserrat',
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? AsmitaPalette.textDarkModeMain
+                                : AsmitaPalette.textDark,
                           ),
                         ),
                       ],
                     ),
-                    const Text(
-                      'Action Required',
-                      style: TextStyle(
+                    Text(
+                      '${queueAfterThem.length} in line',
+                      style: const TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFFD97706),
+                        color: AsmitaPalette.actionRed,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
-                ...waitingVisits.take(3).map((v) => _buildWaitingQueueItem(context, v, isDark)),
+                ...queueAfterThem
+                    .take(3)
+                    .map((v) => _buildWaitingQueueItem(context, v, isDark)),
+              ],
+            ),
+          ),
+        ] else ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Theme.of(context).dividerColor),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AsmitaPalette.successGreen.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    size: 14,
+                    color: AsmitaPalette.successGreen,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Queue Waiting After Them',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? AsmitaPalette.textDarkModeMuted
+                              : AsmitaPalette.textLight,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'No one waiting after ${firstVisit.visitorName} • First in line',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 11,
+                          color: isDark
+                              ? AsmitaPalette.textDarkModeMain
+                              : AsmitaPalette.textDark,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AsmitaPalette.surfaceDark
+                        : AsmitaPalette.systemBG,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '0 in line',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: isDark
+                          ? AsmitaPalette.textDarkModeMuted
+                          : AsmitaPalette.textLight,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -1266,6 +1315,116 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     );
   }
 
+  Widget _buildEmptyWaitingCard(BuildContext context, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).dividerColor,
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.people_outline_rounded,
+                  color: AsmitaPalette.deepNavy,
+                  size: 20,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AsmitaPalette.successGreen.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AsmitaPalette.successGreen.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      size: 12,
+                      color: AsmitaPalette.successGreen,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Queue Clear',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AsmitaPalette.successGreen,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Who is Waiting',
+            style: TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: isDark
+                  ? AsmitaPalette.textDarkModeMuted
+                  : AsmitaPalette.textLight,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "No one's waiting",
+            style: TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: isDark
+                  ? AsmitaPalette.textDarkModeMain
+                  : AsmitaPalette.textDark,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Reception queue empty • All entry gates clear',
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 11,
+              color: isDark
+                  ? AsmitaPalette.textDarkModeMuted
+                  : AsmitaPalette.textLight,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
   Widget _buildWaitingQueueItem(
     BuildContext context,
     IndustrialVisitModel visit,
@@ -1273,37 +1432,41 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   ) {
     final arrivalTime = visit.checkInAt ?? visit.createdAt ?? DateTime.now();
     final diff = DateTime.now().difference(arrivalTime);
-    final diffStr = diff.inMinutes < 60 ? '${diff.inMinutes.clamp(1, 999)}m ago' : '${diff.inHours}h ago';
+    final diffStr = diff.inMinutes < 60
+        ? '${diff.inMinutes.clamp(1, 999)}m ago'
+        : '${diff.inHours}h ago';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+    return InkWell(
+      onTap: () => _showVisitDetailsModal(context, visit),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: isDark ? AsmitaPalette.surfaceDark : AsmitaPalette.systemBG,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Theme.of(context).dividerColor),
         ),
-      ),
-      child: Row(
+        child: Row(
         children: [
           // Left: Avatar + Details
           Container(
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
-              ),
+              color: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Theme.of(context).dividerColor),
             ),
             alignment: Alignment.center,
             child: Text(
-              visit.visitorName.isNotEmpty ? visit.visitorName[0].toUpperCase() : 'V',
+              visit.visitorName.isNotEmpty
+                  ? visit.visitorName[0].toUpperCase()
+                  : 'V',
               style: const TextStyle(
                 fontFamily: 'Montserrat',
                 fontWeight: FontWeight.w800,
-                color: Colors.white,
+                color: AsmitaPalette.deepNavy,
                 fontSize: 14,
               ),
             ),
@@ -1320,7 +1483,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                     fontFamily: 'Montserrat',
                     fontWeight: FontWeight.w700,
                     fontSize: 12.5,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark
+                        ? AsmitaPalette.textDarkModeMain
+                        : AsmitaPalette.textDark,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1331,7 +1496,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                   style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 10.5,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    color: isDark
+                        ? AsmitaPalette.textDarkModeMuted
+                        : AsmitaPalette.textLight,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1348,7 +1515,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
+                  color: AsmitaPalette.actionRed.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -1357,7 +1524,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                     fontFamily: 'Montserrat',
                     fontSize: 9.5,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFFB45309),
+                    color: AsmitaPalette.actionRed,
                   ),
                 ),
               ),
@@ -1369,7 +1536,10 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                     onTap: () => _handleDecide(context, visit.id, 'REJECT'),
                     borderRadius: BorderRadius.circular(6),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: AsmitaPalette.actionRed.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
@@ -1389,9 +1559,12 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                     onTap: () => _handleDecide(context, visit.id, 'APPROVE'),
                     borderRadius: BorderRadius.circular(6),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF16A34A),
+                        color: AsmitaPalette.deepNavy,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Text(
@@ -1410,7 +1583,8 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   // =========================================================================
@@ -1440,106 +1614,100 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                 children: [
                   const Text(
                     'Pre-authorizes instant priority gate clearance with executive protocol.',
-                    style: TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AsmitaPalette.textLight,
+                    ),
                   ),
                   const SizedBox(height: 16),
-                  TextField(
+                  AsmitaTextField(
+                    label: 'VIP Visitor Name * (Mandatory)',
+                    hint: 'e.g. Dr. Rajesh Verma',
+                    icon: Icons.person_outline,
                     controller: nameCtrl,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: InputDecoration(
-                      labelText: 'VIP Visitor Name * (Mandatory)',
-                      hintText: 'e.g. Dr. Rajesh Verma',
-                      prefixIcon: const Icon(Icons.person_outline, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      filled: true,
-                    ),
                   ),
-                  const SizedBox(height: 12),
-                  TextField(
+                  const SizedBox(height: 14),
+                  AsmitaTextField(
+                    label: 'Company / Organization / Title',
+                    hint: 'e.g. KPMG / Board Member / Govt Delegate',
+                    icon: Icons.business_outlined,
                     controller: orgCtrl,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: InputDecoration(
-                      labelText: 'Company / Organization / Title',
-                      hintText: 'e.g. KPMG / Board Member / Govt Delegate',
-                      prefixIcon: const Icon(Icons.business_outlined, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      filled: true,
-                    ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   Row(
                     children: [
                       Expanded(
-                        child: TextField(
+                        child: AsmitaTextField(
+                          label: 'Mobile Number',
+                          hint: '9876543210',
+                          icon: Icons.phone_outlined,
                           controller: phoneCtrl,
                           keyboardType: TextInputType.phone,
-                          maxLength: 10,
-                          decoration: InputDecoration(
-                            labelText: 'Mobile Number',
-                            counterText: '',
-                            hintText: '9876543210',
-                            prefixIcon: const Icon(Icons.phone_outlined, size: 20),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                            filled: true,
-                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: TextField(
+                        child: AsmitaTextField(
+                          label: 'Vehicle No (Optional)',
+                          hint: 'MH 04 AB 1234',
+                          icon: Icons.directions_car_outlined,
                           controller: vehicleCtrl,
-                          textCapitalization: TextCapitalization.characters,
-                          decoration: InputDecoration(
-                            labelText: 'Vehicle No (Optional)',
-                            hintText: 'MH 04 AB 1234',
-                            prefixIcon: const Icon(Icons.directions_car_outlined, size: 20),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                            filled: true,
-                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: accessScope,
-                    decoration: InputDecoration(
-                      labelText: 'VIP Access Level',
-                      prefixIcon: const Icon(Icons.lock_open_rounded, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      filled: true,
-                    ),
+                  const SizedBox(height: 14),
+                  AsmitaSelectField<String>(
+                    label: 'VIP Access Level',
+                    hint: 'Select VIP clearance tier',
+                    value: accessScope,
+                    prefixIcon: Icons.lock_open_rounded,
                     items: const [
-                      DropdownMenuItem(
+                      AsmitaSelectItem(
                         value: 'Floor 8 Executive HQ',
-                        child: Text('Floor 8 Executive HQ Suite'),
+                        label: 'Floor 8 Executive HQ Suite',
+                        subtitle: 'Director cabin & private boardroom suite',
+                        icon: Icons.apartment_rounded,
                       ),
-                      DropdownMenuItem(
+                      AsmitaSelectItem(
                         value: 'Boardroom Suite',
-                        child: Text('Boardroom & Conference Wing'),
+                        label: 'Boardroom & Conference Wing',
+                        subtitle: 'High-security executive boardroom access',
+                        icon: Icons.meeting_room_rounded,
                       ),
-                      DropdownMenuItem(
+                      AsmitaSelectItem(
                         value: 'Full Campus Access',
-                        child: Text('Full Industrial Campus Access'),
+                        label: 'Full Industrial Campus Access',
+                        subtitle:
+                            'Unrestricted clearance across all campus wings',
+                        icon: Icons.verified_user_rounded,
                       ),
                     ],
                     onChanged: (val) {
                       if (val != null) setModalState(() => accessScope = val);
                     },
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   SwitchListTile(
                     title: const Text(
                       'Assign Gate 1 VIP Escort',
-                      style: TextStyle(fontFamily: 'Montserrat', fontSize: 13, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     subtitle: const Text(
                       'Security staff escorts guest directly to your executive cabin.',
-                      style: TextStyle(fontSize: 11, color: AsmitaPalette.textLight),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AsmitaPalette.textLight,
+                      ),
                     ),
                     value: escortRequired,
-                    activeTrackColor: const Color(0xFFD97706),
-                    onChanged: (val) => setModalState(() => escortRequired = val),
+                    activeTrackColor: AsmitaPalette.deepNavy,
+                    onChanged: (val) =>
+                        setModalState(() => escortRequired = val),
                     contentPadding: EdgeInsets.zero,
                   ),
                   const SizedBox(height: 18),
@@ -1557,14 +1725,20 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
 
                       Navigator.pop(ctx);
                       final randomPass = 'VIP-${1000 + Random().nextInt(9000)}';
-                      final org = orgCtrl.text.trim().isNotEmpty ? orgCtrl.text.trim() : 'Executive Guest';
+                      final org = orgCtrl.text.trim().isNotEmpty
+                          ? orgCtrl.text.trim()
+                          : 'Executive Guest';
                       final phone = phoneCtrl.text.trim();
                       final vehicle = vehicleCtrl.text.trim();
 
                       // Auto-provision department & persist VIP pass on backend
                       final authState = context.read<AuthBloc>().state;
-                      final user = authState is AuthAuthenticated ? authState.user : null;
-                      final flat = user?.flatMappings.isNotEmpty == true ? user!.flatMappings.first : null;
+                      final user = authState is AuthAuthenticated
+                          ? authState.user
+                          : null;
+                      final flat = user?.flatMappings.isNotEmpty == true
+                          ? user!.flatMappings.first
+                          : null;
 
                       if (user != null) {
                         final payload = {
@@ -1583,7 +1757,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                           'department_name': accessScope,
                           'max_guest_count': 1,
                           'valid_from': DateTime.now().toIso8601String(),
-                          'valid_to': DateTime.now().add(const Duration(hours: 24)).toIso8601String(),
+                          'valid_to': DateTime.now()
+                              .add(const Duration(hours: 24))
+                              .toIso8601String(),
                           'is_private': escortRequired,
                         };
 
@@ -1591,7 +1767,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                           context.read<VisitorBloc>().add(
                             CreatePreApprovedInviteEvent(payload: payload),
                           );
-                          context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+                          context.read<IndustrialVisitBloc>().add(
+                            const LoadIndustrialVisits(),
+                          );
                         } catch (_) {}
                       }
 
@@ -1608,11 +1786,17 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                       backgroundColor: AsmitaPalette.deepNavy,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: const Text(
                       'Generate VIP Pass',
-                      style: TextStyle(fontFamily: 'Montserrat', fontSize: 14, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -1642,13 +1826,13 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
-                color: Color(0xFFFEF3C7),
+              decoration: BoxDecoration(
+                color: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.workspace_premium_rounded,
-                color: Color(0xFFD97706),
+                color: AsmitaPalette.deepNavy,
                 size: 38,
               ),
             ),
@@ -1665,18 +1849,24 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
             Text(
               '$visitorName • $organization',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+              style: const TextStyle(
+                fontSize: 12,
+                color: AsmitaPalette.textLight,
+              ),
             ),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFD97706), width: 1.5),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor,
+                  width: 1.5,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFD97706).withValues(alpha: 0.15),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -1687,8 +1877,14 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                   QrImageView(
                     data: passCode,
                     size: 140,
-                    eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: Color(0xFF1E3A8A)),
-                    dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: Color(0xFF1E3A8A)),
+                    eyeStyle: const QrEyeStyle(
+                      eyeShape: QrEyeShape.square,
+                      color: AsmitaPalette.deepNavy,
+                    ),
+                    dataModuleStyle: const QrDataModuleStyle(
+                      dataModuleShape: QrDataModuleShape.square,
+                      color: AsmitaPalette.deepNavy,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -1698,24 +1894,36 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1.2,
-                      color: Color(0xFF1E3A8A),
+                      color: AsmitaPalette.deepNavy,
                     ),
                   ),
                   Text(
                     accessScope,
-                    style: const TextStyle(fontSize: 11, color: AsmitaPalette.textLight),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AsmitaPalette.textLight,
+                    ),
                   ),
                   if (hasEscort) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDCFCE7),
+                        color: AsmitaPalette.successGreen.withValues(
+                          alpha: 0.12,
+                        ),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Text(
                         '✓ Gate 1 Escort Officer Assigned',
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: AsmitaPalette.successGreen,
+                        ),
                       ),
                     ),
                   ],
@@ -1737,10 +1945,18 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                       );
                     },
                     icon: const Icon(Icons.copy_rounded, size: 16),
-                    label: const Text('Copy Code', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    label: const Text(
+                      'Copy Code',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 11),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                 ),
@@ -1752,9 +1968,17 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                       backgroundColor: AsmitaPalette.deepNavy,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 11),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                    child: const Text('Done', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -1790,99 +2014,113 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                 children: [
                   const Text(
                     'Dispatches facility valet to retrieve your executive vehicle and park at the designated gate.',
-                    style: TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AsmitaPalette.textLight,
+                    ),
                   ),
                   const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    initialValue: selectedVehicle,
-                    decoration: InputDecoration(
-                      labelText: 'Select Vehicle',
-                      prefixIcon: const Icon(Icons.directions_car_rounded, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      filled: true,
-                    ),
+                  AsmitaSelectField<String>(
+                    label: 'Select Vehicle',
+                    hint: 'Choose your registered vehicle',
+                    value: selectedVehicle,
+                    prefixIcon: Icons.directions_car_rounded,
                     items: const [
-                      DropdownMenuItem(
+                      AsmitaSelectItem(
                         value: 'Mercedes-Benz E220d (MH 04 AB 1234)',
-                        child: Text('Mercedes E220d • MH 04 AB 1234'),
+                        label: 'Mercedes E220d • MH 04 AB 1234',
+                        subtitle: 'Primary Executive Saloon',
+                        icon: Icons.directions_car_filled_rounded,
                       ),
-                      DropdownMenuItem(
+                      AsmitaSelectItem(
                         value: 'BMW 730Ld (MH 01 CZ 9999)',
-                        child: Text('BMW 730Ld • MH 01 CZ 9999'),
+                        label: 'BMW 730Ld • MH 01 CZ 9999',
+                        subtitle: 'Chauffeured Limousine',
+                        icon: Icons.directions_car_filled_rounded,
                       ),
-                      DropdownMenuItem(
+                      AsmitaSelectItem(
                         value: 'Audi A6 (MH 02 EF 5678)',
-                        child: Text('Audi A6 • MH 02 EF 5678'),
+                        label: 'Audi A6 • MH 02 EF 5678',
+                        subtitle: 'Secondary Sedan',
+                        icon: Icons.directions_car_filled_rounded,
                       ),
                     ],
                     onChanged: (val) {
-                      if (val != null) setModalState(() => selectedVehicle = val);
+                      if (val != null) {
+                        setModalState(() => selectedVehicle = val);
+                      }
                     },
                   ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: targetGate,
-                    decoration: InputDecoration(
-                      labelText: 'Delivery Destination Gate',
-                      prefixIcon: const Icon(Icons.meeting_room_rounded, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      filled: true,
-                    ),
+                  const SizedBox(height: 14),
+                  AsmitaSelectField<String>(
+                    label: 'Delivery Destination Gate',
+                    hint: 'Choose destination gate',
+                    value: targetGate,
+                    prefixIcon: Icons.meeting_room_rounded,
                     items: const [
-                      DropdownMenuItem(
+                      AsmitaSelectItem(
                         value: 'Gate 1 - Main Portico',
-                        child: Text('Gate 1 - Main Portico (Express)'),
+                        label: 'Gate 1 - Main Portico (Express)',
+                        subtitle: 'Main Executive Entrance Porch',
+                        icon: Icons.door_sliding_rounded,
                       ),
-                      DropdownMenuItem(
+                      AsmitaSelectItem(
                         value: 'Gate 2 - Executive Bay',
-                        child: Text('Gate 2 - Executive Bay'),
+                        label: 'Gate 2 - Executive Bay',
+                        subtitle: 'Private Director Parking Bay',
+                        icon: Icons.garage_rounded,
                       ),
-                      DropdownMenuItem(
+                      AsmitaSelectItem(
                         value: 'VIP Loading Porch',
-                        child: Text('VIP Loading Bay Porch'),
+                        label: 'VIP Loading Bay Porch',
+                        subtitle: 'Sheltered Porch Zone',
+                        icon: Icons.local_shipping_rounded,
                       ),
                     ],
                     onChanged: (val) {
-                      if (val != null) setModalState(() => targetGate = val);
+                      if (val != null) {
+                        setModalState(() => targetGate = val);
+                      }
                     },
                   ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: timing,
-                    decoration: InputDecoration(
-                      labelText: 'Vehicle Ready Timing',
-                      prefixIcon: const Icon(Icons.schedule_rounded, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      filled: true,
-                    ),
+                  const SizedBox(height: 14),
+                  AsmitaSelectField<String>(
+                    label: 'Vehicle Ready Timing',
+                    hint: 'When do you need the vehicle?',
+                    value: timing,
+                    prefixIcon: Icons.schedule_rounded,
                     items: const [
-                      DropdownMenuItem(
+                      AsmitaSelectItem(
                         value: 'Immediate (Ready in ~5 min)',
-                        child: Text('Immediate (Ready in ~5 min)'),
+                        label: 'Immediate (Ready in ~5 min)',
+                        subtitle: 'Instant priority dispatch',
+                        icon: Icons.bolt_rounded,
                       ),
-                      DropdownMenuItem(
+                      AsmitaSelectItem(
                         value: 'In 10 Minutes',
-                        child: Text('In 10 Minutes'),
+                        label: 'In 10 Minutes',
+                        subtitle: 'Standard dispatch lead time',
+                        icon: Icons.timer_rounded,
                       ),
-                      DropdownMenuItem(
+                      AsmitaSelectItem(
                         value: 'In 20 Minutes',
-                        child: Text('In 20 Minutes'),
+                        label: 'In 20 Minutes',
+                        subtitle: 'Scheduled departure preparation',
+                        icon: Icons.hourglass_bottom_rounded,
                       ),
                     ],
                     onChanged: (val) {
-                      if (val != null) setModalState(() => timing = val);
+                      if (val != null) {
+                        setModalState(() => timing = val);
+                      }
                     },
                   ),
-                  const SizedBox(height: 12),
-                  TextField(
+                  const SizedBox(height: 14),
+                  AsmitaTextField(
+                    label: 'Valet Instructions (Optional)',
+                    hint: 'e.g., Turn on AC, park at VIP porch lane',
+                    icon: Icons.notes_rounded,
                     controller: notesCtrl,
-                    decoration: InputDecoration(
-                      labelText: 'Valet Instructions (Optional)',
-                      hintText: 'e.g., Turn on AC, park at VIP porch lane',
-                      prefixIcon: const Icon(Icons.notes_rounded, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      filled: true,
-                    ),
                   ),
                   const SizedBox(height: 18),
                   ElevatedButton.icon(
@@ -1892,21 +2130,25 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
 
                       // Auto-provision valet department & role along the way via backend valet API
                       final authState = context.read<AuthBloc>().state;
-                      final user = authState is AuthAuthenticated ? authState.user : null;
+                      final user = authState is AuthAuthenticated
+                          ? authState.user
+                          : null;
                       final societyId = user?.societyId ?? 114;
 
                       try {
                         final dio = AsmitaDioClient(SecureStorageService()).dio;
-                        dio.post(
-                          '${EnvConfig.baseUrl}/app-api/valet/request',
-                          data: {
-                            'society_id': societyId,
-                            'vehicle_number': selectedVehicle,
-                            'target_gate': targetGate,
-                            'ready_time': timing,
-                            'notes': notes,
-                          },
-                        ).ignore();
+                        dio
+                            .post(
+                              '${EnvConfig.baseUrl}/app-api/valet/request',
+                              data: {
+                                'society_id': societyId,
+                                'vehicle_number': selectedVehicle,
+                                'target_gate': targetGate,
+                                'ready_time': timing,
+                                'notes': notes,
+                              },
+                            )
+                            .ignore();
                       } catch (_) {}
 
                       _showValetSuccessDialog(
@@ -1919,13 +2161,19 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                     icon: const Icon(Icons.send_rounded, size: 18),
                     label: const Text(
                       'Dispatch Valet to Gate',
-                      style: TextStyle(fontFamily: 'Montserrat', fontSize: 14, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0284C7),
+                      backgroundColor: AsmitaPalette.deepNavy,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ],
@@ -1954,13 +2202,13 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
-                color: Color(0xFFE0F2FE),
+              decoration: BoxDecoration(
+                color: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.directions_car_filled_rounded,
-                color: Color(0xFF0284C7),
+                color: AsmitaPalette.deepNavy,
                 size: 38,
               ),
             ),
@@ -1976,33 +2224,53 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
             const SizedBox(height: 4),
             Text(
               'Ticket #$ticketNo • Assigned to Valet Desk',
-              style: const TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+              style: const TextStyle(
+                fontSize: 12,
+                color: AsmitaPalette.textLight,
+              ),
             ),
             const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF0FDF4),
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF86EFAC)),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: const [
-                      Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 16),
+                      Icon(
+                        Icons.check_circle_rounded,
+                        color: AsmitaPalette.successGreen,
+                        size: 16,
+                      ),
                       SizedBox(width: 6),
-                      Text(
-                        'Driver En Route: Mohan Sharma (Ext 112)',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF166534)),
+                      Expanded(
+                        child: Text(
+                          'Driver En Route: Mohan Sharma (Ext 112)',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: AsmitaPalette.successGreen,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'Retrieving $vehicle from Basement 2 (Bay B-14). Vehicle will be ready at $targetGate ($timing).',
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF14532D)),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AsmitaPalette.textDarkModeMuted
+                          : AsmitaPalette.textLight,
+                    ),
                   ),
                 ],
               ),
@@ -2017,10 +2285,18 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                       _callContact('Valet Control Desk', '+919820110112');
                     },
                     icon: const Icon(Icons.phone, size: 14),
-                    label: const Text('Call Valet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    label: const Text(
+                      'Call Valet',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 11),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                 ),
@@ -2029,12 +2305,20 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(ctx),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0284C7),
+                      backgroundColor: AsmitaPalette.deepNavy,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 11),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                    child: const Text('Dismiss', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    child: const Text(
+                      'Dismiss',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -2056,7 +2340,11 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     // Auto-provision security departments and roles along the way on backend
     try {
       final dio = AsmitaDioClient(SecureStorageService()).dio;
-      dio.get('${EnvConfig.baseUrl}/app-api/security/hotlines?society_id=$societyId').ignore();
+      dio
+          .get(
+            '${EnvConfig.baseUrl}/app-api/security/hotlines?society_id=$societyId',
+          )
+          .ignore();
     } catch (_) {}
 
     showAsmitaBottomSheet(
@@ -2119,7 +2407,11 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           const SizedBox(height: 8),
           const Text(
             'Quick Security Dispatches',
-            style: TextStyle(fontFamily: 'Montserrat', fontSize: 13, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
           Row(
@@ -2130,30 +2422,38 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                     Navigator.pop(context);
                     try {
                       final dio = AsmitaDioClient(SecureStorageService()).dio;
-                      dio.post(
-                        '${EnvConfig.baseUrl}/app-api/security/dispatch',
-                        data: {
-                          'society_id': societyId,
-                          'type': 'VIP_ESCORT',
-                          'destination': 'Gate 1 Main Portico',
-                          'priority': 'HIGH',
-                        },
-                      ).ignore();
+                      dio
+                          .post(
+                            '${EnvConfig.baseUrl}/app-api/security/dispatch',
+                            data: {
+                              'society_id': societyId,
+                              'type': 'VIP_ESCORT',
+                              'destination': 'Gate 1 Main Portico',
+                              'priority': 'HIGH',
+                            },
+                          )
+                          .ignore();
                     } catch (_) {}
 
                     AsmitaToast.show(
                       context,
-                      message: 'VIP Escort Officer dispatched to Gate 1 Main Portico.',
+                      message:
+                          'VIP Escort Officer dispatched to Gate 1 Main Portico.',
                       type: AsmitaToastType.success,
                     );
                   },
                   icon: const Icon(Icons.person_pin_circle_rounded, size: 16),
-                  label: const Text('Request Escort', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  label: const Text(
+                    'Request Escort',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AsmitaPalette.deepNavy,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
@@ -2164,30 +2464,41 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                     Navigator.pop(context);
                     try {
                       final dio = AsmitaDioClient(SecureStorageService()).dio;
-                      dio.post(
-                        '${EnvConfig.baseUrl}/app-api/security/dispatch',
-                        data: {
-                          'society_id': societyId,
-                          'type': 'EXPRESS_CLEARANCE',
-                          'destination': 'All Security Gates',
-                          'priority': 'HIGH',
-                        },
-                      ).ignore();
+                      dio
+                          .post(
+                            '${EnvConfig.baseUrl}/app-api/security/dispatch',
+                            data: {
+                              'society_id': societyId,
+                              'type': 'EXPRESS_CLEARANCE',
+                              'destination': 'All Security Gates',
+                              'priority': 'HIGH',
+                            },
+                          )
+                          .ignore();
                     } catch (_) {}
 
                     AsmitaToast.show(
                       context,
-                      message: 'Priority Express clearance alert transmitted to all gates.',
+                      message:
+                          'Priority Express clearance alert transmitted to all gates.',
                       type: AsmitaToastType.info,
                     );
                   },
-                  icon: const Icon(Icons.notification_important_rounded, size: 16),
-                  label: const Text('Express Lane Alert', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  icon: const Icon(
+                    Icons.notification_important_rounded,
+                    size: 16,
+                  ),
+                  label: const Text(
+                    'Express Lane Alert',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD97706),
+                    backgroundColor: AsmitaPalette.actionRed,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
@@ -2222,792 +2533,22 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     }
   }
 
-  Widget _segmentedTab(
-    String code,
-    String label, {
-    int? count,
-    Color? alertColor,
-  }) {
-    final isSelected = _selectedFilter == code;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final highlight = alertColor ?? AsmitaPalette.deepNavy;
-    final hasBadge = count != null && count > 0;
 
-    return Expanded(
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          setState(() => _selectedFilter = code);
-        },
-        borderRadius: BorderRadius.circular(10),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
-          decoration: BoxDecoration(
-            color: isSelected ? highlight : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: highlight.withValues(alpha: 0.25),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                      color: isSelected
-                          ? Colors.white
-                          : (isDark ? Colors.white70 : AsmitaPalette.textDark),
-                    ),
-                  ),
-                ),
-              ),
-              if (hasBadge) ...[
-                const SizedBox(width: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? Colors.white.withValues(alpha: 0.25)
-                        : highlight.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '$count',
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.white : highlight,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildEmptyState(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 24),
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.verified_user_outlined,
-              size: 44,
-              color: AsmitaPalette.deepNavy,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'No Pending Appointments',
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Your executive visitor queue is clear. Issue a pre-approved pass for VIP guests with priority gate clearance.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
-          ),
-          const SizedBox(height: 18),
-          ElevatedButton.icon(
-            onPressed: () => _showPreApproveModal(context),
-            icon: const Icon(Icons.add, size: 16),
-            label: const Text('Issue VIP Pass'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AsmitaPalette.deepNavy,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _visitorCard(BuildContext context, IndustrialVisitModel visit) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isPending = visit.isPending;
-    final isAck = _acknowledgedIds.contains(visit.id);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isPending
-              ? AsmitaPalette.actionRed.withValues(alpha: 0.5)
-              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-          width: isPending ? 1.5 : 1.1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isPending
-                ? AsmitaPalette.actionRed.withValues(alpha: isDark ? 0.15 : 0.08)
-                : (isDark ? Colors.black.withValues(alpha: 0.35) : const Color(0x0A0F172A)),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: isDark ? Colors.transparent : const Color(0x050F172A),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _showVisitDetailsModal(context, visit),
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top Row: Avatar + Identity/Type + Status Badge
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    _buildVisitorAvatar(context, visit, isDark, isPending),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            visit.visitorName.isNotEmpty ? visit.visitorName : 'Guest Visitor',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
-                              letterSpacing: -0.2,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          _buildVisitorCategoryBadge(context, visit, isDark),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    _buildStatusBadge(context, visit, isDark, isPending),
-                  ],
-                ),
-
-                // Inset Executive Meta Footer (Clean structured arrival + suite + pass code)
-                _buildExecutiveFooter(context, visit, isDark),
-
-                // Pending Decision CTAs
-                if (isPending) ...[
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => _handleDecide(context, visit.id, 'REJECT'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AsmitaPalette.actionRed,
-                            side: BorderSide(
-                              color: AsmitaPalette.actionRed.withValues(alpha: 0.8),
-                              width: 1.2,
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                          child: const Text(
-                            'Decline',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _handleDecide(context, visit.id, 'APPROVE'),
-                          icon: const Icon(Icons.check_rounded, size: 16),
-                          label: const Text(
-                            'Approve Priority',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12.5,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AsmitaPalette.deepNavy,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            elevation: 1,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ] else if (visit.status == IndustrialVisitStatus.approved && !isAck) ...[
-                  const SizedBox(height: 12),
-                  AcknowledgeActionButton(
-                    onAcknowledge: () => _handleAcknowledge(context, visit.id),
-                    isAcknowledged: isAck,
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVisitorAvatar(
-    BuildContext context,
-    IndustrialVisitModel visit,
-    bool isDark,
-    bool isPending,
-  ) {
-    if (visit.visitorPhotoUrl != null && visit.visitorPhotoUrl!.isNotEmpty) {
-      return Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-            width: 1.2,
-          ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(13),
-          child: Image.network(
-            visit.visitorPhotoUrl!,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => _buildAvatarFallback(context, visit, isDark, isPending),
-          ),
-        ),
-      );
-    }
-    return _buildAvatarFallback(context, visit, isDark, isPending);
-  }
-
-  Widget _buildAvatarFallback(
-    BuildContext context,
-    IndustrialVisitModel visit,
-    bool isDark,
-    bool isPending,
-  ) {
-    List<Color> gradientColors;
-    IconData? overlayIcon;
-    bool showStarBadge = false;
-
-    if (isPending) {
-      gradientColors = const [Color(0xFF991B1B), Color(0xFFDC2626)];
-    } else if (visit.isDelivery) {
-      gradientColors = const [Color(0xFFD97706), Color(0xFFF59E0B)];
-      overlayIcon = Icons.local_shipping_rounded;
-    } else if (visit.isPreApproved) {
-      gradientColors = const [Color(0xFF1E293B), Color(0xFF27347B)];
-      showStarBadge = true;
-    } else {
-      gradientColors = const [Color(0xFF1E3A8A), Color(0xFF2563EB)];
-    }
-
-    final letter = visit.visitorName.isNotEmpty ? visit.visitorName[0].toUpperCase() : 'V';
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: gradientColors,
-            ),
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: gradientColors.last.withValues(alpha: isDark ? 0.35 : 0.25),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.18),
-              width: 1.2,
-            ),
-          ),
-          child: Center(
-            child: overlayIcon != null
-                ? Icon(overlayIcon, size: 22, color: Colors.white)
-                : Text(
-                    letter,
-                    style: const TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                      color: Colors.white,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-          ),
-        ),
-        if (showStarBadge)
-          Positioned(
-            right: -2,
-            bottom: -2,
-            child: Container(
-              width: 18,
-              height: 18,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF59E0B),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.surface,
-                  width: 1.8,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 3,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.star_rounded,
-                size: 11,
-                color: Colors.white,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildVisitorCategoryBadge(
-    BuildContext context,
-    IndustrialVisitModel visit,
-    bool isDark,
-  ) {
-    if (visit.isPreApproved) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.35) : const Color(0xFFFEF3C7),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: isDark ? const Color(0xFFB45309).withValues(alpha: 0.6) : const Color(0xFFFDE68A),
-            width: 0.8,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.star_rounded, size: 11, color: Color(0xFFD97706)),
-            const SizedBox(width: 4),
-            Text(
-              'VIP GUEST',
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 9.5,
-                fontWeight: FontWeight.w800,
-                color: isDark ? const Color(0xFFFDE68A) : const Color(0xFFB45309),
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
-        ),
-      );
-    } else if (visit.isDelivery) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.local_shipping_outlined,
-            size: 13,
-            color: isDark ? const Color(0xFFFCD34D) : const Color(0xFFD97706),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            visit.deliveryCompany != null ? '${visit.deliveryCompany} Delivery' : 'Courier Dropoff',
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: isDark ? AsmitaPalette.textDarkModeMuted : const Color(0xFF64748B),
-            ),
-          ),
-        ],
-      );
-    }
-
-    final categoryText = visit.purpose ?? 'Executive Guest';
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          Icons.badge_outlined,
-          size: 13,
-          color: isDark ? AsmitaPalette.textDarkModeMuted : const Color(0xFF64748B),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          categoryText,
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: isDark ? AsmitaPalette.textDarkModeMuted : const Color(0xFF64748B),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatusBadge(
-    BuildContext context,
-    IndustrialVisitModel visit,
-    bool isDark,
-    bool isPending,
-  ) {
-    Color bg;
-    Color border;
-    Color textColor;
-    Color dotColor;
-    String label;
-    bool pulse = false;
-
-    if (isPending) {
-      bg = isDark ? const Color(0xFF450A0A) : const Color(0xFFFEF2F2);
-      border = isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFECACA);
-      textColor = isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C);
-      dotColor = const Color(0xFFEF4444);
-      label = 'PENDING';
-      pulse = true;
-    } else if (visit.status == IndustrialVisitStatus.checkedIn) {
-      bg = isDark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5);
-      border = isDark ? const Color(0xFF047857) : const Color(0xFFA7F3D0);
-      textColor = isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46);
-      dotColor = const Color(0xFF10B981);
-      label = 'INSIDE HQ';
-      pulse = true;
-    } else if (visit.status == IndustrialVisitStatus.approved) {
-      bg = isDark ? const Color(0xFF1E3A8A) : const Color(0xFFEFF6FF);
-      border = isDark ? const Color(0xFF2563EB) : const Color(0xFFBFDBFE);
-      textColor = isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF);
-      dotColor = const Color(0xFF3B82F6);
-      label = 'APPROVED';
-    } else if (visit.status == IndustrialVisitStatus.checkedOut) {
-      bg = isDark ? const Color(0xFF18181B) : const Color(0xFFF4F4F5);
-      border = isDark ? const Color(0xFF27272A) : const Color(0xFFE4E4E7);
-      textColor = isDark ? const Color(0xFFA1A1AA) : const Color(0xFF52525B);
-      dotColor = const Color(0xFF71717A);
-      label = 'CHECKED OUT';
-    } else {
-      bg = visit.status.fillColor(isDark);
-      border = visit.status.textColor(isDark).withValues(alpha: 0.3);
-      textColor = visit.status.textColor(isDark);
-      dotColor = textColor;
-      label = visit.status.label.toUpperCase();
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: border, width: 1.1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 6.5,
-            height: 6.5,
-            decoration: BoxDecoration(
-              color: dotColor,
-              shape: BoxShape.circle,
-              boxShadow: pulse
-                  ? [
-                      BoxShadow(
-                        color: dotColor.withValues(alpha: 0.5),
-                        blurRadius: 4,
-                        spreadRadius: 1,
-                      ),
-                    ]
-                  : null,
-            ),
-          ),
-          const SizedBox(width: 5.5),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              color: textColor,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildExecutiveFooter(
-    BuildContext context,
-    IndustrialVisitModel visit,
-    bool isDark,
-  ) {
-    final arrivalTime = visit.checkInAt != null
-        ? DateFormat('hh:mm a').format(visit.checkInAt!)
-        : (visit.createdAt != null
-            ? DateFormat('hh:mm a').format(visit.createdAt!)
-            : 'Scheduled');
-
-    final destinationName = visit.departmentName ?? 'Executive Suite';
-    final hasPassCode = visit.passCode != null && visit.passCode!.isNotEmpty;
-    final hasVehicle = visit.vehicleNumber != null && visit.vehicleNumber!.isNotEmpty;
-
-    return Container(
-      margin: const EdgeInsets.only(top: 13),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.7) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? const Color(0xFF334155).withValues(alpha: 0.6) : const Color(0xFFE2E8F0),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          // Time info
-          Expanded(
-            child: Row(
-              children: [
-                Icon(
-                  Icons.schedule_rounded,
-                  size: 14,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                ),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        visit.checkInAt != null ? 'ENTERED' : 'SCHEDULED',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                      Text(
-                        arrivalTime,
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Divider
-          Container(
-            width: 1,
-            height: 24,
-            margin: const EdgeInsets.symmetric(horizontal: 8),
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-          ),
-
-          // Destination or Vehicle
-          Expanded(
-            child: Row(
-              children: [
-                Icon(
-                  hasVehicle ? Icons.directions_car_filled_rounded : Icons.apartment_rounded,
-                  size: 14,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                ),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        hasVehicle ? 'VEHICLE' : 'LOCATION',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                      Text(
-                        hasVehicle ? visit.vehicleNumber! : destinationName,
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Security Pass Code Ticket
-          if (hasPassCode) ...[
-            const SizedBox(width: 4),
-            InkWell(
-              onTap: () {
-                Clipboard.setData(ClipboardData(text: visit.passCode!));
-                HapticFeedback.selectionClick();
-                AsmitaToast.show(
-                  context,
-                  message: 'Pass code #${visit.passCode} copied to clipboard',
-                  type: AsmitaToastType.success,
-                );
-              },
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF0F172A) : Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.vpn_key_rounded,
-                      size: 11,
-                      color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '#${visit.passCode}',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
-                        color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ] else ...[
-            const SizedBox(width: 4),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 12,
-              color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 }
 
 class _ExecutiveActionItem {
   final String title;
-  final String subtitle;
   final IconData icon;
-  final List<Color> gradientColors;
+  final Color containerColor;
+  final Color iconColor;
   final VoidCallback onTap;
 
   const _ExecutiveActionItem({
     required this.title,
-    required this.subtitle,
     required this.icon,
-    required this.gradientColors,
+    required this.containerColor,
+    required this.iconColor,
     required this.onTap,
   });
 }

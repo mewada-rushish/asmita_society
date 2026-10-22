@@ -81,11 +81,13 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     showAsmitaBottomSheet(
       context: context,
       title: 'Visitor Pass Details',
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header Card with Pass Code
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header Card with Pass Code
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -348,8 +350,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
               ),
             ),
           ],
-          const SizedBox(height: 8),
-        ],
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
@@ -520,6 +523,47 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       },
                     ),
 
+                    // Search Box
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Theme.of(context).dividerColor),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                            decoration: InputDecoration(
+                              hintText: 'Search visitor, company, pass code, vehicle...',
+                              hintStyle: const TextStyle(fontSize: 13, color: AsmitaPalette.textLight),
+                              prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AsmitaPalette.textLight),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear_rounded, size: 18, color: AsmitaPalette.textLight),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() => _searchQuery = '');
+                                      },
+                                    )
+                                  : null,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
                     // Top KPI Stat Metrics Cards
                     SliverToBoxAdapter(
                       child: Padding(
@@ -528,95 +572,51 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       ),
                     ),
 
-                    // Search and Filter Row
+                    // Fitted Segmented Filter Bar (Zero cropping, 100% responsive width)
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Search Box
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.surface,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: Theme.of(context).dividerColor),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.03),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Theme.of(context).dividerColor),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
                               ),
-                              child: TextField(
-                                controller: _searchController,
-                                onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                                decoration: InputDecoration(
-                                  hintText: 'Search visitor, company, pass code, vehicle...',
-                                  hintStyle: const TextStyle(fontSize: 13, color: AsmitaPalette.textLight),
-                                  prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AsmitaPalette.textLight),
-                                  suffixIcon: _searchQuery.isNotEmpty
-                                      ? IconButton(
-                                          icon: const Icon(Icons.clear_rounded, size: 18, color: AsmitaPalette.textLight),
-                                          onPressed: () {
-                                            _searchController.clear();
-                                            setState(() => _searchQuery = '');
-                                          },
-                                        )
-                                      : null,
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                                ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              _segmentedTab(
+                                'ALL',
+                                'All',
+                                count: visits.length,
                               ),
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Fitted Segmented Filter Bar (Zero cropping, 100% responsive width)
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.surface,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: Theme.of(context).dividerColor),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.03),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
+                              _segmentedTab(
+                                'PENDING',
+                                'Pending',
+                                count: pendingCount,
+                                alertColor: AsmitaPalette.actionRed,
                               ),
-                              child: Row(
-                                children: [
-                                  _segmentedTab(
-                                    'ALL',
-                                    'All',
-                                    count: visits.length,
-                                  ),
-                                  _segmentedTab(
-                                    'PENDING',
-                                    'Pending',
-                                    count: pendingCount,
-                                    alertColor: AsmitaPalette.actionRed,
-                                  ),
-                                  _segmentedTab(
-                                    'APPROVED',
-                                    'Approved',
-                                    count: approvedCount,
-                                    alertColor: const Color(0xFF1E88E5),
-                                  ),
-                                  _segmentedTab(
-                                    'INSIDE',
-                                    'Inside',
-                                    count: insideCount,
-                                    alertColor: AsmitaPalette.successGreen,
-                                  ),
-                                ],
+                              _segmentedTab(
+                                'APPROVED',
+                                'Approved',
+                                count: approvedCount,
+                                alertColor: const Color(0xFF1E88E5),
                               ),
-                            ),
-                            const SizedBox(height: 14),
-                          ],
+                              _segmentedTab(
+                                'INSIDE',
+                                'Inside',
+                                count: insideCount,
+                                alertColor: AsmitaPalette.successGreen,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

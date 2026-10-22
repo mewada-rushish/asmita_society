@@ -1,5 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:asmita_society/core/config/env_config.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -65,161 +70,23 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
   }
 
   void _showCheckInDialog(Map<String, dynamic> invite) {
-    AsmitaDialog.show(
+    showDialog(
       context: context,
-      title: 'Verify Visitor',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              if (invite['company_name'] != null &&
-                  invite['company_name'].toString().isNotEmpty) ...[
-                _buildInviteIcon(invite),
-                const SizedBox(width: 12),
-              ],
-              Expanded(
-                child: Text(
-                  '${(invite['visitor_name'] == null || invite['visitor_name'].toString().isEmpty) ? (invite['title'] ?? 'Unknown') : invite['visitor_name']}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Builder(
-            builder: (context) {
-              final rows = <Widget>[];
-              if (invite['tower_name'] != null &&
-                  invite['flat_number'] != null) {
-                rows.add(
-                  _buildDialogRow(
-                    'Destination',
-                    '${invite['tower_name']} - ${invite['flat_number']}',
-                    highlight: true,
-                  ),
-                );
-              }
-              rows.add(
-                _buildDialogRow(
-                  'Type',
-                  (invite['invite_type']?.toString() ?? 'Guest').toUpperCase(),
-                ),
-              );
-              rows.add(
-                _buildDialogRow(
-                  'Valid From',
-                  invite['valid_from'] != null
-                      ? AppDateFormatter.formatDate(invite['valid_from'])
-                      : 'N/A',
-                ),
-              );
-              rows.add(
-                _buildDialogRow(
-                  'Valid Till',
-                  invite['valid_to'] != null
-                      ? AppDateFormatter.formatDate(invite['valid_to'])
-                      : 'N/A',
-                ),
-              );
-
-              return Container(
-                clipBehavior: Clip.hardEdge,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (int i = 0; i < rows.length; i++) ...[
-                      if (i > 0) const Divider(height: 1, color: Colors.black12),
-                      rows[i],
-                    ],
-                  ],
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Match the details with the visitor.',
-            style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
-            final isPreApproved =
-                invite['record_type'] == null ||
-                invite['record_type'] == 'PRE_APPROVED';
-            context.read<GuardGateBloc>().add(
-              CheckInPreApprovedVisitor(
-                invite['id']?.toString() ?? '0',
-                isPreApproved: isPreApproved,
-              ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AsmitaPalette.deepNavy,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+      barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.4),
+      builder: (ctx) => _PreApprovedCheckInDialog(
+        invite: invite,
+        onConfirm: (photoBase64) {
+          final isPreApproved =
+              invite['record_type'] == null ||
+              invite['record_type'] == 'PRE_APPROVED';
+          context.read<GuardGateBloc>().add(
+            CheckInPreApprovedVisitor(
+              invite['id']?.toString() ?? '0',
+              isPreApproved: isPreApproved,
+              photoBase64: photoBase64,
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          ),
-          child: const Text('Confirm Check-in'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDialogRow(String label, String value, {bool highlight = false}) {
-    return Container(
-      color: highlight
-          ? AsmitaPalette.deepNavy.withValues(alpha: 0.05)
-          : Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.primary,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 12),
-              height: 1,
-              color: Colors.grey.shade300,
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: highlight ? FontWeight.bold : FontWeight.w600,
-              fontSize: highlight ? 15 : 13,
-              color: highlight
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).textTheme.bodyLarge?.color,
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -830,9 +697,59 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
   }
 
   Widget _buildInviteIcon(Map<String, dynamic> invite) {
+    final photoUrl = invite['photo_url']?.toString().trim();
     final companyName = invite['company_name']?.toString();
     final isDelivery =
         invite['invite_type']?.toString().toLowerCase() == 'delivery';
+
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      final fullUrl = photoUrl.startsWith('http')
+          ? photoUrl
+          : '${EnvConfig.baseUrl}$photoUrl';
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AsmitaPalette.successGreen.withValues(alpha: 0.5),
+                width: 1.5,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: CachedNetworkImage(
+                imageUrl: fullUrl,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  color: Colors.grey.shade100,
+                  child: const Center(
+                    child: AsmitaLoadingIndicator(size: 16),
+                  ),
+                ),
+                errorWidget: (context, error, stackTrace) =>
+                    _defaultIcon(isDelivery),
+              ),
+            ),
+          ),
+          Positioned(
+            right: -2,
+            bottom: -2,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: const BoxDecoration(
+                color: AsmitaPalette.successGreen,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check, size: 8, color: Colors.white),
+            ),
+          ),
+        ],
+      );
+    }
 
     if (companyName != null && companyName.isNotEmpty) {
       final fileName = companyName.toLowerCase().replaceAll(
@@ -924,6 +841,11 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
   }
 
   Widget _buildInviteSubtitle(Map<String, dynamic> invite) {
+    final photoUrl = invite['photo_url']?.toString().trim();
+    final hasPhoto = photoUrl != null && photoUrl.isNotEmpty;
+    final isDelivery =
+        invite['invite_type']?.toString().toLowerCase() == 'delivery';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -972,6 +894,27 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (!isDelivery) ...[
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Icon(
+                hasPhoto ? Icons.verified : Icons.camera_alt_outlined,
+                size: 13,
+                color: hasPhoto ? AsmitaPalette.successGreen : Colors.orange.shade800,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                hasPhoto ? 'Photo on File' : 'Photo Required at Gate',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: hasPhoto ? AsmitaPalette.successGreen : Colors.orange.shade800,
                 ),
               ),
             ],
@@ -1079,6 +1022,525 @@ class _PendingOrCheckInButtonState extends State<_PendingOrCheckInButton> {
           fontWeight: FontWeight.bold,
           color: Colors.orange,
         ),
+      ),
+    );
+  }
+}
+
+class _PreApprovedCheckInDialog extends StatefulWidget {
+  final Map<String, dynamic> invite;
+  final void Function(String? photoBase64) onConfirm;
+
+  const _PreApprovedCheckInDialog({
+    required this.invite,
+    required this.onConfirm,
+  });
+
+  @override
+  State<_PreApprovedCheckInDialog> createState() =>
+      _PreApprovedCheckInDialogState();
+}
+
+class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
+  File? _capturedImage;
+  String? _capturedBase64;
+  bool _isCapturing = false;
+  bool _photoMandatoryAlert = false;
+
+  String? get _existingPhotoUrl {
+    final raw = widget.invite['photo_url']?.toString().trim();
+    if (raw == null || raw.isEmpty) return null;
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+    return '${EnvConfig.baseUrl}$raw';
+  }
+
+  bool get _hasPhotoOnRecord => _existingPhotoUrl != null;
+
+  Future<void> _takePhoto() async {
+    setState(() => _isCapturing = true);
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 80,
+      );
+      if (picked != null) {
+        final bytes = await picked.readAsBytes();
+        final b64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+        setState(() {
+          _capturedImage = File(picked.path);
+          _capturedBase64 = b64;
+          _photoMandatoryAlert = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        AsmitaToast.show(
+          context,
+          message: 'Camera error: $e',
+          type: AsmitaToastType.error,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isCapturing = false);
+      }
+    }
+  }
+
+  void _handleConfirm() {
+    final hasPhoto = _hasPhotoOnRecord || _capturedImage != null;
+    if (!hasPhoto && !_photoMandatoryAlert) {
+      setState(() => _photoMandatoryAlert = true);
+      AsmitaToast.show(
+        context,
+        message: 'Visitor photo required. Please take photo before check-in.',
+        type: AsmitaToastType.error,
+      );
+      return;
+    }
+
+    Navigator.pop(context);
+    widget.onConfirm(_capturedBase64);
+  }
+
+  Widget _buildRow(String label, String value, {bool highlight = false}) {
+    return Container(
+      color: highlight
+          ? AsmitaPalette.deepNavy.withValues(alpha: 0.05)
+          : Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.primary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 10),
+              height: 1,
+              color: Colors.grey.shade300,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: highlight ? FontWeight.bold : FontWeight.w600,
+              fontSize: highlight ? 14 : 12,
+              color: highlight
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).textTheme.bodyLarge?.color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final invite = widget.invite;
+    final visitorName = (invite['visitor_name'] == null ||
+            invite['visitor_name'].toString().isEmpty)
+        ? (invite['company_name'] ?? invite['title'] ?? 'Visitor')
+        : invite['visitor_name'];
+    final phone = invite['visitor_phone'] ?? invite['mobile_number'];
+
+    return AsmitaDialog(
+      title: 'Verify Visitor & Entry',
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$visitorName',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                      if (phone != null && phone.toString().isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          'Contact: $phone',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    (invite['invite_type']?.toString() ?? 'Guest').toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: AsmitaPalette.deepNavy,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            _buildPhotoSection(),
+
+            const SizedBox(height: 14),
+
+            Container(
+              clipBehavior: Clip.hardEdge,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (invite['tower_name'] != null &&
+                      invite['flat_number'] != null)
+                    _buildRow(
+                      'Destination',
+                      '${invite['tower_name']} - ${invite['flat_number']}',
+                      highlight: true,
+                    ),
+                  if (invite['vehicle_number'] != null &&
+                      invite['vehicle_number'].toString().isNotEmpty)
+                    _buildRow('Vehicle', invite['vehicle_number'].toString()),
+                  _buildRow(
+                    'Valid From',
+                    invite['valid_from'] != null
+                        ? AppDateFormatter.formatDate(invite['valid_from'])
+                        : 'N/A',
+                  ),
+                  _buildRow(
+                    'Valid Till',
+                    invite['valid_to'] != null
+                        ? AppDateFormatter.formatDate(invite['valid_to'])
+                        : 'N/A',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(Icons.info_outline, size: 13, color: Colors.grey.shade500),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    _hasPhotoOnRecord || _capturedImage != null
+                        ? 'Match visitor photo before confirming gate entry.'
+                        : 'Mandatory photo capture attaches to contact profile.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade600,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _handleConfirm,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AsmitaPalette.deepNavy,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          ),
+          child: Text(
+            (!_hasPhotoOnRecord && _capturedImage == null && _photoMandatoryAlert)
+                ? 'Check In (Bypass Photo)'
+                : 'Confirm Check-in',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPhotoSection() {
+    if (_capturedImage != null) {
+      return Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AsmitaPalette.deepNavy.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: AsmitaPalette.deepNavy.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.file(
+                _capturedImage!,
+                width: 58,
+                height: 58,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        size: 15,
+                        color: AsmitaPalette.successGreen,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'New Photo Captured',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AsmitaPalette.successGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Stored permanently under this contact number.',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                  ),
+                ],
+              ),
+            ),
+            TextButton.icon(
+              onPressed: _isCapturing ? null : _takePhoto,
+              icon: const Icon(Icons.refresh, size: 14),
+              label: const Text('Retake', style: TextStyle(fontSize: 11)),
+              style: TextButton.styleFrom(
+                foregroundColor: AsmitaPalette.deepNavy,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_hasPhotoOnRecord) {
+      return Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AsmitaPalette.successGreen.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: AsmitaPalette.successGreen.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: CachedNetworkImage(
+                imageUrl: _existingPhotoUrl!,
+                width: 58,
+                height: 58,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  width: 58,
+                  height: 58,
+                  color: Colors.grey.shade200,
+                  child: const Center(
+                    child: AsmitaLoadingIndicator(size: 16),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  width: 58,
+                  height: 58,
+                  color: Colors.grey.shade200,
+                  child: const Icon(Icons.person, color: Colors.grey),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(
+                        Icons.verified,
+                        size: 15,
+                        color: AsmitaPalette.successGreen,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'Photo on File (Verified)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AsmitaPalette.successGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Matched by contact number from prior visits.',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                  ),
+                ],
+              ),
+            ),
+            TextButton.icon(
+              onPressed: _isCapturing ? null : _takePhoto,
+              icon: const Icon(Icons.camera_alt_outlined, size: 14),
+              label: const Text('Update', style: TextStyle(fontSize: 11)),
+              style: TextButton.styleFrom(
+                foregroundColor: AsmitaPalette.deepNavy,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Photo NOT on record
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _photoMandatoryAlert
+            ? AsmitaPalette.actionRed.withValues(alpha: 0.06)
+            : Colors.orange.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: _photoMandatoryAlert
+              ? AsmitaPalette.actionRed
+              : Colors.orange.withValues(alpha: 0.5),
+          width: 1.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: (_photoMandatoryAlert
+                          ? AsmitaPalette.actionRed
+                          : Colors.orange)
+                      .withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.add_a_photo,
+                  size: 18,
+                  color: _photoMandatoryAlert
+                      ? AsmitaPalette.actionRed
+                      : Colors.amber.shade900,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _photoMandatoryAlert
+                          ? 'Photo Mandatory Before Check-in'
+                          : 'Photo Required (Not Stored)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: _photoMandatoryAlert
+                            ? AsmitaPalette.actionRed
+                            : Colors.amber.shade900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'No prior image for this contact. Guard must take photo before entry.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _isCapturing ? null : _takePhoto,
+              icon: _isCapturing
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.camera_alt, size: 16),
+              label: Text(
+                _isCapturing ? 'Opening Camera...' : 'Take Visitor Photo Now',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AsmitaPalette.deepNavy,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

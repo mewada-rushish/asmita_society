@@ -32,8 +32,9 @@ class DepartmentDelegationScreen extends StatefulWidget {
 class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen> {
   bool _isDelegationEnabled = true;
   int? _selectedDelegateId;
+  bool _isTillTurnOff = true;
   DateTime _startDate = DateTime.now();
-  DateTime _endDate = DateTime.now().add(const Duration(days: 7));
+  DateTime? _endDate;
   bool _isSubmitting = false;
   bool _isLoadingStaff = true;
   String _selectedCategory = 'All';
@@ -69,6 +70,12 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
           final idx = entry.key;
           final m = Map<String, dynamic>.from(entry.value as Map);
           m['avatarColor'] = _avatarColors[idx % _avatarColors.length];
+          if (m['category'] == 'Floor Receptionist') {
+            m['category'] = 'Receptionist';
+          }
+          if (m['role'] == 'Floor Receptionist') {
+            m['role'] = 'Receptionist';
+          }
           return m;
         }).toList();
 
@@ -92,7 +99,10 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
       context: context,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      initialDateRange: DateTimeRange(start: _startDate, end: _endDate),
+      initialDateRange: DateTimeRange(
+        start: _startDate,
+        end: _endDate ?? _startDate.add(const Duration(days: 7)),
+      ),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -109,6 +119,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
     if (picked != null) {
       setState(() {
+        _isTillTurnOff = false;
         _startDate = picked.start;
         _endDate = picked.end;
       });
@@ -118,6 +129,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
   void _applyQuickPreset(int days) {
     HapticFeedback.selectionClick();
     setState(() {
+      _isTillTurnOff = false;
       _startDate = DateTime.now();
       _endDate = DateTime.now().add(Duration(days: days));
     });
@@ -142,7 +154,8 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         'department_id': widget.departmentId,
         'delegate_user_id': _selectedDelegateId,
         'start_date': _startDate.toIso8601String(),
-        'end_date': _endDate.toIso8601String(),
+        'end_date': _isTillTurnOff ? null : _endDate?.toIso8601String(),
+        'till_turned_off': _isTillTurnOff,
         'is_active': _isDelegationEnabled,
       };
 
@@ -156,8 +169,12 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         orElse: () => {'name': 'Selected Staff'},
       );
 
+      final durationText = _isTillTurnOff
+          ? 'Till I turn off'
+          : '${DateFormat('dd MMM').format(_startDate)} - ${DateFormat('dd MMM').format(_endDate ?? _startDate)}';
+
       final msg = _isDelegationEnabled
-          ? 'Delegation active for ${delegate['name']} (${DateFormat('dd MMM').format(_startDate)} - ${DateFormat('dd MMM').format(_endDate)})'
+          ? 'Delegation active for ${delegate['name']} ($durationText)'
           : 'Department delegation has been disabled.';
 
       if (mounted) {
@@ -173,8 +190,11 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         (s) => s['id'] == _selectedDelegateId,
         orElse: () => {'name': 'Selected Staff'},
       );
+      final durationText = _isTillTurnOff
+          ? 'Till I turn off'
+          : '${DateFormat('dd MMM').format(_startDate)} - ${DateFormat('dd MMM').format(_endDate ?? _startDate)}';
       final msg = _isDelegationEnabled
-          ? 'Delegation active for ${delegate['name']} (${DateFormat('dd MMM').format(_startDate)} - ${DateFormat('dd MMM').format(_endDate)})'
+          ? 'Delegation active for ${delegate['name']} ($durationText)'
           : 'Department delegation has been disabled.';
       if (mounted) {
         AsmitaToast.show(
@@ -343,7 +363,14 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                           children: [
                             _buildCategoryChip('All', _candidates.length),
                             const SizedBox(width: 8),
-                            _buildCategoryChip('Floor Receptionist', _candidates.where((c) => c['category'] == 'Floor Receptionist').length),
+                            _buildCategoryChip(
+                              'Receptionist',
+                              _candidates
+                                  .where((c) =>
+                                      c['category'] == 'Receptionist' ||
+                                      c['category'] == 'Floor Receptionist')
+                                  .length,
+                            ),
                             const SizedBox(width: 8),
                             _buildCategoryChip('Team Lead', _candidates.where((c) => c['category'] == 'Team Lead').length),
                             const SizedBox(width: 8),
@@ -370,6 +397,10 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                           builder: (context) {
                             final filtered = _candidates.where((c) {
                               if (_selectedCategory == 'All') return true;
+                              if (_selectedCategory == 'Receptionist') {
+                                return c['category'] == 'Receptionist' ||
+                                    c['category'] == 'Floor Receptionist';
+                              }
                               return c['category'] == _selectedCategory;
                             }).toList();
 
@@ -534,16 +565,22 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                       ),
 
                       // Quick Presets Row
-                      Row(
-                        children: [
-                          _buildPresetChip('Today (24h)', 1),
-                          const SizedBox(width: 8),
-                          _buildPresetChip('3 Days', 3),
-                          const SizedBox(width: 8),
-                          _buildPresetChip('1 Week', 7),
-                          const SizedBox(width: 8),
-                          _buildPresetChip('2 Weeks', 14),
-                        ],
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        child: Row(
+                          children: [
+                            _buildTillTurnOffChip(),
+                            const SizedBox(width: 8),
+                            _buildPresetChip('Today (24h)', 1),
+                            const SizedBox(width: 8),
+                            _buildPresetChip('3 Days', 3),
+                            const SizedBox(width: 8),
+                            _buildPresetChip('1 Week', 7),
+                            const SizedBox(width: 8),
+                            _buildPresetChip('2 Weeks', 14),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 10),
 
@@ -573,8 +610,10 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                   color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: const Icon(
-                                  Icons.calendar_month_rounded,
+                                child: Icon(
+                                  _isTillTurnOff
+                                      ? Icons.all_inclusive_rounded
+                                      : Icons.calendar_month_rounded,
                                   color: AsmitaPalette.deepNavy,
                                   size: 20,
                                 ),
@@ -594,7 +633,9 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      '${dateFormat.format(_startDate)}  →  ${dateFormat.format(_endDate)}',
+                                      _isTillTurnOff
+                                          ? '${dateFormat.format(_startDate)}  →  Till I turn off'
+                                          : '${dateFormat.format(_startDate)}  →  ${_endDate != null ? dateFormat.format(_endDate!) : "Till I turn off"}',
                                       style: const TextStyle(
                                         fontFamily: 'Montserrat',
                                         fontSize: 13,
@@ -715,38 +756,90 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
     );
   }
 
+  Widget _buildTillTurnOffChip() {
+    final isSelected = _isTillTurnOff;
+    return InkWell(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() {
+          _isTillTurnOff = true;
+          _startDate = DateTime.now();
+          _endDate = null;
+        });
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AsmitaPalette.deepNavy
+              : Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? AsmitaPalette.deepNavy : Theme.of(context).dividerColor,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.all_inclusive_rounded,
+              size: 13,
+              color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              'Till I turn off',
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: isSelected
+                    ? Colors.white
+                    : Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildPresetChip(String label, int days) {
     final now = DateTime.now();
-    final isCurrent = _endDate.difference(_startDate).inDays == days &&
+    final isCurrent = !_isTillTurnOff &&
+        _endDate != null &&
+        _endDate!.difference(_startDate).inDays == days &&
         _startDate.day == now.day &&
         _startDate.month == now.month;
 
-    return Expanded(
-      child: InkWell(
-        onTap: () => _applyQuickPreset(days),
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: isCurrent
-                ? AsmitaPalette.deepNavy
-                : Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: isCurrent ? AsmitaPalette.deepNavy : Theme.of(context).dividerColor,
-            ),
+    return InkWell(
+      onTap: () => _applyQuickPreset(days),
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isCurrent
+              ? AsmitaPalette.deepNavy
+              : Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isCurrent ? AsmitaPalette.deepNavy : Theme.of(context).dividerColor,
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 10,
-              fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600,
-              color: isCurrent
-                  ? Colors.white
-                  : Theme.of(context).colorScheme.onSurface,
-            ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 10,
+            fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600,
+            color: isCurrent
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ),

@@ -36,11 +36,16 @@ class SearchInviteByCode extends GuardGateEvent {
 class CheckInPreApprovedVisitor extends GuardGateEvent {
   final String inviteId;
   final bool isPreApproved;
+  final String? photoBase64;
 
-  const CheckInPreApprovedVisitor(this.inviteId, {this.isPreApproved = true});
+  const CheckInPreApprovedVisitor(
+    this.inviteId, {
+    this.isPreApproved = true,
+    this.photoBase64,
+  });
 
   @override
-  List<Object?> get props => [inviteId, isPreApproved];
+  List<Object?> get props => [inviteId, isPreApproved, photoBase64];
 }
 
 class SubmitWalkInVisitor extends GuardGateEvent {
