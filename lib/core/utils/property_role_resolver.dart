@@ -106,6 +106,30 @@ class PropertyRoleResolver {
     return AsmitaPropertyType.residential;
   }
 
+  /// Determines if current context or user belongs to an Industrial / Corporate campus
+  static bool isIndustrialContext(UserModel? user, {String? propertyType}) {
+    if (propertyType != null && propertyType.isNotEmpty) {
+      if (parsePropertyType(propertyType) == AsmitaPropertyType.industrial) return true;
+    }
+    if (user == null) return false;
+    if (user.propertyType != null && user.propertyType!.isNotEmpty) {
+      if (parsePropertyType(user.propertyType) == AsmitaPropertyType.industrial) return true;
+    }
+    final r = normalizeRole(user.primaryRole, scope: user.roleScope, power: user.rolePower);
+    if (r == 'director' || r == 'employee' || r == 'receptionist' || r == 'facility') {
+      return true;
+    }
+    final s = (user.roleScope ?? '').toLowerCase();
+    if (s == 'corporate' || s == 'industrial' || s == 'operations' || s == 'management') {
+      return true;
+    }
+    final society = (user.societyName ?? '').toLowerCase();
+    if (society.contains('corporate') || society.contains('industrial') || society.contains('campus') || society.contains('tech park')) {
+      return true;
+    }
+    return false;
+  }
+
   /// Human-friendly display title for the role
   static String formatRoleTitle(String? rawRole) {
     if (rawRole == null || rawRole.trim().isEmpty) return 'Member';

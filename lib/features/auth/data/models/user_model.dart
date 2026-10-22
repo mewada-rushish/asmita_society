@@ -65,6 +65,7 @@ class UserModel {
   final Map<String, bool> permissions;
   final String? roleScope;
   final int? rolePower;
+  final String? propertyType;
 
   UserModel({
     required this.userId,
@@ -83,6 +84,7 @@ class UserModel {
     this.permissions = const {},
     this.roleScope,
     this.rolePower,
+    this.propertyType,
   });
 
   /// Dynamic capability check based on backend platform settings
@@ -140,6 +142,7 @@ class UserModel {
       rolePower: json['role_power'] is int
           ? json['role_power'] as int
           : int.tryParse(json['role_power']?.toString() ?? json['power']?.toString() ?? ''),
+      propertyType: json['property_type']?.toString() ?? json['property_profile']?.toString(),
     );
   }
 
@@ -161,6 +164,7 @@ class UserModel {
       'permissions': permissions,
       'role_scope': roleScope,
       'role_power': rolePower,
+      'property_type': propertyType,
     };
   }
 
@@ -181,6 +185,7 @@ class UserModel {
     Map<String, bool>? permissions,
     String? roleScope,
     int? rolePower,
+    String? propertyType,
   }) {
     return UserModel(
       userId: userId ?? this.userId,
@@ -199,6 +204,7 @@ class UserModel {
       permissions: permissions ?? this.permissions,
       roleScope: roleScope ?? this.roleScope,
       rolePower: rolePower ?? this.rolePower,
+      propertyType: propertyType ?? this.propertyType,
     );
   }
 }

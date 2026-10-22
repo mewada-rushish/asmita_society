@@ -21,6 +21,8 @@ import '../../../visitor_management/bloc/industrial_visit_state.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
 import '../../../visitor_management/presentation/widgets/acknowledge_action_button.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'dart:math';
+import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
 /// Director Role Dashboard:
 /// - Executive overview and real-time visitor KPI metrics
@@ -566,8 +568,12 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                           ),
                           const SizedBox(height: 20),
 
-                          // Quick Action Bar
-                          _buildQuickActionBar(context),
+                          // 4-Icon Executive Action Grid
+                          _buildFourIconGrid(context),
+                          const SizedBox(height: 18),
+
+                          // 2-Column Waiting Grid (Who is Waiting, Waiting Since)
+                          _buildWaitingGrid(context, visits),
                           const SizedBox(height: 20),
 
                           // Section Header with Filter Chips
@@ -803,25 +809,1319 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     );
   }
 
-  Widget _buildQuickActionBar(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: () => _showPreApproveModal(context),
-        icon: const Icon(Icons.add_moderator_outlined, size: 18),
-        label: const Text(
-          'Issue VIP Pass',
-          style: TextStyle(fontFamily: 'Montserrat', fontSize: 13, fontWeight: FontWeight.bold),
+  // =========================================================================
+  // 4-ICON EXECUTIVE ACTION GRID
+  // =========================================================================
+  Widget _buildFourIconGrid(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final actions = [
+      _ExecutiveActionItem(
+        title: 'Pre-Approve',
+        subtitle: 'Meetings & Guests',
+        icon: Icons.event_available_rounded,
+        gradientColors: const [Color(0xFF4F46E5), Color(0xFF3730A3)],
+        onTap: () => _showPreApproveModal(context),
+      ),
+      _ExecutiveActionItem(
+        title: 'Issue VIP Pass',
+        subtitle: 'Priority Clearance',
+        icon: Icons.workspace_premium_rounded,
+        gradientColors: const [Color(0xFFD97706), Color(0xFFB45309)],
+        onTap: () => _showVipPassModal(context),
+      ),
+      _ExecutiveActionItem(
+        title: 'Car Valet',
+        subtitle: 'Take Out to gate',
+        icon: Icons.directions_car_filled_rounded,
+        gradientColors: const [Color(0xFF0284C7), Color(0xFF0369A1)],
+        onTap: () => _showCarValetModal(context),
+      ),
+      _ExecutiveActionItem(
+        title: 'Security',
+        subtitle: 'Gate & Escort Desk',
+        icon: Icons.shield_rounded,
+        gradientColors: const [Color(0xFFDC2626), Color(0xFF991B1B)],
+        onTap: () => _showSecurityModal(context),
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: _buildActionTile(context, actions[0], isDark)),
+            const SizedBox(width: 10),
+            Expanded(child: _buildActionTile(context, actions[1], isDark)),
+          ],
         ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AsmitaPalette.deepNavy,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 13),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 2,
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(child: _buildActionTile(context, actions[2], isDark)),
+            const SizedBox(width: 10),
+            Expanded(child: _buildActionTile(context, actions[3], isDark)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionTile(
+    BuildContext context,
+    _ExecutiveActionItem item,
+    bool isDark,
+  ) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          item.onTap();
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: item.gradientColors,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: item.gradientColors.first.withValues(alpha: 0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(item.icon, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      item.title,
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      item.subtitle,
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 10,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  // =========================================================================
+  // 2-COLUMN WAITING GRID (Who is Waiting & Waiting Since)
+  // =========================================================================
+  Widget _buildWaitingGrid(BuildContext context, List<IndustrialVisitModel> visits) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final waitingVisits = visits.where((v) => v.isPending || v.heldAtGate).toList();
+
+    String waitingSinceDuration = '0 mins';
+    String waitingSinceTime = 'Queue Clear';
+    if (waitingVisits.isNotEmpty) {
+      IndustrialVisitModel oldest = waitingVisits.first;
+      for (final v in waitingVisits) {
+        final t = v.checkInAt ?? v.createdAt;
+        final ot = oldest.checkInAt ?? oldest.createdAt;
+        if (t != null && ot != null && t.isBefore(ot)) {
+          oldest = v;
+        }
+      }
+      final oldestTime = oldest.checkInAt ?? oldest.createdAt ?? DateTime.now();
+      final diff = DateTime.now().difference(oldestTime);
+      if (diff.inMinutes < 60) {
+        waitingSinceDuration = '${diff.inMinutes.clamp(1, 999)} mins';
+      } else {
+        waitingSinceDuration = '${diff.inHours}h ${diff.inMinutes % 60}m';
+      }
+      waitingSinceTime = DateFormat('hh:mm a').format(oldestTime);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            // Left Column: Who is Waiting
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: waitingVisits.isNotEmpty
+                        ? const Color(0xFF2563EB).withValues(alpha: 0.4)
+                        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                    width: waitingVisits.isNotEmpty ? 1.5 : 1.0,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.people_alt_rounded,
+                            color: Color(0xFF2563EB),
+                            size: 18,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: waitingVisits.isNotEmpty
+                                ? const Color(0xFF2563EB).withValues(alpha: 0.12)
+                                : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            waitingVisits.isNotEmpty ? '${waitingVisits.length} Waiting' : 'Clear',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: waitingVisits.isNotEmpty
+                                  ? const Color(0xFF2563EB)
+                                  : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Who is Waiting',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      waitingVisits.isNotEmpty
+                          ? waitingVisits.first.visitorName
+                          : 'No visitors waiting',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      waitingVisits.isNotEmpty
+                          ? (waitingVisits.first.departmentName ?? 'At Reception Gate')
+                          : 'Lobby & gates clear',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Right Column: Waiting Since
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: waitingVisits.isNotEmpty
+                        ? const Color(0xFFD97706).withValues(alpha: 0.4)
+                        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                    width: waitingVisits.isNotEmpty ? 1.5 : 1.0,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD97706).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.timer_outlined,
+                            color: Color(0xFFD97706),
+                            size: 18,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: waitingVisits.isNotEmpty
+                                ? const Color(0xFFFEF3C7)
+                                : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            waitingVisits.isNotEmpty ? 'Active Wait' : '0m',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: waitingVisits.isNotEmpty
+                                  ? const Color(0xFFB45309)
+                                  : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Waiting Since',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      waitingVisits.isNotEmpty ? waitingSinceDuration : '0 mins',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: waitingVisits.isNotEmpty
+                            ? const Color(0xFFD97706)
+                            : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      waitingVisits.isNotEmpty
+                          ? 'Arrival: $waitingSinceTime'
+                          : 'Reception queue empty',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        // Live Actionable Waiting Queue Rows if visitors exist
+        if (waitingVisits.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFD97706),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Awaiting Admission (${waitingVisits.length})',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Text(
+                      'Action Required',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFD97706),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ...waitingVisits.take(3).map((v) => _buildWaitingQueueItem(context, v, isDark)),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildWaitingQueueItem(
+    BuildContext context,
+    IndustrialVisitModel visit,
+    bool isDark,
+  ) {
+    final arrivalTime = visit.checkInAt ?? visit.createdAt ?? DateTime.now();
+    final diff = DateTime.now().difference(arrivalTime);
+    final diffStr = diff.inMinutes < 60 ? '${diff.inMinutes.clamp(1, 999)}m ago' : '${diff.inHours}h ago';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Left: Avatar + Details
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
+              ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              visit.visitorName.isNotEmpty ? visit.visitorName[0].toUpperCase() : 'V',
+              style: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  visit.visitorName,
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  '${visit.departmentName ?? 'Guest'} • ${visit.purpose ?? 'Visit'}',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 10.5,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Right: Waiting time & Decisions
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  diffStr,
+                  style: const TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFB45309),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  InkWell(
+                    onTap: () => _handleDecide(context, visit.id, 'REJECT'),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AsmitaPalette.actionRed.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'Decline',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: AsmitaPalette.actionRed,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  InkWell(
+                    onTap: () => _handleDecide(context, visit.id, 'APPROVE'),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF16A34A),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'Admit',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =========================================================================
+  // FUNCTIONAL MODAL: ISSUE VIP PASS
+  // =========================================================================
+  void _showVipPassModal(BuildContext context) {
+    final nameCtrl = TextEditingController();
+    final orgCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    final vehicleCtrl = TextEditingController();
+    bool escortRequired = true;
+    String accessScope = 'Floor 8 Executive HQ';
+
+    showAsmitaBottomSheet(
+      context: context,
+      title: 'Issue Executive VIP Pass',
+      child: StatefulBuilder(
+        builder: (ctx, setModalState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 12,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Pre-authorizes instant priority gate clearance with executive protocol.',
+                    style: TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: nameCtrl,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: InputDecoration(
+                      labelText: 'VIP Visitor Name * (Mandatory)',
+                      hintText: 'e.g. Dr. Rajesh Verma',
+                      prefixIcon: const Icon(Icons.person_outline, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: orgCtrl,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: InputDecoration(
+                      labelText: 'Company / Organization / Title',
+                      hintText: 'e.g. KPMG / Board Member / Govt Delegate',
+                      prefixIcon: const Icon(Icons.business_outlined, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: phoneCtrl,
+                          keyboardType: TextInputType.phone,
+                          maxLength: 10,
+                          decoration: InputDecoration(
+                            labelText: 'Mobile Number',
+                            counterText: '',
+                            hintText: '9876543210',
+                            prefixIcon: const Icon(Icons.phone_outlined, size: 20),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            filled: true,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: vehicleCtrl,
+                          textCapitalization: TextCapitalization.characters,
+                          decoration: InputDecoration(
+                            labelText: 'Vehicle No (Optional)',
+                            hintText: 'MH 04 AB 1234',
+                            prefixIcon: const Icon(Icons.directions_car_outlined, size: 20),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            filled: true,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: accessScope,
+                    decoration: InputDecoration(
+                      labelText: 'VIP Access Level',
+                      prefixIcon: const Icon(Icons.lock_open_rounded, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'Floor 8 Executive HQ',
+                        child: Text('Floor 8 Executive HQ Suite'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Boardroom Suite',
+                        child: Text('Boardroom & Conference Wing'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Full Campus Access',
+                        child: Text('Full Industrial Campus Access'),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setModalState(() => accessScope = val);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    title: const Text(
+                      'Assign Gate 1 VIP Escort',
+                      style: TextStyle(fontFamily: 'Montserrat', fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: const Text(
+                      'Security staff escorts guest directly to your executive cabin.',
+                      style: TextStyle(fontSize: 11, color: AsmitaPalette.textLight),
+                    ),
+                    value: escortRequired,
+                    activeTrackColor: const Color(0xFFD97706),
+                    onChanged: (val) => setModalState(() => escortRequired = val),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  const SizedBox(height: 18),
+                  ElevatedButton(
+                    onPressed: () {
+                      final name = nameCtrl.text.trim();
+                      if (name.isEmpty) {
+                        AsmitaToast.show(
+                          context,
+                          message: 'Visitor Name is mandatory for VIP Passes.',
+                          type: AsmitaToastType.error,
+                        );
+                        return;
+                      }
+
+                      Navigator.pop(ctx);
+                      final randomPass = 'VIP-${1000 + Random().nextInt(9000)}';
+                      _showVipPassSuccessDialog(
+                        context,
+                        passCode: randomPass,
+                        visitorName: name,
+                        organization: orgCtrl.text.trim().isNotEmpty ? orgCtrl.text.trim() : 'Executive Guest',
+                        accessScope: accessScope,
+                        hasEscort: escortRequired,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AsmitaPalette.deepNavy,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text(
+                      'Generate VIP Pass',
+                      style: TextStyle(fontFamily: 'Montserrat', fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showVipPassSuccessDialog(
+    BuildContext context, {
+    required String passCode,
+    required String visitorName,
+    required String organization,
+    required String accessScope,
+    required bool hasEscort,
+  }) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.all(20),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: const BoxDecoration(
+                color: Color(0xFFFEF3C7),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.workspace_premium_rounded,
+                color: Color(0xFFD97706),
+                size: 38,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'VIP Pass Issued',
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$visitorName • $organization',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFD97706), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFD97706).withValues(alpha: 0.15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  QrImageView(
+                    data: passCode,
+                    size: 140,
+                    eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: Color(0xFF1E3A8A)),
+                    dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: Color(0xFF1E3A8A)),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '#$passCode',
+                    style: const TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.2,
+                      color: Color(0xFF1E3A8A),
+                    ),
+                  ),
+                  Text(
+                    accessScope,
+                    style: const TextStyle(fontSize: 11, color: AsmitaPalette.textLight),
+                  ),
+                  if (hasEscort) ...[
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDCFCE7),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        '✓ Gate 1 Escort Officer Assigned',
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: passCode));
+                      HapticFeedback.selectionClick();
+                      AsmitaToast.show(
+                        context,
+                        message: 'Pass Code #$passCode copied to clipboard',
+                        type: AsmitaToastType.success,
+                      );
+                    },
+                    icon: const Icon(Icons.copy_rounded, size: 16),
+                    label: const Text('Copy Code', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AsmitaPalette.deepNavy,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Done', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // =========================================================================
+  // FUNCTIONAL MODAL: CAR VALET (Take Out to gate.)
+  // =========================================================================
+  void _showCarValetModal(BuildContext context) {
+    String selectedVehicle = 'Mercedes-Benz E220d (MH 04 AB 1234)';
+    String targetGate = 'Gate 1 - Main Portico';
+    String timing = 'Immediate (Ready in ~5 min)';
+    final notesCtrl = TextEditingController();
+
+    showAsmitaBottomSheet(
+      context: context,
+      title: 'Car Valet (Take Out to Gate)',
+      child: StatefulBuilder(
+        builder: (ctx, setModalState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 12,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Dispatches facility valet to retrieve your executive vehicle and park at the designated gate.',
+                    style: TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedVehicle,
+                    decoration: InputDecoration(
+                      labelText: 'Select Vehicle',
+                      prefixIcon: const Icon(Icons.directions_car_rounded, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'Mercedes-Benz E220d (MH 04 AB 1234)',
+                        child: Text('Mercedes E220d • MH 04 AB 1234'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'BMW 730Ld (MH 01 CZ 9999)',
+                        child: Text('BMW 730Ld • MH 01 CZ 9999'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Audi A6 (MH 02 EF 5678)',
+                        child: Text('Audi A6 • MH 02 EF 5678'),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setModalState(() => selectedVehicle = val);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: targetGate,
+                    decoration: InputDecoration(
+                      labelText: 'Delivery Destination Gate',
+                      prefixIcon: const Icon(Icons.meeting_room_rounded, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'Gate 1 - Main Portico',
+                        child: Text('Gate 1 - Main Portico (Express)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Gate 2 - Executive Bay',
+                        child: Text('Gate 2 - Executive Bay'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'VIP Loading Porch',
+                        child: Text('VIP Loading Bay Porch'),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setModalState(() => targetGate = val);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: timing,
+                    decoration: InputDecoration(
+                      labelText: 'Vehicle Ready Timing',
+                      prefixIcon: const Icon(Icons.schedule_rounded, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'Immediate (Ready in ~5 min)',
+                        child: Text('Immediate (Ready in ~5 min)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'In 10 Minutes',
+                        child: Text('In 10 Minutes'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'In 20 Minutes',
+                        child: Text('In 20 Minutes'),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setModalState(() => timing = val);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: notesCtrl,
+                    decoration: InputDecoration(
+                      labelText: 'Valet Instructions (Optional)',
+                      hintText: 'e.g., Turn on AC, park at VIP porch lane',
+                      prefixIcon: const Icon(Icons.notes_rounded, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _showValetSuccessDialog(
+                        context,
+                        vehicle: selectedVehicle,
+                        targetGate: targetGate,
+                        timing: timing,
+                      );
+                    },
+                    icon: const Icon(Icons.send_rounded, size: 18),
+                    label: const Text(
+                      'Dispatch Valet to Gate',
+                      style: TextStyle(fontFamily: 'Montserrat', fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0284C7),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showValetSuccessDialog(
+    BuildContext context, {
+    required String vehicle,
+    required String targetGate,
+    required String timing,
+  }) {
+    final ticketNo = 'VALET-${1000 + Random().nextInt(9000)}';
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.all(20),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: const BoxDecoration(
+                color: Color(0xFFE0F2FE),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.directions_car_filled_rounded,
+                color: Color(0xFF0284C7),
+                size: 38,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Valet Dispatched',
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Ticket #$ticketNo • Assigned to Valet Desk',
+              style: const TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+            ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF86EFAC)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: const [
+                      Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 16),
+                      SizedBox(width: 6),
+                      Text(
+                        'Driver En Route: Mohan Sharma (Ext 112)',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF166534)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Retrieving $vehicle from Basement 2 (Bay B-14). Vehicle will be ready at $targetGate ($timing).',
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF14532D)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _callContact('Valet Control Desk', '+919820110112');
+                    },
+                    icon: const Icon(Icons.phone, size: 14),
+                    label: const Text('Call Valet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0284C7),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Dismiss', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // =========================================================================
+  // FUNCTIONAL MODAL: SECURITY COMMAND
+  // =========================================================================
+  void _showSecurityModal(BuildContext context) {
+    showAsmitaBottomSheet(
+      context: context,
+      title: 'Campus Security Command',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Direct hotline connection to campus security gates and escort control desks.',
+            style: TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+          ),
+          const SizedBox(height: 16),
+          _buildHotlineTile(
+            context,
+            icon: Icons.shield_rounded,
+            title: 'Gate 1 Security Control',
+            subtitle: 'Ext: 104 • Main Entrance & VIP Escorts',
+            onCall: () {
+              Navigator.pop(context);
+              _callContact('Gate 1 Security', '+919820110104');
+            },
+          ),
+          const SizedBox(height: 8),
+          _buildHotlineTile(
+            context,
+            icon: Icons.support_agent_rounded,
+            title: 'Floor 8 Executive Reception',
+            subtitle: 'Ext: 101 • Dedicated Director Support',
+            onCall: () {
+              Navigator.pop(context);
+              _callContact('Floor Reception', '+919820110101');
+            },
+          ),
+          const SizedBox(height: 8),
+          _buildHotlineTile(
+            context,
+            icon: Icons.admin_panel_settings_rounded,
+            title: 'Chief Security Officer (CSO)',
+            subtitle: 'Ext: 100 • Head of Campus Security',
+            onCall: () {
+              Navigator.pop(context);
+              _callContact('Campus CSO', '+919820110100');
+            },
+          ),
+          const SizedBox(height: 8),
+          _buildHotlineTile(
+            context,
+            icon: Icons.emergency_rounded,
+            title: 'Campus Emergency & Medical',
+            subtitle: 'Ext: 999 • Rapid Response Team',
+            onCall: () {
+              Navigator.pop(context);
+              _callContact('Emergency Response', '+919820110911');
+            },
+          ),
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 8),
+          const Text(
+            'Quick Security Dispatches',
+            style: TextStyle(fontFamily: 'Montserrat', fontSize: 13, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    AsmitaToast.show(
+                      context,
+                      message: 'VIP Escort Officer dispatched to Gate 1 Main Portico.',
+                      type: AsmitaToastType.success,
+                    );
+                  },
+                  icon: const Icon(Icons.person_pin_circle_rounded, size: 16),
+                  label: const Text('Request Escort', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AsmitaPalette.deepNavy,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    AsmitaToast.show(
+                      context,
+                      message: 'Priority Express clearance alert transmitted to all gates.',
+                      type: AsmitaToastType.info,
+                    );
+                  },
+                  icon: const Icon(Icons.notification_important_rounded, size: 16),
+                  label: const Text('Express Lane Alert', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD97706),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _callContact(String title, String phone) async {
+    final cleanPhone = phone.replaceAll(RegExp(r'\s+'), '');
+    final uri = Uri.parse('tel:$cleanPhone');
+    try {
+      final launched = await url_launcher.launchUrl(uri);
+      if (!launched && mounted) {
+        AsmitaToast.show(
+          context,
+          message: 'Calling $title: $phone',
+          type: AsmitaToastType.info,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        AsmitaToast.show(
+          context,
+          message: 'Connecting to $title: $phone',
+          type: AsmitaToastType.info,
+        );
+      }
+    }
   }
 
   Widget _segmentedTab(
@@ -1596,4 +2896,20 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
       ),
     );
   }
+}
+
+class _ExecutiveActionItem {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final List<Color> gradientColors;
+  final VoidCallback onTap;
+
+  const _ExecutiveActionItem({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.gradientColors,
+    required this.onTap,
+  });
 }
