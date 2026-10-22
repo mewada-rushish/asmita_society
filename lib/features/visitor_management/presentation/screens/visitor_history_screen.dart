@@ -1,5 +1,7 @@
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
@@ -1116,205 +1118,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                               rawHistory[index],
                               currentUserName,
                             );
-                            return InkWell(
-                              onTap: () =>
-                                  _showVisitorDetailsModal(context, item),
-                              borderRadius: BorderRadius.circular(16),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: Theme.of(context).dividerColor,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                padding: const EdgeInsets.all(16),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 44,
-                                      height: 44,
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(
-                                          context,
-                                        ).scaffoldBackgroundColor,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        item['icon'] as IconData,
-                                        color: item['brandColor'] as Color,
-                                        size: 22,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  item['titleText'] as String,
-                                                  style: textTheme.titleLarge
-                                                      ?.copyWith(
-                                                        fontFamily: 'Montserrat',
-                                                        fontSize: 15,
-                                                        fontWeight: FontWeight.w800,
-                                                        color: Theme.of(
-                                                          context,
-                                                        ).colorScheme.primary,
-                                                      ),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                              if (item['passCode'] != null &&
-                                                  item['passCode'].toString().isNotEmpty) ...[
-                                                const SizedBox(width: 6),
-                                                Container(
-                                                  padding: const EdgeInsets.symmetric(
-                                                    horizontal: 7,
-                                                    vertical: 2,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: (item['brandColor'] as Color)
-                                                        .withValues(alpha: 0.1),
-                                                    borderRadius: BorderRadius.circular(6),
-                                                    border: Border.all(
-                                                      color: (item['brandColor'] as Color)
-                                                          .withValues(alpha: 0.3),
-                                                    ),
-                                                  ),
-                                                  child: Text(
-                                                    'PASS #${item['passCode']}',
-                                                    style: TextStyle(
-                                                      fontFamily: 'Montserrat',
-                                                      fontSize: 10,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: item['brandColor'] as Color,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            item['subtitleText'] as String,
-                                            style: textTheme.bodyMedium
-                                                ?.copyWith(
-                                                  fontFamily: 'Poppins',
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: Theme.of(
-                                                    context,
-                                                  ).textTheme.bodyMedium?.color,
-                                                ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          if (item['inviteSubType'] ==
-                                                  'FREQUENT' ||
-                                              item['allowedDays'] != null) ...[
-                                            if (item['startTime'] != null &&
-                                                item['endTime'] != null) ...[
-                                              const SizedBox(height: 6),
-                                              Text(
-                                                '${_formatRawTime(item['startTime'])} - ${_formatRawTime(item['endTime'])}',
-                                                style: textTheme.bodySmall
-                                                    ?.copyWith(
-                                                      fontFamily: 'Poppins',
-                                                      fontSize: 11,
-                                                      color: Theme.of(
-                                                        context,
-                                                      ).colorScheme.primary,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                              ),
-                                            ],
-                                          ],
-                                          if (item['isOutsideSchedule'] ==
-                                              true) ...[
-                                            const SizedBox(height: 4),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 6,
-                                                    vertical: 2,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.red.shade50,
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                                border: Border.all(
-                                                  color: Colors.red.shade200,
-                                                ),
-                                              ),
-                                              child: const Text(
-                                                '⚠️ Outside Schedule',
-                                                style: TextStyle(
-                                                  fontFamily: 'Poppins',
-                                                  fontSize: 10,
-                                                  color: Colors.red,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          children: [
-                                            Text(
-                                              item['entryTime'] as String,
-                                              style: textTheme.bodyLarge?.copyWith(
-                                                fontFamily: 'Poppins',
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w600,
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.primary,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              item['date'] as String,
-                                              style: textTheme.bodyMedium?.copyWith(
-                                                fontFamily: 'Poppins',
-                                                fontSize: 11,
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.primary,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        if (item['qrCode'] != null &&
-                                            item['qrCode'].toString().isNotEmpty) ...[
-                                          const SizedBox(width: 8),
-                                          Icon(
-                                            Icons.qr_code_2_rounded,
-                                            size: 24,
-                                            color: Theme.of(context).colorScheme.primary,
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
+                            return _buildVisitorHistoryCard(context, item);
                           },
                         ),
                       ),
@@ -1343,6 +1147,506 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
           style: TextStyle(
             color: Theme.of(context).colorScheme.surface,
             fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVisitorHistoryCard(BuildContext context, Map<String, dynamic> item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isPreApproved = item['isPreApproved'] == true;
+    final isOutsideSchedule = item['isOutsideSchedule'] == true;
+    final passCode = item['passCode']?.toString();
+    final qrCode = item['qrCode']?.toString();
+    final hasPassCode = passCode != null && passCode.isNotEmpty;
+    final hasQrCode = qrCode != null && qrCode.isNotEmpty;
+
+    // Gradient determination
+    List<Color> gradientColors;
+    final category = (item['category'] ?? '').toString().toLowerCase();
+    final company = (item['company'] ?? '').toString().toLowerCase();
+
+    if (category == 'delivery') {
+      gradientColors = const [Color(0xFFD97706), Color(0xFFF59E0B)];
+    } else if (company.contains('uber') || category.contains('cab')) {
+      gradientColors = const [Color(0xFF334155), Color(0xFF1E293B)];
+    } else if (isPreApproved) {
+      gradientColors = const [Color(0xFF1E293B), Color(0xFF27347B)];
+    } else {
+      gradientColors = const [Color(0xFF1E3A8A), Color(0xFF2563EB)];
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isOutsideSchedule
+              ? AsmitaPalette.actionRed.withValues(alpha: 0.5)
+              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+          width: isOutsideSchedule ? 1.5 : 1.1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isOutsideSchedule
+                ? AsmitaPalette.actionRed.withValues(alpha: isDark ? 0.15 : 0.08)
+                : (isDark ? Colors.black.withValues(alpha: 0.35) : const Color(0x0A0F172A)),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: isDark ? Colors.transparent : const Color(0x050F172A),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showVisitorDetailsModal(context, item),
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Row: Avatar + Title/Host + Action/QR Pill
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Squircle Avatar
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: gradientColors,
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: gradientColors.last.withValues(alpha: isDark ? 0.35 : 0.25),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.18),
+                              width: 1.2,
+                            ),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              item['icon'] as IconData,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                          ),
+                        ),
+                        if (isPreApproved)
+                          Positioned(
+                            right: -2,
+                            bottom: -2,
+                            child: Container(
+                              width: 18,
+                              height: 18,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF59E0B),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.surface,
+                                  width: 1.8,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.2),
+                                    blurRadius: 3,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.star_rounded,
+                                size: 11,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(width: 14),
+
+                    // Title & Subtitle
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item['titleText'] as String,
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              letterSpacing: -0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              if (isPreApproved) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? const Color(0xFF78350F).withValues(alpha: 0.35)
+                                        : const Color(0xFFFEF3C7),
+                                    borderRadius: BorderRadius.circular(5),
+                                    border: Border.all(
+                                      color: isDark
+                                          ? const Color(0xFFB45309).withValues(alpha: 0.6)
+                                          : const Color(0xFFFDE68A),
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.star_rounded, size: 10, color: Color(0xFFD97706)),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        'VIP PASS',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w800,
+                                          color: isDark
+                                              ? const Color(0xFFFDE68A)
+                                              : const Color(0xFFB45309),
+                                          letterSpacing: 0.4,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              Flexible(
+                                child: Text(
+                                  item['subtitleText'] as String,
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark
+                                        ? AsmitaPalette.textDarkModeMuted
+                                        : const Color(0xFF64748B),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (isOutsideSchedule) ...[
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? const Color(0xFF450A0A)
+                                    : const Color(0xFFFEF2F2),
+                                borderRadius: BorderRadius.circular(5),
+                                border: Border.all(
+                                  color: isDark
+                                      ? const Color(0xFF7F1D1D)
+                                      : const Color(0xFFFECACA),
+                                ),
+                              ),
+                              child: const Text(
+                                '⚠️ Outside Schedule',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 10,
+                                  color: Color(0xFFDC2626),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(width: 10),
+
+                    // Right affordance: QR badge or chevron
+                    if (hasQrCode)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.qr_code_2_rounded,
+                              size: 16,
+                              color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'QR',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 13,
+                        color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                      ),
+                  ],
+                ),
+
+                // Inset Executive Meta Footer
+                Container(
+                  margin: const EdgeInsets.only(top: 13),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.7) : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF334155).withValues(alpha: 0.6) : const Color(0xFFE2E8F0),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // 1. Time & Date
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.schedule_rounded,
+                              size: 14,
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'TIME & DATE',
+                                    style: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: 8.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                      letterSpacing: 0.4,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${item['entryTime']} • ${item['date']}',
+                                    style: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Divider
+                      Container(
+                        width: 1,
+                        height: 24,
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      ),
+
+                      // 2. Gate or Schedule Slot
+                      if (item['inviteSubType'] == 'FREQUENT' && item['startTime'] != null && item['endTime'] != null)
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.timelapse_rounded,
+                                size: 14,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'SLOT',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 8.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                        letterSpacing: 0.4,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${_formatRawTime(item['startTime'])} - ${_formatRawTime(item['endTime'])}',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Icon(
+                                item['vehicleNumber'] != null
+                                    ? Icons.directions_car_filled_rounded
+                                    : Icons.meeting_room_rounded,
+                                size: 14,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      item['vehicleNumber'] != null ? 'VEHICLE' : 'ACCESS GATE',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 8.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                        letterSpacing: 0.4,
+                                      ),
+                                    ),
+                                    Text(
+                                      item['vehicleNumber']?.toString() ??
+                                          (item['gate'] as String? ?? 'Main Gate'),
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      // 3. Security Pass Code Ticket (if passCode exists)
+                      if (hasPassCode) ...[
+                        const SizedBox(width: 4),
+                        InkWell(
+                          onTap: () {
+                            Clipboard.setData(ClipboardData(text: passCode));
+                            HapticFeedback.selectionClick();
+                            AsmitaToast.show(
+                              context,
+                              message: 'Pass code #$passCode copied to clipboard',
+                              type: AsmitaToastType.success,
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.vpn_key_rounded,
+                                  size: 11,
+                                  color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '#$passCode',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.5,
+                                    color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
