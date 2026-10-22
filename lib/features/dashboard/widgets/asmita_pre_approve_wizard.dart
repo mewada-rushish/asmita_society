@@ -20,6 +20,7 @@ import '../../visitor_management/presentation/screens/invite_pass_screen.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/utils/property_role_resolver.dart';
+import 'package:asmita_society/core/widgets/asmita_text_field.dart';
 class AsmitaPreApproveWizard extends StatefulWidget {
   final bool isGuardMode;
 
@@ -51,6 +52,13 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     return towers.entries
         .map<Map<String, dynamic>>((e) => <String, dynamic>{'id': e.key, 'name': e.value})
         .toList();
+  }
+
+  int? get _effectiveTowerId {
+    if (_selectedTowerId != null) return _selectedTowerId;
+    final towers = _getTowers();
+    if (towers.length == 1) return towers.first['id'] as int;
+    return null;
   }
 
   List<FlatMapping> _getFlatsForTower(int towerId) {
@@ -152,6 +160,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   );
                 })
                 .toList();
+
+            final towers = _getTowers();
+            if (towers.length == 1) {
+              _selectedTowerId = towers.first['id'] as int;
+            }
           });
         }
       }
@@ -522,100 +535,178 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (widget.isGuardMode) ...[
-          const Text(
-            'Select Tower & Flat',
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AsmitaPalette.textDark,
-            ),
+          Builder(
+            builder: (context) {
+              final towers = _getTowers();
+              final hasMultipleTowers = towers.length > 1;
+              final towerId = _effectiveTowerId;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        hasMultipleTowers ? 'Select Tower & Flat' : 'Select Flat / Unit',
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AsmitaPalette.textDark,
+                        ),
+                      ),
+                      if (!hasMultipleTowers && towers.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.apartment_rounded, size: 12, color: AsmitaPalette.deepNavy),
+                              const SizedBox(width: 4),
+                              Text(
+                                towers.first['name'],
+                                style: const TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: AsmitaPalette.deepNavy,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (_isLoadingFlats)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: Center(
+                        child: AsmitaLoadingIndicator(
+                          color: AsmitaPalette.actionRed,
+                          size: 28,
+                        ),
+                      ),
+                    )
+                  else if (hasMultipleTowers)
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: GestureDetector(
+                            onTap: _showTowerPicker,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border.all(color: AsmitaPalette.borderGrey),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      towerId != null
+                                          ? towers.firstWhere((t) => t['id'] == towerId, orElse: () => <String, dynamic>{'name': 'Tower'})['name']
+                                          : 'Tower',
+                                      style: TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 14,
+                                        color: towerId != null ? AsmitaPalette.textDark : Colors.grey.shade600,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const Icon(Icons.arrow_drop_down_rounded, color: AsmitaPalette.deepNavy),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 3,
+                          child: GestureDetector(
+                            onTap: towerId == null ? null : _showFlatPicker,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: towerId == null ? Colors.grey.shade100 : Colors.white,
+                                border: Border.all(color: AsmitaPalette.borderGrey),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      _selectedFlatMappings.isNotEmpty ? _selectedFlatMappings.map((e) => e.flatNumber).join(', ') : 'Flat',
+                                      style: TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 14,
+                                        color: _selectedFlatMappings.isNotEmpty ? AsmitaPalette.textDark : Colors.grey.shade600,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.arrow_drop_down_rounded, 
+                                    color: towerId == null ? Colors.grey : AsmitaPalette.deepNavy,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    // Single building / tower: direct full-width flat selector
+                    GestureDetector(
+                      onTap: _showFlatPicker,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: AsmitaPalette.borderGrey),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _selectedFlatMappings.isNotEmpty
+                                    ? _selectedFlatMappings.map((e) => e.flatNumber).join(', ')
+                                    : 'Select Flat / Unit',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 14,
+                                  color: _selectedFlatMappings.isNotEmpty ? AsmitaPalette.textDark : Colors.grey.shade600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const Icon(
+                              Icons.arrow_drop_down_rounded,
+                              color: AsmitaPalette.deepNavy,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                ],
+              );
+            },
           ),
-          const SizedBox(height: 8),
-          if (_isLoadingFlats)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.0),
-              child: Center(
-                child: AsmitaLoadingIndicator(
-                  color: AsmitaPalette.actionRed,
-                  size: 28,
-                ),
-              ),
-            )
-          else
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: GestureDetector(
-                    onTap: _showTowerPicker,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: AsmitaPalette.borderGrey),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _selectedTowerId != null
-                                  ? _getTowers().firstWhere((t) => t['id'] == _selectedTowerId, orElse: () => <String, dynamic>{'name': 'Tower'})['name']
-                                  : 'Tower',
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 14,
-                                color: _selectedTowerId != null ? AsmitaPalette.textDark : Colors.grey.shade600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const Icon(Icons.arrow_drop_down_rounded, color: AsmitaPalette.deepNavy),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 3,
-                  child: GestureDetector(
-                    onTap: _selectedTowerId == null ? null : _showFlatPicker,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: _selectedTowerId == null ? Colors.grey.shade100 : Colors.white,
-                        border: Border.all(color: AsmitaPalette.borderGrey),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _selectedFlatMappings.isNotEmpty ? _selectedFlatMappings.map((e) => e.flatNumber).join(', ') : 'Flat',
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 14,
-                                color: _selectedFlatMappings.isNotEmpty ? AsmitaPalette.textDark : Colors.grey.shade600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Icon(
-                            Icons.arrow_drop_down_rounded, 
-                            color: _selectedTowerId == null ? Colors.grey : AsmitaPalette.deepNavy,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          const SizedBox(height: 16),
         ],
         Text(
           widget.isGuardMode
@@ -773,7 +864,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
   void _showTowerPicker() {
     final towers = _getTowers();
-    if (towers.isEmpty) return;
+    if (towers.length <= 1) return; // Do not open picker if only 1 tower exists
 
     showAsmitaBottomSheet(
       context: context,
@@ -789,7 +880,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         itemCount: towers.length,
         itemBuilder: (context, index) {
           final tower = towers[index];
-          final isSelected = _selectedTowerId == tower['id'];
+          final isSelected = _effectiveTowerId == tower['id'];
           return InkWell(
             onTap: () {
               Navigator.pop(context);
@@ -828,9 +919,10 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   }
 
   void _showFlatPicker() {
-    if (_selectedTowerId == null) return;
+    final towerId = _effectiveTowerId;
+    if (towerId == null) return;
     
-    final flats = _getFlatsForTower(_selectedTowerId!);
+    final flats = _getFlatsForTower(towerId);
     if (flats.isEmpty) return;
 
     String searchQuery = '';
@@ -1150,64 +1242,21 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           const SizedBox(height: 24),
         ],
         if (_selectedCategory == 'Guest') ...[
-          TextField(
+          AsmitaTextField(
             controller: _visitorNameController,
+            label: 'Guest / Visitor Name (Optional)',
+            hint: 'e.g., John Doe / Partner',
+            icon: Icons.person_outline_rounded,
             textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              labelText: 'Guest / Visitor Name (Optional)',
-              hintText: 'e.g., John Doe / Partner',
-              labelStyle: const TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 13,
-                color: AsmitaPalette.textLight,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AsmitaPalette.actionRed),
-              ),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-            style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
           ),
           const SizedBox(height: 14),
-          TextField(
+          AsmitaTextField(
             controller: _mobileNumberController,
+            label: 'Mobile Number (Optional)',
+            hint: '10-digit number',
+            icon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
             maxLength: 10,
-            decoration: InputDecoration(
-              labelText: 'Mobile Number (Optional)',
-              counterText: '',
-              hintText: '10-digit number',
-              labelStyle: const TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 13,
-                color: AsmitaPalette.textLight,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AsmitaPalette.actionRed),
-              ),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-            style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
           ),
           const SizedBox(height: 16),
           Row(
@@ -1286,62 +1335,21 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextField(
+        AsmitaTextField(
           controller: _visitorNameController,
+          label: 'Visitor Name*',
+          hint: 'Full visitor name',
+          icon: Icons.person_outline_rounded,
           textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(
-            labelText: 'Visitor Name*',
-            labelStyle: const TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 13,
-              color: AsmitaPalette.textLight,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AsmitaPalette.actionRed),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-          ),
-          style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
         ),
         const SizedBox(height: 16),
-        TextField(
+        AsmitaTextField(
           controller: _mobileNumberController,
+          label: 'Mobile Number*',
+          hint: '10-digit mobile number',
+          icon: Icons.phone_outlined,
           keyboardType: TextInputType.phone,
           maxLength: 10,
-          decoration: InputDecoration(
-            labelText: 'Mobile Number*',
-            counterText: '',
-            labelStyle: const TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 13,
-              color: AsmitaPalette.textLight,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AsmitaPalette.actionRed),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-          ),
-          style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
         ),
         const SizedBox(height: 16),
         if (_selectedCategory == 'Delivery') ...[
@@ -1349,32 +1357,12 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           const SizedBox(height: 16),
         ],
         if (_selectedCategory == 'Cab' || _selectedCategory == 'Delivery') ...[
-          TextField(
+          AsmitaTextField(
             controller: _cabNoController,
+            label: 'Vehicle Number (Optional)',
+            hint: 'e.g., MH 04 AB 1234',
+            icon: Icons.directions_car_outlined,
             textCapitalization: TextCapitalization.characters,
-            decoration: InputDecoration(
-              labelText: 'Vehicle Number (Optional)',
-              labelStyle: const TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 13,
-                color: AsmitaPalette.textLight,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AsmitaPalette.actionRed),
-              ),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-            style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
           ),
           const SizedBox(height: 16),
         ],
@@ -1613,22 +1601,12 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             child: _secureCabMode
                 ? Padding(
                     padding: const EdgeInsets.only(top: 12.0),
-                    child: TextField(
+                    child: AsmitaTextField(
                       controller: _cabNoController,
+                      label: 'Cab / Vehicle Registration',
+                      hint: 'Enter Cab No. (e.g., MH 02 AB 1234)',
+                      icon: Icons.directions_car_outlined,
                       textCapitalization: TextCapitalization.characters,
-                      style: const TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 13,
-                      ),
-                      decoration: const InputDecoration(
-                        hintText: 'Enter Cab No. (e.g., MH 02 AB 1234)',
-                        filled: true,
-                        fillColor: AsmitaPalette.systemBG,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(12)),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
                     ),
                   )
                 : const SizedBox.shrink(),
@@ -1637,64 +1615,21 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         ],
 
         if (isIndustrial || _selectedCategory == 'Guest') ...[
-          TextField(
+          AsmitaTextField(
             controller: _visitorNameController,
+            label: isIndustrial ? 'Visitor Name *' : 'Guest / Visitor Name (Optional)',
+            hint: isIndustrial ? 'Full legal or corporate visitor name' : 'e.g., John Doe / Partner',
+            icon: Icons.person_outline_rounded,
             textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              labelText: isIndustrial ? 'Visitor Name *' : 'Guest / Visitor Name (Optional)',
-              hintText: isIndustrial ? 'Full legal or corporate visitor name' : 'e.g., John Doe / Partner',
-              labelStyle: const TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 13,
-                color: AsmitaPalette.textLight,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AsmitaPalette.actionRed),
-              ),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-            style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
           ),
           const SizedBox(height: 14),
-          TextField(
+          AsmitaTextField(
             controller: _mobileNumberController,
+            label: 'Mobile Number (Optional)',
+            hint: '10-digit number',
+            icon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
             maxLength: 10,
-            decoration: InputDecoration(
-              labelText: 'Mobile Number (Optional)',
-              counterText: '',
-              hintText: '10-digit number',
-              labelStyle: const TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 13,
-                color: AsmitaPalette.textLight,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AsmitaPalette.actionRed),
-              ),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-            style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
           ),
           const SizedBox(height: 16),
           _buildBottomSheetTrigger(

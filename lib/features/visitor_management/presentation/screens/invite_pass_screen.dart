@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+import 'package:flutter/services.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -12,27 +14,43 @@ class InvitePassScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bottomInset = math.max(
+      MediaQuery.viewPaddingOf(context).bottom,
+      MediaQuery.paddingOf(context).bottom,
+    );
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
+    final overlayStyle = SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      systemNavigationBarColor: Theme.of(context).scaffoldBackgroundColor,
+      systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      systemNavigationBarDividerColor: Colors.transparent,
+    );
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlayStyle,
+      child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.primary),
-          onPressed: () => Navigator.pop(context),
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.primary),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            'Visitor Pass',
+            style: textTheme.titleLarge?.copyWith(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+          centerTitle: true,
         ),
-        title: Text(
-          'Visitor Pass',
-          style: textTheme.titleLarge?.copyWith(fontSize: 18, fontWeight: FontWeight.w700),
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          children: [
-            Container(
+        body: SafeArea(
+          top: false,
+          bottom: false,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+            child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
@@ -87,15 +105,15 @@ class InvitePassScreen extends StatelessWidget {
                       border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     child: Center(
-                          child: (invite.qrCode ?? '').isNotEmpty 
-                            ? QrImageView(
-                                data: invite.qrCode ?? '',
-                                version: QrVersions.auto,
-                                size: 180.0,
-                                eyeStyle: QrEyeStyle(eyeShape: QrEyeShape.square, color: Theme.of(context).colorScheme.primary),
-                                dataModuleStyle: QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: Theme.of(context).colorScheme.primary),
-                              )
-                            : Icon(Icons.qr_code_2_rounded, size: 140, color: Theme.of(context).colorScheme.primary),
+                      child: (invite.qrCode ?? '').isNotEmpty 
+                        ? QrImageView(
+                            data: invite.qrCode ?? '',
+                            version: QrVersions.auto,
+                            size: 180.0,
+                            eyeStyle: QrEyeStyle(eyeShape: QrEyeShape.square, color: Theme.of(context).colorScheme.primary),
+                            dataModuleStyle: QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: Theme.of(context).colorScheme.primary),
+                          )
+                        : Icon(Icons.qr_code_2_rounded, size: 140, color: Theme.of(context).colorScheme.primary),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -113,10 +131,19 @@ class InvitePassScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 40),
-            ElevatedButton.icon(
-              onPressed: () {
-                final String passDetails = '''
+          ),
+        ),
+        bottomNavigationBar: Container(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          padding: EdgeInsets.fromLTRB(
+            24,
+            8,
+            24,
+            16 + bottomInset,
+          ),
+          child: ElevatedButton.icon(
+            onPressed: () {
+              final String passDetails = '''
 Visitor Pass for ${invite.companyName ?? 'Visitor'}
 Unit: Flat ${invite.unitId}
 Pass Type: ${invite.inviteType}
@@ -125,23 +152,24 @@ Pass Code: ${invite.passCode ?? 'N/A'}
 
 Please present this code at the gate.
 ''';
-                // Ignore deprecation warning for now since Share is stable or use standard Share
-                // ignore: deprecated_member_use
-                Share.share(passDetails);
-              },
-              icon: Icon(Icons.share_rounded, color: Theme.of(context).colorScheme.surface, size: 18),
-              label: Text(
-                'Share Invite Pass',
-                style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.w600, fontSize: 14),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                minimumSize: const Size(double.infinity, 54),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 0,
+              // ignore: deprecated_member_use
+              Share.share(passDetails);
+            },
+            icon: Icon(Icons.share_rounded, color: Theme.of(context).colorScheme.surface, size: 18),
+            label: Text(
+              'Share Invite Pass',
+              style: textTheme.bodyLarge?.copyWith(
+                color: Theme.of(context).colorScheme.surface,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
               ),
             ),
-          ],
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              minimumSize: const Size(double.infinity, 54),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+          ),
         ),
       ),
     );

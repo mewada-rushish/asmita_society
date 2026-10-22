@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../../../../core/config/env_config.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../bloc/industrial_visit_bloc.dart';
 import '../../bloc/industrial_visit_event.dart';
@@ -198,14 +200,35 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
                         children: [
                           Row(
                             children: [
-                              CircleAvatar(
-                                radius: 28,
-                                backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
-                                child: Text(
-                                  _matchedVisit!.visitorName.isNotEmpty ? _matchedVisit!.visitorName[0] : 'V',
-                                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AsmitaPalette.deepNavy),
-                                ),
-                              ),
+                              (_matchedVisit!.visitorPhotoUrl != null &&
+                                      _matchedVisit!.visitorPhotoUrl!.isNotEmpty)
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(28),
+                                      child: CachedNetworkImage(
+                                        imageUrl: _matchedVisit!.visitorPhotoUrl!.startsWith('http')
+                                            ? _matchedVisit!.visitorPhotoUrl!
+                                            : '${EnvConfig.baseUrl}${_matchedVisit!.visitorPhotoUrl}',
+                                        width: 56,
+                                        height: 56,
+                                        fit: BoxFit.cover,
+                                        errorWidget: (context, url, error) => CircleAvatar(
+                                          radius: 28,
+                                          backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                                          child: Text(
+                                            _matchedVisit!.visitorName.isNotEmpty ? _matchedVisit!.visitorName[0] : 'V',
+                                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AsmitaPalette.deepNavy),
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : CircleAvatar(
+                                      radius: 28,
+                                      backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                                      child: Text(
+                                        _matchedVisit!.visitorName.isNotEmpty ? _matchedVisit!.visitorName[0] : 'V',
+                                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AsmitaPalette.deepNavy),
+                                      ),
+                                    ),
                               const SizedBox(width: 14),
                               Expanded(
                                 child: Column(
