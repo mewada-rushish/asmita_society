@@ -52,9 +52,14 @@ class PermissionManagerService {
 
   /// Displays an AsmitA-branded educational dialog prompting the user
   /// to grant overlay and battery permissions for seamless gate approval alerts.
-  static Future<void> showPermissionSetupDialog(BuildContext context) async {
+  static Future<void> showPermissionSetupDialog(
+    BuildContext context, {
+    bool directToSettingsOnIOS = false,
+  }) async {
     if (!Platform.isAndroid) {
-      await openAppSettings();
+      if (directToSettingsOnIOS) {
+        await openAppSettings();
+      }
       return;
     }
 
