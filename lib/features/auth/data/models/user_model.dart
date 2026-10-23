@@ -98,6 +98,12 @@ class UserModel {
       roleDetails?['designation']?.toString() ??
       roleDetails?['leadership_role']?.toString() ??
       primaryRole;
+  int? get departmentId {
+    if (roleDetails?['department_id'] != null) {
+      return int.tryParse(roleDetails!['department_id'].toString());
+    }
+    return null;
+  }
   String get departmentName {
     if (flatMappings.isNotEmpty && flatMappings.first.flatNumber.isNotEmpty) {
       return flatMappings.first.flatNumber;

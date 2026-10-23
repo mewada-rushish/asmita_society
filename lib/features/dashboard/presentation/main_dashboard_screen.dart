@@ -244,7 +244,12 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
             onOpenDelegation: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const DepartmentDelegationScreen()),
+                MaterialPageRoute(
+                  builder: (_) => DepartmentDelegationScreen(
+                    departmentId: user?.departmentId,
+                    departmentName: user?.departmentName,
+                  ),
+                ),
               );
             },
           ),

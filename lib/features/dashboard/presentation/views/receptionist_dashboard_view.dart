@@ -694,7 +694,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Host: ${visit.hostName ?? "Unassigned"} • ${visit.departmentName ?? "Main HQ"}',
+                        'Host: ${visit.hostName ?? "Unassigned"} • ${visit.departmentName ?? "Main HQ"}${visit.floor != null && visit.floor!.isNotEmpty ? " • Floor ${visit.floor}" : ""}',
                         style: const TextStyle(
                           fontSize: 12,
                           color: AsmitaPalette.textLight,

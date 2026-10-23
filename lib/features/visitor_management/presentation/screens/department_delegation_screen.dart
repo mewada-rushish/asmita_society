@@ -16,13 +16,13 @@ import '../../../../core/widgets/asmita_toast.dart';
 /// - Categorized dynamic delegate staff selection (Floor Receptionists, Team Leads, Members, Interns)
 /// - Date range window with quick duration presets
 class DepartmentDelegationScreen extends StatefulWidget {
-  final int departmentId;
-  final String departmentName;
+  final int? departmentId;
+  final String? departmentName;
 
   const DepartmentDelegationScreen({
     super.key,
-    this.departmentId = 1,
-    this.departmentName = 'General HQ',
+    this.departmentId,
+    this.departmentName,
   });
 
   @override
@@ -32,6 +32,8 @@ class DepartmentDelegationScreen extends StatefulWidget {
 class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen> {
   bool _isDelegationEnabled = true;
   int? _selectedDelegateId;
+  int? _resolvedDepartmentId;
+  String? _resolvedDepartmentName;
   bool _isTillTurnOff = true;
   DateTime _startDate = DateTime.now();
   DateTime? _endDate;
@@ -53,6 +55,8 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
   @override
   void initState() {
     super.initState();
+    _resolvedDepartmentId = widget.departmentId;
+    _resolvedDepartmentName = widget.departmentName;
     _fetchCandidateDelegates();
   }
 
@@ -60,11 +64,20 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
     setState(() => _isLoadingStaff = true);
     try {
       final dio = AsmitaDioClient(SecureStorageService()).dio;
+      final query = <String, dynamic>{};
+      if (_resolvedDepartmentId != null && _resolvedDepartmentId! > 0) {
+        query['department_id'] = _resolvedDepartmentId;
+      }
       final response = await dio.get(
         EnvConfig.candidateDelegates,
-        queryParameters: {'department_id': widget.departmentId},
+        queryParameters: query.isNotEmpty ? query : null,
       );
       if (response.statusCode == 200 && response.data['success'] == true) {
+        if (response.data['department'] != null && response.data['department'] is Map) {
+          final dept = response.data['department'] as Map;
+          _resolvedDepartmentId = dept['id'] as int? ?? _resolvedDepartmentId;
+          _resolvedDepartmentName = dept['name'] as String? ?? _resolvedDepartmentName;
+        }
         final rawList = response.data['data'] as List? ?? [];
         final parsed = rawList.asMap().entries.map((entry) {
           final idx = entry.key;
@@ -151,7 +164,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
     try {
       final dio = AsmitaDioClient(SecureStorageService()).dio;
       final payload = {
-        'department_id': widget.departmentId,
+        'department_id': _resolvedDepartmentId ?? widget.departmentId,
         'delegate_user_id': _selectedDelegateId,
         'start_date': _startDate.toIso8601String(),
         'end_date': _isTillTurnOff ? null : _endDate?.toIso8601String(),
@@ -261,7 +274,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '${widget.departmentName} Authority',
+                                  '${_resolvedDepartmentName ?? widget.departmentName ?? 'Department'} Authority',
                                   style: const TextStyle(
                                     fontFamily: 'Montserrat',
                                     fontSize: 13,
@@ -362,6 +375,17 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                         child: Row(
                           children: [
                             _buildCategoryChip('All', _candidates.length),
+                            if (_candidates.any((c) => c['category'] == 'HOD' || c['is_hod'] == true)) ...[
+                              const SizedBox(width: 8),
+                              _buildCategoryChip(
+                                'HOD',
+                                _candidates
+                                    .where((c) =>
+                                        c['category'] == 'HOD' ||
+                                        c['is_hod'] == true)
+                                    .length,
+                              ),
+                            ],
                             const SizedBox(width: 8),
                             _buildCategoryChip(
                               'Receptionist',
@@ -397,6 +421,9 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                           builder: (context) {
                             final filtered = _candidates.where((c) {
                               if (_selectedCategory == 'All') return true;
+                              if (_selectedCategory == 'HOD') {
+                                return c['category'] == 'HOD' || c['is_hod'] == true;
+                              }
                               if (_selectedCategory == 'Receptionist') {
                                 return c['category'] == 'Receptionist' ||
                                     c['category'] == 'Floor Receptionist';
