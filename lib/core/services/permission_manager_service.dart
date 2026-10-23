@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
@@ -40,6 +41,9 @@ class PermissionManagerService {
 
   /// Checks if all critical background approval permissions are granted.
   static Future<bool> areApprovalPermissionsConfigured() async {
+    if (!Platform.isAndroid) {
+      return await isNotificationPermissionGranted();
+    }
     final overlay = await isOverlayPermissionGranted();
     final notif = await isNotificationPermissionGranted();
     final battery = await isBatteryOptimizationIgnored();
@@ -49,6 +53,11 @@ class PermissionManagerService {
   /// Displays an AsmitA-branded educational dialog prompting the user
   /// to grant overlay and battery permissions for seamless gate approval alerts.
   static Future<void> showPermissionSetupDialog(BuildContext context) async {
+    if (!Platform.isAndroid) {
+      await openAppSettings();
+      return;
+    }
+
     bool overlayGranted = await isOverlayPermissionGranted();
     bool batteryGranted = await isBatteryOptimizationIgnored();
 
