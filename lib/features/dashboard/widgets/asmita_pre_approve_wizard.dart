@@ -3530,7 +3530,7 @@ class _EmployeePickerModalState extends State<_EmployeePickerModal> {
 
   void _onSearchChanged(String query) {
     setState(() {});
-    if (widget.societyId != null && query.trim().length >= 2) {
+    if (widget.societyId != null && query.trim().length >= 3) {
       final matches = _filterList(query);
       if (matches.isEmpty) {
         _debounceTimer?.cancel();
@@ -3677,7 +3677,9 @@ class _EmployeePickerModalState extends State<_EmployeePickerModal> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '${filteredEmployees.length} ${filteredEmployees.length == 1 ? "Employee" : "Employees"}',
+                filteredEmployees.isNotEmpty
+                    ? '${filteredEmployees.length} ${filteredEmployees.length == 1 ? "Employee" : "Employees"}'
+                    : (query.trim().length < 3 ? 'Type 3+ letters' : '0 Employees'),
                 style: TextStyle(
                   fontFamily: 'Montserrat',
                   fontSize: 12,
@@ -3756,37 +3758,40 @@ class _EmployeePickerModalState extends State<_EmployeePickerModal> {
                               ),
                               const SizedBox(height: 12),
                               Text(
-                                query.trim().isNotEmpty
-                                    ? 'No employees found matching "$query"'
-                                    : 'No employees found in directory',
+                                query.trim().length < 3
+                                    ? 'Type 3+ letters to search'
+                                    : 'No employees found matching "$query"',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 13,
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w600,
                                   color: Colors.grey.shade600,
                                 ),
                               ),
-                              const SizedBox(height: 16),
-                              ElevatedButton.icon(
-                                onPressed: () => _loadDirectory(forceRefresh: true),
-                                icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
-                                label: const Text(
-                                  'Reload Directory',
-                                  style: TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
+                              if (query.trim().length >= 3) ...[
+                                const SizedBox(height: 16),
+                                ElevatedButton.icon(
+                                  onPressed: () => _loadDirectory(forceRefresh: true, search: query.trim()),
+                                  icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
+                                  label: const Text(
+                                    'Reload Directory',
+                                    style: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AsmitaPalette.deepNavy,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
                                 ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AsmitaPalette.deepNavy,
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                              ),
+                              ],
                             ],
                           ),
                         ),
