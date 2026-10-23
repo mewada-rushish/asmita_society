@@ -26,12 +26,15 @@ void showAsmitaBottomSheet({
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
-    builder: (ctx) => AsmitaBottomSheet(
-      title: title,
-      subtitle: subtitle,
-      customHeader: customHeader,
-      contentPadding: contentPadding,
-      child: child,
+    builder: (ctx) => Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+      child: AsmitaBottomSheet(
+        title: title,
+        subtitle: subtitle,
+        customHeader: customHeader,
+        contentPadding: contentPadding,
+        child: child,
+      ),
     ),
   );
 }
@@ -56,11 +59,13 @@ class AsmitaBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final bottomPadding = MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom;
+    final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final availableHeight = MediaQuery.of(context).size.height - keyboardInset;
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85, // Enforce space above the sheet
+        maxHeight: availableHeight * 0.90, // Enforce space above the sheet
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
