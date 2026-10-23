@@ -103,15 +103,15 @@ enum IndustrialVisitStatus {
   Color get darkFillColor {
     switch (this) {
       case IndustrialVisitStatus.submitted:
-        return const Color(0xFF1E293B);
+        return const Color(0xFF451A03);
       case IndustrialVisitStatus.awaitingHost:
         return const Color(0xFF451A03);
       case IndustrialVisitStatus.assigned:
         return const Color(0xFF2E1065);
       case IndustrialVisitStatus.approved:
-        return const Color(0xFF064E3B);
+        return const Color(0xFF1E3A8A);
       case IndustrialVisitStatus.checkedIn:
-        return const Color(0xFF134E4A);
+        return const Color(0xFF064E3B);
       case IndustrialVisitStatus.checkedOut:
         return const Color(0xFF18181B);
       case IndustrialVisitStatus.rejected:
@@ -123,88 +123,88 @@ enum IndustrialVisitStatus {
       case IndustrialVisitStatus.revoked:
         return const Color(0xFF4C0519);
       case IndustrialVisitStatus.collected:
-        return const Color(0xFF172554);
+        return const Color(0xFF18181B);
     }
   }
 
   Color get darkTextColor {
     switch (this) {
       case IndustrialVisitStatus.submitted:
-        return const Color(0xFF94A3B8); // 5.71:1
+        return const Color(0xFFFDE047);
       case IndustrialVisitStatus.awaitingHost:
-        return const Color(0xFFFDE047); // 11.36:1
+        return const Color(0xFFFDE047);
       case IndustrialVisitStatus.assigned:
-        return const Color(0xFFDDD6FE); // 10.97:1
+        return const Color(0xFFDDD6FE);
       case IndustrialVisitStatus.approved:
-        return const Color(0xFF6EE7B7); // 6.38:1
+        return const Color(0xFF93C5FD);
       case IndustrialVisitStatus.checkedIn:
-        return const Color(0xFF5EEAD4); // 6.41:1
+        return const Color(0xFF6EE7B7);
       case IndustrialVisitStatus.checkedOut:
-        return const Color(0xFFE4E4E7); // 13.96:1
+        return const Color(0xFFCBD5E1);
       case IndustrialVisitStatus.rejected:
-        return const Color(0xFFFCA5A5); // 8.51:1
+        return const Color(0xFFFCA5A5);
       case IndustrialVisitStatus.expired:
-        return const Color(0xFFCBD5E1); // 9.85:1
+        return const Color(0xFF94A3B8);
       case IndustrialVisitStatus.cancelled:
-        return const Color(0xFFE2E8F0); // 11.87:1
+        return const Color(0xFF94A3B8);
       case IndustrialVisitStatus.revoked:
-        return const Color(0xFFFDA4AF); // 8.27:1
+        return const Color(0xFFFDA4AF);
       case IndustrialVisitStatus.collected:
-        return const Color(0xFF93C5FD); // 8.15:1
+        return const Color(0xFFCBD5E1);
     }
   }
 
   Color get lightFillColor {
     switch (this) {
       case IndustrialVisitStatus.submitted:
-        return const Color(0xFFF1F5F9);
+        return const Color(0xFFFEF3C7);
       case IndustrialVisitStatus.awaitingHost:
         return const Color(0xFFFEF9C3);
       case IndustrialVisitStatus.assigned:
         return const Color(0xFFEDE9FE);
       case IndustrialVisitStatus.approved:
-        return const Color(0xFFD1FAE5);
+        return const Color(0xFFDBEAFE);
       case IndustrialVisitStatus.checkedIn:
-        return const Color(0xFFCCFBF1);
+        return const Color(0xFFDCFCE7);
       case IndustrialVisitStatus.checkedOut:
-        return const Color(0xFFF4F4F5);
+        return const Color(0xFFF1F5F9);
       case IndustrialVisitStatus.rejected:
         return const Color(0xFFFEE2E2);
       case IndustrialVisitStatus.expired:
-        return const Color(0xFFE2E8F0);
+        return const Color(0xFFF1F5F9);
       case IndustrialVisitStatus.cancelled:
         return const Color(0xFFF1F5F9);
       case IndustrialVisitStatus.revoked:
         return const Color(0xFFFFE4E6);
       case IndustrialVisitStatus.collected:
-        return const Color(0xFFDBEAFE);
+        return const Color(0xFFF1F5F9);
     }
   }
 
   Color get lightTextColor {
     switch (this) {
       case IndustrialVisitStatus.submitted:
-        return const Color(0xFF334155); // 9.45:1
+        return const Color(0xFF92400E);
       case IndustrialVisitStatus.awaitingHost:
-        return const Color(0xFF854D0E); // 6.38:1
+        return const Color(0xFF854D0E);
       case IndustrialVisitStatus.assigned:
-        return const Color(0xFF5B21B6); // 7.57:1
+        return const Color(0xFF5B21B6);
       case IndustrialVisitStatus.approved:
-        return const Color(0xFF065F46); // 6.78:1
+        return const Color(0xFF1D4ED8);
       case IndustrialVisitStatus.checkedIn:
-        return const Color(0xFF115E59); // 6.73:1
+        return const Color(0xFF15803D);
       case IndustrialVisitStatus.checkedOut:
-        return const Color(0xFF27272A); // 13.55:1
+        return const Color(0xFF475569);
       case IndustrialVisitStatus.rejected:
-        return const Color(0xFF991B1B); // 6.80:1
+        return const Color(0xFF991B1B);
       case IndustrialVisitStatus.expired:
-        return const Color(0xFF334155); // 8.40:1
+        return const Color(0xFF64748B);
       case IndustrialVisitStatus.cancelled:
-        return const Color(0xFF1E293B); // 13.35:1
+        return const Color(0xFF475569);
       case IndustrialVisitStatus.revoked:
-        return const Color(0xFF9F1239); // 6.68:1
+        return const Color(0xFF9F1239);
       case IndustrialVisitStatus.collected:
-        return const Color(0xFF1E40AF); // 7.15:1
+        return const Color(0xFF475569);
     }
   }
 

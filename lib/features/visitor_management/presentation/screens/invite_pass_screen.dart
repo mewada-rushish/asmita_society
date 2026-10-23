@@ -3,16 +3,103 @@ import 'package:flutter/services.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import '../../../../core/constants/design_system.dart';
+import '../../../../core/config/env_config.dart';
+import '../../../../core/widgets/asmita_toast.dart';
+import 'package:asmita_society/core/network/dio_client.dart';
+import 'package:asmita_society/core/security/secure_storage_service.dart';
 import '../../data/models/invite_model.dart';
+import '../../data/models/industrial_visit_model.dart';
+import '../widgets/receptionist_reassign_sheet.dart';
 import 'package:share_plus/share_plus.dart';
 
-class InvitePassScreen extends StatelessWidget {
+class InvitePassScreen extends StatefulWidget {
   final PreApprovedInvite invite;
 
   const InvitePassScreen({super.key, required this.invite});
 
   @override
+  State<InvitePassScreen> createState() => _InvitePassScreenState();
+}
+
+class _InvitePassScreenState extends State<InvitePassScreen> {
+  String? _hostName;
+  String? _departmentName;
+
+  @override
+  void initState() {
+    super.initState();
+    _hostName = widget.invite.title ?? 'Assigned Host';
+  }
+
+  void _openUpdatePtmSheet() {
+    final inv = widget.invite;
+    final visitModel = IndustrialVisitModel(
+      id: inv.id,
+      requestNumber: (inv.passCode ?? inv.id.toString()),
+      propertyId: inv.societyId,
+      visitorName: inv.visitorName ?? inv.companyName ?? 'Visitor',
+      hostName: _hostName,
+      departmentName: _departmentName,
+      passCode: inv.passCode,
+      status: IndustrialVisitStatus.awaitingHost,
+    );
+
+    ReceptionistReassignSheet.show(
+      context,
+      visit: visitModel,
+      societyId: inv.societyId,
+      onConfirmReassign: (newHostId, cabin, desk) async {
+        if (newHostId == null) return;
+        try {
+          final secureStorage = SecureStorageService();
+          final dio = AsmitaDioClient(secureStorage).dio;
+          final code = inv.passCode;
+          if (code != null && code.isNotEmpty) {
+            await dio.post(
+              '${EnvConfig.baseUrl}/api/public/visitor/status/$code/update-ptm',
+              data: {
+                'host_user_id': newHostId,
+                'cabin_id': cabin,
+                'desk_id': desk,
+              },
+            );
+          } else if (inv.id > 0) {
+            await dio.post(
+              '${EnvConfig.baseUrl}/api/public/visitor/entries/${inv.id}/update-ptm',
+              data: {
+                'host_user_id': newHostId,
+                'cabin_id': cabin,
+                'desk_id': desk,
+              },
+            );
+          }
+          if (mounted) {
+            setState(() {
+              _hostName = 'Executive Host #$newHostId';
+            });
+            AsmitaToast.show(
+              context,
+              message: 'Person to Meet (PTM) updated successfully!',
+              type: AsmitaToastType.success,
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            AsmitaToast.show(
+              context,
+              message: 'Failed to update PTM: $e',
+              type: AsmitaToastType.error,
+            );
+          }
+        }
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final invite = widget.invite;
     final textTheme = Theme.of(context).textTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomInset = math.max(
@@ -123,11 +210,53 @@ class InvitePassScreen extends StatelessWidget {
                     _buildPassDetailRow(context, 'Pass Code', '#${invite.passCode}'),
                     const SizedBox(height: 12),
                   ],
+                  _buildPassDetailRow(context, 'Person to Meet (PTM)', _hostName ?? 'Assigned Host'),
+                  const SizedBox(height: 12),
                   _buildPassDetailRow(context, 'Valid Until', _formatDate(invite.validTo?.toIso8601String())),
                   const SizedBox(height: 12),
                   _buildPassDetailRow(context, 'Unit / Suite', 'Unit ${invite.unitId}'),
                   const SizedBox(height: 12),
                   _buildPassDetailRow(context, 'Pass Type', invite.inviteType),
+                  const SizedBox(height: 16),
+
+                  // Update PTM Action Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _openUpdatePtmSheet,
+                      icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+                      label: const Text(
+                        'Update Person to Meet (PTM)',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AsmitaPalette.deepNavy,
+                        side: BorderSide(color: AsmitaPalette.deepNavy.withValues(alpha: 0.5)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Start Next Walk-in / New Pass
+                  TextButton.icon(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.add_circle_outline_rounded, size: 16),
+                    label: const Text(
+                      'Done / Check in Next Visitor',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AsmitaPalette.textLight,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -192,4 +321,4 @@ Please present this code at the gate.
     if (date == null) return dateStr;
     return AppDateFormatter.formatDate(date);
   }
-}
+}
