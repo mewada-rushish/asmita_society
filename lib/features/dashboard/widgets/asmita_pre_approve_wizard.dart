@@ -801,171 +801,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (widget.isGuardMode) ...[
-          Builder(
-            builder: (context) {
-              final towers = _getTowers();
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Select Host / Employee',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AsmitaPalette.textDark,
-                        ),
-                      ),
-                      if (towers.isNotEmpty)
-                        GestureDetector(
-                          onTap: towers.length > 1 ? _showTowerPicker : null,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.apartment_rounded, size: 12, color: AsmitaPalette.deepNavy),
-                                const SizedBox(width: 4),
-                                Text(
-                                  towers.first['name'],
-                                  style: const TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: AsmitaPalette.deepNavy,
-                                  ),
-                                ),
-                                if (towers.length > 1) ...[
-                                  const SizedBox(width: 2),
-                                  const Icon(Icons.arrow_drop_down, size: 14, color: AsmitaPalette.deepNavy),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  if (_isLoadingEmployees)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8.0),
-                      child: Center(
-                        child: AsmitaLoadingIndicator(
-                          color: AsmitaPalette.actionRed,
-                          size: 28,
-                        ),
-                      ),
-                    )
-                  else
-                    GestureDetector(
-                      onTap: _showEmployeePicker,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(
-                            color: _selectedEmployee != null ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey,
-                            width: _selectedEmployee != null ? 1.5 : 1.0,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: _selectedEmployee != null
-                                  ? Row(
-                                      children: [
-                                        CircleAvatar(
-                                          radius: 18,
-                                          backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
-                                          child: Text(
-                                            (_selectedEmployee!['full_name'] ?? _selectedEmployee!['name'] ?? 'E')
-                                                .toString()
-                                                .trim()
-                                                .split(' ')
-                                                .map((p) => p.isNotEmpty ? p[0] : '')
-                                                .take(2)
-                                                .join('')
-                                                .toUpperCase(),
-                                            style: const TextStyle(
-                                              fontFamily: 'Montserrat',
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                              color: AsmitaPalette.deepNavy,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                _selectedEmployee!['full_name'] ?? _selectedEmployee!['name'] ?? '',
-                                                style: const TextStyle(
-                                                  fontFamily: 'Montserrat',
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AsmitaPalette.textDark,
-                                                ),
-                                              ),
-                                              Text(
-                                                '${_selectedEmployee!['department_name'] ?? _selectedEmployee!['department'] ?? 'General Staff'}${_selectedEmployee!['email_id'] != null && _selectedEmployee!['email_id'].toString().isNotEmpty ? " • ${_selectedEmployee!['email_id']}" : ""}',
-                                                style: TextStyle(
-                                                  fontFamily: 'Poppins',
-                                                  fontSize: 12,
-                                                  color: Colors.grey.shade600,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  : Row(
-                                      children: [
-                                        Icon(Icons.search, size: 18, color: Colors.grey.shade500),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            'Search employee (name, email, dept)...',
-                                            style: TextStyle(
-                                              fontFamily: 'Poppins',
-                                              fontSize: 13,
-                                              color: Colors.grey.shade600,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                            ),
-                            const Icon(
-                              Icons.arrow_drop_down_rounded,
-                              color: AsmitaPalette.deepNavy,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                ],
-              );
-            },
-          ),
-        ],
         Text(
           widget.isGuardMode
               ? 'Select Visitor Category'
@@ -1725,27 +1560,99 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   }
 
   Widget _buildWalkInEmployeeField() {
+    final photoUrl = (_selectedEmployee?['profile_picture_url'] ??
+            _selectedEmployee?['photo_url'] ??
+            _selectedEmployee?['photo'] ??
+            '')
+        .toString()
+        .trim();
+    final name = (_selectedEmployee?['full_name'] ?? _selectedEmployee?['name'] ?? '')
+        .toString()
+        .trim();
+    final dept = (_selectedEmployee?['department_name'] ??
+            _selectedEmployee?['department'] ??
+            '')
+        .toString()
+        .trim();
+
+    final towers = _getTowers();
+    final currentTower = towers.firstWhere(
+      (t) => t['id'] == _effectiveTowerId,
+      orElse: () => towers.isNotEmpty ? towers.first : {'name': ''},
+    );
+    final currentTowerName = (currentTower['name'] ?? '').toString();
+
+    final initials = name.isNotEmpty
+        ? name
+            .split(' ')
+            .where((p) => p.isNotEmpty)
+            .map((p) => p[0])
+            .take(2)
+            .join('')
+            .toUpperCase()
+        : 'E';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Person to Meet / Host Employee*',
-          style: TextStyle(
-            fontFamily: 'Montserrat',
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AsmitaPalette.textDark,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Flexible(
+              child: Text(
+                'Person to Meet / Host Employee*',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AsmitaPalette.textDark,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (currentTowerName.isNotEmpty)
+              GestureDetector(
+                onTap: towers.length > 1 ? _showTowerPicker : null,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.apartment_rounded, size: 12, color: AsmitaPalette.deepNavy),
+                      const SizedBox(width: 4),
+                      Text(
+                        currentTowerName,
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: AsmitaPalette.deepNavy,
+                        ),
+                      ),
+                      if (towers.length > 1) ...[
+                        const SizedBox(width: 2),
+                        const Icon(Icons.arrow_drop_down, size: 14, color: AsmitaPalette.deepNavy),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 8),
         if (_selectedEmployee != null)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.white,
               border: Border.all(
                 color: AsmitaPalette.deepNavy,
-                width: 1.5,
+                width: 1.4,
               ),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
@@ -1760,102 +1667,99 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
-                  child: Text(
-                    (_selectedEmployee!['full_name'] ?? _selectedEmployee!['name'] ?? 'E')
-                        .toString()
-                        .trim()
-                        .split(' ')
-                        .map((p) => p.isNotEmpty ? p[0] : '')
-                        .take(2)
-                        .join('')
-                        .toUpperCase(),
-                    style: const TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: AsmitaPalette.deepNavy,
-                    ),
-                  ),
+                  backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                  backgroundImage: photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
+                  child: photoUrl.isEmpty
+                      ? Text(
+                          initials.isNotEmpty ? initials : 'E',
+                          style: const TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AsmitaPalette.deepNavy,
+                          ),
+                        )
+                      : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _selectedEmployee!['full_name'] ?? _selectedEmployee!['name'] ?? '',
+                        name.isNotEmpty ? name : 'Employee',
                         style: const TextStyle(
                           fontFamily: 'Montserrat',
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: AsmitaPalette.textDark,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          if (_selectedEmployee!['role'] != null || _selectedEmployee!['designation'] != null)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              margin: const EdgeInsets.only(right: 6),
-                              decoration: BoxDecoration(
-                                color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                _selectedEmployee!['role'] ?? _selectedEmployee!['designation'] ?? '',
-                                style: const TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: AsmitaPalette.deepNavy,
-                                ),
-                              ),
-                            ),
-                          Expanded(
-                            child: Text(
-                              _selectedEmployee!['department_name'] ?? _selectedEmployee!['department'] ?? 'Staff',
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 11,
-                                color: Colors.grey.shade600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (_selectedEmployee!['email_id'] != null && _selectedEmployee!['email_id'].toString().isNotEmpty) ...[
+                      if (dept.isNotEmpty) ...[
                         const SizedBox(height: 2),
                         Text(
-                          _selectedEmployee!['email_id'].toString(),
+                          dept,
                           style: TextStyle(
                             fontFamily: 'Poppins',
-                            fontSize: 11,
-                            color: Colors.grey.shade500,
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
                           ),
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ],
                   ),
                 ),
-                TextButton(
-                  onPressed: _showEmployeePicker,
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: const Text(
-                    'Change',
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AsmitaPalette.actionRed,
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: _showEmployeePicker,
+                  borderRadius: BorderRadius.circular(8),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Text(
+                      'Change',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: AsmitaPalette.actionRed,
+                      ),
                     ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else if (_isLoadingEmployees)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: AsmitaPalette.borderGrey, width: 1.0),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(AsmitaPalette.deepNavy),
+                  ),
+                ),
+                SizedBox(width: 10),
+                Text(
+                  'Loading host directory...',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 13,
+                    color: Colors.grey,
                   ),
                 ),
               ],
@@ -1873,16 +1777,17 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               ),
               child: Row(
                 children: [
-                  Icon(Icons.search, size: 20, color: Colors.grey.shade500),
+                  Icon(Icons.person_search_outlined, size: 20, color: Colors.grey.shade500),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Search employee directory (name, email, role)...',
+                      'Select host employee to notify...',
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 13,
                         color: Colors.grey.shade500,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const Icon(Icons.arrow_drop_down_rounded, color: AsmitaPalette.deepNavy),
@@ -3823,14 +3728,19 @@ class _EmployeePickerModalState extends State<_EmployeePickerModal> {
                           final isSelected = widget.selectedEmployee != null &&
                               (widget.selectedEmployee!['user_id'] ?? widget.selectedEmployee!['id']) == empId;
 
-                          final name = emp['full_name'] ?? emp['name'] ?? 'Employee';
-                          final email = emp['email_id'] ?? emp['email'] ?? '';
-                          final phone = emp['mobile_number'] ?? emp['phone'] ?? '';
-                          final role = emp['primary_role'] ?? emp['role'] ?? emp['designation'] ?? '';
-                          final dept = emp['department_name'] ?? emp['department'] ?? 'General Staff';
-                          final unitInfo = emp['unit_info'] ?? emp['flat_number'] ?? emp['floor'] ?? '';
+                          final name = (emp['full_name'] ?? emp['name'] ?? 'Employee').toString().trim();
+                          final dept = (emp['department_name'] ?? emp['department'] ?? 'General Staff').toString().trim();
+                          final photoUrl = (emp['profile_picture_url'] ?? emp['photo_url'] ?? emp['photo'] ?? '').toString().trim();
 
-                          final initials = name.trim().split(' ').map((p) => p.isNotEmpty ? p[0] : '').take(2).join('').toUpperCase();
+                          final initials = name.isNotEmpty
+                              ? name
+                                  .split(' ')
+                                  .where((p) => p.isNotEmpty)
+                                  .map((p) => p[0])
+                                  .take(2)
+                                  .join('')
+                                  .toUpperCase()
+                              : 'E';
 
                           return InkWell(
                             onTap: () {
@@ -3839,7 +3749,7 @@ class _EmployeePickerModalState extends State<_EmployeePickerModal> {
                             },
                             borderRadius: BorderRadius.circular(12),
                             child: Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                               decoration: BoxDecoration(
                                 color: isSelected ? AsmitaPalette.deepNavy.withValues(alpha: 0.05) : Colors.white,
                                 border: Border.all(
@@ -3855,20 +3765,24 @@ class _EmployeePickerModalState extends State<_EmployeePickerModal> {
                                     backgroundColor: isSelected
                                         ? AsmitaPalette.deepNavy
                                         : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-                                    child: Text(
-                                      initials.isNotEmpty ? initials : 'E',
-                                      style: TextStyle(
-                                        fontFamily: 'Montserrat',
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
-                                      ),
-                                    ),
+                                    backgroundImage: photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
+                                    child: photoUrl.isEmpty
+                                        ? Text(
+                                            initials.isNotEmpty ? initials : 'E',
+                                            style: TextStyle(
+                                              fontFamily: 'Montserrat',
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                                            ),
+                                          )
+                                        : null,
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(
                                           name,
@@ -3878,94 +3792,27 @@ class _EmployeePickerModalState extends State<_EmployeePickerModal> {
                                             fontWeight: FontWeight.bold,
                                             color: AsmitaPalette.textDark,
                                           ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        if (role.isNotEmpty) ...[
-                                          const SizedBox(height: 3),
+                                        if (dept.isNotEmpty) ...[
+                                          const SizedBox(height: 2),
                                           Text(
-                                            role,
+                                            dept,
                                             style: TextStyle(
                                               fontFamily: 'Poppins',
                                               fontSize: 12,
+                                              color: Colors.grey.shade600,
                                               fontWeight: FontWeight.w500,
-                                              color: Colors.blueGrey.shade700,
                                             ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ],
-                                        if (unitInfo.isNotEmpty) ...[
-                                          const SizedBox(height: 3),
-                                          Row(
-                                            children: [
-                                              Icon(Icons.location_city_outlined, size: 12, color: Colors.grey.shade600),
-                                              const SizedBox(width: 4),
-                                              Expanded(
-                                                child: Text(
-                                                  unitInfo.toString(),
-                                                  style: TextStyle(
-                                                    fontFamily: 'Poppins',
-                                                    fontSize: 11.5,
-                                                    color: Colors.grey.shade600,
-                                                  ),
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                        if (email.isNotEmpty || phone.isNotEmpty) ...[
-                                          const SizedBox(height: 3),
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                email.isNotEmpty ? Icons.mail_outline_rounded : Icons.phone_outlined,
-                                                size: 12,
-                                                color: Colors.grey.shade500,
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Expanded(
-                                                child: Text(
-                                                  email.isNotEmpty ? email : phone,
-                                                  style: TextStyle(
-                                                    fontFamily: 'Poppins',
-                                                    fontSize: 11.5,
-                                                    color: Colors.grey.shade500,
-                                                  ),
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                        const SizedBox(height: 5),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                                          decoration: BoxDecoration(
-                                            color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              const Icon(
-                                                Icons.business_outlined,
-                                                size: 11,
-                                                color: AsmitaPalette.deepNavy,
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                dept,
-                                                style: const TextStyle(
-                                                  fontFamily: 'Montserrat',
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: AsmitaPalette.deepNavy,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
                                       ],
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
                                   if (isSelected)
                                     const Icon(
                                       Icons.check_circle_rounded,
