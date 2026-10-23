@@ -486,9 +486,20 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         );
         return;
       }
+
+      if (_capturedVisitorPhotoBase64 == null || _capturedVisitorPhotoBase64!.trim().isEmpty) {
+        AsmitaToast.show(
+          context,
+          message: 'Live security photo is mandatory for gate check-in verification.',
+          type: AsmitaToastType.error,
+        );
+        return;
+      }
       
       final hostId = _selectedEmployee != null ? (_selectedEmployee!['user_id'] ?? _selectedEmployee!['id']) : null;
       final deptId = _selectedEmployee != null ? _selectedEmployee!['department_id'] : null;
+      final hostUnitId = _selectedEmployee != null ? (_selectedEmployee!['unit_id'] ?? _selectedEmployee!['flat_id']) : null;
+      final hostTowerId = _selectedEmployee != null ? _selectedEmployee!['tower_id'] : null;
 
       final purposeText = _purposeController.text.trim().isNotEmpty
           ? _purposeController.text.trim()
@@ -516,8 +527,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             }).toList()
           : [{
               'society_id': user.societyId,
-              'tower_id': 1,
-              'unit_id': 1,
+              'tower_id': hostTowerId ?? 1,
+              'unit_id': hostUnitId ?? 1,
               'host_user_id': hostId,
               'department_id': deptId,
               'visitor_name': _visitorNameController.text.trim(),

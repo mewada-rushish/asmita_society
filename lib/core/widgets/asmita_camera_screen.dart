@@ -3,8 +3,17 @@ import 'dart:ui' as ui;
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+
+/// Categories of camera failure for user-friendly error recovery.
+enum CameraErrorKind {
+  permissionDenied,
+  hardwareUnavailable,
+  noCamerasFound,
+  generic,
+}
 
 /// An in-app camera viewfinder screen for capturing live visitor/security photos
 /// directly within the app without redirecting to the phone's native camera application.
@@ -56,6 +65,10 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
   bool _isTakingPicture = false;
   bool _isMirrored = true;
   String? _errorMessage;
+  String _errorTitle = 'Camera Error';
+  String? _rawErrorDetails;
+  CameraErrorKind _errorKind = CameraErrorKind.generic;
+  bool _showTechnicalDetails = false;
   FlashMode _currentFlashMode = FlashMode.auto;
 
   // Captured preview state before saving
@@ -86,33 +99,89 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
     if (state == AppLifecycleState.inactive) {
       cameraController.dispose();
     } else if (state == AppLifecycleState.resumed) {
-      _initCameraController(_cameras[_selectedCameraIndex]);
+      if (_cameras.isNotEmpty && _selectedCameraIndex < _cameras.length) {
+        _initCameraController(_cameras[_selectedCameraIndex]);
+      }
     }
   }
 
-  Future<void> _initCamera() async {
+  void _handleError(
+    dynamic error, {
+    CameraErrorKind? kind,
+    String? customTitle,
+    String? customMessage,
+  }) {
+    final String errStr = error?.toString() ?? '';
+    debugPrint('Camera error: $errStr');
+
+    CameraErrorKind resolvedKind = kind ?? CameraErrorKind.generic;
+    String title = customTitle ?? 'Camera Error';
+    String message =
+        customMessage ?? 'An unexpected issue occurred while starting the camera.';
+
+    if (kind == null) {
+      final lower = errStr.toLowerCase();
+      if (lower.contains('permission') || lower.contains('denied')) {
+        resolvedKind = CameraErrorKind.permissionDenied;
+        title = 'Camera Access Required';
+        message =
+            'AsmitA requires access to your device camera to capture live visitor security photos. Please enable camera permissions in your settings.';
+      } else if (lower.contains('channel-error') ||
+          lower.contains('processcameraprovider') ||
+          lower.contains('cameraaccessexception') ||
+          lower.contains('cameraexception') ||
+          lower.contains('failed to handle')) {
+        resolvedKind = CameraErrorKind.hardwareUnavailable;
+        title = 'Camera Hardware Unavailable';
+        message =
+            'Unable to connect to the camera sensor. Another application may be using the camera, or the camera system service needs to reload.';
+      } else if (lower.contains('no camera') || lower.contains('not found')) {
+        resolvedKind = CameraErrorKind.noCamerasFound;
+        title = 'No Camera Detected';
+        message = 'No active camera hardware was found on this device.';
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _isInitializing = false;
+        _errorKind = resolvedKind;
+        _errorTitle = title;
+        _errorMessage = message;
+        _rawErrorDetails = errStr.isNotEmpty ? errStr : null;
+      });
+    }
+  }
+
+  Future<void> _initCamera({int retryCount = 0}) async {
+    if (!mounted) return;
     setState(() {
       _isInitializing = true;
       _errorMessage = null;
+      _rawErrorDetails = null;
     });
 
     try {
       final status = await Permission.camera.request();
       if (!status.isGranted) {
-        setState(() {
-          _isInitializing = false;
-          _errorMessage =
-              'Camera permission is required to capture live visitor photos.';
-        });
+        _handleError(
+          'Camera permission denied',
+          kind: CameraErrorKind.permissionDenied,
+          customTitle: 'Camera Access Required',
+          customMessage:
+              'Camera access is required to capture live visitor photos. Please allow camera access in your settings to proceed.',
+        );
         return;
       }
 
       _cameras = await availableCameras();
       if (_cameras.isEmpty) {
-        setState(() {
-          _isInitializing = false;
-          _errorMessage = 'No camera found on this device.';
-        });
+        _handleError(
+          'availableCameras() returned empty list',
+          kind: CameraErrorKind.noCamerasFound,
+          customTitle: 'No Camera Detected',
+          customMessage: 'No working camera hardware was found on this device.',
+        );
         return;
       }
 
@@ -124,18 +193,26 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
       }
 
       _selectedCameraIndex = targetIndex;
-      await _initCameraController(_cameras[_selectedCameraIndex]);
+      await _initCameraController(_cameras[_selectedCameraIndex], retryCount: retryCount);
     } catch (e) {
-      setState(() {
-        _isInitializing = false;
-        _errorMessage = 'Failed to initialize camera: $e';
-      });
+      if (retryCount == 0 && e.toString().contains('channel-error')) {
+        debugPrint('CameraX channel-error on first attempt. Retrying in 350ms...');
+        await Future.delayed(const Duration(milliseconds: 350));
+        if (mounted) {
+          return _initCamera(retryCount: 1);
+        }
+      }
+      _handleError(e);
     }
   }
 
-  Future<void> _initCameraController(CameraDescription cameraDescription) async {
+  Future<void> _initCameraController(
+    CameraDescription cameraDescription, {
+    int retryCount = 0,
+  }) async {
     final previousController = _controller;
     await previousController?.dispose();
+    _controller = null;
 
     final CameraController cameraController = CameraController(
       cameraDescription,
@@ -153,14 +230,50 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
         setState(() {
           _isInitializing = false;
           _errorMessage = null;
+          _rawErrorDetails = null;
         });
       }
     } catch (e) {
+      if (retryCount == 0 && e.toString().contains('channel-error')) {
+        debugPrint('CameraX channel-error during controller init. Retrying in 350ms...');
+        await Future.delayed(const Duration(milliseconds: 350));
+        if (mounted) {
+          return _initCameraController(cameraDescription, retryCount: 1);
+        }
+      }
+      _handleError(e);
+    }
+  }
+
+  Future<void> _fallbackWithImagePicker(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final XFile? picked = await picker.pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 1280,
+        maxHeight: 1280,
+      );
+      if (picked != null && mounted) {
+        File fileToReturn = File(picked.path);
+        if (widget.preferredLensDirection == CameraLensDirection.front && _isMirrored) {
+          fileToReturn = await _mirrorImageFile(fileToReturn);
+        }
+        if (!mounted) return;
+        Navigator.of(context).pop(fileToReturn);
+      }
+    } catch (e) {
+      debugPrint('Fallback image picker error: $e');
       if (mounted) {
-        setState(() {
-          _isInitializing = false;
-          _errorMessage = 'Error initializing camera: $e';
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Could not open ${source == ImageSource.camera ? "camera" : "gallery"}: $e',
+              style: const TextStyle(fontFamily: 'Poppins', fontSize: 13),
+            ),
+            backgroundColor: AsmitaPalette.actionRed,
+          ),
+        );
       }
     }
   }
@@ -305,14 +418,15 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
               ),
 
               // Bottom Action Controls Bar
-              Positioned(
-                bottom: 16,
-                left: 0,
-                right: 0,
-                child: _capturedFile != null
-                    ? _buildConfirmControls()
-                    : _buildCaptureControls(),
-              ),
+              if (_errorMessage == null)
+                Positioned(
+                  bottom: 16,
+                  left: 0,
+                  right: 0,
+                  child: _capturedFile != null
+                      ? _buildConfirmControls()
+                      : _buildCaptureControls(),
+                ),
             ],
           ),
         ),
@@ -689,33 +803,222 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
   }
 
   Widget _buildErrorView() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.videocam_off_outlined, color: Colors.white70, size: 54),
-            const SizedBox(height: 16),
-            Text(
-              _errorMessage ?? 'Camera error occurred',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 14,
-                color: Colors.white,
+    final bool isPermission = _errorKind == CameraErrorKind.permissionDenied;
+    final bool showSystemCamera =
+        _errorKind != CameraErrorKind.noCamerasFound && !isPermission;
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 26),
+          decoration: BoxDecoration(
+            color: const Color(0xFF161A22),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.6),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
               ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _initCamera,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AsmitaPalette.actionRed,
-                foregroundColor: Colors.white,
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon with soft circular background
+              Container(
+                width: 68,
+                height: 68,
+                decoration: BoxDecoration(
+                  color: isPermission
+                      ? Colors.amber.withValues(alpha: 0.15)
+                      : AsmitaPalette.actionRed.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Icon(
+                    isPermission
+                        ? Icons.security_rounded
+                        : Icons.no_photography_rounded,
+                    color: isPermission ? Colors.amberAccent : AsmitaPalette.actionRed,
+                    size: 32,
+                  ),
+                ),
               ),
-              child: const Text('Retry Camera'),
-            ),
-          ],
+              const SizedBox(height: 18),
+
+              // Title
+              Text(
+                _errorTitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Clear user explanation
+              Text(
+                _errorMessage ??
+                    'Unable to start the camera viewfinder. Please retry or take a photo using your device camera.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 13,
+                  color: Colors.white.withValues(alpha: 0.8),
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 22),
+
+              // Primary Action Button (Retry or Open Settings)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    if (isPermission) {
+                      openAppSettings();
+                    } else {
+                      _initCamera();
+                    }
+                  },
+                  icon: Icon(
+                    isPermission ? Icons.settings_rounded : Icons.refresh_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                  label: Text(
+                    isPermission ? 'Open Device Settings' : 'Retry Camera',
+                    style: const TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AsmitaPalette.actionRed,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 3,
+                  ),
+                ),
+              ),
+
+              // Secondary Fallback: Use System Camera
+              if (showSystemCamera) ...[
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _fallbackWithImagePicker(ImageSource.camera),
+                    icon: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 18),
+                    label: const Text(
+                      'Take Photo with System Camera',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+
+              // Tertiary Fallback: Pick from Gallery
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () => _fallbackWithImagePicker(ImageSource.gallery),
+                icon: Icon(
+                  Icons.photo_library_outlined,
+                  color: Colors.white.withValues(alpha: 0.7),
+                  size: 16,
+                ),
+                label: Text(
+                  'Choose from Gallery',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white.withValues(alpha: 0.75),
+                  ),
+                ),
+              ),
+
+              // Collapsible Technical Exception details for developers / debugging
+              if (_rawErrorDetails != null) ...[
+                const SizedBox(height: 6),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _showTechnicalDetails = !_showTechnicalDetails;
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _showTechnicalDetails ? 'Hide technical details' : 'Show technical details',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 11,
+                            color: Colors.white.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          _showTechnicalDetails ? Icons.expand_less : Icons.expand_more,
+                          size: 14,
+                          color: Colors.white.withValues(alpha: 0.4),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (_showTechnicalDetails) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    ),
+                    child: Text(
+                      _rawErrorDetails!,
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 10.5,
+                        color: Colors.white54,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ],
+          ),
         ),
       ),
     );

@@ -265,6 +265,7 @@ class IndustrialVisitModel {
   final String? deskNumber;
   final String? purpose;
   final String? notes;
+  final String? floor;
   final bool isDelivery;
   final String? deliveryCompany;
   final bool heldAtGate;
@@ -298,6 +299,7 @@ class IndustrialVisitModel {
     this.deskNumber,
     this.purpose,
     this.notes,
+    this.floor,
     this.isDelivery = false,
     this.deliveryCompany,
     this.heldAtGate = false,
@@ -327,7 +329,7 @@ class IndustrialVisitModel {
       departmentId: json['department_id'] is int ? json['department_id'] : int.tryParse(json['department_id']?.toString() ?? ''),
       departmentName: json['department_name']?.toString() ?? json['department']?['name']?.toString(),
       hostUserId: json['host_user_id'] is int ? json['host_user_id'] : int.tryParse(json['host_user_id']?.toString() ?? ''),
-      hostName: json['host_name']?.toString() ?? json['host']?['name']?.toString(),
+      hostName: json['host_name']?.toString() ?? json['host']?['name']?.toString() ?? json['host_user']?['full_name']?.toString(),
       status: IndustrialVisitStatus.fromString(json['status']?.toString()),
       statusToken: json['status_token']?.toString(),
       passCode: json['pass_code']?.toString(),
@@ -337,8 +339,9 @@ class IndustrialVisitModel {
       verifiedAt: json['verified_at'] != null ? DateTime.tryParse(json['verified_at'].toString()) : null,
       cabinNumber: json['cabin_number']?.toString() ?? json['cabin']?.toString(),
       deskNumber: json['desk_number']?.toString() ?? json['desk']?.toString(),
-      purpose: json['purpose']?.toString(),
+      purpose: json['purpose']?.toString() ?? json['purpose_of_visit']?.toString(),
       notes: json['notes']?.toString(),
+      floor: json['floor']?.toString() ?? json['department']?['floor']?.toString(),
       isDelivery: json['visit_type']?.toString().toUpperCase() == 'DELIVERY' || json['is_delivery'] == true,
       deliveryCompany: json['delivery_company']?.toString(),
       heldAtGate: json['held_at_gate'] == true,
@@ -373,6 +376,7 @@ class IndustrialVisitModel {
       'desk_number': deskNumber,
       'purpose': purpose,
       'notes': notes,
+      'floor': floor,
       'is_delivery': isDelivery,
       'delivery_company': deliveryCompany,
       'held_at_gate': heldAtGate,

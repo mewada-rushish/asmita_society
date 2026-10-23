@@ -21,7 +21,11 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       eventType == 'VISITOR_SUBMITTED' ||
       eventType == 'VISITOR_AWAITING_HOST' ||
       eventType == 'VISITOR_ASSIGNED' ||
-      eventType == 'visitor_approval';
+      eventType == 'visitor_approval' ||
+      eventType == 'approval' ||
+      message.data['notification_type'] == 'visitor_approval' ||
+      message.data['notification_type'] == 'approval' ||
+      message.data['requires_approval'] == 'true';
 
   if (isApproval) {
     try {
@@ -276,7 +280,11 @@ class FirebaseMessagingService {
         eventType == 'VISITOR_SUBMITTED' ||
         eventType == 'VISITOR_AWAITING_HOST' ||
         eventType == 'VISITOR_ASSIGNED' ||
-        eventType == 'visitor_approval';
+        eventType == 'visitor_approval' ||
+        eventType == 'approval' ||
+        message.data['notification_type'] == 'visitor_approval' ||
+        message.data['notification_type'] == 'approval' ||
+        message.data['requires_approval'] == 'true';
 
     final isEscalation = eventType == 'ESCALATION' || eventType == 'VISITOR_ESCALATED';
 

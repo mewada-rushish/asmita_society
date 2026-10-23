@@ -55,18 +55,64 @@ class PermissionManagerService {
   static Future<void> showPermissionSetupDialog(
     BuildContext context, {
     bool directToSettingsOnIOS = false,
+    bool force = false,
   }) async {
     if (!Platform.isAndroid) {
-      if (directToSettingsOnIOS) {
+      if (directToSettingsOnIOS || Platform.isIOS) {
         await openAppSettings();
+      } else if (force && context.mounted) {
+        await showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.transparent,
+          builder: (ctx) => Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Icon(Icons.layers_rounded, size: 40, color: AsmitaPalette.deepNavy),
+                const SizedBox(height: 14),
+                const Text(
+                  'Background Overlay & Alert',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Floating visitor arrival alerts and battery exemptions are active on mobile devices.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: Colors.grey),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AsmitaPalette.deepNavy,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('OK', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        );
       }
       return;
     }
 
-    bool overlayGranted = await isOverlayPermissionGranted();
-    bool batteryGranted = await isBatteryOptimizationIgnored();
+    bool overlayGranted = false;
+    bool batteryGranted = false;
+    try {
+      overlayGranted = await isOverlayPermissionGranted();
+      batteryGranted = await isBatteryOptimizationIgnored();
+    } catch (_) {}
 
-    if (overlayGranted && batteryGranted) return;
+    if (!force && overlayGranted && batteryGranted) return;
     if (!context.mounted) return;
 
     await showModalBottomSheet(
@@ -76,6 +122,8 @@ class PermissionManagerService {
       builder: (ctx) => StatefulBuilder(
         builder: (modalContext, setModalState) {
           final bottomInset = MediaQuery.viewPaddingOf(modalContext).bottom;
+          final allActive = overlayGranted && batteryGranted;
+
           return Container(
             padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottomInset),
             decoration: const BoxDecoration(
@@ -102,33 +150,35 @@ class PermissionManagerService {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AsmitaPalette.actionRed.withValues(alpha: 0.1),
+                        color: (allActive ? Colors.green : AsmitaPalette.actionRed).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.phonelink_ring_rounded,
-                        color: AsmitaPalette.actionRed,
+                      child: Icon(
+                        allActive ? Icons.check_circle_outline_rounded : Icons.phonelink_ring_rounded,
+                        color: allActive ? Colors.green : AsmitaPalette.actionRed,
                         size: 26,
                       ),
                     ),
                     const SizedBox(width: 14),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Instant Gate Approvals',
-                            style: TextStyle(
+                            allActive ? 'Alerts Fully Configured' : 'Instant Gate Approvals',
+                            style: const TextStyle(
                               fontFamily: 'Montserrat',
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: AsmitaPalette.deepNavy,
                             ),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
-                            'Appear on screen like an incoming call',
-                            style: TextStyle(
+                            allActive
+                                ? 'Floating visitor cards and sound alerts are active'
+                                : 'Appear on screen like an incoming call',
+                            style: const TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 12,
                               color: AsmitaPalette.textDark,
@@ -141,7 +191,9 @@ class PermissionManagerService {
                 ),
                 const SizedBox(height: 18),
                 Text(
-                  'To ensure visitor approval requests pop up immediately even when you are using other apps or your screen is locked, please enable these two permissions:',
+                  allActive
+                      ? 'Your phone is configured to receive instant floating visitor approval cards even when other apps are open or the screen is locked.'
+                      : 'To ensure visitor approval requests pop up immediately even when you are using other apps or your screen is locked, please enable these two permissions:',
                   style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 13,
@@ -173,7 +225,7 @@ class PermissionManagerService {
                     setModalState(() {});
                   },
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () => Navigator.pop(ctx),
                   style: ElevatedButton.styleFrom(
@@ -190,6 +242,20 @@ class PermissionManagerService {
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await openAppSettings();
+                  },
+                  icon: const Icon(Icons.settings_outlined, size: 16),
+                  label: const Text('Open System App Settings'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),

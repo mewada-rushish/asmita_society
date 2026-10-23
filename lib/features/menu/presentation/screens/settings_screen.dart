@@ -72,7 +72,11 @@ class SettingsScreen extends ConsumerWidget {
                             'Background Overlay & Alert',
                             'Configure',
                             true,
-                            () => PermissionManagerService.showPermissionSetupDialog(context, directToSettingsOnIOS: true),
+                            () => PermissionManagerService.showPermissionSetupDialog(
+                              context,
+                              directToSettingsOnIOS: true,
+                              force: true,
+                            ),
                           ),
                           _buildActionRow(
                             context,
@@ -203,7 +207,10 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      child: Column(children: children),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(19),
+        child: Column(children: children),
+      ),
     );
   }
 
@@ -237,29 +244,33 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Widget _buildActionRow(BuildContext context, TextTheme textTheme, IconData icon, String title, String trailingText, bool showBorder, VoidCallback onTap, {Color? textColor, Color? iconColor}) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          border: showBorder ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1)) : null,
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: iconColor ?? Theme.of(context).iconTheme.color, size: 22),
-            const SizedBox(width: 14),
-            Text(
-              title,
-              style: textTheme.bodyLarge?.copyWith(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: textColor,
-              ),
-            ),
-            const SizedBox(width: 12),
-            if (trailingText.isNotEmpty) ...[
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          color: Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          decoration: BoxDecoration(
+            border: showBorder ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1)) : null,
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: iconColor ?? Theme.of(context).iconTheme.color, size: 22),
+              const SizedBox(width: 14),
               Expanded(
                 child: Text(
+                  title,
+                  style: textTheme.bodyLarge?.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              if (trailingText.isNotEmpty) ...[
+                Text(
                   trailingText,
                   textAlign: TextAlign.end,
                   maxLines: 1,
@@ -269,13 +280,11 @@ class SettingsScreen extends ConsumerWidget {
                     color: Theme.of(context).textTheme.bodySmall?.color,
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-            ] else ...[
-              const Spacer(),
+                const SizedBox(width: 8),
+              ],
+              Icon(Icons.arrow_forward_ios_rounded, size: 14, color: iconColor ?? Theme.of(context).iconTheme.color),
             ],
-            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: iconColor ?? Theme.of(context).iconTheme.color),
-          ],
+          ),
         ),
       ),
     );
