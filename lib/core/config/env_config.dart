@@ -95,7 +95,10 @@ class EnvConfig {
   static String get industrialSettings => '$baseUrl/app-api/industrial/settings';
   static String get industrialOutageMode => '$baseUrl/app-api/industrial/outage-mode';
 
-  /// Department Delegation Endpoints
   static String get candidateDelegates => '$baseUrl/app-api/masters/departments/candidate-delegates';
   static String get assignDepartmentDelegate => '$baseUrl/app-api/masters/departments/delegate';
+
+  /// Public Visitor OTP Authentication
+  static String get publicVisitorOtpSend => '$baseUrl/app-api/public/visitor/otp/send';
+  static String get publicVisitorOtpVerify => '$baseUrl/app-api/public/visitor/otp/verify';
 }
