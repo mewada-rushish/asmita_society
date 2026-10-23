@@ -35,6 +35,8 @@ import 'core/observers/crashlytics_navigation_observer.dart';
 import 'package:asmita_society/l10n/app_localizations.dart';
 import 'features/menu/presentation/providers/preferences_provider.dart';
 
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
 Future<void> main() async {
   runZonedGuarded(
     () async {
@@ -169,6 +171,7 @@ class AsmitaApp extends ConsumerWidget {
         ),
       ],
       child: MaterialApp(
+        navigatorKey: rootNavigatorKey,
         title: 'AsmitA',
         debugShowCheckedModeBanner: false,
         theme: AsmitaTheme.lightTheme,

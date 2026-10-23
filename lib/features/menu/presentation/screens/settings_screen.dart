@@ -16,6 +16,7 @@ import 'package:asmita_society/l10n/app_localizations.dart';
 import 'package:asmita_society/features/menu/presentation/providers/preferences_provider.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:asmita_society/core/services/permission_manager_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -63,6 +64,15 @@ class SettingsScreen extends ConsumerWidget {
                             prefs.emailAlerts, 
                             true,
                             (val) => ref.read(preferencesProvider.notifier).updatePreference(emailAlerts: val)
+                          ),
+                          _buildActionRow(
+                            context,
+                            textTheme,
+                            Icons.layers_rounded,
+                            'Background Overlay & Alert',
+                            'Configure',
+                            true,
+                            () => PermissionManagerService.showPermissionSetupDialog(context),
                           ),
                           _buildActionRow(
                             context,
