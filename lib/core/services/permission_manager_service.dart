@@ -75,8 +75,9 @@ class PermissionManagerService {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (modalContext, setModalState) {
+          final bottomInset = MediaQuery.viewPaddingOf(modalContext).bottom;
           return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottomInset),
             decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
