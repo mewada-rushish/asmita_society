@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,12 +12,14 @@ class AsmitaCameraScreen extends StatefulWidget {
   final String title;
   final String subtitle;
   final CameraLensDirection preferredLensDirection;
+  final bool defaultMirrored;
 
   const AsmitaCameraScreen({
     super.key,
     this.title = 'Live Security Photo',
     this.subtitle = 'Position visitor inside the frame and take photo',
     this.preferredLensDirection = CameraLensDirection.back,
+    this.defaultMirrored = true,
   });
 
   /// Static helper to open the camera screen and return the captured [File], or null if cancelled.
@@ -25,6 +28,7 @@ class AsmitaCameraScreen extends StatefulWidget {
     String title = 'Live Security Photo',
     String subtitle = 'Position visitor inside the frame and take photo',
     CameraLensDirection preferredLensDirection = CameraLensDirection.back,
+    bool defaultMirrored = true,
   }) {
     return Navigator.of(context).push<File?>(
       MaterialPageRoute(
@@ -33,6 +37,7 @@ class AsmitaCameraScreen extends StatefulWidget {
           title: title,
           subtitle: subtitle,
           preferredLensDirection: preferredLensDirection,
+          defaultMirrored: defaultMirrored,
         ),
       ),
     );
@@ -49,6 +54,7 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
   int _selectedCameraIndex = 0;
   bool _isInitializing = true;
   bool _isTakingPicture = false;
+  bool _isMirrored = true;
   String? _errorMessage;
   FlashMode _currentFlashMode = FlashMode.auto;
 
@@ -58,6 +64,7 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
   @override
   void initState() {
     super.initState();
+    _isMirrored = widget.defaultMirrored;
     WidgetsBinding.instance.addObserver(this);
     _initCamera();
   }
@@ -194,9 +201,14 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
 
       final file = await controller.takePicture();
 
+      File resultFile = File(file.path);
+      if (_isMirrored) {
+        resultFile = await _mirrorImageFile(resultFile);
+      }
+
       if (mounted) {
         setState(() {
-          _capturedFile = file;
+          _capturedFile = XFile(resultFile.path);
           _isTakingPicture = false;
         });
       }
@@ -216,6 +228,45 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
   void _confirmAndSave() {
     if (_capturedFile != null) {
       Navigator.of(context).pop(File(_capturedFile!.path));
+    }
+  }
+
+  /// Mirrors (flips horizontally) an image file using hardware-accelerated Canvas.
+  Future<File> _mirrorImageFile(File inputFile) async {
+    try {
+      final Uint8List bytes = await inputFile.readAsBytes();
+      final ui.Codec codec = await ui.instantiateImageCodec(bytes);
+      final ui.FrameInfo frame = await codec.getNextFrame();
+      final ui.Image image = frame.image;
+
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+
+      // Horizontal flip: translate by width, then scale -1 on X-axis
+      canvas.translate(image.width.toDouble(), 0);
+      canvas.scale(-1.0, 1.0);
+      canvas.drawImage(image, Offset.zero, Paint());
+
+      final picture = recorder.endRecording();
+      final ui.Image flippedImage =
+          await picture.toImage(image.width, image.height);
+      final ByteData? byteData =
+          await flippedImage.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) {
+        return inputFile;
+      }
+
+      final Uint8List flippedBytes = byteData.buffer.asUint8List();
+      final extMatch = RegExp(r'\.[a-zA-Z0-9]+$').firstMatch(inputFile.path);
+      final String mirroredPath = extMatch != null
+          ? inputFile.path.replaceAll(RegExp(r'\.[a-zA-Z0-9]+$'), '_mirrored.png')
+          : '${inputFile.path}_mirrored.png';
+      final File mirroredFile = File(mirroredPath);
+      await mirroredFile.writeAsBytes(flippedBytes);
+      return mirroredFile;
+    } catch (e) {
+      debugPrint('Error mirroring image file: $e');
+      return inputFile;
     }
   }
 
@@ -306,6 +357,27 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
+                onPressed: () {
+                  setState(() => _isMirrored = !_isMirrored);
+                  HapticFeedback.lightImpact();
+                },
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _isMirrored
+                        ? AsmitaPalette.actionRed.withValues(alpha: 0.85)
+                        : Colors.black.withValues(alpha: 0.45),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.flip_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                tooltip: _isMirrored ? 'Mirroring ON' : 'Mirroring OFF',
+              ),
+              IconButton(
                 onPressed: _toggleFlash,
                 icon: Container(
                   padding: const EdgeInsets.all(8),
@@ -351,11 +423,18 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
   }
 
   Widget _buildCameraView() {
+    final preview = CameraPreview(_controller!);
     return Stack(
       fit: StackFit.expand,
       children: [
         Center(
-          child: CameraPreview(_controller!),
+          child: _isMirrored
+              ? Transform.scale(
+                  scaleX: -1.0,
+                  alignment: Alignment.center,
+                  child: preview,
+                )
+              : preview,
         ),
 
         // Framing guide overlay
