@@ -1180,42 +1180,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   // =========================================================================
   Widget _buildCategoryWorkflowRouter() {
     if (widget.isGuardMode) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              GestureDetector(
-                onTap: _prevStep,
-                behavior: HitTestBehavior.opaque,
-                child: const Padding(
-                  padding: EdgeInsets.only(right: 12.0, top: 4.0, bottom: 4.0),
-                  child: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: 18,
-                    color: AsmitaPalette.deepNavy,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  'Walk-In $_selectedCategory Entry',
-                  style: const TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: AsmitaPalette.deepNavy,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _buildGuardWalkInLayout(),
-        ],
-      );
+      return _buildGuardWalkInLayout();
     }
 
     return Column(
@@ -1473,6 +1438,16 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           maxLength: 10,
         ),
         const SizedBox(height: 16),
+        AsmitaTextField(
+          controller: _cabNoController,
+          label: _selectedCategory == 'Cab'
+              ? 'Vehicle Number*'
+              : 'Vehicle Number (Optional)',
+          hint: 'e.g., MH 04 AB 1234',
+          icon: Icons.directions_car_outlined,
+          textCapitalization: TextCapitalization.characters,
+        ),
+        const SizedBox(height: 16),
         _buildWalkInEmployeeField(),
         const SizedBox(height: 16),
         _buildLivePhotoSection(),
@@ -1499,15 +1474,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           ),
           const SizedBox(height: 16),
         ],
-        AsmitaTextField(
-          controller: _cabNoController,
-          label: _selectedCategory == 'Cab'
-              ? 'Vehicle Number*'
-              : 'Vehicle Number (Optional)',
-          hint: 'e.g., MH 04 AB 1234',
-          icon: Icons.directions_car_outlined,
-          textCapitalization: TextCapitalization.characters,
-        ),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -2054,35 +2020,56 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   }
 
   Widget _buildActionButtons() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _submitInvite,
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          backgroundColor: AsmitaPalette.actionRed,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _submitInvite,
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: AsmitaPalette.actionRed,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Text(
+                  'Generate Digital Gate Pass',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(width: 8),
+                Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
+              ],
+            ),
           ),
-          elevation: 2,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Text(
-              'Generate Digital Gate Pass',
+        if (_currentStep > 0) ...[
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: _prevStep,
+            icon: const Icon(Icons.arrow_back_rounded, size: 16, color: AsmitaPalette.deepNavy),
+            label: const Text(
+              'Change Category',
               style: TextStyle(
                 fontFamily: 'Montserrat',
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AsmitaPalette.deepNavy,
               ),
             ),
-            SizedBox(width: 8),
-            Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
-          ],
-        ),
-      ),
+          ),
+        ],
+      ],
     );
   }
 
