@@ -13,6 +13,7 @@ import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_toast.dart';
+import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_camera_screen.dart';
 import '../../../visitor_management/bloc/guard_gate_bloc.dart';
 import '../../../visitor_management/bloc/guard_gate_event.dart';
@@ -20,11 +21,14 @@ import '../../../visitor_management/bloc/guard_gate_state.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
-import '../../../visitor_management/presentation/screens/guard_pass_check_in_screen.dart';
+import '../../../visitor_management/presentation/widgets/guard_pass_check_in_sheet.dart';
 import '../../../visitor_management/presentation/screens/guard_vehicle_draft_screen.dart';
 import '../../../visitor_management/presentation/screens/guard_delivery_entry_screen.dart';
 import '../../../visitor_management/presentation/widgets/manual_override_dialog.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
+import '../../../visitor_management/presentation/widgets/receptionist_reassign_sheet.dart';
+import 'package:asmita_society/core/network/dio_client.dart';
+import 'package:asmita_society/core/security/secure_storage_service.dart';
 
 class GuardDashboardView extends StatefulWidget {
   final VoidCallback onNavigateToMenu;
@@ -78,6 +82,69 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
         type: AsmitaToastType.error,
       );
     }
+  }
+
+  void _showUpdatePtmSheet(Map<String, dynamic> invite) {
+    final visitModel = IndustrialVisitModel(
+      id: int.tryParse(invite['id']?.toString() ?? '') ?? 0,
+      requestNumber: (invite['pass_code'] ?? invite['request_number'] ?? invite['id'] ?? 'VISIT').toString(),
+      propertyId: int.tryParse(invite['society_id']?.toString() ?? '') ?? 114,
+      visitorName: (invite['visitor_name'] ?? invite['company_name'] ?? 'Visitor').toString(),
+      hostUserId: int.tryParse(invite['host_user_id']?.toString() ?? ''),
+      hostName: invite['host_name']?.toString() ?? invite['resident_name']?.toString(),
+      departmentName: invite['department_name']?.toString(),
+      passCode: invite['pass_code']?.toString(),
+      status: IndustrialVisitStatus.awaitingHost,
+    );
+
+    ReceptionistReassignSheet.show(
+      context,
+      visit: visitModel,
+      societyId: visitModel.propertyId,
+      onConfirmReassign: (newHostId, cabin, desk) async {
+        if (newHostId == null) return;
+        try {
+          final secureStorage = SecureStorageService();
+          final dio = AsmitaDioClient(secureStorage).dio;
+          final code = invite['pass_code'] ?? invite['code'];
+          if (code != null && code.toString().isNotEmpty) {
+            await dio.post(
+              '${EnvConfig.baseUrl}/api/public/visitor/status/$code/update-ptm',
+              data: {
+                'host_user_id': newHostId,
+                'cabin_id': cabin,
+                'desk_id': desk,
+              },
+            );
+          } else if (invite['id'] != null) {
+            await dio.post(
+              '${EnvConfig.baseUrl}/api/public/visitor/entries/${invite['id']}/update-ptm',
+              data: {
+                'host_user_id': newHostId,
+                'cabin_id': cabin,
+                'desk_id': desk,
+              },
+            );
+          }
+          if (mounted) {
+            AsmitaToast.show(
+              context,
+              message: 'Person to Meet (PTM) updated successfully!',
+              type: AsmitaToastType.success,
+            );
+            context.read<GuardGateBloc>().add(LoadExpectedInvites());
+          }
+        } catch (e) {
+          if (mounted) {
+            AsmitaToast.show(
+              context,
+              message: 'Failed to update PTM: $e',
+              type: AsmitaToastType.error,
+            );
+          }
+        }
+      },
+    );
   }
 
   void _showCheckInDialog(Map<String, dynamic> invite) {
@@ -310,14 +377,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const GuardPassCheckInScreen(gateId: 1),
-                        ),
-                      );
-                    },
+                    onPressed: () => GuardPassCheckInSheet.show(context, gateId: 1),
                     icon: const Icon(Icons.qr_code_scanner, size: 16, color: AsmitaPalette.deepNavy),
                     label: const Text('Verify Pass', style: TextStyle(fontSize: 12, color: AsmitaPalette.deepNavy)),
                     style: OutlinedButton.styleFrom(
@@ -495,11 +555,16 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
   }
 
   void _showNewVisitorModal(BuildContext context) {
-    showDialog(
+    showAsmitaBottomSheet(
       context: context,
-      builder: (context) => const AsmitaDialog(
-        title: 'New Walk-in Visitor',
-        content: AsmitaPreApproveWizard(isGuardMode: true),
+      title: 'New Walk-in Visitor',
+      subtitle: 'Record lobby guest entry details',
+      isScrollControlled: true,
+      contentPadding: EdgeInsets.zero,
+      child: const SingleChildScrollView(
+        physics: ClampingScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: AsmitaPreApproveWizard(isGuardMode: true),
       ),
     );
   }
@@ -666,39 +731,79 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                state.isSubmitting &&
-                        state.submittingVisitorId == (invite['id']?.toString() ?? '')
-                    ? const SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: Center(
-                          child: AsmitaLoadingIndicator(
-                            color: AsmitaPalette.deepNavy,
-                            size: 20,
+                const SizedBox(width: 8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    InkWell(
+                      onTap: () => _showUpdatePtmSheet(invite),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AsmitaPalette.deepNavy.withValues(alpha: 0.2),
                           ),
                         ),
-                      )
-                    : (invite['status']?.toString().toUpperCase() ==
-                              'PENDING' ||
-                          invite['action']?.toString().toUpperCase() ==
-                              'PENDING')
-                    ? _PendingOrCheckInButton(
-                        invite: invite,
-                        onCheckIn: () => _showCheckInDialog(invite),
-                      )
-                    : IconButton(
-                        icon: Icon(
-                          Icons.check_circle,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 28,
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.swap_horiz_rounded,
+                              size: 13,
+                              color: AsmitaPalette.deepNavy,
+                            ),
+                            SizedBox(width: 3),
+                            Text(
+                              'PTM',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AsmitaPalette.deepNavy,
+                              ),
+                            ),
+                          ],
                         ),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () {
-                          _showCheckInDialog(invite);
-                        },
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    state.isSubmitting &&
+                            state.submittingVisitorId == (invite['id']?.toString() ?? '')
+                        ? const SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: Center(
+                              child: AsmitaLoadingIndicator(
+                                color: AsmitaPalette.deepNavy,
+                                size: 20,
+                              ),
+                            ),
+                          )
+                        : (invite['status']?.toString().toUpperCase() ==
+                                  'PENDING' ||
+                              invite['action']?.toString().toUpperCase() ==
+                                  'PENDING')
+                        ? _PendingOrCheckInButton(
+                            invite: invite,
+                            onCheckIn: () => _showCheckInDialog(invite),
+                          )
+                        : IconButton(
+                            icon: Icon(
+                              Icons.check_circle,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 28,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              _showCheckInDialog(invite);
+                            },
+                          ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -1115,6 +1220,75 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
     widget.onConfirm(_capturedBase64);
   }
 
+  void _openReassignFromDialog() {
+    final invite = widget.invite;
+    final visitModel = IndustrialVisitModel(
+      id: int.tryParse(invite['id']?.toString() ?? '') ?? 0,
+      requestNumber: (invite['pass_code'] ?? invite['request_number'] ?? invite['id'] ?? 'VISIT').toString(),
+      propertyId: int.tryParse(invite['society_id']?.toString() ?? '') ?? 114,
+      visitorName: (invite['visitor_name'] ?? invite['company_name'] ?? 'Visitor').toString(),
+      hostUserId: int.tryParse(invite['host_user_id']?.toString() ?? ''),
+      hostName: invite['host_name']?.toString() ?? invite['resident_name']?.toString(),
+      departmentName: invite['department_name']?.toString(),
+      passCode: invite['pass_code']?.toString(),
+      status: IndustrialVisitStatus.awaitingHost,
+    );
+
+    ReceptionistReassignSheet.show(
+      context,
+      visit: visitModel,
+      societyId: visitModel.propertyId,
+      onConfirmReassign: (newHostId, cabin, desk) async {
+        if (newHostId == null) return;
+        try {
+          final secureStorage = SecureStorageService();
+          final dio = AsmitaDioClient(secureStorage).dio;
+          final code = invite['pass_code'] ?? invite['code'];
+          if (code != null && code.toString().isNotEmpty) {
+            await dio.post(
+              '${EnvConfig.baseUrl}/api/public/visitor/status/$code/update-ptm',
+              data: {
+                'host_user_id': newHostId,
+                'cabin_id': cabin,
+                'desk_id': desk,
+              },
+            );
+          } else if (invite['id'] != null) {
+            await dio.post(
+              '${EnvConfig.baseUrl}/api/public/visitor/entries/${invite['id']}/update-ptm',
+              data: {
+                'host_user_id': newHostId,
+                'cabin_id': cabin,
+                'desk_id': desk,
+              },
+            );
+          }
+          if (mounted) {
+            setState(() {
+              invite['host_user_id'] = newHostId;
+              invite['cabin_id'] = cabin;
+              invite['desk_id'] = desk;
+            });
+            AsmitaToast.show(
+              context,
+              message: 'Person to Meet (PTM) updated successfully!',
+              type: AsmitaToastType.success,
+            );
+            context.read<GuardGateBloc>().add(LoadExpectedInvites());
+          }
+        } catch (e) {
+          if (mounted) {
+            AsmitaToast.show(
+              context,
+              message: 'Failed to update PTM: $e',
+              type: AsmitaToastType.error,
+            );
+          }
+        }
+      },
+    );
+  }
+
   Widget _buildRow(String label, String value, {bool highlight = false}) {
     return Container(
       color: highlight
@@ -1232,12 +1406,17 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  _buildRow(
+                    'Person to Meet (PTM)',
+                    (invite['host_name'] ?? invite['resident_name'] ?? (invite['flat_number'] != null ? '${invite['tower_name'] ?? "Tower"} - ${invite['flat_number']}' : 'Assigned Unit')).toString(),
+                    highlight: true,
+                  ),
                   if (invite['tower_name'] != null &&
-                      invite['flat_number'] != null)
+                      invite['flat_number'] != null &&
+                      invite['host_name'] != null)
                     _buildRow(
-                      'Destination',
+                      'Unit / Desk',
                       '${invite['tower_name']} - ${invite['flat_number']}',
-                      highlight: true,
                     ),
                   if (invite['vehicle_number'] != null &&
                       invite['vehicle_number'].toString().isNotEmpty)
@@ -1257,7 +1436,28 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: _openReassignFromDialog,
+                icon: const Icon(Icons.swap_horiz_rounded, size: 15, color: AsmitaPalette.deepNavy),
+                label: const Text(
+                  'Change Person to Meet (PTM)',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: AsmitaPalette.deepNavy,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Icon(Icons.info_outline, size: 13, color: Colors.grey.shade500),

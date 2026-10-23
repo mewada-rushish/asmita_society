@@ -401,6 +401,21 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     super.dispose();
   }
 
+  void _clearFormSession() {
+    _visitorNameController.clear();
+    _mobileNumberController.clear();
+    _purposeController.clear();
+    _orderIdController.clear();
+    _cabNoController.clear();
+    _capturedVisitorPhoto = null;
+    _capturedVisitorPhotoBase64 = null;
+    _selectedEmployee = null;
+    _selectedFlatMappings.clear();
+    _selectedTowerId = null;
+    _guestCount = 1;
+    _currentStep = 0;
+  }
+
   void _nextStep() => setState(() => _currentStep++);
   void _prevStep() {
     if (_currentStep > 0) setState(() => _currentStep--);
@@ -709,6 +724,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             message: 'Walk-in visitor logged successfully!',
             type: AsmitaToastType.success,
           );
+          _clearFormSession();
           Navigator.pop(context); // Or go to a success screen
         } else if (guardState.status == GuardGateStatus.error) {
           AsmitaToast.show(
@@ -721,6 +737,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       child: BlocConsumer<VisitorBloc, VisitorState>(
         listener: (context, state) {
           if (state is VisitorCreateSuccess) {
+            final passInvite = state.invite;
+            _clearFormSession();
             if (_selectedCategory == 'Cab' || _selectedCategory == 'Delivery') {
               setState(() {
                 _currentStep = 2;
@@ -730,7 +748,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               rootNav.pop(true);
               rootNav.push(
                 MaterialPageRoute(
-                  builder: (context) => InvitePassScreen(invite: state.invite),
+                  builder: (context) => InvitePassScreen(invite: passInvite),
                 ),
               );
             }

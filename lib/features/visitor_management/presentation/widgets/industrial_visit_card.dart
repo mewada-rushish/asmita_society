@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/config/env_config.dart';
 import '../../data/models/industrial_visit_model.dart';
 
 /// Shared Industrial Visit Card Component
@@ -106,9 +107,12 @@ class IndustrialVisitCard extends StatelessWidget {
                       ],
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: visit.visitorPhotoUrl != null && visit.visitorPhotoUrl!.isNotEmpty
+                    child: visit.visitorPhotoUrl != null && visit.visitorPhotoUrl!.trim().isNotEmpty
                         ? Image.network(
-                            visit.visitorPhotoUrl!,
+                            visit.visitorPhotoUrl!.trim().startsWith('http://') ||
+                                    visit.visitorPhotoUrl!.trim().startsWith('https://')
+                                ? visit.visitorPhotoUrl!.trim()
+                                : '${EnvConfig.baseUrl}${visit.visitorPhotoUrl!.trim().startsWith('/') ? '' : '/'}${visit.visitorPhotoUrl!.trim()}',
                             fit: BoxFit.cover,
                             errorBuilder: (ctx, err, stack) => _fallbackAvatar(),
                           )
