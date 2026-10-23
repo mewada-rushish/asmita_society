@@ -914,12 +914,15 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                                       children: [
                                         Icon(Icons.search, size: 18, color: Colors.grey.shade500),
                                         const SizedBox(width: 8),
-                                        Text(
-                                          'Search employee (name, email, dept)...',
-                                          style: TextStyle(
-                                            fontFamily: 'Poppins',
-                                            fontSize: 13,
-                                            color: Colors.grey.shade600,
+                                        Expanded(
+                                          child: Text(
+                                            'Search employee (name, email, dept)...',
+                                            style: TextStyle(
+                                              fontFamily: 'Poppins',
+                                              fontSize: 13,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
                                       ],
