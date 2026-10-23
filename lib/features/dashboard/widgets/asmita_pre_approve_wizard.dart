@@ -1162,12 +1162,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     showAsmitaBottomSheet(
       context: context,
       title: 'Select Host / Employee',
-      contentPadding: EdgeInsets.fromLTRB(
-        20,
-        8,
-        20,
-        MediaQuery.of(context).viewInsets.bottom > 0 ? 8 : (MediaQuery.of(context).padding.bottom + 16),
-      ),
+      contentPadding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
       child: _EmployeePickerModal(
         employees: _societyEmployees,
         departments: _societyDepartments,
@@ -3522,11 +3517,9 @@ class _EmployeePickerModalState extends State<_EmployeePickerModal> {
           floor.contains(query);
     }).toList();
 
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final totalHeight = MediaQuery.of(context).size.height;
-    final modalHeight = bottomInset > 0
-        ? (totalHeight * 0.85 - bottomInset).clamp(240.0, totalHeight * 0.85)
-        : totalHeight * 0.72;
+    final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
+    final availableHeight = MediaQuery.of(context).size.height - keyboardInset;
+    final modalHeight = (availableHeight * 0.75).clamp(240.0, availableHeight - 40.0);
 
     return SizedBox(
       height: modalHeight,
