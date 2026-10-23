@@ -244,7 +244,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       );
       if (picked != null) {
         final bytes = await picked.readAsBytes();
-        final b64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+        final isPng = picked.path.toLowerCase().endsWith('.png');
+        final mime = isPng ? 'image/png' : 'image/jpeg';
+        final b64 = 'data:$mime;base64,${base64Encode(bytes)}';
         setState(() {
           _capturedVisitorPhoto = picked;
           _capturedVisitorPhotoBase64 = b64;
