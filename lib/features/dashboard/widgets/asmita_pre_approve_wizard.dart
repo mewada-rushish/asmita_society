@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -110,22 +111,44 @@ class AsmitaPreApproveWizard extends StatefulWidget {
   static final Map<int, List<Map<String, dynamic>>> _cachedSocietyEmployees = {};
   static final Map<int, List<Map<String, dynamic>>> _cachedSocietyDepartments = {};
 
-  static Future<List<Map<String, dynamic>>> loadSocietyEmployees(int? societyId) async {
+  static void clearEmployeeCache([int? societyId]) {
+    if (societyId != null) {
+      _cachedSocietyEmployees.remove(societyId);
+    } else {
+      _cachedSocietyEmployees.clear();
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> loadSocietyEmployees(
+    int? societyId, {
+    String? search,
+    bool forceRefresh = false,
+  }) async {
     if (societyId == null) return [];
-    if (_cachedSocietyEmployees.containsKey(societyId) &&
-        _cachedSocietyEmployees[societyId]!.isNotEmpty) {
-      return _cachedSocietyEmployees[societyId]!;
+    final hasSearch = search != null && search.trim().isNotEmpty;
+    if (!forceRefresh && !hasSearch) {
+      if (_cachedSocietyEmployees.containsKey(societyId) &&
+          _cachedSocietyEmployees[societyId]!.isNotEmpty) {
+        return _cachedSocietyEmployees[societyId]!;
+      }
     }
     try {
       final secureStorage = SecureStorageService();
       final client = AsmitaDioClient(secureStorage).dio;
+      final queryParams = <String, dynamic>{'society_id': societyId};
+      if (hasSearch) {
+        queryParams['search'] = search.trim();
+      }
       final response = await client.get(
-        '${EnvConfig.baseUrl}/api/public/visitor/hosts?society_id=$societyId',
+        '${EnvConfig.baseUrl}/api/public/visitor/hosts',
+        queryParameters: queryParams,
       );
       if (response.statusCode == 200 && response.data['success'] == true) {
         final List<dynamic> list = response.data['data'] ?? response.data['hosts'] ?? [];
         final employees = list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-        _cachedSocietyEmployees[societyId] = employees;
+        if (!hasSearch && employees.isNotEmpty) {
+          _cachedSocietyEmployees[societyId] = employees;
+        }
         return employees;
       }
     } catch (e) {
@@ -306,9 +329,10 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     }
   }
 
-  Future<void> _fetchSocietyEmployees(int? societyId) async {
+  Future<void> _fetchSocietyEmployees(int? societyId, {bool forceRefresh = false}) async {
     if (societyId == null) return;
-    if (AsmitaPreApproveWizard._cachedSocietyEmployees.containsKey(societyId) &&
+    if (!forceRefresh &&
+        AsmitaPreApproveWizard._cachedSocietyEmployees.containsKey(societyId) &&
         AsmitaPreApproveWizard._cachedSocietyEmployees[societyId]!.isNotEmpty) {
       if (mounted) {
         setState(() {
@@ -322,7 +346,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
     if (mounted) setState(() => _isLoadingEmployees = true);
     final results = await Future.wait([
-      AsmitaPreApproveWizard.loadSocietyEmployees(societyId),
+      AsmitaPreApproveWizard.loadSocietyEmployees(societyId, forceRefresh: forceRefresh),
       AsmitaPreApproveWizard.loadSocietyDepartments(societyId),
     ]);
 
@@ -1164,6 +1188,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       title: 'Select Host / Employee',
       contentPadding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
       child: _EmployeePickerModal(
+        societyId: societyId,
         employees: _societyEmployees,
         departments: _societyDepartments,
         selectedEmployee: _selectedEmployee,
@@ -3444,12 +3469,14 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 }
 
 class _EmployeePickerModal extends StatefulWidget {
+  final int? societyId;
   final List<Map<String, dynamic>> employees;
   final List<Map<String, dynamic>> departments;
   final Map<String, dynamic>? selectedEmployee;
   final ValueChanged<Map<String, dynamic>> onSelect;
 
   const _EmployeePickerModal({
+    this.societyId,
     required this.employees,
     required this.departments,
     required this.selectedEmployee,
@@ -3462,64 +3489,134 @@ class _EmployeePickerModal extends StatefulWidget {
 
 class _EmployeePickerModalState extends State<_EmployeePickerModal> {
   late final TextEditingController _searchController;
+  late List<Map<String, dynamic>> _allEmployees;
+  late List<Map<String, dynamic>> _departments;
   String _selectedDept = 'All';
+  bool _isLoading = false;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _allEmployees = List.from(widget.employees);
+    _departments = List.from(widget.departments);
+    if (_allEmployees.isEmpty && widget.societyId != null) {
+      _loadDirectory(forceRefresh: true);
+    }
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadDirectory({bool forceRefresh = false, String? search}) async {
+    if (widget.societyId == null) return;
+    setState(() => _isLoading = true);
+    try {
+      final results = await Future.wait([
+        AsmitaPreApproveWizard.loadSocietyEmployees(
+          widget.societyId,
+          search: search,
+          forceRefresh: forceRefresh,
+        ),
+        if (_departments.isEmpty)
+          AsmitaPreApproveWizard.loadSocietyDepartments(widget.societyId)
+        else
+          Future.value(_departments),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        if (search == null || search.trim().isEmpty) {
+          _allEmployees = List.from(results[0]);
+        } else {
+          final serverList = results[0];
+          final existingIds = _allEmployees.map((e) => e['user_id'] ?? e['id']).toSet();
+          for (final emp in serverList) {
+            final id = emp['user_id'] ?? emp['id'];
+            if (!existingIds.contains(id)) {
+              _allEmployees.add(emp);
+              existingIds.add(id);
+            }
+          }
+        }
+        _departments = List.from(results[1]);
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _onSearchChanged(String query) {
+    setState(() {});
+    if (widget.societyId != null && query.trim().length >= 2) {
+      final matches = _filterList(query);
+      if (matches.isEmpty) {
+        _debounceTimer?.cancel();
+        _debounceTimer = Timer(const Duration(milliseconds: 350), () {
+          _loadDirectory(search: query.trim());
+        });
+      }
+    }
+  }
+
+  List<Map<String, dynamic>> _filterList(String query) {
+    final cleanQuery = query.trim().toLowerCase();
+    return _allEmployees.where((emp) {
+      final empDept = (emp['department_name'] ?? emp['department'] ?? '').toString().trim().toLowerCase();
+      final matchesDept = _selectedDept == 'All' ||
+          empDept == _selectedDept.toLowerCase() ||
+          (emp['department_id'] != null &&
+              _departments.any((d) =>
+                  d['id'] == emp['department_id'] &&
+                  d['name']?.toString().toLowerCase() == _selectedDept.toLowerCase()));
+
+      if (!matchesDept) return false;
+      if (cleanQuery.isEmpty) return true;
+
+      final name = (emp['full_name'] ?? emp['name'] ?? '').toString().toLowerCase();
+      final email = (emp['email_id'] ?? emp['email'] ?? '').toString().toLowerCase();
+      final role = (emp['primary_role'] ?? emp['role'] ?? emp['designation'] ?? '').toString().toLowerCase();
+      final floor = (emp['floor'] ?? '').toString().toLowerCase();
+      final unit = (emp['unit_info'] ?? emp['flat_number'] ?? '').toString().toLowerCase();
+      final phone = (emp['mobile_number'] ?? emp['phone'] ?? '').toString().toLowerCase();
+
+      return name.contains(cleanQuery) ||
+          email.contains(cleanQuery) ||
+          empDept.contains(cleanQuery) ||
+          role.contains(cleanQuery) ||
+          floor.contains(cleanQuery) ||
+          unit.contains(cleanQuery) ||
+          phone.contains(cleanQuery);
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final List<String> deptNames = ['All'];
-    for (final d in widget.departments) {
+    for (final d in _departments) {
       final name = d['name']?.toString() ?? d['department_name']?.toString();
       if (name != null && name.trim().isNotEmpty && !deptNames.contains(name.trim())) {
         deptNames.add(name.trim());
       }
     }
-    for (final emp in widget.employees) {
+    for (final emp in _allEmployees) {
       final name = emp['department_name']?.toString() ?? emp['department']?.toString();
       if (name != null && name.trim().isNotEmpty && !deptNames.contains(name.trim())) {
         deptNames.add(name.trim());
       }
     }
 
-    final query = _searchController.text.trim().toLowerCase();
-    final filteredEmployees = widget.employees.where((emp) {
-      final empDept = (emp['department_name'] ?? emp['department'] ?? '').toString().trim().toLowerCase();
-      final matchesDept = _selectedDept == 'All' ||
-          empDept == _selectedDept.toLowerCase() ||
-          (emp['department_id'] != null &&
-              widget.departments.any((d) =>
-                  d['id'] == emp['department_id'] &&
-                  d['name']?.toString().toLowerCase() == _selectedDept.toLowerCase()));
-
-      if (!matchesDept) return false;
-      if (query.isEmpty) return true;
-
-      final name = (emp['full_name'] ?? emp['name'] ?? '').toString().toLowerCase();
-      final email = (emp['email_id'] ?? emp['email'] ?? '').toString().toLowerCase();
-      final role = (emp['primary_role'] ?? emp['role'] ?? emp['designation'] ?? '').toString().toLowerCase();
-      final floor = (emp['floor'] ?? '').toString().toLowerCase();
-
-      return name.contains(query) ||
-          email.contains(query) ||
-          empDept.contains(query) ||
-          role.contains(query) ||
-          floor.contains(query);
-    }).toList();
+    final query = _searchController.text;
+    final filteredEmployees = _filterList(query);
 
     final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
     final availableHeight = MediaQuery.of(context).size.height - keyboardInset;
-    final modalHeight = (availableHeight * 0.75).clamp(240.0, availableHeight - 40.0);
+    final modalHeight = (availableHeight * 0.75).clamp(260.0, availableHeight - 40.0);
 
     return SizedBox(
       height: modalHeight,
@@ -3572,7 +3669,7 @@ class _EmployeePickerModalState extends State<_EmployeePickerModal> {
           TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Search by name, email, department...',
+              hintText: 'Search by name, role, department, unit...',
               hintStyle: TextStyle(
                 fontFamily: 'Poppins',
                 fontSize: 13.5,
@@ -3596,9 +3693,7 @@ class _EmployeePickerModalState extends State<_EmployeePickerModal> {
                 borderSide: BorderSide.none,
               ),
             ),
-            onChanged: (_) {
-              setState(() {});
-            },
+            onChanged: _onSearchChanged,
           ),
           const SizedBox(height: 10),
           Row(
@@ -3613,176 +3708,276 @@ class _EmployeePickerModalState extends State<_EmployeePickerModal> {
                   color: Colors.grey.shade600,
                 ),
               ),
-              if (_selectedDept != 'All')
-                GestureDetector(
-                  onTap: () => setState(() => _selectedDept = 'All'),
-                  child: Text(
-                    'Show all departments',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w600,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_selectedDept != 'All') ...[
+                    GestureDetector(
+                      onTap: () => setState(() => _selectedDept = 'All'),
+                      child: Text(
+                        'All depts',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                  ],
+                  GestureDetector(
+                    onTap: () => _loadDirectory(forceRefresh: true),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.refresh_rounded,
+                          size: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          'Refresh',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: filteredEmployees.isEmpty
-                ? Center(
+            child: _isLoading && filteredEmployees.isEmpty
+                ? const Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.person_search_outlined,
-                            size: 48,
-                            color: Colors.grey.shade300,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            query.isNotEmpty
-                                ? 'No employees found matching "$query"'
-                                : 'No employees listed in $_selectedDept',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 13,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
+                      padding: EdgeInsets.all(24.0),
+                      child: AsmitaLoadingIndicator(
+                        color: AsmitaPalette.actionRed,
+                        size: 32,
                       ),
                     ),
                   )
-                : ListView.separated(
-                    itemCount: filteredEmployees.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 8),
-                    itemBuilder: (context, index) {
-                      final emp = filteredEmployees[index];
-                      final empId = emp['user_id'] ?? emp['id'];
-                      final isSelected = widget.selectedEmployee != null &&
-                          (widget.selectedEmployee!['user_id'] ?? widget.selectedEmployee!['id']) == empId;
-
-                      final name = emp['full_name'] ?? emp['name'] ?? 'Employee';
-                      final email = emp['email_id'] ?? emp['email'] ?? '';
-                      final dept = emp['department_name'] ?? emp['department'] ?? 'General Staff';
-
-                      final initials = name.trim().split(' ').map((p) => p.isNotEmpty ? p[0] : '').take(2).join('').toUpperCase();
-
-                      return InkWell(
-                        onTap: () {
-                          widget.onSelect(emp);
-                          Navigator.pop(context);
-                        },
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: isSelected ? AsmitaPalette.deepNavy.withValues(alpha: 0.05) : Colors.white,
-                            border: Border.all(
-                              color: isSelected ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey,
-                              width: isSelected ? 1.5 : 1.0,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
+                : filteredEmployees.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              CircleAvatar(
-                                radius: 20,
-                                backgroundColor: isSelected
-                                    ? AsmitaPalette.deepNavy
-                                    : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-                                child: Text(
-                                  initials.isNotEmpty ? initials : 'E',
+                              Icon(
+                                Icons.person_search_outlined,
+                                size: 48,
+                                color: Colors.grey.shade300,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                query.trim().isNotEmpty
+                                    ? 'No employees found matching "$query"'
+                                    : 'No employees found in directory',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 13,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: () => _loadDirectory(forceRefresh: true),
+                                icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
+                                label: const Text(
+                                  'Reload Directory',
                                   style: TextStyle(
                                     fontFamily: 'Montserrat',
                                     fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AsmitaPalette.deepNavy,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      name,
-                                      style: const TextStyle(
-                                        fontFamily: 'Montserrat',
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: AsmitaPalette.textDark,
-                                      ),
-                                    ),
-                                    if (email.isNotEmpty) ...[
-                                      const SizedBox(height: 3),
-                                      Row(
-                                        children: [
-                                          Icon(Icons.mail_outline_rounded, size: 12, color: Colors.grey.shade600),
-                                          const SizedBox(width: 4),
-                                          Expanded(
-                                            child: Text(
-                                              email,
-                                              style: TextStyle(
-                                                fontFamily: 'Poppins',
-                                                fontSize: 12,
-                                                color: Colors.grey.shade600,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                    const SizedBox(height: 5),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                                      decoration: BoxDecoration(
-                                        color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(
-                                            Icons.business_outlined,
-                                            size: 11,
-                                            color: AsmitaPalette.deepNavy,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            dept,
-                                            style: const TextStyle(
-                                              fontFamily: 'Montserrat',
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w600,
-                                              color: AsmitaPalette.deepNavy,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              if (isSelected)
-                                const Icon(
-                                  Icons.check_circle_rounded,
-                                  color: AsmitaPalette.deepNavy,
-                                  size: 20,
-                                ),
                             ],
                           ),
                         ),
-                      );
-                    },
-                  ),
+                      )
+                    : ListView.separated(
+                        itemCount: filteredEmployees.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final emp = filteredEmployees[index];
+                          final empId = emp['user_id'] ?? emp['id'];
+                          final isSelected = widget.selectedEmployee != null &&
+                              (widget.selectedEmployee!['user_id'] ?? widget.selectedEmployee!['id']) == empId;
+
+                          final name = emp['full_name'] ?? emp['name'] ?? 'Employee';
+                          final email = emp['email_id'] ?? emp['email'] ?? '';
+                          final phone = emp['mobile_number'] ?? emp['phone'] ?? '';
+                          final role = emp['primary_role'] ?? emp['role'] ?? emp['designation'] ?? '';
+                          final dept = emp['department_name'] ?? emp['department'] ?? 'General Staff';
+                          final unitInfo = emp['unit_info'] ?? emp['flat_number'] ?? emp['floor'] ?? '';
+
+                          final initials = name.trim().split(' ').map((p) => p.isNotEmpty ? p[0] : '').take(2).join('').toUpperCase();
+
+                          return InkWell(
+                            onTap: () {
+                              widget.onSelect(emp);
+                              Navigator.pop(context);
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: isSelected ? AsmitaPalette.deepNavy.withValues(alpha: 0.05) : Colors.white,
+                                border: Border.all(
+                                  color: isSelected ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey,
+                                  width: isSelected ? 1.5 : 1.0,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 20,
+                                    backgroundColor: isSelected
+                                        ? AsmitaPalette.deepNavy
+                                        : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                                    child: Text(
+                                      initials.isNotEmpty ? initials : 'E',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          name,
+                                          style: const TextStyle(
+                                            fontFamily: 'Montserrat',
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color: AsmitaPalette.textDark,
+                                          ),
+                                        ),
+                                        if (role.isNotEmpty) ...[
+                                          const SizedBox(height: 3),
+                                          Text(
+                                            role,
+                                            style: TextStyle(
+                                              fontFamily: 'Poppins',
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.blueGrey.shade700,
+                                            ),
+                                          ),
+                                        ],
+                                        if (unitInfo.isNotEmpty) ...[
+                                          const SizedBox(height: 3),
+                                          Row(
+                                            children: [
+                                              Icon(Icons.location_city_outlined, size: 12, color: Colors.grey.shade600),
+                                              const SizedBox(width: 4),
+                                              Expanded(
+                                                child: Text(
+                                                  unitInfo.toString(),
+                                                  style: TextStyle(
+                                                    fontFamily: 'Poppins',
+                                                    fontSize: 11.5,
+                                                    color: Colors.grey.shade600,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                        if (email.isNotEmpty || phone.isNotEmpty) ...[
+                                          const SizedBox(height: 3),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                email.isNotEmpty ? Icons.mail_outline_rounded : Icons.phone_outlined,
+                                                size: 12,
+                                                color: Colors.grey.shade500,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Expanded(
+                                                child: Text(
+                                                  email.isNotEmpty ? email : phone,
+                                                  style: TextStyle(
+                                                    fontFamily: 'Poppins',
+                                                    fontSize: 11.5,
+                                                    color: Colors.grey.shade500,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                        const SizedBox(height: 5),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                                          decoration: BoxDecoration(
+                                            color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(
+                                                Icons.business_outlined,
+                                                size: 11,
+                                                color: AsmitaPalette.deepNavy,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                dept,
+                                                style: const TextStyle(
+                                                  fontFamily: 'Montserrat',
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AsmitaPalette.deepNavy,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    const Icon(
+                                      Icons.check_circle_rounded,
+                                      color: AsmitaPalette.deepNavy,
+                                      size: 20,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
           ),
         ],
       ),
