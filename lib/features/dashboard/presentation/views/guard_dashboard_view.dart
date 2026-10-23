@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:asmita_society/core/config/env_config.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
@@ -14,6 +13,7 @@ import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_toast.dart';
+import '../../../../core/widgets/asmita_camera_screen.dart';
 import '../../../visitor_management/bloc/guard_gate_bloc.dart';
 import '../../../visitor_management/bloc/guard_gate_event.dart';
 import '../../../visitor_management/bloc/guard_gate_state.dart';
@@ -1070,18 +1070,16 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
   Future<void> _takePhoto() async {
     setState(() => _isCapturing = true);
     try {
-      final picker = ImagePicker();
-      final picked = await picker.pickImage(
-        source: ImageSource.camera,
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 80,
+      final File? picked = await AsmitaCameraScreen.open(
+        context,
+        title: 'Visitor Verification Photo',
+        subtitle: 'Align visitor inside frame and tap to save photo',
       );
       if (picked != null) {
         final bytes = await picked.readAsBytes();
         final b64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
         setState(() {
-          _capturedImage = File(picked.path);
+          _capturedImage = picked;
           _capturedBase64 = b64;
           _photoMandatoryAlert = false;
         });
