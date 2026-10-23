@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:image_picker/image_picker.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/security/secure_storage_service.dart';
@@ -24,6 +23,7 @@ import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/utils/property_role_resolver.dart';
 import 'package:asmita_society/core/widgets/asmita_text_field.dart';
+import 'package:asmita_society/core/widgets/asmita_camera_screen.dart';
 class AsmitaPreApproveWizard extends StatefulWidget {
   final bool isGuardMode;
 
@@ -237,18 +237,16 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   Future<void> _takeLiveVisitorPhoto() async {
     setState(() => _isCapturingPhoto = true);
     try {
-      final picker = ImagePicker();
-      final picked = await picker.pickImage(
-        source: ImageSource.camera,
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 80,
+      final File? picked = await AsmitaCameraScreen.open(
+        context,
+        title: 'Visitor Live Photo',
+        subtitle: 'Position visitor inside frame and tap to save photo',
       );
       if (picked != null) {
         final bytes = await picked.readAsBytes();
         final b64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
         setState(() {
-          _capturedVisitorPhoto = File(picked.path);
+          _capturedVisitorPhoto = picked;
           _capturedVisitorPhotoBase64 = b64;
         });
       }
