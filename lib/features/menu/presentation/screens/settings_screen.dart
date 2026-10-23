@@ -72,7 +72,7 @@ class SettingsScreen extends ConsumerWidget {
                             'Background Overlay & Alert',
                             'Configure',
                             true,
-                            () => PermissionManagerService.showPermissionSetupDialog(context),
+                            () => PermissionManagerService.showPermissionSetupDialog(context, directToSettingsOnIOS: true),
                           ),
                           _buildActionRow(
                             context,

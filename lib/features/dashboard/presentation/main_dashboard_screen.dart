@@ -33,6 +33,7 @@ import 'package:asmita_society/features/services/data/repositories/daily_help_re
 import '../../../core/di/injection_container.dart' as di;
 import '../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../visitor_management/data/repositories/industrial_visit_repository.dart';
+import 'package:asmita_society/core/services/permission_manager_service.dart';
 
 class MainDashboardScreen extends StatefulWidget {
   final String userRole;
@@ -45,6 +46,16 @@ class MainDashboardScreen extends StatefulWidget {
 
 class _MainDashboardScreenState extends State<MainDashboardScreen> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        PermissionManagerService.showPermissionSetupDialog(context);
+      }
+    });
+  }
 
   void _navigateToSearch() {
     Navigator.push(
