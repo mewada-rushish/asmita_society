@@ -8,6 +8,7 @@ import '../../../../core/config/env_config.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/security/secure_storage_service.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
@@ -245,77 +246,252 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AsmitaPalette.deepNavy,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 26,
-                  backgroundColor: Colors.white.withValues(alpha: 0.15),
-                  child: Text(
-                    visit.visitorName.isNotEmpty
-                        ? visit.visitorName[0].toUpperCase()
-                        : 'V',
-                    style: const TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
-                      color: Colors.white,
-                    ),
-                  ),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0F172A), AsmitaPalette.deepNavy],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.15),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.35),
+                  blurRadius: 14,
+                  offset: const Offset(0, 5),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        visit.visitorName,
-                        style: const TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 17,
-                          color: Colors.white,
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.white.withValues(alpha: 0.25),
+                              Colors.white.withValues(alpha: 0.08),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.35),
+                            width: 1.5,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          visit.visitorName.isNotEmpty
+                              ? visit.visitorName[0].toUpperCase()
+                              : 'V',
+                          style: const TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        visit.deliveryCompany ?? visit.purpose ?? 'VIP Visitor',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white.withValues(alpha: 0.8),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              visit.visitorName,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 17,
+                                color: Colors.white,
+                                letterSpacing: 0.2,
+                                height: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              visit.deliveryCompany ?? visit.purpose ?? 'VIP Guest',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 12,
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: visit.status.fillColor(isDark).withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: visit.status.textColor(isDark).withValues(alpha: 0.6),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              visit.status.iconData,
+                              size: 12,
+                              color: visit.status.textColor(isDark),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              visit.status.label,
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: visit.status.textColor(isDark),
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-                if (visit.passCode != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Text(
-                      'PASS #${visit.passCode}',
-                      style: const TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
+                if (visit.passCode != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Row(
+                      children: List.generate(
+                        24,
+                        (index) => Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: Container(
+                              height: 1.5,
+                              color: index.isEven
+                                  ? Colors.white.withValues(alpha: 0.22)
+                                  : Colors.transparent,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.12),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.vpn_key_rounded,
+                                      size: 11,
+                                      color: Colors.white60,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'PASS CODE',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white.withValues(alpha: 0.7),
+                                        letterSpacing: 0.8,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  visit.passCode!,
+                                  style: const TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    letterSpacing: 1.1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                Clipboard.setData(ClipboardData(text: visit.passCode!));
+                                HapticFeedback.lightImpact();
+                                AsmitaToast.show(
+                                  context,
+                                  message: 'Pass code #${visit.passCode} copied to clipboard',
+                                  type: AsmitaToastType.success,
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.25),
+                                  ),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.copy_rounded, size: 12, color: Colors.white),
+                                    SizedBox(width: 5),
+                                    Text(
+                                      'Copy',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -572,51 +748,47 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
 
           // 2. Scrollable Body
           Expanded(
-            child: RefreshIndicator(
-              color: AsmitaPalette.deepNavy,
-              onRefresh: () async {
-                if (widget.visits == null) {
-                  context.read<IndustrialVisitBloc>().add(
-                    const LoadIndustrialVisits(),
-                  );
-                }
-              },
-              child: isLoading
-                  ? const Center(
-                      child: AsmitaLoadingIndicator(
-                        color: AsmitaPalette.deepNavy,
-                        size: 32,
-                      ),
-                    )
-                  : SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Executive KPI Stat Cards
-                          _buildKpiRow(
-                            context,
-                            pendingCount: pendingCount,
-                            approvedCount: approvedCount,
-                            checkedInCount: checkedInCount,
-                          ),
-                          const SizedBox(height: 20),
-
-                          // 4-Icon Executive Action Grid
-                          _buildFourIconGrid(context),
-                          const SizedBox(height: 18),
-
-                          // 2-Column Waiting Grid (Who is Waiting, Waiting Since)
-                          _buildWaitingGrid(context, visits),
-                          const SizedBox(height: 120),
-                        ],
-                      ),
+            child: isLoading
+                ? const Center(
+                    child: AsmitaLoadingIndicator(
+                      color: AsmitaPalette.deepNavy,
+                      size: 32,
                     ),
-            ),
+                  )
+                : AsmitaPullToRefresh(
+                    onRefresh: () async {
+                      if (widget.visits == null) {
+                        context.read<IndustrialVisitBloc>().add(
+                          const LoadIndustrialVisits(),
+                        );
+                      }
+                    },
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Executive KPI Stat Cards
+                        _buildKpiRow(
+                          context,
+                          pendingCount: pendingCount,
+                          approvedCount: approvedCount,
+                          checkedInCount: checkedInCount,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // 4-Icon Executive Action Grid
+                        _buildFourIconGrid(context),
+                        const SizedBox(height: 18),
+
+                        // 2-Column Waiting Grid (Who is Waiting, Waiting Since)
+                        _buildWaitingGrid(context, visits),
+                        const SizedBox(height: 120),
+                      ],
+                    ),
+                  ),
           ),
         ],
       ),

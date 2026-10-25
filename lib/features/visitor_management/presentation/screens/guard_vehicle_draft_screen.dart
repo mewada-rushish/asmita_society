@@ -27,6 +27,14 @@ class _GuardVehicleDraftScreenState extends State<GuardVehicleDraftScreen> {
   final TextEditingController _plateController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
 
+  String _selectedVehicleType = 'Personal Car';
+  final List<String> _vehicleTypes = [
+    'Personal Bike',
+    'Personal Car',
+    'Auto / Cab',
+    'Commercial',
+  ];
+
   Map<String, dynamic>? _activeDraft;
   Timer? _countdownTimer;
   int _remainingSeconds = 300; // 5 minutes default
@@ -144,6 +152,44 @@ class _GuardVehicleDraftScreenState extends State<GuardVehicleDraftScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
+
+                // Vehicle Type Selector
+                const Text(
+                  'Vehicle Category',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AsmitaPalette.deepNavy,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: _vehicleTypes.map((type) {
+                      final isSelected = _selectedVehicleType == type;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ChoiceChip(
+                          label: Text(type),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) setState(() => _selectedVehicleType = type);
+                          },
+                          selectedColor: AsmitaPalette.actionRed,
+                          labelStyle: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 12,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                            color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 16),
 
                 // Vehicle Plate Field
                 TextField(

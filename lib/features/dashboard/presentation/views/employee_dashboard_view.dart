@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
 import '../../../../core/constants/design_system.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
+import '../../../../core/widgets/asmita_visitor_card.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
-import '../../../visitor_management/presentation/widgets/acknowledge_action_button.dart';
 import '../../../visitor_management/presentation/widgets/delivery_action_sheet.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
 
@@ -110,34 +109,6 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
     context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
   }
 
-  Future<void> _callPhone(String? phoneNumber) async {
-    if (phoneNumber == null || phoneNumber.trim().isEmpty) return;
-    final clean = phoneNumber.replaceAll(RegExp(r'[^0-9+]'), '');
-    final uri = Uri.parse('tel:$clean');
-    try {
-      if (await url_launcher.canLaunchUrl(uri)) {
-        await url_launcher.launchUrl(uri);
-      } else {
-        if (!mounted) return;
-        AsmitaToast.show(
-          context,
-          message: 'Unable to open phone dialer for $phoneNumber',
-          type: AsmitaToastType.info,
-        );
-      }
-    } catch (_) {}
-  }
-
-  void _copyPassCode(BuildContext context, String code) {
-    Clipboard.setData(ClipboardData(text: code));
-    HapticFeedback.lightImpact();
-    AsmitaToast.show(
-      context,
-      message: 'Pass code #$code copied to clipboard',
-      type: AsmitaToastType.success,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     if (widget.visits != null) {
@@ -180,24 +151,18 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
                 allowPropertySwitching: false,
               ),
               Expanded(
-                child: RefreshIndicator(
-                  color: AsmitaPalette.deepNavy,
-                  onRefresh: () async {
-                    context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
-                  },
-                  child: isLoading
-                      ? const Center(
-                          child: AsmitaLoadingIndicator(
-                            color: AsmitaPalette.deepNavy,
-                            size: 32,
-                          ),
-                        )
-                      : _buildScrollBody(
-                          context,
-                          state.visits,
-                          isLoading: state.status == IndustrialVisitBlocStatus.loading,
+                child: isLoading
+                    ? const Center(
+                        child: AsmitaLoadingIndicator(
+                          color: AsmitaPalette.deepNavy,
+                          size: 32,
                         ),
-                ),
+                      )
+                    : _buildScrollBody(
+                        context,
+                        state.visits,
+                        isLoading: state.status == IndustrialVisitBlocStatus.loading,
+                      ),
               ),
             ],
           ),
@@ -250,8 +215,10 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
       }).toList();
     }
 
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
+    return AsmitaPullToRefresh(
+      onRefresh: () async {
+        context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+      },
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -333,101 +300,64 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top row: Name & Delegation Quick Pill
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            // Top row: Name & Designation
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.employeeName,
-                        style: const TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          letterSpacing: 0.2,
+                Text(
+                  widget.employeeName,
+                  style: const TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(6),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.18),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF10B981), // active green dot
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Flexible(
-                                    child: Text(
-                                      widget.designation.toUpperCase(),
-                                      style: const TextStyle(
-                                        fontFamily: 'Montserrat',
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
-                                        letterSpacing: 0.5,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF10B981), // active green dot
+                                shape: BoxShape.circle,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                // Delegation Button
-                InkWell(
-                  onTap: widget.onOpenDelegation,
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.45)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.swap_horiz_rounded, size: 15, color: Colors.white),
-                        SizedBox(width: 5),
-                        Text(
-                          'Delegation',
-                          style: TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                            const SizedBox(width: 5),
+                            Flexible(
+                              child: Text(
+                                widget.designation.toUpperCase(),
+                                style: const TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
@@ -952,400 +882,54 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
   // 6. VISITOR CARD (Responsive, Overflow-Proof)
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildVisitCard(BuildContext context, IndustrialVisitModel visit) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isPending = visit.isPending;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-          width: 1.1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black.withValues(alpha: 0.3) : const Color(0x0A0F172A),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
+    Widget? bottomActions;
+    if (isPending && visit.isDelivery) {
+      bottomActions = Align(
+        alignment: Alignment.centerRight,
+        child: ElevatedButton.icon(
+          onPressed: () {
+            DeliveryActionSheet.show(
+              context,
+              visit: visit,
+              onActionSelected: (action) =>
+                  _handleDecide(context, visit.id, action),
+            );
+          },
+          icon: const Icon(Icons.touch_app_rounded, size: 16, color: Colors.white),
+          label: const Text(
+            'Delivery Options',
+            style: TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top Row: Avatar, Name, Purpose, Status Badge
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Squircle Avatar
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: visit.isDelivery
-                          ? const [Color(0xFFD97706), Color(0xFFF59E0B)]
-                          : (visit.isCheckedIn
-                              ? const [Color(0xFF059669), Color(0xFF10B981)]
-                              : const [Color(0xFF1E3A8A), Color(0xFF2563EB)]),
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (visit.isDelivery
-                                ? const Color(0xFFF59E0B)
-                                : const Color(0xFF2563EB))
-                            .withValues(alpha: 0.22),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Icon(
-                      visit.isDelivery
-                          ? Icons.local_shipping_rounded
-                          : (visit.isCheckedIn
-                              ? Icons.how_to_reg_rounded
-                              : Icons.person_rounded),
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-
-                // Name and Purpose
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        visit.isDelivery
-                            ? '${visit.deliveryCompany ?? "Courier"} Delivery'
-                            : visit.visitorName,
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        visit.isDelivery
-                            ? 'Package Dropoff'
-                            : (visit.purpose ?? 'Department Guest Meeting'),
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 12,
-                          color: isDark
-                              ? AsmitaPalette.textDarkModeMuted
-                              : const Color(0xFF64748B),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // Lifecycle Status Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: visit.status.fillColor(isDark),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: visit.status.textColor(isDark).withValues(alpha: 0.25),
-                    ),
-                  ),
-                  child: Text(
-                    visit.status.label.toUpperCase(),
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: visit.status.textColor(isDark),
-                      letterSpacing: 0.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            // Inset Meta & Routing Container
-            Container(
-              margin: const EdgeInsets.only(top: 13),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.tag_rounded,
-                        size: 13,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        visit.requestNumber,
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white70 : const Color(0xFF334155),
-                        ),
-                      ),
-                      const Spacer(),
-                      if (visit.passCode != null && visit.passCode!.isNotEmpty)
-                        InkWell(
-                          onTap: () => _copyPassCode(context, visit.passCode!),
-                          borderRadius: BorderRadius.circular(6),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(0xFF3B82F6).withValues(alpha: 0.15)
-                                  : const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'PASS: #${visit.passCode}',
-                                  style: TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: isDark
-                                        ? const Color(0xFF93C5FD)
-                                        : const Color(0xFF1E3A8A),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                const Icon(
-                                  Icons.copy_rounded,
-                                  size: 12,
-                                  color: Color(0xFF3B82F6),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.meeting_room_outlined,
-                        size: 13,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                      ),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          'Destination: Cabin ${visit.cabinNumber ?? widget.cabinNumber} • Desk ${visit.deskNumber ?? widget.deskNumber}',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 11,
-                            color: isDark ? Colors.white70 : const Color(0xFF64748B),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (visit.isVehicle) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.directions_car_rounded, size: 11),
-                              const SizedBox(width: 4),
-                              Text(
-                                visit.vehicleNumber ?? 'Car',
-                                style: const TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Timestamps & Calling info
-            if (visit.checkInAt != null || visit.createdAt != null || visit.visitorMobile != null) ...[
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Icon(
-                    Icons.access_time_rounded,
-                    size: 12,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF94A3B8),
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    visit.isCheckedIn
-                        ? 'Checked in: ${AppDateFormatter.timeAgo(visit.checkInAt ?? visit.createdAt)}'
-                        : 'Requested: ${AppDateFormatter.timeAgo(visit.createdAt)}',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 11,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                    ),
-                  ),
-                  const Spacer(),
-                  if (visit.visitorMobile != null && visit.visitorMobile!.isNotEmpty)
-                    InkWell(
-                      onTap: () => _callPhone(visit.visitorMobile),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.phone_rounded, size: 12, color: Color(0xFF10B981)),
-                            SizedBox(width: 4),
-                            Text(
-                              'Call',
-                              style: TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF10B981),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-
-            // Action Buttons Row (FittedBox protected against layout overflows)
-            if (visit.isPending) ...[
-              const SizedBox(height: 14),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerRight,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    if (visit.isDelivery) ...[
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          DeliveryActionSheet.show(
-                            context,
-                            visit: visit,
-                            onActionSelected: (action) =>
-                                _handleDecide(context, visit.id, action),
-                          );
-                        },
-                        icon: const Icon(Icons.touch_app_rounded, size: 16, color: Colors.white),
-                        label: const Text(
-                          'Delivery Options',
-                          style: TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AsmitaPalette.deepNavy,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          elevation: 1,
-                        ),
-                      ),
-                    ] else ...[
-                      AcknowledgeActionButton(
-                        onAcknowledge: () => _handleAcknowledge(context, visit.id),
-                      ),
-                      const SizedBox(width: 6),
-                      OutlinedButton(
-                        onPressed: () => _handleDecide(context, visit.id, 'REJECT'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AsmitaPalette.actionRed,
-                          side: BorderSide(
-                            color: AsmitaPalette.actionRed.withValues(alpha: 0.8),
-                            width: 1.2,
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        child: const Text(
-                          'Reject',
-                          style: TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      ElevatedButton.icon(
-                        onPressed: () => _handleDecide(context, visit.id, 'APPROVE'),
-                        icon: const Icon(Icons.check_rounded, size: 16),
-                        label: const Text(
-                          'Approve',
-                          style: TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AsmitaPalette.deepNavy,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          elevation: 1,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ],
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AsmitaPalette.deepNavy,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            elevation: 1,
+          ),
         ),
-      ),
+      );
+    }
+
+    return AsmitaVisitorCard.fromIndustrialVisit(
+      visit: visit,
+      context: context,
+      onApprove: (isPending && !visit.isDelivery)
+          ? () => _handleDecide(context, visit.id, 'APPROVE')
+          : null,
+      onDeny: (isPending && !visit.isDelivery)
+          ? () => _handleDecide(context, visit.id, 'REJECT')
+          : null,
+      onAcknowledge: (isPending && !visit.isDelivery)
+          ? () => _handleAcknowledge(context, visit.id)
+          : null,
+      bottomActions: bottomActions,
     );
   }
 

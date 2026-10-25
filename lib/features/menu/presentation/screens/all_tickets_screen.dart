@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
+import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/features/menu/presentation/providers/support_provider.dart';
 import '../widgets/ticket_conversation_bottom_sheet.dart';
 import 'package:shimmer/shimmer.dart';
@@ -47,19 +48,17 @@ class AllTicketsScreen extends ConsumerWidget {
             );
           }
           
-          return RefreshIndicator(
+          return AsmitaRefreshableListView(
             onRefresh: () async {
               await ref.read(supportProvider.notifier).fetchTickets();
             },
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: tickets.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final t = tickets[index];
-                return _buildTicketCard(context, t, textTheme);
-              },
-            ),
+            padding: const EdgeInsets.all(16),
+            itemCount: tickets.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final t = tickets[index];
+              return _buildTicketCard(context, t, textTheme);
+            },
           );
         },
         loading: () => _buildSkeletonList(context),

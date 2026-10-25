@@ -30,16 +30,16 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
   int? _selectedRecipientUserId;
 
   final List<String> _commonCouriers = [
-    'Amazon',
-    'Blue Dart',
-    'DTDC',
-    'DHL',
-    'Swiggy',
     'Zomato',
+    'Swiggy',
+    'Amazon',
     'Blinkit',
     'Zepto',
     'Flipkart',
+    'BlueDart',
     'Delhivery',
+    'DTDC',
+    'DHL',
     'India Post',
     'Other',
   ];

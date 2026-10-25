@@ -10,6 +10,7 @@ import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
+import '../../../../core/widgets/asmita_visitor_card.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
@@ -19,7 +20,6 @@ import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
-import '../../../visitor_management/presentation/widgets/acknowledge_action_button.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 class IndustrialVisitsScreen extends StatefulWidget {
@@ -76,7 +76,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
   void _showVisitDetailsModal(BuildContext context, IndustrialVisitModel visit) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isPending = visit.isPending;
-    final isAck = _acknowledgedIds.contains(visit.id);
+    final isExpired = visit.status == IndustrialVisitStatus.expired ||
+        visit.status == IndustrialVisitStatus.cancelled ||
+        visit.status == IndustrialVisitStatus.rejected;
 
     showAsmitaBottomSheet(
       context: context,
@@ -87,269 +89,599 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header Card with Pass Code
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AsmitaPalette.deepNavy, Color(0xFF1E293B)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+            // 1. Executive Boarding Pass / Digital Pass Header Card
+            Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0F172A), AsmitaPalette.deepNavy],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AsmitaPalette.deepNavy.withValues(alpha: 0.35),
+                    blurRadius: 14,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.25),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 26,
-                  backgroundColor: Colors.white.withValues(alpha: 0.15),
-                  child: Text(
-                    visit.visitorName.isNotEmpty ? visit.visitorName[0].toUpperCase() : 'V',
-                    style: const TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        visit.visitorName,
-                        style: const TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        visit.deliveryCompany ?? visit.purpose ?? 'Guest Visitor',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white.withValues(alpha: 0.8),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (visit.passCode != null)
-                  InkWell(
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: visit.passCode!));
-                      HapticFeedback.lightImpact();
-                      AsmitaToast.show(
-                        context,
-                        message: 'Pass code ${visit.passCode} copied!',
-                        type: AsmitaToastType.success,
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
-                      ),
-                      child: Column(
-                        children: [
-                          const Text(
-                            'PASS CODE',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white70,
-                              letterSpacing: 0.5,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Upper Row: Avatar, Visitor Name, Category & Status Pill
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.white.withValues(alpha: 0.25),
+                                Colors.white.withValues(alpha: 0.08),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.35),
+                              width: 1.5,
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Row(
+                          alignment: Alignment.center,
+                          child: Text(
+                            visit.visitorName.isNotEmpty
+                                ? visit.visitorName[0].toUpperCase()
+                                : 'V',
+                            style: const TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 22,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                visit.passCode!,
+                                visit.visitorName,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontFamily: 'Montserrat',
-                                  fontSize: 15,
                                   fontWeight: FontWeight.bold,
+                                  fontSize: 17,
                                   color: Colors.white,
+                                  letterSpacing: 0.2,
+                                  height: 1.2,
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              const Icon(Icons.copy, size: 12, color: Colors.white70),
+                              const SizedBox(height: 3),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    visit.isDelivery
+                                        ? Icons.local_shipping_outlined
+                                        : Icons.badge_outlined,
+                                    size: 13,
+                                    color: Colors.white70,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      visit.deliveryCompany ??
+                                          visit.purpose ??
+                                          (visit.isDelivery ? 'Delivery Entry' : 'Guest Visitor'),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 12,
+                                        color: Colors.white70,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Status Badge in header
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: visit.status.fillColor(isDark).withValues(alpha: 0.25),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: visit.status.textColor(isDark).withValues(alpha: 0.6),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                visit.status.iconData,
+                                size: 12,
+                                color: visit.status.textColor(isDark),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                visit.status.label,
+                                style: TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: visit.status.textColor(isDark),
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Perforated ticket dash divider
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Row(
+                      children: List.generate(
+                        24,
+                        (index) => Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: Container(
+                              height: 1.5,
+                              color: index.isEven
+                                  ? Colors.white.withValues(alpha: 0.22)
+                                  : Colors.transparent,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Lower Section: Full-Width Digital Pass Code Strip
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.12),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.vpn_key_rounded,
+                                      size: 11,
+                                      color: Colors.white60,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'PASS CODE',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white.withValues(alpha: 0.7),
+                                        letterSpacing: 0.8,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  visit.passCode ?? visit.requestNumber,
+                                  style: const TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    letterSpacing: 1.1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (visit.passCode != null)
+                            Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  Clipboard.setData(ClipboardData(text: visit.passCode!));
+                                  HapticFeedback.lightImpact();
+                                  AsmitaToast.show(
+                                    context,
+                                    message: 'Pass code ${visit.passCode} copied!',
+                                    type: AsmitaToastType.success,
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.25),
+                                    ),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.copy_rounded, size: 12, color: Colors.white),
+                                      SizedBox(width: 5),
+                                      Text(
+                                        'Copy',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
                   ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Detail Grid
-          _buildDetailRow(
-            context,
-            icon: Icons.flag_outlined,
-            label: 'Current Status',
-            value: visit.status.label,
-            badgeColor: visit.status.textColor(isDark),
-            badgeBg: visit.status.fillColor(isDark),
-          ),
-          _buildDetailRow(
-            context,
-            icon: Icons.business_rounded,
-            label: 'Department',
-            value: visit.departmentName ?? 'General Campus',
-          ),
-          if (visit.hostName != null && visit.hostName!.isNotEmpty)
-            _buildDetailRow(
-              context,
-              icon: Icons.person_outline_rounded,
-              label: 'Host Person',
-              value: visit.hostName!,
-            ),
-          if (visit.visitorMobile != null && visit.visitorMobile!.isNotEmpty)
-            _buildDetailRow(
-              context,
-              icon: Icons.phone_outlined,
-              label: 'Visitor Contact',
-              value: visit.visitorMobile!,
-              trailing: IconButton(
-                icon: const Icon(Icons.phone, size: 18, color: AsmitaPalette.successGreen),
-                onPressed: () {
-                  AsmitaToast.show(
-                    context,
-                    message: 'Connecting to ${visit.visitorMobile}...',
-                    type: AsmitaToastType.info,
-                  );
-                },
+                ],
               ),
             ),
-          if (visit.vehicleNumber != null && visit.vehicleNumber!.isNotEmpty)
-            _buildDetailRow(
-              context,
-              icon: Icons.directions_car_outlined,
-              label: 'Vehicle Plate',
-              value: visit.vehicleNumber!,
-            ),
-          _buildDetailRow(
-            context,
-            icon: Icons.access_time_rounded,
-            label: 'Scheduled Time',
-            value: visit.checkInAt != null
-                ? DateFormat('dd MMM yyyy, hh:mm a').format(visit.checkInAt!)
-                : (visit.createdAt != null
-                    ? DateFormat('dd MMM yyyy, hh:mm a').format(visit.createdAt!)
-                    : 'Scheduled Visit'),
-          ),
-
-          if (visit.statusToken != null && visit.statusToken!.isNotEmpty) ...[
             const SizedBox(height: 16),
-            Center(
-              child: Container(
-                width: 170,
-                height: 170,
-                padding: const EdgeInsets.all(12),
+
+            // 2. Structured Information Card
+            Container(
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.35) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor.withValues(alpha: isDark ? 0.3 : 0.8),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildDetailRow(
+                    context,
+                    icon: Icons.flag_rounded,
+                    label: 'Current Status',
+                    customValue: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: visit.status.fillColor(isDark),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        visit.status.label,
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: visit.status.textColor(isDark),
+                        ),
+                      ),
+                    ),
+                  ),
+                  _buildRowDivider(context),
+                  _buildDetailRow(
+                    context,
+                    icon: Icons.business_rounded,
+                    label: 'Department',
+                    value: visit.departmentName ?? 'General Campus',
+                  ),
+                  if (visit.hostName != null && visit.hostName!.isNotEmpty) ...[
+                    _buildRowDivider(context),
+                    _buildDetailRow(
+                      context,
+                      icon: Icons.person_outline_rounded,
+                      label: 'Host Person',
+                      value: visit.hostName!,
+                    ),
+                  ],
+                  if (visit.visitorMobile != null && visit.visitorMobile!.isNotEmpty) ...[
+                    _buildRowDivider(context),
+                    _buildDetailRow(
+                      context,
+                      icon: Icons.phone_outlined,
+                      label: 'Visitor Contact',
+                      value: visit.visitorMobile!,
+                      trailing: IconButton(
+                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.all(4),
+                        icon: const Icon(Icons.phone_in_talk_rounded, size: 16, color: AsmitaPalette.successGreen),
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: visit.visitorMobile!));
+                          HapticFeedback.lightImpact();
+                          AsmitaToast.show(
+                            context,
+                            message: 'Phone number ${visit.visitorMobile} copied!',
+                            type: AsmitaToastType.info,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                  if (visit.vehicleNumber != null && visit.vehicleNumber!.isNotEmpty) ...[
+                    _buildRowDivider(context),
+                    _buildDetailRow(
+                      context,
+                      icon: Icons.directions_car_outlined,
+                      label: 'Vehicle Plate',
+                      customValue: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Theme.of(context).dividerColor),
+                        ),
+                        child: Text(
+                          visit.vehicleNumber!,
+                          style: const TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  _buildRowDivider(context),
+                  _buildDetailRow(
+                    context,
+                    icon: Icons.access_time_rounded,
+                    label: 'Scheduled Time',
+                    value: visit.checkInAt != null
+                        ? DateFormat('dd MMM yyyy, hh:mm a').format(visit.checkInAt!)
+                        : (visit.createdAt != null
+                            ? DateFormat('dd MMM yyyy, hh:mm a').format(visit.createdAt!)
+                            : 'Scheduled Visit'),
+                  ),
+                  if (visit.checkOutAt != null) ...[
+                    _buildRowDivider(context),
+                    _buildDetailRow(
+                      context,
+                      icon: Icons.logout_rounded,
+                      label: 'Check Out Time',
+                      value: DateFormat('dd MMM yyyy, hh:mm a').format(visit.checkOutAt!),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // 3. High-Assurance Gate Pass QR Section
+            if (visit.statusToken != null && visit.statusToken!.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.35) : Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Theme.of(context).dividerColor),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor.withValues(alpha: isDark ? 0.3 : 0.8),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.qr_code_scanner_rounded,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'GATE PASS QR VERIFICATION',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.8,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Show this QR code at the security checkpoint to scan and verify',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AsmitaPalette.borderGrey),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Opacity(
+                            opacity: isExpired ? 0.35 : 1.0,
+                            child: QrImageView(
+                              data: visit.statusToken!,
+                              version: QrVersions.auto,
+                              size: 140.0,
+                              eyeStyle: const QrEyeStyle(
+                                eyeShape: QrEyeShape.square,
+                                color: AsmitaPalette.deepNavy,
+                              ),
+                              dataModuleStyle: const QrDataModuleStyle(
+                                dataModuleShape: QrDataModuleShape.square,
+                                color: AsmitaPalette.deepNavy,
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (isExpired)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AsmitaPalette.actionRed.withValues(alpha: 0.9),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.history_toggle_off_rounded, size: 14, color: Colors.white),
+                                SizedBox(width: 4),
+                                Text(
+                                  'PASS EXPIRED',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                    color: Colors.white,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
-                child: QrImageView(
-                  data: visit.statusToken!,
-                  version: QrVersions.auto,
-                  size: 146.0,
-                  eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: AsmitaPalette.deepNavy),
-                  dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: AsmitaPalette.deepNavy),
-                ),
               ),
-            ),
-          ],
+            ],
 
-          const SizedBox(height: 20),
+            const SizedBox(height: 18),
 
-          // Action Buttons
-          if (isPending) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      context.read<IndustrialVisitBloc>().add(
-                            DecideVisitEvent(visitId: visit.id, action: 'DENY'),
-                          );
-                    },
-                    icon: const Icon(Icons.close_rounded, size: 18),
-                    label: const Text('Deny Entry', style: TextStyle(fontWeight: FontWeight.bold)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AsmitaPalette.actionRed,
-                      side: const BorderSide(color: AsmitaPalette.actionRed, width: 1.5),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            // 4. Action Buttons
+            if (isPending) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        context.read<IndustrialVisitBloc>().add(
+                              DecideVisitEvent(visitId: visit.id, action: 'DENY'),
+                            );
+                      },
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                      label: const Text('Deny Entry', style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AsmitaPalette.actionRed,
+                        side: const BorderSide(color: AsmitaPalette.actionRed, width: 1.5),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      context.read<IndustrialVisitBloc>().add(
-                            DecideVisitEvent(visitId: visit.id, action: 'APPROVE'),
-                          );
-                    },
-                    icon: const Icon(Icons.check_rounded, size: 18),
-                    label: const Text('Approve Entry', style: TextStyle(fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AsmitaPalette.successGreen,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        context.read<IndustrialVisitBloc>().add(
+                              DecideVisitEvent(visitId: visit.id, action: 'APPROVE'),
+                            );
+                      },
+                      icon: const Icon(Icons.check_rounded, size: 18),
+                      label: const Text('Approve Entry', style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AsmitaPalette.successGreen,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ] else if (visit.status == IndustrialVisitStatus.approved && !isAck) ...[
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                setState(() => _acknowledgedIds.add(visit.id));
-                context.read<IndustrialVisitBloc>().add(AcknowledgeVisitEvent(visit.id));
-              },
-              icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
-              label: const Text('Acknowledge Visitor Arrival', style: TextStyle(fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AsmitaPalette.deepNavy,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ],
               ),
-            ),
-          ],
+            ] else if (visit.passCode != null) ...[
+              ElevatedButton.icon(
+                onPressed: () {
+                  final summary = 'Visitor Pass for ${visit.visitorName}\n'
+                      'Pass Code: #${visit.passCode}\n'
+                      'Status: ${visit.status.label}\n'
+                      'Department: ${visit.departmentName ?? "General Campus"}\n'
+                      'Host: ${visit.hostName ?? "General"}';
+                  Clipboard.setData(ClipboardData(text: summary));
+                  HapticFeedback.lightImpact();
+                  AsmitaToast.show(
+                    context,
+                    message: 'Pass details copied to clipboard!',
+                    type: AsmitaToastType.success,
+                  );
+                },
+                icon: const Icon(Icons.share_outlined, size: 16),
+                label: const Text(
+                  'Share Pass Summary',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
           ],
         ),
@@ -357,23 +689,32 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     );
   }
 
+  Widget _buildRowDivider(BuildContext context) {
+    return Divider(
+      height: 1,
+      thickness: 0.6,
+      indent: 44,
+      endIndent: 12,
+      color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+    );
+  }
+
   Widget _buildDetailRow(
     BuildContext context, {
     required IconData icon,
     required String label,
-    required String value,
-    Color? badgeColor,
-    Color? badgeBg,
+    String? value,
+    Widget? customValue,
     Widget? trailing,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
-              color: Theme.of(context).dividerColor.withValues(alpha: 0.15),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
@@ -381,35 +722,29 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
           const SizedBox(width: 12),
           Text(
             label,
-            style: const TextStyle(fontSize: 13, color: AsmitaPalette.textLight),
+            style: const TextStyle(
+              fontSize: 13,
+              fontFamily: 'Poppins',
+              color: AsmitaPalette.textLight,
+            ),
           ),
           const Spacer(),
-          if (badgeColor != null && badgeBg != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-              decoration: BoxDecoration(
-                color: badgeBg,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: badgeColor,
-                ),
-              ),
-            )
-          else
+          if (customValue != null)
+            customValue
+          else if (value != null)
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Montserrat',
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
-          ?trailing,
+          if (trailing != null) ...[
+            const SizedBox(width: 4),
+            trailing,
+          ],
         ],
       ),
     );
@@ -841,738 +1176,40 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
   }
 
   Widget _buildVisitItem(BuildContext context, IndustrialVisitModel visit) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isPending = visit.isPending;
     final isAck = _acknowledgedIds.contains(visit.id);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isPending
-              ? AsmitaPalette.actionRed.withValues(alpha: 0.5)
-              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-          width: isPending ? 1.5 : 1.1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isPending
-                ? AsmitaPalette.actionRed.withValues(alpha: isDark ? 0.15 : 0.08)
-                : (isDark ? Colors.black.withValues(alpha: 0.35) : const Color(0x0A0F172A)),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: isDark ? Colors.transparent : const Color(0x050F172A),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _showVisitDetailsModal(context, visit),
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top Row: Avatar + Identity/Type
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    _buildVisitorAvatar(context, visit, isDark, isPending),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            visit.visitorName.isNotEmpty ? visit.visitorName : 'Guest Visitor',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
-                              letterSpacing: -0.2,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          _buildVisitorCategoryBadge(context, visit, isDark),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                // Inset Executive Meta Data Table (Time, Location, Key, Status)
-                _buildExecutiveFooter(context, visit, isDark, isPending),
-
-                // Decision Actions for Pending Visits
-                if (isPending) ...[
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            context.read<IndustrialVisitBloc>().add(
-                                  DecideVisitEvent(visitId: visit.id, action: 'DENY'),
-                                );
-                          },
-                          icon: const Icon(Icons.close_rounded, size: 16),
-                          label: const Text(
-                            'Deny Entry',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12.5,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AsmitaPalette.actionRed,
-                            side: BorderSide(
-                              color: AsmitaPalette.actionRed.withValues(alpha: 0.8),
-                              width: 1.2,
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            context.read<IndustrialVisitBloc>().add(
-                                  DecideVisitEvent(visitId: visit.id, action: 'APPROVE'),
-                                );
-                          },
-                          icon: const Icon(Icons.check_rounded, size: 16),
-                          label: const Text(
-                            'Approve Entry',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12.5,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AsmitaPalette.deepNavy,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            elevation: 1,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-
-                // Acknowledge Action Button
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: AcknowledgeActionButton(
-                    isAcknowledged: isAck,
-                    onAcknowledge: () {
-                      setState(() => _acknowledgedIds.add(visit.id));
-                      context.read<IndustrialVisitBloc>().add(AcknowledgeVisitEvent(visit.id));
-                      AsmitaToast.show(
-                        context,
-                        message: 'Visitor pass #${visit.passCode ?? visit.id} acknowledged',
-                        type: AsmitaToastType.success,
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVisitorAvatar(
-    BuildContext context,
-    IndustrialVisitModel visit,
-    bool isDark,
-    bool isPending,
-  ) {
-    if (visit.visitorPhotoUrl != null && visit.visitorPhotoUrl!.isNotEmpty) {
-      return Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-            width: 1.2,
-          ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(13),
-          child: Image.network(
-            visit.visitorPhotoUrl!,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => _buildAvatarFallback(context, visit, isDark, isPending),
-          ),
-        ),
-      );
-    }
-    return _buildAvatarFallback(context, visit, isDark, isPending);
-  }
-
-  Widget _buildAvatarFallback(
-    BuildContext context,
-    IndustrialVisitModel visit,
-    bool isDark,
-    bool isPending,
-  ) {
-    List<Color> gradientColors;
-    IconData? overlayIcon;
-    bool showStarBadge = false;
-
-    if (isPending) {
-      gradientColors = const [Color(0xFF991B1B), Color(0xFFDC2626)];
-    } else if (visit.isDelivery) {
-      gradientColors = const [Color(0xFFD97706), Color(0xFFF59E0B)];
-      overlayIcon = Icons.local_shipping_rounded;
-    } else if (visit.isPreApproved) {
-      gradientColors = const [Color(0xFF1E293B), Color(0xFF27347B)];
-      showStarBadge = true;
-    } else {
-      gradientColors = const [Color(0xFF1E3A8A), Color(0xFF2563EB)];
-    }
-
-    final letter = visit.visitorName.isNotEmpty ? visit.visitorName[0].toUpperCase() : 'V';
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: gradientColors,
-            ),
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: gradientColors.last.withValues(alpha: isDark ? 0.35 : 0.25),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.18),
-              width: 1.2,
-            ),
-          ),
-          child: Center(
-            child: overlayIcon != null
-                ? Icon(overlayIcon, size: 22, color: Colors.white)
-                : Text(
-                    letter,
-                    style: const TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                      color: Colors.white,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-          ),
-        ),
-        if (showStarBadge)
-          Positioned(
-            right: -2,
-            bottom: -2,
-            child: Container(
-              width: 18,
-              height: 18,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF59E0B),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.surface,
-                  width: 1.8,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 3,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.star_rounded,
-                size: 11,
-                color: Colors.white,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildVisitorCategoryBadge(
-    BuildContext context,
-    IndustrialVisitModel visit,
-    bool isDark,
-  ) {
-    if (visit.isPreApproved) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.35) : const Color(0xFFFEF3C7),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: isDark ? const Color(0xFFB45309).withValues(alpha: 0.6) : const Color(0xFFFDE68A),
-            width: 0.8,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.star_rounded, size: 11, color: Color(0xFFD97706)),
-            const SizedBox(width: 4),
-            Text(
-              'VIP GUEST',
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 9.5,
-                fontWeight: FontWeight.w800,
-                color: isDark ? const Color(0xFFFDE68A) : const Color(0xFFB45309),
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
-        ),
-      );
-    } else if (visit.isDelivery) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.local_shipping_outlined,
-            size: 13,
-            color: isDark ? const Color(0xFFFCD34D) : const Color(0xFFD97706),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            visit.deliveryCompany != null ? '${visit.deliveryCompany} Delivery' : 'Courier Dropoff',
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: isDark ? AsmitaPalette.textDarkModeMuted : const Color(0xFF64748B),
-            ),
-          ),
-        ],
-      );
-    }
-
-    final categoryText = visit.purpose ?? 'Campus Guest';
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          Icons.badge_outlined,
-          size: 13,
-          color: isDark ? AsmitaPalette.textDarkModeMuted : const Color(0xFF64748B),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          categoryText,
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: isDark ? AsmitaPalette.textDarkModeMuted : const Color(0xFF64748B),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatusBadge(
-    BuildContext context,
-    IndustrialVisitModel visit,
-    bool isDark,
-    bool isPending,
-  ) {
-    Color bg;
-    Color border;
-    Color textColor;
-    Color dotColor;
-    String label;
-    bool pulse = false;
-
-    if (isPending) {
-      bg = isDark ? const Color(0xFF450A0A) : const Color(0xFFFEF2F2);
-      border = isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFECACA);
-      textColor = isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C);
-      dotColor = const Color(0xFFEF4444);
-      label = 'PENDING';
-      pulse = true;
-    } else if (visit.status == IndustrialVisitStatus.checkedIn) {
-      bg = isDark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5);
-      border = isDark ? const Color(0xFF047857) : const Color(0xFFA7F3D0);
-      textColor = isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46);
-      dotColor = const Color(0xFF10B981);
-      label = 'INSIDE HQ';
-      pulse = true;
-    } else if (visit.status == IndustrialVisitStatus.approved) {
-      bg = isDark ? const Color(0xFF1E3A8A) : const Color(0xFFEFF6FF);
-      border = isDark ? const Color(0xFF2563EB) : const Color(0xFFBFDBFE);
-      textColor = isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF);
-      dotColor = const Color(0xFF3B82F6);
-      label = 'APPROVED';
-    } else if (visit.status == IndustrialVisitStatus.checkedOut) {
-      bg = isDark ? const Color(0xFF18181B) : const Color(0xFFF4F4F5);
-      border = isDark ? const Color(0xFF27272A) : const Color(0xFFE4E4E7);
-      textColor = isDark ? const Color(0xFFA1A1AA) : const Color(0xFF52525B);
-      dotColor = const Color(0xFF71717A);
-      label = 'CHECKED OUT';
-    } else {
-      bg = visit.status.fillColor(isDark);
-      border = visit.status.textColor(isDark).withValues(alpha: 0.3);
-      textColor = visit.status.textColor(isDark);
-      dotColor = textColor;
-      label = visit.status.label.toUpperCase();
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: border, width: 1.1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 6.5,
-            height: 6.5,
-            decoration: BoxDecoration(
-              color: dotColor,
-              shape: BoxShape.circle,
-              boxShadow: pulse
-                  ? [
-                      BoxShadow(
-                        color: dotColor.withValues(alpha: 0.5),
-                        blurRadius: 4,
-                        spreadRadius: 1,
-                      ),
-                    ]
-                  : null,
-            ),
-          ),
-          const SizedBox(width: 5.5),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              color: textColor,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildExecutiveFooter(
-    BuildContext context,
-    IndustrialVisitModel visit,
-    bool isDark,
-    bool isPending,
-  ) {
-    final arrivalTime = visit.checkInAt != null
-        ? DateFormat('hh:mm a').format(visit.checkInAt!)
-        : (visit.createdAt != null
-            ? DateFormat('hh:mm a').format(visit.createdAt!)
-            : 'Scheduled');
-
-    final destinationName = visit.departmentName ?? 'General Campus';
-    final hasPassCode = visit.passCode != null && visit.passCode!.isNotEmpty;
-    final hasVehicle = visit.vehicleNumber != null && visit.vehicleNumber!.isNotEmpty;
-
-    final mutedColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-    final dividerColor = isDark ? const Color(0xFF334155).withValues(alpha: 0.6) : const Color(0xFFE2E8F0);
-
-    return Container(
-      margin: const EdgeInsets.only(top: 13),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.7) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: dividerColor,
-          width: 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          // Row 1: Entered/Scheduled Time & Location/Vehicle
-          Row(
-            children: [
-              // Time
-              Expanded(
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.schedule_rounded,
-                      size: 14,
-                      color: mutedColor,
-                    ),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            visit.checkInAt != null ? 'ENTERED' : 'SCHEDULED',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 8.5,
-                              fontWeight: FontWeight.w700,
-                              color: mutedColor,
-                              letterSpacing: 0.4,
-                            ),
-                          ),
-                          const SizedBox(height: 1),
-                          Text(
-                            arrivalTime,
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Vertical Divider
-              Container(
-                width: 1,
-                height: 26,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                color: dividerColor,
-              ),
-
-              // Destination or Vehicle
-              Expanded(
-                child: Row(
-                  children: [
-                    Icon(
-                      hasVehicle ? Icons.directions_car_filled_rounded : Icons.apartment_rounded,
-                      size: 14,
-                      color: mutedColor,
-                    ),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            hasVehicle ? 'VEHICLE' : 'LOCATION',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 8.5,
-                              fontWeight: FontWeight.w700,
-                              color: mutedColor,
-                              letterSpacing: 0.4,
-                            ),
-                          ),
-                          const SizedBox(height: 1),
-                          Text(
-                            hasVehicle ? visit.vehicleNumber! : destinationName,
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          // Horizontal Divider
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Divider(
-              height: 1,
-              thickness: 1,
-              color: dividerColor,
-            ),
-          ),
-
-          // Row 2: Access Key (Left) & Status (Right) in matching format
-          Row(
-            children: [
-              // Access Key
-              Expanded(
-                child: InkWell(
-                  onTap: hasPassCode
-                      ? () {
-                          Clipboard.setData(ClipboardData(text: visit.passCode!));
-                          HapticFeedback.selectionClick();
-                          AsmitaToast.show(
-                            context,
-                            message: 'Pass code #${visit.passCode} copied to clipboard',
-                            type: AsmitaToastType.success,
-                          );
-                        }
-                      : null,
-                  borderRadius: BorderRadius.circular(6),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.vpn_key_rounded,
-                        size: 14,
-                        color: mutedColor,
-                      ),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'ACCESS KEY',
-                              style: TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.w700,
-                                color: mutedColor,
-                                letterSpacing: 0.4,
-                              ),
-                            ),
-                            const SizedBox(height: 1),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    hasPassCode ? '#${visit.passCode}' : 'N/A',
-                                    style: TextStyle(
-                                      fontFamily: 'Montserrat',
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (hasPassCode) ...[
-                                  const SizedBox(width: 4),
-                                  Icon(
-                                    Icons.copy_rounded,
-                                    size: 10,
-                                    color: mutedColor,
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Vertical Divider
-              Container(
-                width: 1,
-                height: 26,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                color: dividerColor,
-              ),
-
-              // Status
-              Expanded(
-                child: Row(
-                  children: [
-                    Icon(
-                      isPending
-                          ? Icons.pending_rounded
-                          : (visit.status == IndustrialVisitStatus.checkedIn
-                              ? Icons.meeting_room_rounded
-                              : (visit.status == IndustrialVisitStatus.approved
-                                  ? Icons.verified_rounded
-                                  : Icons.info_outline_rounded)),
-                      size: 14,
-                      color: mutedColor,
-                    ),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'STATUS',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 8.5,
-                              fontWeight: FontWeight.w700,
-                              color: mutedColor,
-                              letterSpacing: 0.4,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerLeft,
-                            child: _buildStatusBadge(context, visit, isDark, isPending),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+    return AsmitaVisitorCard.fromIndustrialVisit(
+      visit: visit,
+      context: context,
+      isAcknowledged: isAck,
+      onTap: () => _showVisitDetailsModal(context, visit),
+      onApprove: isPending
+          ? () {
+              context.read<IndustrialVisitBloc>().add(
+                    DecideVisitEvent(visitId: visit.id, action: 'APPROVE'),
+                  );
+            }
+          : null,
+      onDeny: isPending
+          ? () {
+              context.read<IndustrialVisitBloc>().add(
+                    DecideVisitEvent(visitId: visit.id, action: 'DENY'),
+                  );
+            }
+          : null,
+      onAcknowledge: (isPending && !isAck)
+          ? () {
+              setState(() => _acknowledgedIds.add(visit.id));
+              context.read<IndustrialVisitBloc>().add(AcknowledgeVisitEvent(visit.id));
+              AsmitaToast.show(
+                context,
+                message: 'Visitor pass #${visit.passCode ?? visit.id} acknowledged',
+                type: AsmitaToastType.success,
+              );
+            }
+          : null,
     );
   }
 }
+
