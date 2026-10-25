@@ -288,6 +288,363 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   TimeOfDay _selectedEndTime = const TimeOfDay(hour: 23, minute: 59);
   int _guestCount = 1;
 
+  static const Map<String, List<String>> purposeSuggestionsByCategory = {
+    'Guest': [
+      'Official Meeting',
+      'Job Interview',
+      'Personal Visit',
+      'Document Submission',
+      'Other',
+    ],
+    'Cab': [
+      'Official Meeting',
+      'Job Interview',
+      'Personal Visit',
+      'Cab Drop / Pickup',
+      'Document Submission',
+      'Other',
+    ],
+    'Delivery': [],
+    'Visiting Help': [
+      'Maintenance & Repair',
+      'Vendor Work',
+      'Electrical / Plumbing',
+      'Inspection & Audit',
+      'Document Submission',
+      'Other',
+    ],
+  };
+
+  static const List<String> deliveryCompanyOptions = [
+    'Zomato',
+    'Swiggy',
+    'Amazon',
+    'Blinkit',
+    'Zepto',
+    'Flipkart',
+    'BlueDart',
+    'Delhivery',
+  ];
+
+  static const List<String> cabCompanyOptions = [
+    'Personal Vehicle',
+    'Uber',
+    'Ola',
+    'Rapido',
+    'BluSmart',
+  ];
+
+  static const List<String> vehicleTypeOptions = [
+    'Personal Bike',
+    'Personal Car',
+    'Auto / Cab',
+    'Commercial',
+  ];
+  String _selectedVehicleType = 'Personal Car';
+
+  Widget _buildPurposeSection({bool isGuard = false}) {
+    if (_selectedCategory == 'Delivery') {
+      return const SizedBox.shrink();
+    }
+
+    final suggestions = purposeSuggestionsByCategory[_selectedCategory] ??
+        purposeSuggestionsByCategory['Guest']!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AsmitaTextField(
+          controller: _purposeController,
+          label: 'Purpose of Visit*',
+          hint: 'Select or enter purpose of visit',
+          icon: Icons.notes_rounded,
+          minLines: 1,
+          maxLines: 2,
+          textCapitalization: TextCapitalization.sentences,
+        ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: suggestions.map((p) {
+              final isSelected = _purposeController.text.trim() == p;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ChoiceChip(
+                  label: Text(
+                    p,
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                    ),
+                  ),
+                  selected: isSelected,
+                  selectedColor: AsmitaPalette.actionRed,
+                  backgroundColor: AsmitaPalette.systemBG,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: isSelected
+                          ? AsmitaPalette.actionRed
+                          : AsmitaPalette.borderGrey,
+                    ),
+                  ),
+                  onSelected: (selected) {
+                    setState(() {
+                      if (selected) {
+                        _purposeController.text = p;
+                      } else if (_purposeController.text == p) {
+                        _purposeController.clear();
+                      }
+                    });
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDeliveryCompanySelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Delivery Partner / App*',
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AsmitaPalette.textDark,
+              ),
+            ),
+            GestureDetector(
+              onTap: _showCompanySelectionSheet,
+              child: const Text(
+                'View All',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AsmitaPalette.actionRed,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              ...deliveryCompanyOptions.map((comp) {
+                final isSelected = _selectedCompany == comp;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: ChoiceChip(
+                    label: Text(
+                      comp,
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                      ),
+                    ),
+                    selected: isSelected,
+                    selectedColor: AsmitaPalette.actionRed,
+                    backgroundColor: AsmitaPalette.systemBG,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(
+                        color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
+                      ),
+                    ),
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() {
+                          _selectedCompany = comp;
+                          _customCompanyName = '';
+                        });
+                      }
+                    },
+                  ),
+                );
+              }),
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ActionChip(
+                  avatar: const Icon(Icons.more_horiz_rounded, size: 16),
+                  label: Text(
+                    _selectedCompany == 'Other' && _customCompanyName.isNotEmpty
+                        ? _customCompanyName
+                        : 'Other',
+                    style: const TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AsmitaPalette.deepNavy,
+                    ),
+                  ),
+                  backgroundColor: _selectedCompany == 'Other'
+                      ? AsmitaPalette.actionRed.withValues(alpha: 0.15)
+                      : AsmitaPalette.systemBG,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: _selectedCompany == 'Other'
+                          ? AsmitaPalette.actionRed
+                          : AsmitaPalette.borderGrey,
+                    ),
+                  ),
+                  onPressed: _showCompanySelectionSheet,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCabProviderSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Cab / Vehicle Provider',
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AsmitaPalette.textDark,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              ...cabCompanyOptions.map((provider) {
+                final isSelected = _selectedCompany == provider;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: ChoiceChip(
+                    label: Text(
+                      provider,
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                      ),
+                    ),
+                    selected: isSelected,
+                    selectedColor: AsmitaPalette.actionRed,
+                    backgroundColor: AsmitaPalette.systemBG,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(
+                        color: isSelected ? AsmitaPalette.actionRed : AsmitaPalette.borderGrey,
+                      ),
+                    ),
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() {
+                          _selectedCompany = provider;
+                          _customCompanyName = '';
+                        });
+                      }
+                    },
+                  ),
+                );
+              }),
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ActionChip(
+                  avatar: const Icon(Icons.more_horiz_rounded, size: 16),
+                  label: Text(
+                    _selectedCompany == 'Other' && _customCompanyName.isNotEmpty
+                        ? _customCompanyName
+                        : 'Other',
+                    style: const TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AsmitaPalette.deepNavy,
+                    ),
+                  ),
+                  backgroundColor: _selectedCompany == 'Other'
+                      ? AsmitaPalette.actionRed.withValues(alpha: 0.15)
+                      : AsmitaPalette.systemBG,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: _selectedCompany == 'Other'
+                          ? AsmitaPalette.actionRed
+                          : AsmitaPalette.borderGrey,
+                    ),
+                  ),
+                  onPressed: _showCompanySelectionSheet,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'Vehicle Category',
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AsmitaPalette.textLight,
+          ),
+        ),
+        const SizedBox(height: 6),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: vehicleTypeOptions.map((vType) {
+              final isSelected = _selectedVehicleType == vType;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ChoiceChip(
+                  label: Text(vType),
+                  selected: isSelected,
+                  selectedColor: AsmitaPalette.deepNavy,
+                  backgroundColor: AsmitaPalette.systemBG,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(
+                      color: isSelected ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey,
+                    ),
+                  ),
+                  labelStyle: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 11,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                  ),
+                  onSelected: (selected) {
+                    if (selected) setState(() => _selectedVehicleType = vType);
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -453,14 +810,25 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     }
 
     final isIndustrial = PropertyRoleResolver.isIndustrialContext(user);
+    final isDelivery = _selectedCategory == 'Delivery';
+    final isCabOrVehicle = _selectedCategory == 'Cab';
+    final isVendor = _selectedCategory == 'Visiting Help';
 
     if (widget.isGuardMode) {
       if (_visitorNameController.text.trim().isEmpty) {
+        String msg = 'Please enter visitor full name.';
+        if (isDelivery) {
+          msg = 'Please enter delivery partner name.';
+        } else if (isCabOrVehicle) {
+          msg = 'Please enter driver or visitor full name.';
+        } else if (isVendor) {
+          msg = 'Please enter technician or supervisor full name.';
+        } else if (isIndustrial) {
+          msg = 'Visitor Name is mandatory for industrial campus check-ins.';
+        }
         AsmitaToast.show(
           context,
-          message: isIndustrial
-              ? 'Visitor Name is mandatory for industrial campus check-ins.'
-              : 'Please enter visitor name.',
+          message: msg,
           type: AsmitaToastType.error,
         );
         return;
@@ -484,25 +852,31 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         return;
       }
 
-      if (_purposeController.text.trim().isEmpty) {
+      // Auto-set purpose for delivery partners
+      if (isDelivery && _purposeController.text.trim().isEmpty) {
+        _purposeController.text = 'Delivery / Courier Drop';
+      }
+
+      if (!isDelivery && _purposeController.text.trim().isEmpty) {
         AsmitaToast.show(
           context,
-          message: 'Please enter the purpose of visit.',
+          message: 'Please enter or select the purpose of visit.',
           type: AsmitaToastType.error,
         );
         return;
       }
 
-      if (_selectedCategory == 'Cab' && _cabNoController.text.trim().isEmpty) {
+      if (isCabOrVehicle && _cabNoController.text.trim().isEmpty) {
         AsmitaToast.show(
           context,
-          message: 'Please enter vehicle registration number for cab entries.',
+          message: 'Please enter vehicle registration number for vehicle entries.',
           type: AsmitaToastType.error,
         );
         return;
       }
 
-      if (_capturedVisitorPhotoBase64 == null || _capturedVisitorPhotoBase64!.trim().isEmpty) {
+      // Mandatory photo check applies to VISITOR, VEHICLE, and VENDOR; skipped for DELIVERY per latest API spec
+      if (!isDelivery && (_capturedVisitorPhotoBase64 == null || _capturedVisitorPhotoBase64!.trim().isEmpty)) {
         AsmitaToast.show(
           context,
           message: 'Live security photo is mandatory for gate check-in verification.',
@@ -516,9 +890,22 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       final hostUnitId = _selectedEmployee != null ? (_selectedEmployee!['unit_id'] ?? _selectedEmployee!['flat_id']) : null;
       final hostTowerId = _selectedEmployee != null ? _selectedEmployee!['tower_id'] : null;
 
-      final purposeText = _purposeController.text.trim().isNotEmpty
-          ? _purposeController.text.trim()
-          : (_selectedCategory == 'Visiting Help' ? 'Help' : _selectedCategory);
+      final resolvedVisitType = isDelivery
+          ? 'DELIVERY'
+          : (isCabOrVehicle ? 'VEHICLE' : (isVendor ? 'VENDOR' : 'VISITOR'));
+
+      final purposeText = isDelivery
+          ? 'Delivery / Courier Drop'
+          : (_purposeController.text.trim().isNotEmpty
+              ? _purposeController.text.trim()
+              : (isVendor ? 'Maintenance & Repair' : 'Official Meeting'));
+
+      final effectiveGuestCount = isDelivery ? 1 : _guestCount;
+      final companyName = isDelivery
+          ? (_selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany)
+          : (isCabOrVehicle
+              ? (_selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany)
+              : (_selectedCategory == 'Guest' ? 'Guest' : _selectedCompany));
 
       final payloads = selectedFlats.isNotEmpty
           ? selectedFlats.map((flat) => {
@@ -527,18 +914,23 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               'unit_id': flat.flatId,
               'host_user_id': hostId,
               'department_id': deptId,
+              'visit_type': resolvedVisitType,
+              'arrival_mode': resolvedVisitType,
               'visitor_name': _visitorNameController.text.trim(),
+              'full_name': _visitorNameController.text.trim(),
               'visitor_phone': _mobileNumberController.text.trim(),
+              'mobile_number': _mobileNumberController.text.trim(),
               'purpose': purposeText,
-              'company_name': _selectedCategory == 'Guest'
-                  ? 'Guest'
-                  : (_selectedCategory == 'Cab' ? 'Cab' : _selectedCompany),
+              'company_name': companyName,
+              'delivery_company': isDelivery ? companyName : null,
+              'delivery_company_name': isDelivery ? companyName : null,
               'vehicle_number': _cabNoController.text.trim().toUpperCase(),
-              'no_of_visitors': _guestCount,
-              'number_of_visitors': _guestCount,
-              'photo_base64': _capturedVisitorPhotoBase64,
-              'selfie_base64': _capturedVisitorPhotoBase64,
-              'delivery_order_id': _orderIdController.text.trim(),
+              'no_of_visitors': effectiveGuestCount,
+              'number_of_visitors': effectiveGuestCount,
+              'photo_base64': isDelivery ? null : _capturedVisitorPhotoBase64,
+              'selfie_base64': isDelivery ? null : _capturedVisitorPhotoBase64,
+              'delivery_order_id': isDelivery ? _orderIdController.text.trim() : null,
+              'order_id': isDelivery ? _orderIdController.text.trim() : null,
             }).toList()
           : [{
               'society_id': user.societyId,
@@ -546,18 +938,23 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               'unit_id': hostUnitId ?? 1,
               'host_user_id': hostId,
               'department_id': deptId,
+              'visit_type': resolvedVisitType,
+              'arrival_mode': resolvedVisitType,
               'visitor_name': _visitorNameController.text.trim(),
+              'full_name': _visitorNameController.text.trim(),
               'visitor_phone': _mobileNumberController.text.trim(),
+              'mobile_number': _mobileNumberController.text.trim(),
               'purpose': purposeText,
-              'company_name': _selectedCategory == 'Guest'
-                  ? 'Guest'
-                  : (_selectedCategory == 'Cab' ? 'Cab' : _selectedCompany),
+              'company_name': companyName,
+              'delivery_company': isDelivery ? companyName : null,
+              'delivery_company_name': isDelivery ? companyName : null,
               'vehicle_number': _cabNoController.text.trim().toUpperCase(),
-              'no_of_visitors': _guestCount,
-              'number_of_visitors': _guestCount,
-              'photo_base64': _capturedVisitorPhotoBase64,
-              'selfie_base64': _capturedVisitorPhotoBase64,
-              'delivery_order_id': _orderIdController.text.trim(),
+              'no_of_visitors': effectiveGuestCount,
+              'number_of_visitors': effectiveGuestCount,
+              'photo_base64': isDelivery ? null : _capturedVisitorPhotoBase64,
+              'selfie_base64': isDelivery ? null : _capturedVisitorPhotoBase64,
+              'delivery_order_id': isDelivery ? _orderIdController.text.trim() : null,
+              'order_id': isDelivery ? _orderIdController.text.trim() : null,
             }];
       // Prompt visitor mobile OTP verification before generating pass
       _initiateVisitorOtpVerification(
@@ -631,26 +1028,50 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     final enteredMobile = _mobileNumberController.text.trim();
     final visitorName = enteredName.isNotEmpty
         ? enteredName
-        : (_selectedCategory == 'Guest' ? 'VIP Guest' : '$_selectedCategory Guest');
+        : (_selectedCategory == 'Guest'
+            ? 'VIP Guest'
+            : (isDelivery
+                ? '${_selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany} Partner'
+                : '$_selectedCategory Guest'));
+
+    final inviteType = isDelivery
+        ? 'delivery'
+        : (isCabOrVehicle ? 'cab' : 'guest');
+
+    final invitePurpose = isDelivery
+        ? 'Delivery / Courier Drop'
+        : (_purposeController.text.trim().isNotEmpty
+            ? _purposeController.text.trim()
+            : (isVendor ? 'Maintenance & Repair' : (_selectedCategory == 'Guest' ? 'VIP Visit' : _selectedCategory)));
+
+    final companyName = isDelivery
+        ? (_selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany)
+        : (isCabOrVehicle
+            ? (_selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany)
+            : (_selectedCategory == 'Guest'
+                ? (enteredName.isNotEmpty ? enteredName : 'VIP Guest')
+                : _selectedCompany));
 
     final payload = {
       'society_id': user.societyId,
       'tower_id': flat.towerId,
       'unit_id': flat.flatId,
       'resident_id': user.userId,
-      'invite_type': _selectedCategory == 'Visiting Help'
-          ? 'Guest'
-          : _selectedCategory,
+      'invite_type': inviteType,
       'invite_sub_type': isOnce ? 'ONCE' : 'FREQUENT',
-      'title': enteredName.isNotEmpty ? '$enteredName Pass' : '$_selectedCategory Invite',
+      'title': enteredName.isNotEmpty
+          ? '$enteredName Pass'
+          : (isDelivery
+              ? '$companyName Delivery Pass'
+              : '$_selectedCategory Invite'),
       'visitor_name': visitorName,
       'mobile_number': enteredMobile,
-      'company_name': _selectedCategory == 'Guest'
-          ? (enteredName.isNotEmpty ? enteredName : 'VIP Guest')
-          : (_selectedCategory == 'Cab' ? 'Cab' : _selectedCompany),
-      'vehicle_number': _cabNoController.text.trim(),
-      'purpose': _selectedCategory == 'Guest' ? 'VIP Visit' : _selectedCategory,
-      'max_guest_count': _selectedCategory == 'Guest' ? _guestCount : 1,
+      'company_name': companyName,
+      'delivery_company': isDelivery ? companyName : null,
+      'delivery_order_id': isDelivery ? _orderIdController.text.trim() : null,
+      'vehicle_number': _cabNoController.text.trim().toUpperCase(),
+      'purpose': invitePurpose,
+      'max_guest_count': isDelivery ? 1 : (_selectedCategory == 'Guest' ? _guestCount : 1),
       'valid_from': _selectedCategory == 'Guest'
           ? combinedStartTime.toIso8601String()
           : (isOnce
@@ -669,7 +1090,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 : _selectedDate
                       .add(const Duration(days: 180))
                       .toIso8601String()),
-      'is_private': _selectedCategory == 'Cab'
+      'is_private': isCabOrVehicle
           ? _secureCabMode
           : _surpriseDelivery,
       if (!isOnce && allowedDays != null) 'allowed_days': allowedDays,
@@ -852,9 +1273,22 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 setState(() {
                   _selectedCategory = cat['label'] as String;
                   _selectedDurationHours = 1;
-                  _selectedCompany = _selectedCategory == 'Cab'
-                      ? 'Uber'
-                      : 'Amazon';
+                  if (_selectedCategory == 'Cab') {
+                    _selectedCompany = 'Uber';
+                    _purposeController.text = 'Personal Visit';
+                  } else if (_selectedCategory == 'Delivery') {
+                    _selectedCompany = 'Zomato';
+                    _guestCount = 1;
+                    _purposeController.text = 'Delivery / Courier Drop';
+                    _capturedVisitorPhoto = null;
+                    _capturedVisitorPhotoBase64 = null;
+                  } else if (_selectedCategory == 'Visiting Help') {
+                    _selectedCompany = 'Service Partner';
+                    _purposeController.text = 'Maintenance & Repair';
+                  } else {
+                    _selectedCompany = 'Guest';
+                    _purposeController.text = 'Official Meeting';
+                  }
                 });
                 _nextStep();
               },
@@ -1441,14 +1875,31 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   }
 
   Widget _buildGuardWalkInLayout() {
+    final isDelivery = _selectedCategory == 'Delivery';
+    final isCabOrVehicle = _selectedCategory == 'Cab';
+    final isVendor = _selectedCategory == 'Visiting Help';
+
+    String nameLabel = 'Visitor Full Name*';
+    String nameHint = 'Enter full name as per Govt ID';
+    if (isDelivery) {
+      nameLabel = 'Delivery Partner Name*';
+      nameHint = 'Enter name as registered with delivery app';
+    } else if (isCabOrVehicle) {
+      nameLabel = 'Driver / Visitor Full Name*';
+      nameHint = 'Enter driver or visitor full name';
+    } else if (isVendor) {
+      nameLabel = 'Technician / Contractor Name*';
+      nameHint = 'Enter technician or supervisor full name';
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AsmitaTextField(
           controller: _visitorNameController,
-          label: 'Visitor Name*',
-          hint: 'Full visitor name',
+          label: nameLabel,
+          hint: nameHint,
           icon: Icons.person_outline_rounded,
           textCapitalization: TextCapitalization.words,
         ),
@@ -1462,53 +1913,71 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           maxLength: 10,
         ),
         const SizedBox(height: 16),
-        AsmitaTextField(
-          controller: _cabNoController,
-          label: _selectedCategory == 'Cab'
-              ? 'Vehicle Number*'
-              : 'Vehicle Number (Optional)',
-          hint: 'e.g., MH 04 AB 1234',
-          icon: Icons.directions_car_outlined,
-          textCapitalization: TextCapitalization.characters,
-        ),
-        const SizedBox(height: 16),
-        _buildWalkInEmployeeField(),
-        const SizedBox(height: 16),
-        _buildLivePhotoSection(),
-        const SizedBox(height: 16),
-        AsmitaTextField(
-          controller: _purposeController,
-          label: 'Purpose of Visit*',
-          hint: 'e.g. Official Meeting, Delivery, Interview',
-          icon: Icons.notes_rounded,
-          minLines: 2,
-          maxLines: 3,
-          textCapitalization: TextCapitalization.sentences,
-        ),
-        const SizedBox(height: 16),
-        if (_selectedCategory == 'Delivery') ...[
-          _buildCompanyDropdown(),
+
+        if (isDelivery) ...[
+          _buildDeliveryCompanySelector(),
           const SizedBox(height: 16),
           AsmitaTextField(
             controller: _orderIdController,
             label: 'Delivery / Order ID (Optional)',
-            hint: 'e.g. AMZ-982143',
+            hint: 'e.g. ZOM-1928, AMZ-982143',
             icon: Icons.local_shipping_outlined,
             textCapitalization: TextCapitalization.characters,
           ),
           const SizedBox(height: 16),
         ],
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AsmitaPalette.borderGrey),
+
+        if (isCabOrVehicle) ...[
+          _buildCabProviderSelector(),
+          const SizedBox(height: 16),
+          AsmitaTextField(
+            controller: _cabNoController,
+            label: 'Vehicle Registration Number*',
+            hint: 'e.g., MH 04 AB 1234',
+            icon: Icons.directions_car_outlined,
+            textCapitalization: TextCapitalization.characters,
           ),
-          child: _buildGuestCountSelector(),
-        ),
+          const SizedBox(height: 16),
+        ] else if (!isDelivery) ...[
+          AsmitaTextField(
+            controller: _cabNoController,
+            label: 'Vehicle Number (Optional)',
+            hint: 'e.g., MH 04 AB 1234 (If arrived by vehicle)',
+            icon: Icons.directions_car_outlined,
+            textCapitalization: TextCapitalization.characters,
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        _buildWalkInEmployeeField(),
         const SizedBox(height: 16),
+
+        // Live Photo: mandatory for VISITOR, VEHICLE, VENDOR; hidden for DELIVERY per API
+        if (!isDelivery) ...[
+          _buildLivePhotoSection(),
+          const SizedBox(height: 16),
+        ],
+
+        // Purpose Section: chips + text; hidden for DELIVERY (auto-set to Delivery / Courier Drop)
+        if (!isDelivery) ...[
+          _buildPurposeSection(isGuard: true),
+          const SizedBox(height: 16),
+        ],
+
+        // Number of visitors: hidden for DELIVERY (always 1)
+        if (!isDelivery) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AsmitaPalette.borderGrey),
+            ),
+            child: _buildGuestCountSelector(),
+          ),
+          const SizedBox(height: 16),
+        ],
+
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -1989,15 +2458,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     );
   }
 
-  Widget _buildCompanyDropdown() {
-    return _buildBottomSheetTrigger(
-      label: 'Company Name',
-      value: _selectedCompany == 'Other' && _customCompanyName.isNotEmpty
-          ? _customCompanyName
-          : _selectedCompany,
-      onTap: _showCompanySelectionSheet,
-    );
-  }
 
   Widget _buildGuestCountSelector() {
     return Row(
@@ -2112,8 +2572,18 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // DYNAMIC FEATURE BLOCK: Surprise Delivery
+        // DYNAMIC FEATURE BLOCK: Surprise Delivery & Delivery App Selector
         if (_selectedCategory == 'Delivery') ...[
+          _buildDeliveryCompanySelector(),
+          const SizedBox(height: 16),
+          AsmitaTextField(
+            controller: _orderIdController,
+            label: 'Delivery / Order ID (Optional)',
+            hint: 'e.g. ZOM-1928, AMZ-982143',
+            icon: Icons.local_shipping_outlined,
+            textCapitalization: TextCapitalization.characters,
+          ),
+          const SizedBox(height: 16),
           GestureDetector(
             onTap: () => setState(() => _surpriseDelivery = !_surpriseDelivery),
             behavior: HitTestBehavior.opaque,
@@ -2175,14 +2645,18 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
         // DYNAMIC FEATURE BLOCK: Secure Cab Identity
         if (_selectedCategory == 'Cab') ...[
-          _buildBottomSheetTrigger(
-            label: 'Company Name',
-            value: _selectedCompany == 'Other' && _customCompanyName.isNotEmpty
-                ? _customCompanyName
-                : _selectedCompany,
-            onTap: _showCompanySelectionSheet,
+          _buildCabProviderSelector(),
+          const SizedBox(height: 16),
+          AsmitaTextField(
+            controller: _cabNoController,
+            label: 'Cab / Vehicle Registration Number',
+            hint: 'Enter Cab No. (e.g., MH 02 AB 1234)',
+            icon: Icons.directions_car_outlined,
+            textCapitalization: TextCapitalization.characters,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
+          _buildPurposeSection(),
+          const SizedBox(height: 16),
           GestureDetector(
             onTap: () => setState(() => _secureCabMode = !_secureCabMode),
             behavior: HitTestBehavior.opaque,
@@ -2239,23 +2713,29 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               ),
             ),
           ),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeInOut,
-            child: _secureCabMode
-                ? Padding(
-                    padding: const EdgeInsets.only(top: 12.0),
-                    child: AsmitaTextField(
-                      controller: _cabNoController,
-                      label: 'Cab / Vehicle Registration',
-                      hint: 'Enter Cab No. (e.g., MH 02 AB 1234)',
-                      icon: Icons.directions_car_outlined,
-                      textCapitalization: TextCapitalization.characters,
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
           const SizedBox(height: 20),
+        ],
+
+        if (_selectedCategory == 'Visiting Help') ...[
+          AsmitaTextField(
+            controller: _visitorNameController,
+            label: 'Technician / Contractor Name (Optional)',
+            hint: 'e.g., Raju Plumber / Urban Company',
+            icon: Icons.person_outline_rounded,
+            textCapitalization: TextCapitalization.words,
+          ),
+          const SizedBox(height: 14),
+          AsmitaTextField(
+            controller: _mobileNumberController,
+            label: 'Mobile Number (Optional)',
+            hint: '10-digit number',
+            icon: Icons.phone_outlined,
+            keyboardType: TextInputType.phone,
+            maxLength: 10,
+          ),
+          const SizedBox(height: 16),
+          _buildPurposeSection(),
+          const SizedBox(height: 16),
         ],
 
         if (isIndustrial || _selectedCategory == 'Guest') ...[
@@ -2275,6 +2755,16 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             keyboardType: TextInputType.phone,
             maxLength: 10,
           ),
+          const SizedBox(height: 16),
+          AsmitaTextField(
+            controller: _cabNoController,
+            label: 'Vehicle Number (Optional)',
+            hint: 'e.g., MH 04 AB 1234 (If arrived by vehicle)',
+            icon: Icons.directions_car_outlined,
+            textCapitalization: TextCapitalization.characters,
+          ),
+          const SizedBox(height: 16),
+          _buildPurposeSection(),
           const SizedBox(height: 16),
           _buildBottomSheetTrigger(
             label: 'Arrival Time',
@@ -3098,7 +3588,14 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             'Zomato': 'assets/images/logos/zomato.png',
           };
 
-          final cabCompanies = ['Uber', 'Ola', 'Rapido', 'Other'];
+          final cabCompanies = [
+            'Personal Vehicle',
+            'Uber',
+            'Ola',
+            'Rapido',
+            'BluSmart',
+            'Other',
+          ];
           final List<String> companies;
 
           if (_selectedCategory == 'Cab') {

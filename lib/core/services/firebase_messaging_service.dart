@@ -1,10 +1,28 @@
+import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
 import 'package:asmita_society/core/security/secure_storage_service.dart';
 import 'package:asmita_society/features/auth/data/repositories/auth_repository.dart';
-import 'package:asmita_society/main.dart' show rootNavigatorKey;
-import 'package:asmita_society/features/visitor_management/presentation/widgets/incoming_visitor_approval_dialog.dart';
+import 'package:asmita_society/core/services/incoming_visitor_service.dart';
+
+@pragma('vm:entry-point')
+void notificationTapBackground(NotificationResponse notificationResponse) {
+  debugPrint('[NotificationBackgroundTap] action: ${notificationResponse.actionId}, payload: ${notificationResponse.payload}');
+  final payloadStr = notificationResponse.payload;
+  if (payloadStr != null && payloadStr.isNotEmpty) {
+    try {
+      final data = jsonDecode(payloadStr) as Map<String, dynamic>;
+      if (notificationResponse.actionId == 'approve_action') {
+        IncomingVisitorService.handleBackgroundDecision(data, 'APPROVE');
+      } else if (notificationResponse.actionId == 'reject_action') {
+        IncomingVisitorService.handleBackgroundDecision(data, 'REJECT');
+      }
+    } catch (e) {
+      debugPrint('[NotificationBackgroundTap] Error: $e');
+    }
+  }
+}
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -75,6 +93,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         title: title,
         body: body,
         notificationDetails: const NotificationDetails(android: androidDetails),
+        payload: jsonEncode(message.data),
       );
     } catch (e) {
       debugPrint('[BackgroundHandler] Error showing full-screen alert: $e');
@@ -125,7 +144,11 @@ class FirebaseMessagingService {
       iOS: initializationSettingsIOS,
     );
     
-    await _localNotifications.initialize(settings: initializationSettings);
+    await _localNotifications.initialize(
+      settings: initializationSettings,
+      onDidReceiveNotificationResponse: _handleNotificationResponse,
+      onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
+    );
 
     // Create Android notification channels
     final visitorChannels = [
@@ -224,6 +247,34 @@ class FirebaseMessagingService {
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
     
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
+
+    // Check cold-start from local notification (e.g. lock screen fullScreenIntent)
+    try {
+      final launchDetails = await _localNotifications.getNotificationAppLaunchDetails();
+      if (launchDetails != null && launchDetails.didNotificationLaunchApp) {
+        final payload = launchDetails.notificationResponse?.payload;
+        debugPrint('[FirebaseMessagingService] Launched via local notification payload: $payload');
+        if (payload != null && payload.isNotEmpty) {
+          final data = jsonDecode(payload) as Map<String, dynamic>;
+          IncomingVisitorService.onIncomingCallReceived(data);
+        }
+      }
+    } catch (e) {
+      debugPrint('[FirebaseMessagingService] Error checking notification launch details: $e');
+    }
+
+    // Check cold-start from FCM message
+    try {
+      final initialMessage = await _firebaseMessaging.getInitialMessage();
+      if (initialMessage != null) {
+        debugPrint('[FirebaseMessagingService] Launched via FCM initial message: ${initialMessage.data}');
+        if (_isApproval(initialMessage.data)) {
+          IncomingVisitorService.onIncomingCallReceived(initialMessage.data);
+        }
+      }
+    } catch (e) {
+      debugPrint('[FirebaseMessagingService] Error checking initial FCM message: $e');
+    }
     
     // Get and save FCM token
     String? token;
@@ -245,11 +296,65 @@ class FirebaseMessagingService {
     });
   }
 
+  void _handleNotificationResponse(NotificationResponse response) {
+    debugPrint('[NotificationResponse] action: ${response.actionId}, payload: ${response.payload}');
+    final payload = response.payload;
+    if (payload != null && payload.isNotEmpty) {
+      try {
+        final data = jsonDecode(payload) as Map<String, dynamic>;
+        if (response.actionId == 'approve_action') {
+          IncomingVisitorService.handleBackgroundDecision(data, 'APPROVE');
+        } else if (response.actionId == 'reject_action') {
+          IncomingVisitorService.handleBackgroundDecision(data, 'REJECT');
+        } else {
+          IncomingVisitorService.onIncomingCallReceived(data);
+        }
+      } catch (e) {
+        debugPrint('[NotificationResponse] Error parsing payload: $e');
+      }
+    }
+  }
+
+  bool _isApproval(Map<String, dynamic> data) {
+    final eventType = data['event']?.toString() ??
+        data['eventType']?.toString() ??
+        data['event_type']?.toString() ??
+        data['notification_type']?.toString() ??
+        '';
+
+    return eventType == 'VISITOR_REQUEST' ||
+        eventType == 'VISITOR_ARRIVAL' ||
+        eventType == 'VISITOR_SUBMITTED' ||
+        eventType == 'VISITOR_AWAITING_HOST' ||
+        eventType == 'VISITOR_ASSIGNED' ||
+        eventType == 'visitor_approval' ||
+        eventType == 'approval' ||
+        data['notification_type'] == 'visitor_approval' ||
+        data['notification_type'] == 'approval' ||
+        data['requires_approval'] == 'true';
+  }
+
+  Future<void> syncToken() async {
+    try {
+      final token = await _firebaseMessaging.getToken();
+      if (token != null) {
+        debugPrint("[FirebaseMessagingService] syncToken fetched fresh token: $token");
+        await _secureStorage.write(key: 'fcm_token', value: token);
+        await _syncTokenToBackend(token);
+      }
+    } catch (e) {
+      debugPrint("Failed to syncToken: $e");
+    }
+  }
+
   Future<void> _syncTokenToBackend(String token) async {
     try {
       final sessionToken = await _secureStorage.getToken();
       if (sessionToken != null && sessionToken.isNotEmpty) {
         await _authRepository.updateFcmToken(token);
+        debugPrint("[FirebaseMessagingService] Successfully synced FCM token to backend.");
+      } else {
+        debugPrint("[FirebaseMessagingService] Session token not available yet; cached FCM token in SecureStorage.");
       }
     } catch (e) {
       debugPrint("Failed to sync FCM token to backend: $e");
@@ -275,61 +380,19 @@ class FirebaseMessagingService {
     final userApprovalSound = await _secureStorage.getApprovalSound();
     final userNotifSound = await _secureStorage.getNotificationSound();
 
-    final isApproval = eventType == 'VISITOR_REQUEST' ||
-        eventType == 'VISITOR_ARRIVAL' ||
-        eventType == 'VISITOR_SUBMITTED' ||
-        eventType == 'VISITOR_AWAITING_HOST' ||
-        eventType == 'VISITOR_ASSIGNED' ||
-        eventType == 'visitor_approval' ||
-        eventType == 'approval' ||
-        message.data['notification_type'] == 'visitor_approval' ||
-        message.data['notification_type'] == 'approval' ||
-        message.data['requires_approval'] == 'true';
-
+    final isApproval = _isApproval(message.data);
     final isEscalation = eventType == 'ESCALATION' || eventType == 'VISITOR_ESCALATED';
 
-    // Show MyGate-style Approval Modal immediately in the foreground
+    // Show full-screen Doorbell Overlay / Modal immediately
     if (isApproval) {
-      final navContext = rootNavigatorKey.currentContext;
-      if (navContext != null) {
-        final visitId = int.tryParse(
-          message.data['visit_id']?.toString() ??
-          message.data['visitId']?.toString() ??
-          message.data['entry_id']?.toString() ??
-          '0',
-        ) ?? 0;
-        final visitorName = message.data['visitor_name']?.toString() ??
-            message.data['name']?.toString() ??
-            'Visitor';
-        final photoUrl = message.data['photo_url']?.toString() ??
-            message.data['visitor_photo']?.toString();
-        final department = message.data['department']?.toString() ??
-            message.data['dept']?.toString();
-        final floor = message.data['floor']?.toString();
-        final purpose = message.data['purpose']?.toString();
-        final gateId = message.data['gate_id']?.toString() ??
-            message.data['gate']?.toString();
-        final vehicleNumber = message.data['vehicle_number']?.toString();
+      final soundAsset = userApprovalSound == 'asmita_alert_2'
+          ? 'assets/audio/notifications/approvals/AsmitA Alert 2.wav'
+          : 'assets/audio/notifications/approvals/AsmitA Alert 1.wav';
 
-        final soundAsset = userApprovalSound == 'asmita_alert_2'
-            ? 'assets/audio/notifications/approvals/AsmitA Alert 2.wav'
-            : 'assets/audio/notifications/approvals/AsmitA Alert 1.wav';
-
-        if (navContext.mounted) {
-          IncomingVisitorApprovalDialog.show(
-            navContext,
-            visitId: visitId,
-            visitorName: visitorName,
-            photoUrl: photoUrl,
-            department: department,
-            floor: floor,
-            purpose: purpose,
-            gateId: gateId,
-            vehicleNumber: vehicleNumber,
-            soundAsset: soundAsset,
-          );
-        }
-      }
+      IncomingVisitorService.onIncomingCallReceived(
+        message.data,
+        soundAsset: soundAsset,
+      );
     }
 
     final title = message.notification?.title ??
@@ -378,28 +441,57 @@ class FirebaseMessagingService {
       soundName = userNotifSound;
     }
 
+    final bool isDoorbellAlert = isApproval || isEscalation;
+
     _localNotifications.show(
       id: message.messageId.hashCode,
       title: title,
       body: body,
+      payload: jsonEncode(message.data),
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           channelId,
           channelName,
           importance: Importance.max,
-          priority: Priority.high,
+          priority: isDoorbellAlert ? Priority.max : Priority.high,
+          category: isDoorbellAlert ? AndroidNotificationCategory.call : AndroidNotificationCategory.event,
+          fullScreenIntent: isDoorbellAlert,
+          visibility: NotificationVisibility.public,
           icon: '@mipmap/ic_launcher',
           sound: RawResourceAndroidNotificationSound(soundName),
+          playSound: true,
+          actions: isDoorbellAlert
+              ? const [
+                  AndroidNotificationAction(
+                    'approve_action',
+                    'Approve',
+                    showsUserInterface: true,
+                    cancelNotification: true,
+                  ),
+                  AndroidNotificationAction(
+                    'reject_action',
+                    'Reject',
+                    showsUserInterface: true,
+                    cancelNotification: true,
+                  ),
+                ]
+              : null,
         ),
         iOS: DarwinNotificationDetails(
           sound: '$soundName.wav',
+          presentAlert: true,
+          presentSound: true,
+          presentBadge: true,
+          interruptionLevel: isDoorbellAlert ? InterruptionLevel.timeSensitive : InterruptionLevel.active,
         ),
       ),
     );
   }
 
   void _handleMessageOpenedApp(RemoteMessage message) {
-    debugPrint('A new onMessageOpenedApp event was published!');
-    // Handle navigation or other logic when app is opened from notification
+    debugPrint('A new onMessageOpenedApp event was published! data: ${message.data}');
+    if (_isApproval(message.data)) {
+      IncomingVisitorService.onIncomingCallReceived(message.data);
+    }
   }
 }

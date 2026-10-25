@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../providers/history_request_provider.dart';
 import '../../data/models/history_request_model.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 
 class HistoryRequestsScreen extends ConsumerWidget {
   const HistoryRequestsScreen({super.key});
@@ -25,16 +26,14 @@ class HistoryRequestsScreen extends ConsumerWidget {
             return const Center(child: Text('No access requests found.'));
           }
 
-          return RefreshIndicator(
+          return AsmitaRefreshableListView(
             onRefresh: () => ref.read(historyRequestProvider.notifier).fetchRequests(),
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: requests.length,
-              itemBuilder: (context, index) {
-                final req = requests[index];
-                return _buildRequestCard(context, ref, textTheme, req);
-              },
-            ),
+            padding: const EdgeInsets.all(16),
+            itemCount: requests.length,
+            itemBuilder: (context, index) {
+              final req = requests[index];
+              return _buildRequestCard(context, ref, textTheme, req);
+            },
           );
         },
         loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),

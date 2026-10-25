@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/menu/presentation/providers/society_provider.dart';
 
@@ -26,8 +27,11 @@ class RulesScreen extends ConsumerWidget {
                       child: Text('No rules found.', style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color)),
                     );
                   }
-                  return ListView.builder(
-                    physics: const ClampingScrollPhysics(),
+                  return AsmitaRefreshableListView(
+                    onRefresh: () async {
+                      ref.invalidate(rulesProvider);
+                      await ref.read(rulesProvider.future);
+                    },
                     padding: const EdgeInsets.all(16),
                     itemCount: rules.length,
                     itemBuilder: (context, index) {

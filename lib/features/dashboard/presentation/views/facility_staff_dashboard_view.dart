@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_select_field.dart';
 import '../../../../core/widgets/asmita_toast.dart';
@@ -347,21 +348,19 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
             allowPropertySwitching: false,
           ),
           Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                _handleRefresh(context);
-              },
-              child: isLoading
-                  ? const Center(
-                      child: AsmitaLoadingIndicator(
-                        color: AsmitaPalette.deepNavy,
-                        size: 32,
-                      ),
-                    )
-                  : SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
+            child: isLoading
+                ? const Center(
+                    child: AsmitaLoadingIndicator(
+                      color: AsmitaPalette.deepNavy,
+                      size: 32,
+                    ),
+                  )
+                : AsmitaPullToRefresh(
+                    onRefresh: () async {
+                      _handleRefresh(context);
+                    },
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Building Occupancy Tracker Banner
@@ -546,7 +545,6 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
                     ],
                   ),
                 ),
-            ),
           ),
         ],
       ),

@@ -1,3 +1,4 @@
+import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,21 +18,104 @@ class CreateInviteScreen extends StatefulWidget {
 
 class _CreateInviteScreenState extends State<CreateInviteScreen> {
   final _formKey = GlobalKey<FormState>();
-  
-  String _inviteType = 'Guest';
+
+  String _inviteType = 'Guest'; // Guest, Delivery, Cab, Service & Vendor
   String _inviteSubType = 'ONCE';
+  String _selectedCompany = 'Zomato';
+
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _mobileController = TextEditingController();
+  final TextEditingController _purposeController = TextEditingController();
+  final TextEditingController _vehicleController = TextEditingController();
+  final TextEditingController _orderIdController = TextEditingController();
+  final TextEditingController _customCompanyController = TextEditingController();
+
   DateTime? _validFrom;
   DateTime? _validTo;
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
 
+  static const List<String> _deliveryCompanies = [
+    'Zomato',
+    'Swiggy',
+    'Amazon',
+    'Blinkit',
+    'Zepto',
+    'Flipkart',
+    'BlueDart',
+    'Delhivery',
+    'Other',
+  ];
+
+  static const List<String> _cabCompanies = [
+    'Personal Vehicle',
+    'Uber',
+    'Ola',
+    'Rapido',
+    'BluSmart',
+    'Other',
+  ];
+
+  static const Map<String, List<String>> _purposeSuggestions = {
+    'Guest': [
+      'Official Meeting',
+      'Job Interview',
+      'Personal Visit',
+      'Document Submission',
+      'Other',
+    ],
+    'Cab': [
+      'Official Meeting',
+      'Job Interview',
+      'Personal Visit',
+      'Cab Drop / Pickup',
+      'Other',
+    ],
+    'Delivery': [],
+    'Service & Vendor': [
+      'Maintenance & Repair',
+      'Vendor Work',
+      'Electrical / Plumbing',
+      'Inspection & Audit',
+      'Other',
+    ],
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _validFrom = DateTime.now();
+    _purposeController.text = 'Official Meeting';
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
     _mobileController.dispose();
+    _purposeController.dispose();
+    _vehicleController.dispose();
+    _orderIdController.dispose();
+    _customCompanyController.dispose();
     super.dispose();
+  }
+
+  void _onCategoryChanged(String type) {
+    setState(() {
+      _inviteType = type;
+      if (type == 'Delivery') {
+        _selectedCompany = 'Zomato';
+        _purposeController.text = 'Delivery / Courier Drop';
+      } else if (type == 'Cab') {
+        _selectedCompany = 'Uber';
+        _purposeController.text = 'Personal Visit';
+      } else if (type == 'Service & Vendor') {
+        _selectedCompany = 'Service Partner';
+        _purposeController.text = 'Maintenance & Repair';
+      } else {
+        _selectedCompany = 'Guest';
+        _purposeController.text = 'Official Meeting';
+      }
+    });
   }
 
   Future<void> _selectDate(BuildContext context, bool isFrom) async {
@@ -99,7 +183,7 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
         );
         return;
       }
-      
+
       final authState = context.read<AuthBloc>().state;
       int residentId = 1;
       int societyId = 1;
@@ -114,20 +198,49 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
         }
       }
 
+      final effectiveCompany = (_selectedCompany == 'Other' && _customCompanyController.text.trim().isNotEmpty)
+          ? _customCompanyController.text.trim()
+          : _selectedCompany;
+
+      final effectivePurpose = _inviteType == 'Delivery'
+          ? 'Delivery / Courier Drop'
+          : (_purposeController.text.trim().isNotEmpty
+              ? _purposeController.text.trim()
+              : (_inviteType == 'Service & Vendor' ? 'Maintenance & Repair' : 'Official Meeting'));
+
+      final visitorName = _nameController.text.trim().isNotEmpty
+          ? _nameController.text.trim()
+          : (_inviteType == 'Delivery'
+              ? '$effectiveCompany Partner'
+              : (_inviteType == 'Cab' ? '$effectiveCompany Cab' : '$_inviteType Guest'));
+
       final payload = {
         'society_id': societyId,
         'tower_id': towerId,
         'unit_id': unitId,
         'resident_id': residentId,
-        'invite_type': _inviteType,
+        'invite_type': _inviteType == 'Delivery' ? 'delivery' : (_inviteType == 'Cab' ? 'cab' : 'guest'),
         'invite_sub_type': _inviteSubType,
-        'visitor_name': _nameController.text,
-        'mobile_number': _mobileController.text,
-        'company_name': _inviteType != 'Guest' ? _nameController.text : null,
+        'title': _nameController.text.trim().isNotEmpty
+            ? '${_nameController.text.trim()} Pass'
+            : (_inviteType == 'Delivery' ? '$effectiveCompany Delivery' : '$_inviteType Invite'),
+        'visitor_name': visitorName,
+        'mobile_number': _mobileController.text.trim(),
+        'company_name': _inviteType == 'Guest'
+            ? (_nameController.text.trim().isNotEmpty ? _nameController.text.trim() : 'Guest')
+            : effectiveCompany,
+        'delivery_company': _inviteType == 'Delivery' ? effectiveCompany : null,
+        'delivery_order_id': _inviteType == 'Delivery' ? _orderIdController.text.trim() : null,
+        'vehicle_number': _vehicleController.text.trim().toUpperCase(),
+        'purpose': effectivePurpose,
         'valid_from': _validFrom?.toIso8601String(),
-        'valid_to': _validTo?.toIso8601String(),
-        'start_time': _startTime != null ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}' : null,
-        'end_time': _endTime != null ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}' : null,
+        'valid_to': (_inviteSubType == 'FREQUENT' ? _validTo : _validFrom?.add(const Duration(hours: 24)))?.toIso8601String(),
+        'start_time': _startTime != null
+            ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}'
+            : null,
+        'end_time': _endTime != null
+            ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
+            : null,
         'approval_required': false,
         'is_private': false,
         'allowed_days': _inviteSubType == 'FREQUENT' ? 'Mon,Tue,Wed,Thu,Fri,Sat,Sun' : null,
@@ -179,60 +292,185 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                 Text('Invite Type', style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 Wrap(
-                  spacing: 12,
-                  children: ['Guest', 'Delivery', 'Cab'].map((type) {
+                  spacing: 10,
+                  runSpacing: 8,
+                  children: ['Guest', 'Delivery', 'Cab', 'Service & Vendor'].map((type) {
+                    final isSelected = _inviteType == type;
                     return ChoiceChip(
                       label: Text(type),
-                      selected: _inviteType == type,
+                      selected: isSelected,
                       onSelected: (selected) {
-                        if (selected) setState(() => _inviteType = type);
+                        if (selected) _onCategoryChanged(type);
                       },
                       selectedColor: Theme.of(context).colorScheme.primary,
-                      labelStyle: TextStyle(color: _inviteType == type ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.primary),
+                      labelStyle: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.primary,
+                      ),
                     );
                   }).toList(),
                 ),
                 const SizedBox(height: 24),
-                
+
+                // Delivery App Selector
+                if (_inviteType == 'Delivery') ...[
+                  Text('Delivery App / Brand', style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _deliveryCompanies.map((comp) {
+                        final isSelected = _selectedCompany == comp;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: ChoiceChip(
+                            label: Text(comp),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              if (selected) setState(() => _selectedCompany = comp);
+                            },
+                            selectedColor: AsmitaPalette.actionRed,
+                            labelStyle: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 12,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                              color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  if (_selectedCompany == 'Other') ...[
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _customCompanyController,
+                      decoration: InputDecoration(
+                        labelText: 'Other Delivery Company Name',
+                        hintText: 'e.g. DTDC, Blue Dart, Local Courier',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _orderIdController,
+                    decoration: InputDecoration(
+                      labelText: 'Order / Parcel Tracking ID (Optional)',
+                      hintText: 'e.g. ZOM-1029, AMZ-982143',
+                      prefixIcon: const Icon(Icons.local_shipping_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    textCapitalization: TextCapitalization.characters,
+                  ),
+                  const SizedBox(height: 24),
+                ],
+
+                // Cab Provider Selector
+                if (_inviteType == 'Cab') ...[
+                  Text('Cab / Vehicle Provider', style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _cabCompanies.map((provider) {
+                        final isSelected = _selectedCompany == provider;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: ChoiceChip(
+                            label: Text(provider),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              if (selected) setState(() => _selectedCompany = provider);
+                            },
+                            selectedColor: AsmitaPalette.actionRed,
+                            labelStyle: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 12,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                              color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  if (_selectedCompany == 'Other') ...[
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _customCompanyController,
+                      decoration: InputDecoration(
+                        labelText: 'Custom Cab / Travel Agency',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _vehicleController,
+                    decoration: InputDecoration(
+                      labelText: 'Cab Registration Number (Optional)',
+                      hintText: 'e.g. MH 02 AB 1234',
+                      prefixIcon: const Icon(Icons.directions_car_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    textCapitalization: TextCapitalization.characters,
+                  ),
+                  const SizedBox(height: 24),
+                ],
+
                 Text('Frequency', style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 12,
                   children: ['ONCE', 'FREQUENT'].map((freq) {
+                    final isSelected = _inviteSubType == freq;
                     return ChoiceChip(
                       label: Text(freq == 'ONCE' ? 'One Time' : 'Frequent'),
-                      selected: _inviteSubType == freq,
+                      selected: isSelected,
                       onSelected: (selected) {
                         if (selected) setState(() => _inviteSubType = freq);
                       },
                       selectedColor: Theme.of(context).colorScheme.primary,
-                      labelStyle: TextStyle(color: _inviteSubType == freq ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.primary),
+                      labelStyle: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.primary,
+                      ),
                     );
                   }).toList(),
                 ),
                 const SizedBox(height: 24),
-                
+
+                // Name input with dynamic labels
                 Semantics(
-                  label: _inviteType == 'Guest' ? 'Visitor Name Input' : 'Company or Driver Name Input',
+                  label: _inviteType == 'Guest'
+                      ? 'Visitor Name Input'
+                      : (_inviteType == 'Delivery' ? 'Delivery Partner Name Input' : 'Technician or Driver Name Input'),
                   child: TextFormField(
                     controller: _nameController,
                     decoration: InputDecoration(
-                      labelText: _inviteType == 'Guest' ? 'Visitor Name' : 'Company/Driver Name',
+                      labelText: _inviteType == 'Guest'
+                          ? 'Visitor Full Name'
+                          : (_inviteType == 'Delivery'
+                              ? 'Delivery Partner Name (Optional)'
+                              : (_inviteType == 'Cab' ? 'Driver / Visitor Name (Optional)' : 'Technician / Contractor Name')),
+                      hintText: _inviteType == 'Guest' ? 'Enter full name as per Govt ID' : 'Optional name',
+                      prefixIcon: const Icon(Icons.person_outline_rounded),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Required';
-                      }
-                      if (value.trim().length < 3) {
-                        return 'Must be at least 3 characters';
+                      if (_inviteType == 'Guest' && (value == null || value.trim().isEmpty)) {
+                        return 'Required for guests';
                       }
                       return null;
                     },
                   ),
                 ),
                 const SizedBox(height: 16),
-                
+
+                // Mobile Number
                 Semantics(
                   label: 'Visitor Mobile Number Input',
                   hint: 'Optional 10-digit mobile number',
@@ -240,6 +478,8 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                     controller: _mobileController,
                     decoration: InputDecoration(
                       labelText: 'Mobile Number (Optional)',
+                      hintText: '10-digit number',
+                      prefixIcon: const Icon(Icons.phone_outlined),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     keyboardType: TextInputType.phone,
@@ -253,8 +493,65 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                     },
                   ),
                 ),
-                const SizedBox(height: 24),
-                
+                const SizedBox(height: 16),
+
+                // Purpose Section with suggestion chips (Hidden for Delivery)
+                if (_inviteType != 'Delivery') ...[
+                  TextFormField(
+                    controller: _purposeController,
+                    decoration: InputDecoration(
+                      labelText: 'Purpose of Visit',
+                      hintText: 'e.g. Official Meeting, Maintenance',
+                      prefixIcon: const Icon(Icons.notes_rounded),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: (_purposeSuggestions[_inviteType] ?? _purposeSuggestions['Guest']!).map((p) {
+                        final isSelected = _purposeController.text.trim() == p;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: ChoiceChip(
+                            label: Text(p),
+                            selected: isSelected,
+                            selectedColor: AsmitaPalette.actionRed,
+                            labelStyle: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 12,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                              color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                            ),
+                            onSelected: (selected) {
+                              if (selected) {
+                                setState(() => _purposeController.text = p);
+                              }
+                            },
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Optional Vehicle Plate for Guest
+                if (_inviteType == 'Guest') ...[
+                  TextFormField(
+                    controller: _vehicleController,
+                    decoration: InputDecoration(
+                      labelText: 'Vehicle Number (Optional)',
+                      hintText: 'e.g. MH 04 AB 1234 (If arrived by vehicle)',
+                      prefixIcon: const Icon(Icons.directions_car_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    textCapitalization: TextCapitalization.characters,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 Text('Validity', style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 Row(
@@ -289,7 +586,7 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                
+
                 Row(
                   children: [
                     Expanded(
@@ -319,8 +616,8 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                     ),
                   ],
                 ),
-                
-                const SizedBox(height: 40),
+
+                const SizedBox(height: 36),
                 BlocBuilder<VisitorBloc, VisitorState>(
                   builder: (context, state) {
                     return Semantics(
@@ -337,7 +634,10 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                             ? AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.surface, size: 24)
                             : Text(
                                 'Generate Pass',
-                                style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.w600),
+                                style: textTheme.bodyLarge?.copyWith(
+                                  color: Theme.of(context).colorScheme.surface,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                       ),
                     );

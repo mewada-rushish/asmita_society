@@ -52,6 +52,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         }
         
         emit(AuthAuthenticated(user: sessionUser, sessionRole: cachedRole));
+        final fcmToken = await secureStorage.read(key: 'fcm_token');
+        if (fcmToken != null && fcmToken.isNotEmpty) {
+          authRepository.updateFcmToken(fcmToken).catchError((_) {});
+        }
       } else {
         final hasOnboarded = await secureStorage.read(key: 'has_seen_onboarding') == 'true';
         if (hasOnboarded) {
@@ -215,6 +219,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
       await secureStorage.write(key: 'user_profile', value: jsonEncode(response.data!.toJson()));
       emit(AuthAuthenticated(user: response.data!, sessionRole: response.role));
+      final fcmToken = await secureStorage.read(key: 'fcm_token');
+      if (fcmToken != null && fcmToken.isNotEmpty) {
+        authRepository.updateFcmToken(fcmToken).catchError((_) {});
+      }
     } else {
       emit(const AuthError(message: 'Invalid session payload.'));
     }
