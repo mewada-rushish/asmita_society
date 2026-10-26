@@ -462,6 +462,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                     builder: (_) => GuardQrScannerScreen(
                       isActive: true,
                       onScanComplete: () => Navigator.pop(context),
+                      onBack: () => Navigator.pop(context),
                     ),
                   ),
                 );
