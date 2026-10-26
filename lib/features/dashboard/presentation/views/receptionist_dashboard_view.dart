@@ -436,7 +436,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
 
   Widget _buildQuickActionBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.fromLTRB(16, 26, 16, 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

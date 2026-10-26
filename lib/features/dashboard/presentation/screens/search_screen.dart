@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../features/auth/bloc/auth_bloc.dart';
@@ -321,20 +322,205 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
                       padding: const EdgeInsets.only(bottom: 12.0),
                       child: VisitorHistoryCard(item: item),
                     );
-                  } else {
-                    // Fallback generic card for other modules
-                    final title = rawItem['title'] ?? rawItem['visitor_name'] ?? rawItem['sender_name'] ?? 'Result';
+                  } else if (_selectedModule == 'Users') {
+                    final name = rawItem['full_name'] ?? rawItem['name'] ?? 'Staff Member';
+                    final phone = (rawItem['mobile_number'] ?? rawItem['phone'] ?? '').toString();
+                    
+                    // Parse extension and role from role_details JSON or direct fields
+                    dynamic roleDetails = rawItem['role_details'];
+                    String ext = '';
+                    String designation = rawItem['primary_role'] ?? rawItem['role'] ?? 'Staff';
+                    String department = rawItem['department_name'] ?? rawItem['department'] ?? '';
+                    
+                    if (roleDetails is Map) {
+                      ext = (roleDetails['extension'] ?? roleDetails['ext'] ?? '').toString();
+                      if (roleDetails['designation'] != null) {
+                        designation = roleDetails['designation'].toString();
+                      }
+                      if (roleDetails['department'] != null && department.isEmpty) {
+                        department = roleDetails['department'].toString();
+                      }
+                    }
+                    if (ext.isEmpty) {
+                      ext = (rawItem['extension'] ?? rawItem['ext'] ?? '').toString();
+                    }
+
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Theme.of(context).dividerColor),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.02),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                            child: Text(
+                              name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name.toString(),
+                                  style: const TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13.5,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  department.isNotEmpty ? '$designation • $department' : designation,
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 11,
+                                    color: Theme.of(context).textTheme.bodySmall?.color,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 6),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 4,
+                                  children: [
+                                    if (ext.isNotEmpty)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.dialer_sip_rounded,
+                                              size: 10,
+                                              color: Theme.of(context).colorScheme.primary,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'Ext: $ext',
+                                              style: TextStyle(
+                                                fontFamily: 'Montserrat',
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w700,
+                                                color: Theme.of(context).colorScheme.primary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    if (phone.isNotEmpty)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.phone_iphone_rounded,
+                                              size: 10,
+                                              color: Theme.of(context).textTheme.bodySmall?.color,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              phone,
+                                              style: TextStyle(
+                                                fontFamily: 'Montserrat',
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w600,
+                                                color: Theme.of(context).textTheme.bodySmall?.color,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (phone.isNotEmpty)
+                            IconButton(
+                              onPressed: () async {
+                                final uri = Uri.parse('tel:$phone');
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(uri);
+                                }
+                              },
+                              icon: const Icon(
+                                Icons.phone_in_talk_rounded,
+                                size: 18,
+                                color: Color(0xFF10B981),
+                              ),
+                              style: IconButton.styleFrom(
+                                backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                padding: const EdgeInsets.all(8),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    // Fallback card for Services & Community
+                    final title = rawItem['name'] ?? rawItem['title'] ?? rawItem['visitor_name'] ?? rawItem['sender_name'] ?? 'Result';
+                    final subtitle = rawItem['description'] ?? rawItem['message'] ?? rawItem['subtitle'] ?? '';
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Theme.of(context).dividerColor),
                       ),
-                      child: Text(
-                        title.toString(),
-                        style: const TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.w600),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title.toString(),
+                            style: const TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.w600, fontSize: 13.5),
+                          ),
+                          if (subtitle.toString().isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              subtitle.toString(),
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 11.5,
+                                color: Theme.of(context).textTheme.bodySmall?.color,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
                       ),
                     );
                   }

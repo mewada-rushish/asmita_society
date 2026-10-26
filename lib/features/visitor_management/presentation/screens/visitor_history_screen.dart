@@ -697,31 +697,39 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                           'CHECKED_OUT',
                         ]
                         .map(
-                          (s) => ChoiceChip(
-                            label: Text(s),
-                            selected:
-                                tempStatus == s ||
-                                (s == 'ALL' && tempStatus == null),
-                            onSelected: (selected) {
-                              if (selected) {
-                                setModalState(
-                                  () => tempStatus = s == 'ALL' ? null : s,
-                                );
-                              }
-                            },
-                            selectedColor: Theme.of(
-                              context,
-                            ).colorScheme.error.withValues(alpha: 0.1),
-                            labelStyle: TextStyle(
-                              fontFamily: 'Poppins',
-                              color:
-                                  (tempStatus == s ||
-                                      (s == 'ALL' && tempStatus == null))
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          (s) {
+                            final isSelected = tempStatus == s || (s == 'ALL' && tempStatus == null);
+                            return ChoiceChip(
+                              label: Text(s),
+                              selected: isSelected,
+                              checkmarkColor: Colors.white,
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setModalState(
+                                    () => tempStatus = s == 'ALL' ? null : s,
+                                  );
+                                }
+                              },
+                              selectedColor: AsmitaPalette.deepNavy,
+                              backgroundColor: Theme.of(context).colorScheme.surface,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                side: BorderSide(
+                                  color: isSelected
+                                      ? AsmitaPalette.deepNavy
+                                      : Theme.of(context).dividerColor,
+                                ),
+                              ),
+                              labelStyle: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 11.5,
+                                color: isSelected
+                                    ? Colors.white
+                                    : Theme.of(context).textTheme.bodyLarge?.color,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                              ),
+                            );
+                          },
                         )
                         .toList(),
               ),
