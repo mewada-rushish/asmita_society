@@ -15,9 +15,10 @@ import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
 import '../../../visitor_management/presentation/widgets/receptionist_reassign_sheet.dart';
-import '../../../visitor_management/presentation/widgets/guard_pass_check_in_sheet.dart';
 import '../../../visitor_management/presentation/widgets/delivery_action_sheet.dart';
 import '../../../visitor_management/presentation/screens/guard_qr_scanner_screen.dart';
+import '../../../visitor_management/presentation/widgets/employee_registry_sheet.dart';
+import 'employee_dashboard_view.dart';
 
 class ReceptionistDashboardView extends StatefulWidget {
   final List<IndustrialVisitModel>? visits;
@@ -414,51 +415,63 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
   }
 
   Widget _buildQuickActionBar(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
       child: Row(
         children: [
-          Expanded(
-            child: _buildQuickActionCard(
-              context,
-              icon: Icons.person_add_alt_1_rounded,
-              label: 'New Walk-in',
-              subtitle: 'Lobby guest',
-              color: AsmitaPalette.deepNavy,
-              onTap: () => _showNewVisitorModal(context),
-            ),
+          // 1. New Walk-in
+          _buildQuickActionCard(
+            context,
+            icon: Icons.person_add_alt_1_rounded,
+            label: 'New Walk-in',
+            subtitle: 'Lobby guest',
+            color: AsmitaPalette.deepNavy,
+            onTap: () => _showNewVisitorModal(context),
           ),
           const SizedBox(width: 8),
-          Expanded(
-            child: _buildQuickActionCard(
-              context,
-              icon: Icons.pin_rounded,
-              label: 'Verify Code',
-              subtitle: 'Pass check-in',
-              color: const Color(0xFF2563EB),
-              onTap: () => GuardPassCheckInSheet.show(context, gateId: 1),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _buildQuickActionCard(
-              context,
-              icon: Icons.qr_code_scanner_rounded,
-              label: 'Scan QR',
-              subtitle: 'Digital pass',
-              color: const Color(0xFF059669),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => GuardQrScannerScreen(
-                      isActive: true,
-                      onScanComplete: () => Navigator.pop(context),
-                    ),
+
+          // 2. Digital Pass (QR Scan & Check-in Code)
+          _buildQuickActionCard(
+            context,
+            icon: Icons.qr_code_scanner_rounded,
+            label: 'Digital Pass',
+            subtitle: 'Scan or code',
+            color: const Color(0xFF059669),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => GuardQrScannerScreen(
+                    isActive: true,
+                    onScanComplete: () => Navigator.pop(context),
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+
+          // 3. Employee Registry (Check-in / Check-out)
+          _buildQuickActionCard(
+            context,
+            icon: Icons.badge_rounded,
+            label: 'Staff Registry',
+            subtitle: 'Check in / out',
+            color: const Color(0xFF7C3AED),
+            onTap: () => EmployeeRegistrySheet.show(context),
+          ),
+          const SizedBox(width: 8),
+
+          // 4. BBPS Bill Payments
+          _buildQuickActionCard(
+            context,
+            icon: Icons.receipt_long_rounded,
+            label: 'BBPS Bills',
+            subtitle: 'Utilities',
+            color: const Color(0xFFD97706),
+            onTap: () => BbpsBillPaymentsSheet.show(context),
           ),
         ],
       ),
@@ -481,6 +494,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
         child: Container(
+          width: 108,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
