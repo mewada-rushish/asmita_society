@@ -20,6 +20,8 @@ import 'features/visitor_management/bloc/guard_gate_bloc.dart';
 import 'core/di/injection_container.dart' as di;
 import 'core/services/firebase_messaging_service.dart';
 import 'features/visitor_management/bloc/visitor_bloc.dart';
+import 'features/visitor_management/bloc/industrial_visit_bloc.dart';
+import 'features/visitor_management/data/repositories/industrial_visit_repository.dart';
 import 'features/services/bloc/amenities_bloc.dart';
 import 'features/services/bloc/amenities_event.dart';
 import 'features/services/bloc/daily_help_bloc.dart';
@@ -43,6 +45,8 @@ import 'package:flutter_quill/flutter_quill.dart'
 import 'features/auth/presentation/unsafe_device_screen.dart';
 import 'core/observers/crashlytics_navigation_observer.dart';
 import 'package:asmita_society/l10n/app_localizations.dart';
+
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   globalNavigatorKey = GlobalKey<NavigatorState>();
@@ -200,46 +204,32 @@ class _AsmitaAppState extends State<AsmitaApp> with WidgetsBindingObserver {
         BlocProvider<QuickActionsBloc>(
           create: (context) => QuickActionsBloc()..add(LoadQuickActions()),
         ),
-        BlocProvider<FamilyBloc>(create: (_) => di.sl<FamilyBloc>()),
-        BlocProvider<PetsBloc>(create: (_) => di.sl<PetsBloc>()),
-        BlocProvider<VehiclesBloc>(create: (_) => di.sl<VehiclesBloc>()),
-        BlocProvider<TenantBloc>(create: (_) => di.sl<TenantBloc>()),
-        BlocProvider<PreferencesBloc>(
-          create: (_) => di.sl<PreferencesBloc>()..add(const LoadPreferences()),
+        BlocProvider<IndustrialVisitBloc>(
+          create: (context) {
+            di.registerIndustrialDependencies();
+            return IndustrialVisitBloc(
+              repository: di.sl<IndustrialVisitRepository>(),
+            );
+          },
         ),
-        BlocProvider<SocietyBloc>(create: (_) => di.sl<SocietyBloc>()),
-        BlocProvider<SupportBloc>(create: (_) => di.sl<SupportBloc>()),
-        BlocProvider<HistoryRequestBloc>(create: (_) => di.sl<HistoryRequestBloc>()),
       ],
-      child: BlocBuilder<PreferencesBloc, PreferencesState>(
-        builder: (context, state) {
-          String? language;
-          String? appTheme;
-          if (state is PreferencesLoaded) {
-            language = state.items?.language;
-            appTheme = state.items?.appTheme;
-          }
-          final locale = _getLocaleFromLanguage(language);
-          
-          return MaterialApp(
-            navigatorKey: globalNavigatorKey,
-            title: 'AsmitA',
-            debugShowCheckedModeBanner: false,
-            theme: AsmitaTheme.lightTheme,
-            darkTheme: AsmitaTheme.darkTheme,
-            themeMode: appTheme?.toLowerCase() == 'dark' 
-                ? ThemeMode.dark 
-                : (appTheme?.toLowerCase() == 'light' ? ThemeMode.light : ThemeMode.system),
-            locale: locale,
-            localizationsDelegates: [
-              ...AppLocalizations.localizationsDelegates,
-              FlutterQuillLocalizations.delegate,
-            ],
-            supportedLocales: AppLocalizations.supportedLocales,
-            navigatorObservers: [CrashlyticsNavigationObserver()],
-            home: widget.isDeviceSafe ? const RootScreen() : const UnsafeDeviceScreen(),
-          );
-        }
+      child: MaterialApp(
+        navigatorKey: rootNavigatorKey,
+        title: 'AsmitA',
+        debugShowCheckedModeBanner: false,
+        theme: AsmitaTheme.lightTheme,
+        darkTheme: AsmitaTheme.darkTheme,
+        themeMode: preferencesAsync.value?.appTheme.toLowerCase() == 'dark' 
+            ? ThemeMode.dark 
+            : (preferencesAsync.value?.appTheme.toLowerCase() == 'light' ? ThemeMode.light : ThemeMode.system),
+        locale: locale,
+        localizationsDelegates: [
+          ...AppLocalizations.localizationsDelegates,
+          FlutterQuillLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        navigatorObservers: [CrashlyticsNavigationObserver()],
+        home: isDeviceSafe ? const RootScreen() : const UnsafeDeviceScreen(),
       ),
     );
   }

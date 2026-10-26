@@ -5,6 +5,8 @@ class UserPreferencesModel {
   final String language;
   final String appTheme;
   final bool biometricLogin;
+  final String approvalSound;
+  final String notificationSound;
 
   UserPreferencesModel({
     required this.id,
@@ -13,6 +15,8 @@ class UserPreferencesModel {
     this.language = 'English',
     this.appTheme = 'System Default',
     this.biometricLogin = false,
+    this.approvalSound = 'asmita_alert_1',
+    this.notificationSound = 'asmita_notification_1',
   });
 
   factory UserPreferencesModel.fromJson(Map<String, dynamic> json) {
@@ -23,6 +27,8 @@ class UserPreferencesModel {
       language: json['language'] as String? ?? 'English',
       appTheme: json['app_theme'] as String? ?? 'System Default',
       biometricLogin: json['biometric_login'] == 1 || json['biometric_login'] == true,
+      approvalSound: json['approval_sound'] as String? ?? 'asmita_alert_1',
+      notificationSound: json['notification_sound'] as String? ?? 'asmita_notification_1',
     );
   }
 }

@@ -62,7 +62,7 @@ class _ChatComposerState extends State<ChatComposer>
     _blinkController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
-    )..repeat(reverse: true);
+    );
     _controller.addListener(() {
       setState(() {
         _isTyping = _controller.text.trim().isNotEmpty;
@@ -149,6 +149,7 @@ class _ChatComposerState extends State<ChatComposer>
 
         _focusNode.unfocus();
         _micScaleController.forward();
+        _blinkController.repeat(reverse: true);
 
         _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
           setState(() {
@@ -170,6 +171,8 @@ class _ChatComposerState extends State<ChatComposer>
 
   Future<void> _stopRecording({bool cancel = false}) async {
     _recordingTimer?.cancel();
+    _blinkController.stop();
+    _blinkController.reset();
     final path = await _audioRecorder.stop();
 
     final durationSeconds = _recordingDuration;
@@ -677,46 +680,44 @@ class _ChatComposerState extends State<ChatComposer>
                 ),
               ),
             ),
-            SizeTransition(
-              sizeFactor: _emojiAnim,
-              alignment: Alignment.topCenter,
-              child: Container(
-                color: Colors.white,
-                child: RepaintBoundary(
-                  child: SizedBox(
-                    height: 250,
-                    child: EmojiPicker(
-                      textEditingController: _controller,
-                      config: Config(
-                        bottomActionBarConfig: const BottomActionBarConfig(
-                          showBackspaceButton: false,
-                          showSearchViewButton: false,
+          ),
+        ),
+        SizeTransition(
+          sizeFactor: _emojiAnim,
+          alignment: Alignment.topCenter,
+          child: Container(
+            color: Colors.white,
+            child: RepaintBoundary(
+              child: SizedBox(
+                height: 250,
+                child: (_emojiShowing || _emojiAnim.value > 0)
+                    ? EmojiPicker(
+                        textEditingController: _controller,
+                        config: Config(
+                          bottomActionBarConfig: const BottomActionBarConfig(
+                            showBackspaceButton: false,
+                            showSearchViewButton: false,
+                          ),
+                          categoryViewConfig: const CategoryViewConfig(
+                            backgroundColor: Colors.white,
+                            iconColor: AsmitaPalette.textLight,
+                            iconColorSelected: AsmitaPalette.deepNavy,
+                            indicatorColor: AsmitaPalette.deepNavy,
+                            dividerColor: Colors.black12,
+                          ),
+                          emojiViewConfig: EmojiViewConfig(
+                            backgroundColor: Colors.white,
+                            columns: 7,
+                            emojiSizeMax:
+                                28 *
+                                (foundation.defaultTargetPlatform ==
+                                        TargetPlatform.iOS
+                                    ? 1.30
+                                    : 1.0),
+                          ),
                         ),
-                        categoryViewConfig: CategoryViewConfig(
-                          backgroundColor: Colors.white,
-                          iconColor:
-                              Theme.of(context).textTheme.bodySmall?.color ??
-                              Theme.of(context).colorScheme.onSurface,
-                          iconColorSelected: Theme.of(
-                            context,
-                          ).colorScheme.primary,
-                          indicatorColor: Theme.of(context).colorScheme.primary,
-                          dividerColor: Colors.black12,
-                        ),
-                        emojiViewConfig: EmojiViewConfig(
-                          backgroundColor: Colors.white,
-                          columns: 7,
-                          emojiSizeMax:
-                              28 *
-                              (foundation.defaultTargetPlatform ==
-                                      TargetPlatform.iOS
-                                  ? 1.30
-                                  : 1.0),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                      )
+                    : const SizedBox.shrink(),
               ),
             ),
             SizedBox(height: MediaQuery.paddingOf(context).bottom),

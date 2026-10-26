@@ -95,7 +95,7 @@ class FamilyMembersScreen extends StatelessWidget {
                           sliver: SliverGrid(
                             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
-                              childAspectRatio: 0.85,
+                              childAspectRatio: 0.80,
                               crossAxisSpacing: 16,
                               mainAxisSpacing: 16,
                             ),
@@ -290,12 +290,14 @@ class FamilyMembersScreen extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 color: Theme.of(context).scaffoldBackgroundColor,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -534,6 +536,7 @@ class FamilyMembersScreen extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
               ),
             );
           }

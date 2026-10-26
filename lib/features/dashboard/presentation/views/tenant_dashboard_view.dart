@@ -5,6 +5,8 @@ import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
+import 'package:asmita_society/core/utils/property_role_resolver.dart';
 import 'package:asmita_society/core/utils/dashboard_scroll_physics.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_raise_alert_wizard.dart';
@@ -63,14 +65,17 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authState = context.read<AuthBloc>().state;
-      int residentId = 1;
-      if (authState is AuthAuthenticated) {
-        residentId = authState.user.userId;
-      }
-      context.read<VisitorBloc>().add(
-        LoadMyHistory(residentId: residentId, isRefresh: true),
-      );
+      if (!mounted) return;
+      try {
+        final authState = context.read<AuthBloc>().state;
+        int residentId = 1;
+        if (authState is AuthAuthenticated) {
+          residentId = authState.user.userId;
+        }
+        context.read<VisitorBloc>().add(
+          LoadMyHistory(residentId: residentId, isRefresh: true),
+        );
+      } catch (_) {}
     });
   }
 
@@ -80,14 +85,31 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
     super.dispose();
   }
 
-  void _showPreApproveModal(BuildContext context) {
-    showDialog(
+  Future<void> _showPreApproveModal(BuildContext context) async {
+    final authState = context.read<AuthBloc>().state;
+    final user = authState is AuthAuthenticated ? authState.user : null;
+    if (!PropertyRoleResolver.canIssuePasses(user)) {
+      AsmitaToast.show(
+        context,
+        message: 'Your role does not have permission to pre-approve visitors.',
+        type: AsmitaToastType.error,
+      );
+      return;
+    }
+    await showDialog(
       context: context,
       builder: (context) => const AsmitaDialog(
         title: 'Pre-Approve Entry',
         content: AsmitaPreApproveWizard(), // Plugs in our dynamic wizard safely
       ),
     );
+
+    if (!context.mounted) return;
+    if (user != null) {
+      context.read<VisitorBloc>().add(
+        LoadMyHistory(residentId: user.userId, isRefresh: true),
+      );
+    }
   }
 
   void _showRaiseAlertModal(BuildContext context) {
@@ -112,6 +134,19 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
 
   @override
   Widget build(BuildContext context) {
+    String userInitials = 'KM';
+    try {
+      final authState = context.watch<AuthBloc>().state;
+      if (authState is AuthAuthenticated && authState.user.fullName.trim().isNotEmpty) {
+        final parts = authState.user.fullName.trim().split(RegExp(r'\s+'));
+        if (parts.length >= 2) {
+          userInitials = '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+        } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
+          userInitials = parts[0][0].toUpperCase();
+        }
+      }
+    } catch (_) {}
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
@@ -236,7 +271,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
             left: 0,
             right: 0,
             child: AsmitaPrimaryHeader(
-              userInitials: 'KM',
+              userInitials: userInitials,
               onSearchPressed: widget.onNavigateToSearch,
               onChatPressed: widget.onNavigateToCommunity,
             ),
@@ -580,22 +615,31 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                Row(
-                  children: [
-                    Text(
-                      'View All',
-                      style: textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.secondary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                InkWell(
+                  onTap: () {
+                    if (widget.onNavigateToHistory != null) {
+                      widget.onNavigateToHistory!();
+                    }
+                  },
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  child: Row(
+                    children: [
+                      Text(
+                        'View All',
+                        style: textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.secondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: Theme.of(context).colorScheme.secondary,
-                      size: 16,
-                    ),
-                  ],
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: Theme.of(context).colorScheme.secondary,
+                        size: 16,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

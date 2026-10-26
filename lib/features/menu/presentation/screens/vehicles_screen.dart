@@ -86,7 +86,7 @@ class VehiclesScreen extends StatelessWidget {
                           sliver: SliverGrid(
                             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
-                              childAspectRatio: 0.85,
+                              childAspectRatio: 0.80,
                               crossAxisSpacing: 16,
                               mainAxisSpacing: 16,
                             ),
@@ -103,6 +103,10 @@ class VehiclesScreen extends StatelessWidget {
                   }
                   return const SizedBox.shrink();
                 },
+                loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
+                error: (error, _) => Center(
+                  child: Text('Error: $error', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
+                ),
               ),
             ),
           ],
@@ -213,7 +217,7 @@ class VehiclesScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
         title: const Text('Delete Vehicle'),
-        content: Text('Are you sure you want to remove ?'),
+        content: Text('Are you sure you want to remove ${vehicle.makeModel}?'),
         actions: [
           CupertinoDialogAction(
             child: const Text('Cancel'),
@@ -228,9 +232,11 @@ class VehiclesScreen extends StatelessWidget {
       ),
     );
     
-    if (confirm == true && context.mounted) {
-      context.read<VehiclesBloc>().add(DeleteVehicle(vehicle.id));
-      AsmitaToast.show(context, message: 'Vehicle deleted', type: AsmitaToastType.success);
+    if (confirm == true) {
+      final success = await ref.read(vehiclesProvider.notifier).deleteVehicle(vehicle.id);
+      if (success && context.mounted) {
+        AsmitaToast.show(context, message: '${vehicle.makeModel} deleted', type: AsmitaToastType.success);
+      }
     }
   }
 

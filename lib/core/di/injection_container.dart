@@ -12,14 +12,7 @@ import '../../features/services/data/repositories/amenities_repository.dart';
 import '../../features/services/data/repositories/daily_help_repository.dart';
 import '../../features/dashboard/data/repositories/search_repository.dart';
 import '../../features/visitor_management/data/repositories/guard_gate_repository.dart';
-import '../../features/menu/data/repositories/family_repository.dart';
-import '../../features/menu/data/repositories/pets_repository.dart';
-import '../../features/menu/data/repositories/vehicles_repository.dart';
-import '../../features/menu/data/repositories/tenant_repository.dart';
-import '../../features/menu/data/repositories/preferences_repository.dart';
-import '../../features/menu/data/repositories/society_repository.dart';
-import '../../features/menu/data/repositories/support_repository.dart';
-import '../../features/menu/data/repositories/history_request_repository.dart';
+import '../../features/visitor_management/data/repositories/industrial_visit_repository.dart';
 
 import '../../features/menu/bloc/family_bloc.dart';
 import '../../features/menu/bloc/pets_bloc.dart';
@@ -91,24 +84,20 @@ Future<void> init() async {
   sl.registerLazySingleton<SearchRepository>(
     () => SearchRepository(dio: sl<AsmitaDioClient>().dio),
   );
-  
-  // Menu Repositories
-  sl.registerLazySingleton<FamilyRepository>(() => FamilyRepository(dio: sl<AsmitaDioClient>().dio));
-  sl.registerLazySingleton<PetsRepository>(() => PetsRepository(dio: sl<AsmitaDioClient>().dio));
-  sl.registerLazySingleton<VehiclesRepository>(() => VehiclesRepository(dio: sl<AsmitaDioClient>().dio));
-  sl.registerLazySingleton<TenantRepository>(() => TenantRepository(dio: sl<AsmitaDioClient>().dio));
-  sl.registerLazySingleton<PreferencesRepository>(() => PreferencesRepository(dio: sl<AsmitaDioClient>().dio));
-  sl.registerLazySingleton<SocietyRepository>(() => SocietyRepository(dio: sl<AsmitaDioClient>().dio));
-  sl.registerLazySingleton<SupportRepository>(() => SupportRepository(dio: sl<AsmitaDioClient>().dio));
-  sl.registerLazySingleton<HistoryRequestRepository>(() => HistoryRequestRepository(dio: sl<AsmitaDioClient>().dio));
 
-  // Menu Blocs
-  sl.registerFactory(() => FamilyBloc(repository: sl()));
-  sl.registerFactory(() => PetsBloc(repository: sl()));
-  sl.registerFactory(() => VehiclesBloc(repository: sl()));
-  sl.registerFactory(() => TenantBloc(repository: sl()));
-  sl.registerFactory(() => PreferencesBloc(repository: sl()));
-  sl.registerFactory(() => SocietyBloc(repository: sl()));
-  sl.registerFactory(() => SupportBloc(repository: sl()));
-  sl.registerFactory(() => HistoryRequestBloc(repository: sl()));
+  registerIndustrialDependencies();
+}
+
+void registerIndustrialDependencies() {
+  if (!sl.isRegistered<SecureStorageService>()) {
+    sl.registerLazySingleton<SecureStorageService>(() => SecureStorageService());
+  }
+  if (!sl.isRegistered<AsmitaDioClient>()) {
+    sl.registerLazySingleton<AsmitaDioClient>(() => AsmitaDioClient(sl<SecureStorageService>()));
+  }
+  if (!sl.isRegistered<IndustrialVisitRepository>()) {
+    sl.registerLazySingleton<IndustrialVisitRepository>(
+      () => IndustrialVisitRepository(dio: sl<AsmitaDioClient>().dio),
+    );
+  }
 }

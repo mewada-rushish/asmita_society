@@ -98,9 +98,8 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
         children: [
           AsmitaPrimaryHeader(
             subtitleOverride: 'Checked In Visitors',
+            showBackButton: true,
             allowPropertySwitching: false,
-            onProfilePressed: () {},
-            trailingActions: const SizedBox(),
           ),
           Expanded(
             child: BlocConsumer<GuardGateBloc, GuardGateState>(
@@ -162,10 +161,13 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                         },
                       ),
                       const SliverFillRemaining(
-                        child: Center(
-                          child: Text(
-                            'No active visitors inside.',
-                            style: TextStyle(color: Colors.grey),
+                        child: Padding(
+                          padding: EdgeInsets.only(bottom: 100),
+                          child: Center(
+                            child: Text(
+                              'No active visitors inside.',
+                              style: TextStyle(color: Colors.grey),
+                            ),
                           ),
                         ),
                       ),

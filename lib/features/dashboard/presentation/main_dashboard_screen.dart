@@ -11,20 +11,29 @@ import 'screens/view_more_screen.dart';
 import 'views/owner_dashboard_view.dart';
 import 'views/tenant_dashboard_view.dart';
 import 'views/guard_dashboard_view.dart';
+import 'views/director_dashboard_view.dart';
+import 'views/employee_dashboard_view.dart';
+import 'views/receptionist_dashboard_view.dart';
+import 'views/facility_staff_dashboard_view.dart';
 import 'screens/guard_history_screen.dart';
 import 'screens/guard_checked_in_screen.dart';
+import 'screens/industrial_visits_screen.dart';
+import 'screens/industrial_directory_screen.dart';
 import '../../visitor_management/presentation/screens/guard_qr_scanner_screen.dart';
+import '../../visitor_management/presentation/screens/department_delegation_screen.dart';
 import 'package:asmita_society/features/services/presentation/screens/daily_help_screen.dart';
 import 'screens/search_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/utils/property_role_resolver.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/services/bloc/daily_help_bloc.dart';
 import 'package:asmita_society/features/services/bloc/daily_help_event.dart';
 import 'package:asmita_society/features/services/data/repositories/daily_help_repository.dart';
 import '../../../core/di/injection_container.dart' as di;
-import '../../../core/services/property_config_service.dart';
-import '../../visitor_management/data/models/property_config.dart';
+import '../../visitor_management/bloc/industrial_visit_bloc.dart';
+import '../../visitor_management/data/repositories/industrial_visit_repository.dart';
+import 'package:asmita_society/core/services/permission_manager_service.dart';
 
 class MainDashboardScreen extends StatefulWidget {
   final String userRole;
@@ -59,6 +68,16 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         });
       }
     } catch (_) {}
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        PermissionManagerService.showPermissionSetupDialog(context);
+      }
+    });
   }
 
   void _navigateToSearch() {
@@ -129,23 +148,27 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   }
 
   // Dynamically builds the view list cleanly to keep callback bindings alive on state mutations
-  List<Widget> _buildScreens(String activeRole) {
-    final isStaff = _isGuardOrReceptionist(activeRole);
+  List<Widget> _buildScreens() {
+    final normalized = PropertyRoleResolver.normalizeRole(widget.userRole);
+    final isResidential = normalized == 'owner' || normalized == 'tenant';
     return [
-      _resolveRoleBasedHomeView(activeRole), // Index 0: Home view
-      isStaff
-          ? const SizedBox.shrink()
-          : ServicesScreen( // Index 1: Services Grid
+      _resolveRoleBasedHomeView(widget.userRole), // Index 0: Home view
+      isResidential
+          ? ServicesScreen( // Index 1: Services Grid
               onNavigateToSearch: _navigateToSearch,
               onNavigateToCommunity: () => setState(() => _currentIndex = 2),
+            )
+          : _wrapWithIndustrialBloc(
+              context,
+              IndustrialVisitsScreen(onBack: () => setState(() => _currentIndex = 0)),
             ),
-      isStaff
-          ? const SizedBox.shrink()
-          : CommunityScreen( // Index 2: Society Chat
+      isResidential
+          ? CommunityScreen( // Index 2: Society Chat
               onNavigateToSearch: _navigateToSearch,
               onNavigateToCommunity: () => setState(() => _currentIndex = 2),
-            ),
-      _resolveRoleBasedHistoryView(activeRole),               // Index 3: Gate Records (History)
+            )
+          : IndustrialDirectoryScreen(onBack: () => setState(() => _currentIndex = 0)),
+      _resolveRoleBasedHistoryView(widget.userRole),               // Index 3: Gate Records (History)
       MenuScreen(
         userRole: activeRole,
         propertyConfig: _propertyConfig,
@@ -164,22 +187,113 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   }
 
   Widget _resolveRoleBasedCheckedInView(String role) {
-    if (_isGuardOrReceptionist(role)) {
+    if (PropertyRoleResolver.normalizeRole(role) == 'guard') {
       return const GuardCheckedInScreen();
     }
     return const SizedBox.shrink();
   }
 
   Widget _resolveRoleBasedHomeView(String role) {
-    final r = role.toLowerCase();
-
-    // 1. Guards and Receptionists (Desk & Gate scanning)
-    if (_isGuardOrReceptionist(role)) {
-      return GuardDashboardView(
-        onNavigateToMenu: () => setState(() => _currentIndex = 4),
-        onNavigateToHistory: () => setState(() => _currentIndex = 3),
-        onNavigateToScanner: () => setState(() => _currentIndex = 5),
-      );
+    final normalized = PropertyRoleResolver.normalizeRole(role);
+    switch (normalized) {
+      case 'owner':
+        return OwnerDashboardView(
+          onNavigateToCommunity: () {
+            setState(() {
+              _currentIndex = 2; // Society Chat
+            });
+          },
+          onNavigateToHistory: () {
+            setState(() {
+              _currentIndex = 3; // Gate Records
+            });
+          },
+          onNavigateToViewMore: () {
+            showViewMoreSheet(context, onNavigationItemSelected: (index) {
+              setState(() => _currentIndex = index);
+            }, onNavigateToPosts: _navigateToAllNotices);
+          },
+          onNavigateToServices: () {
+            setState(() {
+              _currentIndex = 1; // FIXED: Natively switches view canvas to Services (Index 1)
+            });
+          },
+          onNavigateToDailyHelp: _navigateToDailyHelp,
+          onNavigateToAllNotices: _navigateToAllNotices,
+          onNavigateToSearch: _navigateToSearch,
+        );
+      case 'tenant':
+        return TenantDashboardView(
+          onNavigateToCommunity: () {
+            setState(() {
+              _currentIndex = 2; // Society Chat
+            });
+          },
+          onNavigateToHistory: () {
+            setState(() {
+              _currentIndex = 3; // Gate Records
+            });
+          },
+          onNavigateToViewMore: () {
+            setState(() {
+              _currentIndex = 4; // View More/Menu
+            });
+          },
+          onNavigateToServices: () => setState(() => _currentIndex = 1),
+          onNavigateToDailyHelp: _navigateToDailyHelp,
+          onNavigateToAllNotices: _navigateToAllNotices,
+          onNavigateToSearch: _navigateToSearch,
+        );
+      case 'guard':
+        return _wrapWithIndustrialBloc(
+          context,
+          GuardDashboardView(
+            onNavigateToMenu: () => setState(() => _currentIndex = 4),
+            onNavigateToHistory: () => setState(() => _currentIndex = 3),
+            onNavigateToScanner: () => setState(() => _currentIndex = 5),
+          ),
+        );
+      case 'director':
+        return _wrapWithIndustrialBloc(
+          context,
+          const DirectorDashboardView(),
+        );
+      case 'employee':
+        final authState = context.watch<AuthBloc>().state;
+        final user = authState is AuthAuthenticated ? authState.user : null;
+        final canDelegate = PropertyRoleResolver.canDelegate(
+          user,
+          designation: user?.designation,
+        );
+        return _wrapWithIndustrialBloc(
+          context,
+          EmployeeDashboardView(
+            employeeName: (user != null && user.fullName.isNotEmpty) ? user.fullName : 'IT HOD',
+            departmentName: user?.departmentName ?? '201 (IT)',
+            cabinNumber: (user?.cabinCode != null && user!.cabinCode.isNotEmpty) ? user.cabinCode : 'CAB-IT-01',
+            deskNumber: (user?.deskCode != null && user!.deskCode.isNotEmpty) ? user.deskCode : 'IT-DSK-01',
+            designation: user?.designation ?? 'Head of Department (HOD)',
+            isActive: user?.isActive ?? true,
+            canDelegate: canDelegate,
+            onOpenDelegation: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => DepartmentDelegationScreen(
+                    departmentId: user?.departmentId,
+                    departmentName: user?.departmentName,
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      case 'receptionist':
+        return _wrapWithIndustrialBloc(context, const ReceptionistDashboardView());
+      case 'facility':
+        return _wrapWithIndustrialBloc(context, const FacilityStaffDashboardView());
+      default:
+        return Center(child: Text('Role Architecture: $role'));
     }
 
     // 2. Tenants, Corporate Staff, Team Leaders & Department Heads
@@ -242,8 +356,24 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
     );
   }
 
+  Widget _wrapWithIndustrialBloc(BuildContext context, Widget child) {
+    di.registerIndustrialDependencies();
+    try {
+      context.read<IndustrialVisitBloc>();
+      return child;
+    } catch (_) {
+      return BlocProvider<IndustrialVisitBloc>(
+        create: (_) => IndustrialVisitBloc(
+          repository: di.sl<IndustrialVisitRepository>(),
+        ),
+        child: child,
+      );
+    }
+  }
+
+
   Widget _resolveRoleBasedQrScanner(String role) {
-    if (_isGuardOrReceptionist(role)) {
+    if (PropertyRoleResolver.normalizeRole(role) == 'guard') {
       return GuardQrScannerScreen(
         isActive: _currentIndex == 5,
         onScanComplete: () => setState(() => _currentIndex = 0),
@@ -253,7 +383,8 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   }
 
   Widget _resolveRoleBasedHistoryView(String role) {
-    if (_isGuardOrReceptionist(role)) {
+    final normalized = PropertyRoleResolver.normalizeRole(role);
+    if (normalized == 'guard') {
       return const GuardHistoryScreen();
     }
     return VisitorHistoryScreen(onBack: () => setState(() => _currentIndex = 0));

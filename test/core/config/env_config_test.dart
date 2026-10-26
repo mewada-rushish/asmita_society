@@ -56,11 +56,28 @@ void main() {
       expect(EnvConfig.userVehicles, endsWith('/app-api/vehicles'));
       expect(EnvConfig.userPets, endsWith('/app-api/pets'));
       expect(EnvConfig.parkingSlots, endsWith('/app-api/parking-slots'));
-      expect(EnvConfig.committeeMembers, endsWith('/app-api/committee-members'));
-      expect(EnvConfig.societyRules, endsWith('/app-api/rules'));
-      expect(EnvConfig.societyDocuments, endsWith('/app-api/documents'));
+      expect(EnvConfig.committeeMembers, endsWith('/app-api/society/committee-members'));
+      expect(EnvConfig.societyRules, endsWith('/app-api/society/rules'));
+      expect(EnvConfig.societyDocuments, endsWith('/app-api/society/documents'));
       expect(EnvConfig.supportTickets, endsWith('/app-api/support-tickets'));
-      expect(EnvConfig.userPreferences, endsWith('/app-api/user-preferences'));
+      expect(EnvConfig.userPreferences, endsWith('/app-api/preferences'));
+    });
+
+    test('industrial endpoints are properly constructed', () {
+      expect(EnvConfig.industrialVisits, endsWith('/app-api/industrial/visits'));
+      expect(EnvConfig.industrialGuardDraft, endsWith('/app-api/industrial/guard/draft'));
+      expect(EnvConfig.industrialGuardDrafts, endsWith('/app-api/industrial/guard/drafts'));
+      expect(EnvConfig.industrialDelivery, endsWith('/app-api/industrial/visits/delivery'));
+      expect(EnvConfig.industrialHandover(42), endsWith('/app-api/industrial/visits/42/confirm-handover'));
+      expect(EnvConfig.industrialAction(42), endsWith('/app-api/industrial/visits/42/action'));
+      expect(EnvConfig.industrialAcknowledge(42), endsWith('/app-api/industrial/visits/42/acknowledge'));
+      expect(EnvConfig.industrialOverride(42), endsWith('/app-api/industrial/visits/42/override'));
+      expect(EnvConfig.industrialCheckIn(42), endsWith('/app-api/industrial/visits/42/check-in'));
+      expect(EnvConfig.industrialCheckOut(42), endsWith('/app-api/industrial/visits/42/check-out'));
+      expect(EnvConfig.industrialGuardClockIn, endsWith('/app-api/industrial/guard/duty/clock-in'));
+      expect(EnvConfig.industrialGuardClockOut, endsWith('/app-api/industrial/guard/duty/clock-out'));
+      expect(EnvConfig.industrialSettings, endsWith('/app-api/industrial/settings'));
+      expect(EnvConfig.industrialOutageMode, endsWith('/app-api/industrial/outage-mode'));
     });
   });
 }

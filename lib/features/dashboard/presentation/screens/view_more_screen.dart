@@ -11,6 +11,10 @@ import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wiz
 import 'package:asmita_society/features/dashboard/widgets/asmita_security_wizard.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_raise_alert_wizard.dart';
 import 'package:asmita_society/features/menu/presentation/screens/vehicles_screen.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
+import 'package:asmita_society/core/utils/property_role_resolver.dart';
+import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
+import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/visitor_management/presentation/screens/visitor_history_screen.dart';
 import 'package:asmita_society/features/community/presentation/attachments/create_poll_dialog.dart';
 
@@ -41,6 +45,16 @@ class ViewMoreScreen extends StatelessWidget {
   });
 
   void _showPreApproveModal(BuildContext context) {
+    final authState = context.read<AuthBloc>().state;
+    final user = authState is AuthAuthenticated ? authState.user : null;
+    if (!PropertyRoleResolver.canIssuePasses(user)) {
+      AsmitaToast.show(
+        context,
+        message: 'Your role does not have permission to pre-approve visitors.',
+        type: AsmitaToastType.error,
+      );
+      return;
+    }
     showDialog(
       context: context,
       builder: (context) => const AsmitaDialog(

@@ -2,6 +2,7 @@ import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/menu/bloc/society_bloc.dart';
 import 'package:asmita_society/features/menu/bloc/society_state.dart';
@@ -50,7 +51,25 @@ class DocumentsScreen extends StatelessWidget {
                       },
                     );
                   }
-                  return const SizedBox.shrink();
+                  return AsmitaRefreshableListView(
+                    onRefresh: () async {
+                      ref.invalidate(documentsProvider);
+                      await ref.read(documentsProvider.future);
+                    },
+                    padding: const EdgeInsets.all(16),
+                    itemCount: docs.length,
+                    itemBuilder: (context, index) {
+                      final doc = docs[index];
+                      final dateStr = doc.uploadedAt != null 
+                        ? AppDateFormatter.formatDate(doc.uploadedAt!)
+                        : 'Unknown Date';
+                        
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildDocumentCard(context, textTheme, doc.title, 'Updated: $dateStr', 'Available'),
+                      );
+                    },
+                  );
                 },
               ),
             ),

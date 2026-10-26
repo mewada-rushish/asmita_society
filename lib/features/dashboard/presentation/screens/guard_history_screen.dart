@@ -69,9 +69,8 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
         children: [
           AsmitaPrimaryHeader(
             subtitleOverride: 'Gate History',
+            showBackButton: true,
             allowPropertySwitching: false,
-            onProfilePressed: () {},
-            trailingActions: const SizedBox(),
           ),
           Expanded(
             child: BlocBuilder<GuardGateBloc, GuardGateState>(
@@ -118,10 +117,13 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                         },
                       ),
                       const SliverFillRemaining(
-                        child: Center(
-                          child: Text(
-                            'No visitor records found.',
-                            style: TextStyle(color: Colors.grey),
+                        child: Padding(
+                          padding: EdgeInsets.only(bottom: 100),
+                          child: Center(
+                            child: Text(
+                              'No visitor records found.',
+                              style: TextStyle(color: Colors.grey),
+                            ),
                           ),
                         ),
                       ),

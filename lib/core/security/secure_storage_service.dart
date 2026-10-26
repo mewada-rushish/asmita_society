@@ -59,6 +59,56 @@ class SecureStorageService {
     return val != null ? int.tryParse(val) : null;
   }
 
+  static const String _approvalSoundKey = 'pref_approval_sound';
+  static const String _notificationSoundKey = 'pref_notification_sound';
+
+  Future<void> saveApprovalSound(String sound) async {
+    await _storage.write(key: _approvalSoundKey, value: sound);
+  }
+
+  Future<String> getApprovalSound() async {
+    final val = await _storage.read(key: _approvalSoundKey);
+    return val ?? 'asmita_alert_1';
+  }
+
+  Future<void> saveNotificationSound(String sound) async {
+    await _storage.write(key: _notificationSoundKey, value: sound);
+  }
+
+  Future<String> getNotificationSound() async {
+    final val = await _storage.read(key: _notificationSoundKey);
+    return val ?? 'asmita_notification_1';
+  }
+
+  static const String _biometricLoginKey = 'pref_biometric_login';
+  static const String _appThemeKey = 'pref_app_theme';
+  static const String _languageKey = 'pref_language';
+
+  Future<void> saveBiometricLogin(bool enabled) async {
+    await _storage.write(key: _biometricLoginKey, value: enabled.toString());
+  }
+
+  Future<bool> getBiometricLogin() async {
+    final val = await _storage.read(key: _biometricLoginKey);
+    return val == 'true';
+  }
+
+  Future<void> saveAppTheme(String theme) async {
+    await _storage.write(key: _appThemeKey, value: theme);
+  }
+
+  Future<String?> getAppTheme() async {
+    return await _storage.read(key: _appThemeKey);
+  }
+
+  Future<void> saveLanguage(String language) async {
+    await _storage.write(key: _languageKey, value: language);
+  }
+
+  Future<String?> getLanguage() async {
+    return await _storage.read(key: _languageKey);
+  }
+
   Future<void> clearSession() async {
     await _storage.delete(key: _tokenKey);
     await _storage.delete(key: _roleKey);

@@ -4,6 +4,7 @@ import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
+import 'package:asmita_society/core/widgets/asmita_visitor_card.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/visitor_bloc.dart';
@@ -13,9 +14,12 @@ import '../../data/models/visitor_history_item.dart';
 import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_state.dart';
 import 'package:intl/intl.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import '../../../dashboard/widgets/asmita_pre_approve_wizard.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
+import '../../data/models/invite_model.dart';
+import 'invite_pass_screen.dart';
 
 class VisitorHistoryScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -88,9 +92,13 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
   Map<String, dynamic> _normalizeItem(VisitorHistoryItem item, String currentUserName) {
     final isPreApproved = item.isPreApproved;
 
-    final name = item.name;
-    final company = item.company;
-    final category = item.category;
+    final name = (item['visitor_name'] != null && item['visitor_name'].toString().trim().isNotEmpty)
+        ? item['visitor_name'].toString().trim()
+        : (item['title'] ?? (isPreApproved ? 'VIP Guest' : 'Unknown'));
+    final company = item['company_name'] ?? item['purpose'] ?? 'Visitor';
+    final category = isPreApproved
+        ? (item['invite_type'] ?? 'Invite')
+        : (item['visitor_type_name'] ?? 'Walk-in');
 
     final entryTime = _formatTime(item.dateStr, item.entryTimeStr);
     final exitTime = _formatTime(item.dateStr, item.exitTimeStr);
@@ -171,19 +179,15 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
       brandColor = Colors.black;
     }
 
-    // Default title is name, but for Cab/Delivery/Guest it should be the company/purpose
+    // Default title is name, but for Cab/Delivery it should be the company/purpose
     String titleText = name;
-    if (category.toLowerCase() == 'delivery' ||
-        category.toLowerCase() == 'cab' ||
-        icon != Icons.person_rounded ||
-        name.toLowerCase().contains('invite')) {
+    if (category.toString().toLowerCase() == 'delivery' ||
+        category.toString().toLowerCase() == 'cab') {
       titleText = company;
-      // Clean up cases where company name might be empty or redundant
-      if (titleText.toLowerCase().contains('invite')) {
-        titleText = titleText
-            .replaceAll(RegExp(r' invite', caseSensitive: false), '')
-            .trim();
-      }
+    } else if (titleText.toLowerCase().contains('invite')) {
+      titleText = company.isNotEmpty && company != 'Visitor'
+          ? company
+          : (isPreApproved ? 'VIP Guest' : titleText);
     }
 
     String subtitleText = isPreApproved
@@ -219,6 +223,10 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
       'maxGuestCount': item.maxGuestCount,
       'isPrivate': item.isPrivate,
       'isOutsideSchedule': isOutsideSchedule,
+      'passCode': item['pass_code']?.toString(),
+      'qrCode': item['qr_code']?.toString(),
+      'isPreApproved': isPreApproved,
+      'rawItem': item,
     };
   }
 
@@ -289,6 +297,29 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
               ),
             ),
           ),
+          if (visitor['passCode'] != null && visitor['passCode'].toString().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  'PASS CODE: #${visitor['passCode']}',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
       child: SingleChildScrollView(
@@ -397,6 +428,66 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                 label: 'Outbound Timestamp',
                 value: visitor['exitTime'] as String,
               ),
+
+            if (visitor['qrCode'] != null && visitor['qrCode'].toString().isNotEmpty) ...[
+              const SizedBox(height: 18),
+              Center(
+                child: Container(
+                  width: 170,
+                  height: 170,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                  ),
+                  child: QrImageView(
+                    data: visitor['qrCode'].toString(),
+                    version: QrVersions.auto,
+                    size: 146.0,
+                    eyeStyle: QrEyeStyle(
+                      eyeShape: QrEyeShape.square,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    dataModuleStyle: QrDataModuleStyle(
+                      dataModuleShape: QrDataModuleShape.square,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  final raw = visitor['rawItem'];
+                  if (raw is Map) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => InvitePassScreen(
+                          invite: PreApprovedInvite.fromJson(
+                            Map<String, dynamic>.from(raw),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.share_rounded, size: 16),
+                label: const Text(
+                  'View & Share Pass',
+                  style: TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.surface,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
           ],
         ),
       ),
@@ -788,7 +879,6 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     final authState = context.read<AuthBloc>().state;
     String currentUserName = 'Resident';
     if (authState is AuthAuthenticated) {
@@ -802,12 +892,12 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
           // Aligned Unified Header Structure matches Dashboard Layouts seamlessly
           const AsmitaPrimaryHeader(),
 
-          if (widget.onBack != null || Navigator.canPop(context))
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (widget.onBack != null || Navigator.canPop(context))
                   GestureDetector(
                     onTap: () {
                       if (widget.onBack != null) {
@@ -818,7 +908,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                     },
                     behavior: HitTestBehavior.opaque,
                     child: Padding(
-                      padding: EdgeInsets.only(
+                      padding: const EdgeInsets.only(
                         right: 12.0,
                         top: 4.0,
                         bottom: 4.0,
@@ -830,29 +920,29 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                       ),
                     ),
                   ),
-                  Expanded(
-                    child: Text(
-                      'Visitor History',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.filter_list_rounded,
+                Expanded(
+                  child: Text(
+                    'Visitor History',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
                       color: Theme.of(context).colorScheme.primary,
                     ),
-                    onPressed: _showFilterModal,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
                   ),
-                ],
-              ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.filter_list_rounded,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  onPressed: _showFilterModal,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
             ),
+          ),
 
           // Active filters chip area (optional, to show applied filters)
           if (_selectedStatus != null || _startDate != null || _endDate != null)
@@ -979,10 +1069,12 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                   slivers: [
                     AsmitaAnimatedRefresh(
                       onRefresh: () async {
+                        final bloc = context.read<VisitorBloc>();
+                        final future = bloc.stream
+                            .firstWhere((s) => s is! VisitorLoading)
+                            .timeout(const Duration(seconds: 4), onTimeout: () => bloc.state);
                         _loadHistory(isRefresh: true);
-                        await Future.delayed(
-                          const Duration(seconds: 1),
-                        ); // UX delay
+                        await future;
                       },
                     ),
                     if (historyList.isEmpty)
@@ -1012,157 +1104,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                               historyList[index],
                               currentUserName,
                             );
-                            return InkWell(
-                              onTap: () =>
-                                  _showVisitorDetailsModal(context, item),
-                              borderRadius: BorderRadius.circular(16),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: Theme.of(context).dividerColor,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                padding: const EdgeInsets.all(16),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 44,
-                                      height: 44,
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(
-                                          context,
-                                        ).scaffoldBackgroundColor,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        item['icon'] as IconData,
-                                        color: item['brandColor'] as Color? ?? Theme.of(context).colorScheme.primary,
-                                        size: 22,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            item['titleText'] as String,
-                                            style: textTheme.titleLarge
-                                                ?.copyWith(
-                                                  fontFamily: 'Montserrat',
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: Theme.of(
-                                                    context,
-                                                  ).colorScheme.primary,
-                                                ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            item['subtitleText'] as String,
-                                            style: textTheme.bodyMedium
-                                                ?.copyWith(
-                                                  fontFamily: 'Poppins',
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: Theme.of(
-                                                    context,
-                                                  ).textTheme.bodyMedium?.color,
-                                                ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          if (item['inviteSubType'] ==
-                                                  'FREQUENT' ||
-                                              item['allowedDays'] != null) ...[
-                                            if (item['startTime'] != null &&
-                                                item['endTime'] != null) ...[
-                                              const SizedBox(height: 6),
-                                              Text(
-                                                '${_formatRawTime(item['startTime'])} - ${_formatRawTime(item['endTime'])}',
-                                                style: textTheme.bodySmall
-                                                    ?.copyWith(
-                                                      fontFamily: 'Poppins',
-                                                      fontSize: 11,
-                                                      color: Theme.of(
-                                                        context,
-                                                      ).colorScheme.primary,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                              ),
-                                            ],
-                                          ],
-                                          if (item['isOutsideSchedule'] ==
-                                              true) ...[
-                                            const SizedBox(height: 4),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 6,
-                                                    vertical: 2,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.red.shade50,
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                                border: Border.all(
-                                                  color: Colors.red.shade200,
-                                                ),
-                                              ),
-                                              child: const Text(
-                                                '⚠️ Outside Schedule',
-                                                style: TextStyle(
-                                                  fontFamily: 'Poppins',
-                                                  fontSize: 10,
-                                                  color: Colors.red,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          item['entryTime'] as String,
-                                          style: textTheme.bodyLarge?.copyWith(
-                                            fontFamily: 'Poppins',
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          item['date'] as String,
-                                          style: textTheme.bodyMedium?.copyWith(
-                                            fontFamily: 'Poppins',
-                                            fontSize: 11,
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
+                            return _buildVisitorHistoryCard(context, item);
                           },
                         ),
                       ),
@@ -1194,6 +1136,13 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildVisitorHistoryCard(BuildContext context, Map<String, dynamic> item) {
+    return AsmitaVisitorCard.fromMap(
+      item: item,
+      onTap: () => _showVisitorDetailsModal(context, item),
     );
   }
 
