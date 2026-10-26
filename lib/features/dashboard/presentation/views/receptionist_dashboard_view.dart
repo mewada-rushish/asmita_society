@@ -62,8 +62,12 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
           final authState = context.read<AuthBloc>().state;
           if (authState is AuthAuthenticated) {
             AsmitaPreApproveWizard.loadSocietyFlats(authState.user.societyId);
-            AsmitaPreApproveWizard.loadSocietyEmployees(authState.user.societyId);
-            AsmitaPreApproveWizard.loadSocietyDepartments(authState.user.societyId);
+            AsmitaPreApproveWizard.loadSocietyEmployees(
+              authState.user.societyId,
+            );
+            AsmitaPreApproveWizard.loadSocietyDepartments(
+              authState.user.societyId,
+            );
           }
         } catch (_) {}
       });
@@ -74,8 +78,12 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
           final authState = context.read<AuthBloc>().state;
           if (authState is AuthAuthenticated) {
             AsmitaPreApproveWizard.loadSocietyFlats(authState.user.societyId);
-            AsmitaPreApproveWizard.loadSocietyEmployees(authState.user.societyId);
-            AsmitaPreApproveWizard.loadSocietyDepartments(authState.user.societyId);
+            AsmitaPreApproveWizard.loadSocietyEmployees(
+              authState.user.societyId,
+            );
+            AsmitaPreApproveWizard.loadSocietyDepartments(
+              authState.user.societyId,
+            );
           }
         } catch (_) {}
       });
@@ -216,8 +224,8 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
             child: AsmitaPullToRefresh(
               onRefresh: () async {
                 context.read<IndustrialVisitBloc>().add(
-                      const LoadIndustrialVisits(),
-                    );
+                  const LoadIndustrialVisits(),
+                );
               },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -238,7 +246,10 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
 
                   // 4. Content Area: Inline Visit Cards or Empty State
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     child: isLoading
                         ? const Padding(
                             padding: EdgeInsets.symmetric(vertical: 40),
@@ -250,8 +261,16 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                             ),
                           )
                         : (_selectedTabIndex == 0
-                            ? _buildInlineVisitList(context, waitingList, isAlertTab: false)
-                            : _buildInlineVisitList(context, floorAlerts, isAlertTab: true)),
+                              ? _buildInlineVisitList(
+                                  context,
+                                  waitingList,
+                                  isAlertTab: false,
+                                )
+                              : _buildInlineVisitList(
+                                  context,
+                                  floorAlerts,
+                                  isAlertTab: true,
+                                )),
                   ),
 
                   // 5. Bottom clearance above floating curved nav bar
@@ -549,7 +568,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
     bool isDark,
   ) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -613,7 +632,9 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
               size: 16,
               color: isSelected
                   ? Colors.white
-                  : Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                  : Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
             ),
             const SizedBox(width: 6),
             Flexible(
@@ -627,7 +648,9 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                   fontSize: 12,
                   color: isSelected
                       ? Colors.white
-                      : Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                      : Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -670,7 +693,11 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                       _handleDecide(context, visit.id, action),
                 );
               },
-              icon: const Icon(Icons.touch_app_rounded, size: 16, color: Colors.white),
+              icon: const Icon(
+                Icons.touch_app_rounded,
+                size: 16,
+                color: Colors.white,
+              ),
               label: const Text(
                 'Delivery Options',
                 style: TextStyle(
@@ -682,8 +709,13 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AsmitaPalette.deepNavy,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 elevation: 1,
               ),
             ),
@@ -696,13 +728,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                 visit: visit,
                 societyId: visit.propertyId,
                 onConfirmReassign: (assignedUser, cabin, desk) {
-                  _handleReassign(
-                    context,
-                    visit.id,
-                    assignedUser,
-                    cabin,
-                    desk,
-                  );
+                  _handleReassign(context, visit.id, assignedUser, cabin, desk);
                 },
               );
             },
@@ -746,7 +772,10 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                   color: AsmitaPalette.actionRed.withValues(alpha: 0.8),
                   width: 1.2,
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -762,8 +791,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
             ),
             const SizedBox(width: 8),
             ElevatedButton.icon(
-              onPressed: () =>
-                  _handleDecide(context, visit.id, 'APPROVE'),
+              onPressed: () => _handleDecide(context, visit.id, 'APPROVE'),
               icon: const Icon(Icons.check_rounded, size: 16),
               label: const Text(
                 'Approve Entry',
@@ -776,7 +804,10 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AsmitaPalette.successGreen,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -789,12 +820,12 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
             ElevatedButton.icon(
               onPressed: () {
                 context.read<IndustrialVisitBloc>().add(
-                      CheckInPassEvent(
-                        visitId: visit.id,
-                        gateId: 1,
-                        passCode: visit.passCode,
-                      ),
-                    );
+                  CheckInPassEvent(
+                    visitId: visit.id,
+                    gateId: 1,
+                    passCode: visit.passCode,
+                  ),
+                );
               },
               icon: const Icon(Icons.how_to_reg_rounded, size: 16),
               label: const Text(
@@ -808,7 +839,10 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AsmitaPalette.successGreen,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -821,11 +855,8 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
             ElevatedButton.icon(
               onPressed: () {
                 context.read<IndustrialVisitBloc>().add(
-                      CheckOutPassEvent(
-                        visitId: visit.id,
-                        gateId: 1,
-                      ),
-                    );
+                  CheckOutPassEvent(visitId: visit.id, gateId: 1),
+                );
               },
               icon: const Icon(Icons.logout_rounded, size: 16),
               label: const Text(
@@ -839,7 +870,10 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AsmitaPalette.deepNavy,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -876,10 +910,11 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: (isAlertTab
-                      ? AsmitaPalette.amberWarning
-                      : AsmitaPalette.deepNavy)
-                  .withValues(alpha: 0.1),
+              color:
+                  (isAlertTab
+                          ? AsmitaPalette.amberWarning
+                          : AsmitaPalette.deepNavy)
+                      .withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
