@@ -113,17 +113,17 @@ enum IndustrialVisitStatus {
       case IndustrialVisitStatus.checkedIn:
         return const Color(0xFF064E3B);
       case IndustrialVisitStatus.checkedOut:
-        return const Color(0xFF18181B);
+        return const Color(0xFF334155);
       case IndustrialVisitStatus.rejected:
         return const Color(0xFF450A0A);
       case IndustrialVisitStatus.expired:
-        return const Color(0xFF1E293B);
+        return const Color(0xFF334155);
       case IndustrialVisitStatus.cancelled:
-        return const Color(0xFF1E293B);
+        return const Color(0xFF334155);
       case IndustrialVisitStatus.revoked:
         return const Color(0xFF4C0519);
       case IndustrialVisitStatus.collected:
-        return const Color(0xFF18181B);
+        return const Color(0xFF334155);
     }
   }
 
@@ -140,17 +140,90 @@ enum IndustrialVisitStatus {
       case IndustrialVisitStatus.checkedIn:
         return const Color(0xFF6EE7B7);
       case IndustrialVisitStatus.checkedOut:
-        return const Color(0xFFCBD5E1);
+        return const Color(0xFFF1F5F9);
       case IndustrialVisitStatus.rejected:
         return const Color(0xFFFCA5A5);
       case IndustrialVisitStatus.expired:
-        return const Color(0xFF94A3B8);
+        return const Color(0xFFCBD5E1);
       case IndustrialVisitStatus.cancelled:
-        return const Color(0xFF94A3B8);
+        return const Color(0xFFCBD5E1);
       case IndustrialVisitStatus.revoked:
         return const Color(0xFFFDA4AF);
       case IndustrialVisitStatus.collected:
-        return const Color(0xFFCBD5E1);
+        return const Color(0xFFF1F5F9);
+    }
+  }
+
+  /// High-contrast luminous styling for badges displayed on dark/navy hero cards
+  Color get darkCardTextColor {
+    switch (this) {
+      case IndustrialVisitStatus.submitted:
+      case IndustrialVisitStatus.awaitingHost:
+        return const Color(0xFFFDE047); // Luminous Amber
+      case IndustrialVisitStatus.assigned:
+        return const Color(0xFFDDD6FE); // Soft Lavender
+      case IndustrialVisitStatus.approved:
+        return const Color(0xFF93C5FD); // Bright Sky Blue
+      case IndustrialVisitStatus.checkedIn:
+        return const Color(0xFF6EE7B7); // Vibrant Emerald Mint
+      case IndustrialVisitStatus.checkedOut:
+        return const Color(0xFFF1F5F9); // Crisp Luminous Silver/White
+      case IndustrialVisitStatus.rejected:
+      case IndustrialVisitStatus.revoked:
+        return const Color(0xFFFCA5A5); // Soft Coral Red
+      case IndustrialVisitStatus.expired:
+      case IndustrialVisitStatus.cancelled:
+        return const Color(0xFFCBD5E1); // Muted Silver
+      case IndustrialVisitStatus.collected:
+        return const Color(0xFFF1F5F9);
+    }
+  }
+
+  Color get darkCardFillColor {
+    switch (this) {
+      case IndustrialVisitStatus.submitted:
+      case IndustrialVisitStatus.awaitingHost:
+        return const Color(0xFFFDE047).withValues(alpha: 0.18);
+      case IndustrialVisitStatus.assigned:
+        return const Color(0xFF8B5CF6).withValues(alpha: 0.22);
+      case IndustrialVisitStatus.approved:
+        return const Color(0xFF3B82F6).withValues(alpha: 0.22);
+      case IndustrialVisitStatus.checkedIn:
+        return const Color(0xFF10B981).withValues(alpha: 0.22);
+      case IndustrialVisitStatus.checkedOut:
+        return Colors.white.withValues(alpha: 0.14);
+      case IndustrialVisitStatus.rejected:
+      case IndustrialVisitStatus.revoked:
+        return const Color(0xFFEF4444).withValues(alpha: 0.22);
+      case IndustrialVisitStatus.expired:
+      case IndustrialVisitStatus.cancelled:
+        return Colors.white.withValues(alpha: 0.08);
+      case IndustrialVisitStatus.collected:
+        return Colors.white.withValues(alpha: 0.14);
+    }
+  }
+
+  Color get darkCardBorderColor {
+    switch (this) {
+      case IndustrialVisitStatus.submitted:
+      case IndustrialVisitStatus.awaitingHost:
+        return const Color(0xFFFDE047).withValues(alpha: 0.55);
+      case IndustrialVisitStatus.assigned:
+        return const Color(0xFFDDD6FE).withValues(alpha: 0.55);
+      case IndustrialVisitStatus.approved:
+        return const Color(0xFF93C5FD).withValues(alpha: 0.6);
+      case IndustrialVisitStatus.checkedIn:
+        return const Color(0xFF6EE7B7).withValues(alpha: 0.6);
+      case IndustrialVisitStatus.checkedOut:
+        return const Color(0xFFCBD5E1).withValues(alpha: 0.5);
+      case IndustrialVisitStatus.rejected:
+      case IndustrialVisitStatus.revoked:
+        return const Color(0xFFFCA5A5).withValues(alpha: 0.55);
+      case IndustrialVisitStatus.expired:
+      case IndustrialVisitStatus.cancelled:
+        return const Color(0xFF94A3B8).withValues(alpha: 0.4);
+      case IndustrialVisitStatus.collected:
+        return const Color(0xFFCBD5E1).withValues(alpha: 0.5);
     }
   }
 
@@ -310,46 +383,89 @@ class IndustrialVisitModel {
     this.checkOutAt,
   });
 
-  bool get isVehicle => arrivalMode == 'FOUR_WHEELER' || (vehicleNumber != null && vehicleNumber!.isNotEmpty);
-  bool get isPending => status == IndustrialVisitStatus.submitted || status == IndustrialVisitStatus.awaitingHost || status == IndustrialVisitStatus.assigned;
+  bool get isVehicle =>
+      arrivalMode == 'FOUR_WHEELER' ||
+      (vehicleNumber != null && vehicleNumber!.isNotEmpty);
+  bool get isPending =>
+      status == IndustrialVisitStatus.submitted ||
+      status == IndustrialVisitStatus.awaitingHost ||
+      status == IndustrialVisitStatus.assigned;
   bool get isApproved => status == IndustrialVisitStatus.approved;
   bool get isCheckedIn => status == IndustrialVisitStatus.checkedIn;
-  bool get isPassValid => passCode != null && passCodeExpiresAt != null && passCodeExpiresAt!.isAfter(DateTime.now());
+  bool get isPassValid =>
+      passCode != null &&
+      passCodeExpiresAt != null &&
+      passCodeExpiresAt!.isAfter(DateTime.now());
 
   factory IndustrialVisitModel.fromJson(Map<String, dynamic> json) {
     return IndustrialVisitModel(
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       requestNumber: json['request_number']?.toString() ?? '',
-      propertyId: json['property_id'] is int ? json['property_id'] : int.tryParse(json['property_id']?.toString() ?? '114') ?? 114,
+      propertyId: json['property_id'] is int
+          ? json['property_id']
+          : int.tryParse(json['property_id']?.toString() ?? '114') ?? 114,
       visitorName: json['visitor_name']?.toString() ?? 'Unknown Visitor',
-      visitorMobile: json['visitor_mobile']?.toString() ?? json['phone_number']?.toString(),
-      visitorPhotoUrl: json['visitor_photo_url']?.toString() ?? json['photo_url']?.toString(),
+      visitorMobile:
+          json['visitor_mobile']?.toString() ??
+          json['phone_number']?.toString(),
+      visitorPhotoUrl:
+          json['visitor_photo_url']?.toString() ??
+          json['photo_url']?.toString(),
       arrivalMode: json['arrival_mode']?.toString() ?? 'PEDESTRIAN',
       vehicleNumber: json['vehicle_number']?.toString(),
-      departmentId: json['department_id'] is int ? json['department_id'] : int.tryParse(json['department_id']?.toString() ?? ''),
-      departmentName: json['department_name']?.toString() ?? json['department']?['name']?.toString(),
-      hostUserId: json['host_user_id'] is int ? json['host_user_id'] : int.tryParse(json['host_user_id']?.toString() ?? ''),
-      hostName: json['host_name']?.toString() ?? json['host']?['name']?.toString() ?? json['host_user']?['full_name']?.toString(),
+      departmentId: json['department_id'] is int
+          ? json['department_id']
+          : int.tryParse(json['department_id']?.toString() ?? ''),
+      departmentName:
+          json['department_name']?.toString() ??
+          json['department']?['name']?.toString(),
+      hostUserId: json['host_user_id'] is int
+          ? json['host_user_id']
+          : int.tryParse(json['host_user_id']?.toString() ?? ''),
+      hostName:
+          json['host_name']?.toString() ??
+          json['host']?['name']?.toString() ??
+          json['host_user']?['full_name']?.toString(),
       status: IndustrialVisitStatus.fromString(json['status']?.toString()),
       statusToken: json['status_token']?.toString(),
       passCode: json['pass_code']?.toString(),
-      passCodeExpiresAt: json['pass_code_expires_at'] != null ? DateTime.tryParse(json['pass_code_expires_at'].toString()) : null,
+      passCodeExpiresAt: json['pass_code_expires_at'] != null
+          ? DateTime.tryParse(json['pass_code_expires_at'].toString())
+          : null,
       verifiedOnSite: json['verified_on_site'] == true,
-      verifiedByUserId: json['verified_by_user_id'] is int ? json['verified_by_user_id'] : int.tryParse(json['verified_by_user_id']?.toString() ?? ''),
-      verifiedAt: json['verified_at'] != null ? DateTime.tryParse(json['verified_at'].toString()) : null,
-      cabinNumber: json['cabin_number']?.toString() ?? json['cabin']?.toString(),
+      verifiedByUserId: json['verified_by_user_id'] is int
+          ? json['verified_by_user_id']
+          : int.tryParse(json['verified_by_user_id']?.toString() ?? ''),
+      verifiedAt: json['verified_at'] != null
+          ? DateTime.tryParse(json['verified_at'].toString())
+          : null,
+      cabinNumber:
+          json['cabin_number']?.toString() ?? json['cabin']?.toString(),
       deskNumber: json['desk_number']?.toString() ?? json['desk']?.toString(),
-      purpose: json['purpose']?.toString() ?? json['purpose_of_visit']?.toString(),
+      purpose:
+          json['purpose']?.toString() ?? json['purpose_of_visit']?.toString(),
       notes: json['notes']?.toString(),
-      floor: json['floor']?.toString() ?? json['department']?['floor']?.toString(),
-      isDelivery: json['visit_type']?.toString().toUpperCase() == 'DELIVERY' || json['is_delivery'] == true,
+      floor:
+          json['floor']?.toString() ?? json['department']?['floor']?.toString(),
+      isDelivery:
+          json['visit_type']?.toString().toUpperCase() == 'DELIVERY' ||
+          json['is_delivery'] == true,
       deliveryCompany: json['delivery_company']?.toString(),
       heldAtGate: json['held_at_gate'] == true,
       isBatched: json['is_batched'] == true,
-      isPreApproved: json['is_pre_approved'] == true || json['isPreApproved'] == true,
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null,
-      checkInAt: json['check_in_at'] != null ? DateTime.tryParse(json['check_in_at'].toString()) : null,
-      checkOutAt: json['check_out_at'] != null ? DateTime.tryParse(json['check_out_at'].toString()) : null,
+      isPreApproved:
+          json['is_pre_approved'] == true || json['isPreApproved'] == true,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString())
+          : null,
+      checkInAt: json['check_in_at'] != null
+          ? DateTime.tryParse(json['check_in_at'].toString())
+          : null,
+      checkOutAt: json['check_out_at'] != null
+          ? DateTime.tryParse(json['check_out_at'].toString())
+          : null,
     );
   }
 
