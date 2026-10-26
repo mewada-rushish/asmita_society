@@ -342,10 +342,10 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: visit.status.fillColor(isDark).withValues(alpha: 0.25),
+                          color: visit.status.darkCardFillColor,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: visit.status.textColor(isDark).withValues(alpha: 0.6),
+                            color: visit.status.darkCardBorderColor,
                             width: 1,
                           ),
                         ),
@@ -355,7 +355,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                             Icon(
                               visit.status.iconData,
                               size: 12,
-                              color: visit.status.textColor(isDark),
+                              color: visit.status.darkCardTextColor,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -364,7 +364,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                                 fontFamily: 'Montserrat',
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: visit.status.textColor(isDark),
+                                color: visit.status.darkCardTextColor,
                                 letterSpacing: 0.3,
                               ),
                             ),
