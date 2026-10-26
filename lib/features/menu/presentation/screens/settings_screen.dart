@@ -262,7 +262,6 @@ class SettingsScreen extends ConsumerWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          color: Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           decoration: BoxDecoration(
             border: showBorder ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1)) : null,
