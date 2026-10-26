@@ -381,13 +381,13 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                     ),
                   ),
                   selected: isSelected,
-                  selectedColor: AsmitaPalette.actionRed,
+                  selectedColor: AsmitaPalette.deepNavy,
                   backgroundColor: AsmitaPalette.systemBG,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                     side: BorderSide(
                       color: isSelected
-                          ? AsmitaPalette.actionRed
+                          ? AsmitaPalette.deepNavy
                           : AsmitaPalette.borderGrey,
                     ),
                   ),
@@ -2476,8 +2476,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           children: [
             IconButton(
               icon: const Icon(
-                Icons.remove_circle_outline,
-                color: AsmitaPalette.actionRed,
+                Icons.remove_circle_outline_rounded,
+                color: AsmitaPalette.deepNavy,
               ),
               onPressed: () {
                 if (_guestCount > 1) setState(() => _guestCount--);
@@ -2493,8 +2493,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             ),
             IconButton(
               icon: const Icon(
-                Icons.add_circle_outline,
-                color: AsmitaPalette.actionRed,
+                Icons.add_circle_outline_rounded,
+                color: AsmitaPalette.deepNavy,
               ),
               onPressed: () {
                 if (_guestCount < 99) setState(() => _guestCount++);
@@ -2516,11 +2516,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             onPressed: _submitInvite,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              backgroundColor: AsmitaPalette.actionRed,
+              backgroundColor: AsmitaPalette.deepNavy,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
               ),
-              elevation: 2,
+              elevation: 0,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
