@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_state.dart';
 import '../../bloc/search/search_bloc.dart';
@@ -264,16 +265,25 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
         if (state is SearchLoaded) {
           final results = state.results;
 
-          return ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
-                ),
+          return CustomScrollView(
+            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+            slivers: [
+              AsmitaAnimatedRefresh(
+                onRefresh: () async {
+                  _executeSearch(_currentSearchQuery);
+                },
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.all(20),
+                sliver: SliverList.list(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
+                      ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -525,9 +535,12 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
                     );
                   }
                 }),
-            ],
-          );
-        }
+              ],
+            ),
+          ),
+        ],
+      );
+    }
 
         return const SizedBox.shrink();
       },

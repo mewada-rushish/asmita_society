@@ -1,47 +1,99 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../constants/design_system.dart';
 import 'asmita_loading_indicator.dart';
 
 /// A premium, globally reusable animated pull-to-refresh sliver.
-/// Utilizes native Cupertino physics for a buttery-smooth inline stretch effect.
-class AsmitaAnimatedRefresh extends StatelessWidget {
+/// Utilizes native Cupertino physics with haptic feedback and custom branded visuals.
+class AsmitaAnimatedRefresh extends StatefulWidget {
   final Future<void> Function() onRefresh;
+  final Color? color;
 
-  const AsmitaAnimatedRefresh({super.key, required this.onRefresh});
+  const AsmitaAnimatedRefresh({
+    super.key,
+    required this.onRefresh,
+    this.color,
+  });
+
+  @override
+  State<AsmitaAnimatedRefresh> createState() => _AsmitaAnimatedRefreshState();
+}
+
+class _AsmitaAnimatedRefreshState extends State<AsmitaAnimatedRefresh> {
+  bool _hasArmedHapticFired = false;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryBrandColor = widget.color ?? (isDark ? const Color(0xFFEF4444) : AsmitaPalette.actionRed);
+
     return CupertinoSliverRefreshControl(
-      onRefresh: onRefresh,
-      refreshTriggerPullDistance: 65.0,
-      refreshIndicatorExtent: 50.0,
+      onRefresh: () async {
+        HapticFeedback.mediumImpact();
+        await widget.onRefresh();
+      },
+      refreshTriggerPullDistance: 70.0,
+      refreshIndicatorExtent: 56.0,
       builder: (context, refreshState, pulledExtent, refreshTriggerPullDistance, refreshIndicatorExtent) {
-        // Calculate the pull percentage to drive the custom animations
         final double percentageComplete = (pulledExtent / refreshTriggerPullDistance).clamp(0.0, 1.0);
 
+        // Fire single light haptic feedback once threshold is armed
+        if (refreshState == RefreshIndicatorMode.armed && !_hasArmedHapticFired) {
+          _hasArmedHapticFired = true;
+          HapticFeedback.selectionClick();
+        } else if (refreshState == RefreshIndicatorMode.drag || refreshState == RefreshIndicatorMode.inactive) {
+          _hasArmedHapticFired = false;
+        }
+
+        final isRefreshing = refreshState == RefreshIndicatorMode.armed || refreshState == RefreshIndicatorMode.refresh;
+
         return Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 8.0),
+            padding: const EdgeInsets.all(7.0),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              border: Border.all(
+                color: isRefreshing
+                    ? primaryBrandColor.withValues(alpha: 0.35)
+                    : theme.dividerColor.withValues(alpha: (percentageComplete * 0.7).clamp(0.1, 0.7)),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.4)
+                      : primaryBrandColor.withValues(alpha: (isRefreshing ? 0.18 : (percentageComplete * 0.12))),
+                  blurRadius: isRefreshing ? 12 : 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // 1. Pulling State: Spins and fades in the brand icon as user pulls down
-                if (refreshState == RefreshIndicatorMode.drag)
+                // 1. Pulling State: Spins and scales proportionally with user gesture
+                if (!isRefreshing)
                   Transform.rotate(
                     angle: percentageComplete * 6.283185307179586,
-                    child: Icon(
-                      Icons.blur_on_rounded, // Branded dotted squircle
-                      color: AsmitaPalette.actionRed.withValues(alpha: (percentageComplete * 1.2).clamp(0.2, 1.0)),
-                      size: 28 * (0.6 + (0.4 * percentageComplete)),
+                    child: Opacity(
+                      opacity: (percentageComplete * 1.3).clamp(0.2, 1.0),
+                      child: Icon(
+                        Icons.blur_on_rounded, // Branded dotted icon
+                        color: primaryBrandColor,
+                        size: 24 * (0.65 + (0.35 * percentageComplete)),
+                      ),
                     ),
                   ),
 
-                // 2. Armed & Refreshing State: Smooth continuous branded spinning animation
-                if (refreshState == RefreshIndicatorMode.armed || refreshState == RefreshIndicatorMode.refresh)
-                  const AsmitaLoadingIndicator(
-                    color: AsmitaPalette.actionRed,
-                    size: 28,
+                // 2. Armed & Refreshing State: Continuous spinning branded preloader
+                if (isRefreshing)
+                  AsmitaLoadingIndicator(
+                    color: primaryBrandColor,
+                    size: 24,
                   ),
               ],
             ),
