@@ -29,6 +29,7 @@ class EmployeeDashboardView extends StatefulWidget {
   final String cabinNumber;
   final String deskNumber;
   final String designation;
+  final bool isActive;
   final List<IndustrialVisitModel>? visits;
   final VoidCallback onOpenDelegation;
   final Function(int visitId, String action)? onDecideVisit;
@@ -39,8 +40,9 @@ class EmployeeDashboardView extends StatefulWidget {
     this.employeeName = 'IT HOD',
     this.departmentName = 'IT',
     this.cabinNumber = 'CAB-IT-01',
-    this.deskNumber = 'Desk 1',
+    this.deskNumber = 'IT-DSK-01',
     this.designation = 'Head of Department (HOD)',
+    this.isActive = true,
     this.visits,
     required this.onOpenDelegation,
     this.onDecideVisit,
@@ -147,7 +149,6 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
           body: Column(
             children: [
               const AsmitaPrimaryHeader(
-                subtitleOverride: 'Host Desk',
                 allowPropertySwitching: false,
               ),
               Expanded(
@@ -300,28 +301,28 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top row: Name & Designation
-            Column(
+            // Top row: (Name & Designation on left) + (Active/Inactive status on top right)
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  widget.employeeName,
-                  style: const TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    letterSpacing: 0.2,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Container(
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.employeeName,
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.18),
@@ -356,9 +357,11 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
                           ],
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 10),
+                _statusPill(widget.isActive),
               ],
             ),
             const SizedBox(height: 12),
@@ -388,18 +391,98 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
             ),
             const SizedBox(height: 14),
 
-            // Location badges row
+            // Location badges row: Cabin & Desk ID
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                _locationBadge(Icons.meeting_room_outlined, 'Cabin ${widget.cabinNumber}'),
-                _locationBadge(Icons.desk_outlined, 'Desk ${widget.deskNumber}'),
-                _locationBadge(Icons.verified_user_outlined, 'Host Active', isAccent: true),
+                if (widget.cabinNumber.trim().isNotEmpty)
+                  _locationBadge(
+                    Icons.meeting_room_outlined,
+                    _formatCabinLabel(widget.cabinNumber),
+                  ),
+                if (widget.deskNumber.trim().isNotEmpty)
+                  _locationBadge(
+                    Icons.desk_outlined,
+                    _formatDeskLabel(widget.deskNumber),
+                  ),
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  String _formatDeskLabel(String raw) {
+    var clean = raw.trim();
+    while (clean.toLowerCase().startsWith('desk')) {
+      clean = clean.substring(4).trim().replaceAll(RegExp(r'^[:\-\s]+'), '');
+    }
+    if (clean.isEmpty) {
+      return 'Desk';
+    }
+    return 'Desk ID: $clean';
+  }
+
+  String _formatCabinLabel(String raw) {
+    var clean = raw.trim();
+    while (clean.toLowerCase().startsWith('cabin')) {
+      clean = clean.substring(5).trim().replaceAll(RegExp(r'^[:\-\s]+'), '');
+    }
+    if (clean.isEmpty) {
+      return 'Cabin';
+    }
+    return 'Cabin $clean';
+  }
+
+  Widget _statusPill(bool isActive) {
+    final statusColor = isActive ? const Color(0xFF10B981) : const Color(0xFF94A3B8);
+    final textColor = isActive ? const Color(0xFFD1FAE5) : const Color(0xFFE2E8F0);
+    final label = isActive ? 'Active' : 'Inactive';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: statusColor.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: statusColor.withValues(alpha: 0.5),
+          width: 1.0,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              color: statusColor,
+              shape: BoxShape.circle,
+              boxShadow: isActive
+                  ? [
+                      BoxShadow(
+                        color: statusColor.withValues(alpha: 0.8),
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: textColor,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
       ),
     );
   }
