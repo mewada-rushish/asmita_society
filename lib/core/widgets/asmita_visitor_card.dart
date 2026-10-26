@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import '../constants/design_system.dart';
 import 'asmita_toast.dart';
 import '../../features/visitor_management/data/models/industrial_visit_model.dart';
-import '../../features/visitor_management/presentation/widgets/acknowledge_action_button.dart';
 
 /// Global, reusable Executive Visitor Card component.
 /// Standardized across Resident, Employee, Receptionist, Guard, and Director dashboards.
@@ -184,7 +183,9 @@ class AsmitaVisitorCard extends StatelessWidget {
       metaLabel: metaLabel,
       metaValue: metaValue,
       metaIcon: metaIcon,
-      passCode: visit.passCode,
+      passCode: (visit.passCode != null && visit.passCode!.isNotEmpty)
+          ? visit.passCode
+          : visit.requestNumber,
       hasQrCode: visit.statusToken != null && visit.statusToken!.isNotEmpty,
       statusLabel: visit.status.label,
       statusFillColor: visit.status.fillColor(isDark),
@@ -291,9 +292,15 @@ class AsmitaVisitorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final hasPass = passCode != null && passCode!.trim().isNotEmpty;
-
-    // Squircle gradient selection matching visitor history aesthetics
     final List<Color> gradientColors = avatarGradient ?? _determineAvatarGradient();
+
+    final statusConfig = _resolveStatusConfig(
+      rawStatus: statusLabel,
+      isDark: isDark,
+      overrideFill: statusFillColor,
+      overrideText: statusTextColor,
+      overrideIcon: statusIcon,
+    );
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -452,10 +459,10 @@ class AsmitaVisitorCard extends StatelessWidget {
                   ],
                 ),
 
-                // 2. Inset Executive Meta Footer
+                // 2. Inset Executive Meta Matrix (2 Rows)
                 Container(
                   margin: const EdgeInsets.only(top: 13),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: isDark
                         ? const Color(0xFF1E293B).withValues(alpha: 0.7)
@@ -468,238 +475,301 @@ class AsmitaVisitorCard extends StatelessWidget {
                       width: 1,
                     ),
                   ),
-                  child: Row(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Cell 1: Time & Date
-                      if (timeAndDate != null && timeAndDate!.isNotEmpty) ...[
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.schedule_rounded,
-                                size: 14,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                              ),
-                              const SizedBox(width: 6),
-                              Flexible(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
+                      // Row 1: Time & Date (Left) | Vehicle / Department / Gate (Right)
+                      Row(
+                        children: [
+                          // Cell 1: Time & Date
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.schedule_rounded,
+                                  size: 14,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'TIME & DATE',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 8.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                          letterSpacing: 0.4,
+                                        ),
+                                      ),
+                                      Text(
+                                        (timeAndDate != null && timeAndDate!.isNotEmpty) ? timeAndDate! : 'Pending Arrival',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Vertical Divider
+                          Container(
+                            width: 1,
+                            height: 24,
+                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                          ),
+
+                          // Cell 2: Meta Location / Vehicle / Gate
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Icon(
+                                  metaIcon ?? Icons.meeting_room_rounded,
+                                  size: 14,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        metaLabel ?? 'ACCESS GATE',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 8.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                          letterSpacing: 0.4,
+                                        ),
+                                      ),
+                                      Text(
+                                        (metaValue != null && metaValue!.isNotEmpty) ? metaValue! : 'Main Gate',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // Horizontal Hairline Divider between Row 1 and Row 2
+                      Container(
+                        height: 1,
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        color: isDark
+                            ? const Color(0xFF334155).withValues(alpha: 0.5)
+                            : const Color(0xFFE2E8F0),
+                      ),
+
+                      // Row 2: Security Pass Code Key (Left) | Status Cell (Right)
+                      Row(
+                        children: [
+                          // Cell 3: Security Pass Code Key
+                          Expanded(
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: hasPass
+                                    ? () {
+                                        Clipboard.setData(ClipboardData(text: passCode!));
+                                        HapticFeedback.selectionClick();
+                                        AsmitaToast.show(
+                                          context,
+                                          message: 'Pass code #$passCode copied to clipboard',
+                                          type: AsmitaToastType.success,
+                                        );
+                                      }
+                                    : null,
+                                borderRadius: BorderRadius.circular(6),
+                                child: Row(
                                   children: [
-                                    Text(
-                                      'TIME & DATE',
-                                      style: TextStyle(
-                                        fontFamily: 'Montserrat',
-                                        fontSize: 8.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                        letterSpacing: 0.4,
-                                      ),
+                                    Icon(
+                                      Icons.vpn_key_rounded,
+                                      size: 14,
+                                      color: isDark ? const Color(0xFF93C5FD) : AsmitaPalette.deepNavy,
                                     ),
-                                    Text(
-                                      timeAndDate!,
-                                      style: TextStyle(
-                                        fontFamily: 'Montserrat',
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'SECURITY KEY',
+                                            style: TextStyle(
+                                              fontFamily: 'Montserrat',
+                                              fontSize: 8.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                              letterSpacing: 0.4,
+                                            ),
+                                          ),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              if (hasPass) ...[
+                                                Text(
+                                                  '#',
+                                                  style: TextStyle(
+                                                    fontFamily: 'Montserrat',
+                                                    fontSize: 11.5,
+                                                    fontWeight: FontWeight.w800,
+                                                    letterSpacing: 0.4,
+                                                    color: isDark ? const Color(0xFF93C5FD) : AsmitaPalette.deepNavy,
+                                                  ),
+                                                ),
+                                                Flexible(
+                                                  child: Text(
+                                                    passCode!,
+                                                    style: TextStyle(
+                                                      fontFamily: 'Montserrat',
+                                                      fontSize: 11.5,
+                                                      fontWeight: FontWeight.w800,
+                                                      letterSpacing: 0.4,
+                                                      color: isDark ? const Color(0xFF93C5FD) : AsmitaPalette.deepNavy,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Icon(
+                                                  Icons.copy_rounded,
+                                                  size: 10,
+                                                  color: isDark
+                                                      ? const Color(0xFF93C5FD).withValues(alpha: 0.7)
+                                                      : AsmitaPalette.deepNavy.withValues(alpha: 0.6),
+                                                ),
+                                              ] else ...[
+                                                Text(
+                                                  'PASS PENDING',
+                                                  style: TextStyle(
+                                                    fontFamily: 'Montserrat',
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ],
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Divider
-                        Container(
-                          width: 1,
-                          height: 24,
-                          margin: const EdgeInsets.symmetric(horizontal: 8),
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                        ),
-                      ],
-
-                      // Cell 2: Meta Location / Vehicle / Gate
-                      if (metaValue != null && metaValue!.isNotEmpty) ...[
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Icon(
-                                metaIcon ?? Icons.meeting_room_rounded,
-                                size: 14,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                              ),
-                              const SizedBox(width: 6),
-                              Flexible(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      metaLabel ?? 'ACCESS GATE',
-                                      style: TextStyle(
-                                        fontFamily: 'Montserrat',
-                                        fontSize: 8.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                        letterSpacing: 0.4,
-                                      ),
-                                    ),
-                                    Text(
-                                      metaValue!,
-                                      style: TextStyle(
-                                        fontFamily: 'Montserrat',
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-
-                      // Cell 3: Security Pass Code Ticket
-                      if (hasPass) ...[
-                        const SizedBox(width: 4),
-                        Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              Clipboard.setData(ClipboardData(text: passCode!));
-                              HapticFeedback.selectionClick();
-                              AsmitaToast.show(
-                                context,
-                                message: 'Pass code #$passCode copied to clipboard',
-                                type: AsmitaToastType.success,
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(8),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF0F172A) : Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                                  width: 1,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 1),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.vpn_key_rounded,
-                                    size: 11,
-                                    color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '#$passCode',
-                                    style: TextStyle(
-                                      fontFamily: 'Montserrat',
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 0.5,
-                                      color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
-                                    ),
-                                  ),
-                                ],
                               ),
                             ),
                           ),
-                        ),
-                      ],
+
+                          // Vertical Divider
+                          Container(
+                            width: 1,
+                            height: 24,
+                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                          ),
+
+                          // Cell 4: Status Cell (Dynamic Icon, BG color, Text color)
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'STATUS',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 8.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                          letterSpacing: 0.4,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: statusConfig.bgColor,
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(
+                                            color: statusConfig.borderColor,
+                                            width: 0.8,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              statusConfig.icon,
+                                              size: 11,
+                                              color: statusConfig.textColor,
+                                            ),
+                                            const SizedBox(width: 4.5),
+                                            Flexible(
+                                              child: Text(
+                                                statusConfig.label,
+                                                style: TextStyle(
+                                                  fontFamily: 'Montserrat',
+                                                  fontSize: 10.5,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: statusConfig.textColor,
+                                                  letterSpacing: 0.2,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
 
-                // 3. Optional Bottom Decision Actions (e.g. Approve/Deny buttons)
-                if (onApprove != null || onDeny != null) ...[
+                // 3. Unified Executive Action Bar (Single Sleek Row)
+                if (onApprove != null || onDeny != null || onAcknowledge != null) ...[
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      if (onDeny != null)
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: onDeny,
-                            icon: const Icon(Icons.close_rounded, size: 16),
-                            label: Text(
-                              denyLabel ?? 'Deny Entry',
-                              style: const TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12.5,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AsmitaPalette.actionRed,
-                              side: BorderSide(
-                                color: AsmitaPalette.actionRed.withValues(alpha: 0.8),
-                                width: 1.2,
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                          ),
-                        ),
-                      if (onApprove != null && onDeny != null)
-                        const SizedBox(width: 10),
-                      if (onApprove != null)
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: onApprove,
-                            icon: const Icon(Icons.check_rounded, size: 16),
-                            label: Text(
-                              approveLabel ?? 'Approve Entry',
-                              style: const TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12.5,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AsmitaPalette.deepNavy,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              elevation: 1,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+                  _buildActionBar(context, isDark),
                 ],
 
-                // 4. Optional Acknowledge Action Button
-                if (onAcknowledge != null) ...[
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: AcknowledgeActionButton(
-                      isAcknowledged: isAcknowledged,
-                      onAcknowledge: onAcknowledge!,
-                    ),
-                  ),
-                ],
-
-                // 5. Custom Bottom Actions slot
+                // 4. Custom Bottom Actions slot
                 if (bottomActions != null) ...[
                   const SizedBox(height: 12),
                   bottomActions!,
@@ -809,38 +879,6 @@ class AsmitaVisitorCard extends StatelessWidget {
   Widget _buildRightAffordance(BuildContext context, bool isDark) {
     if (trailing != null) return trailing!;
 
-    if (statusLabel != null && statusLabel!.isNotEmpty) {
-      final fill = statusFillColor ?? (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9));
-      final textC = statusTextColor ?? (isDark ? Colors.white70 : AsmitaPalette.textDark);
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-        decoration: BoxDecoration(
-          color: fill,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: textC.withValues(alpha: 0.25), width: 1),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (statusIcon != null) ...[
-              Icon(statusIcon, size: 12, color: textC),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              statusLabel!,
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 10.5,
-                fontWeight: FontWeight.w700,
-                color: textC,
-                letterSpacing: 0.3,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
     if (hasQrCode) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
@@ -876,10 +914,444 @@ class AsmitaVisitorCard extends StatelessWidget {
       );
     }
 
-    return Icon(
-      Icons.arrow_forward_ios_rounded,
-      size: 13,
-      color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+    if (isPreApproved) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isDark
+              ? const Color(0xFF78350F).withValues(alpha: 0.35)
+              : const Color(0xFFFEF3C7),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isDark
+                ? const Color(0xFFB45309).withValues(alpha: 0.5)
+                : const Color(0xFFFDE68A),
+            width: 0.8,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.verified_rounded, size: 12, color: Color(0xFFD97706)),
+            const SizedBox(width: 3.5),
+            Text(
+              'VIP',
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.4,
+                color: isDark ? const Color(0xFFFDE68A) : const Color(0xFFB45309),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (onTap != null) {
+      return Icon(
+        Icons.arrow_forward_ios_rounded,
+        size: 13,
+        color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildActionBar(BuildContext context, bool isDark) {
+    final hasDeny = onDeny != null;
+    final hasAck = onAcknowledge != null;
+    final hasApprove = onApprove != null;
+
+    final actionCount = (hasDeny ? 1 : 0) + (hasAck ? 1 : 0) + (hasApprove ? 1 : 0);
+    if (actionCount == 0) return const SizedBox.shrink();
+
+    return Row(
+      children: [
+        // 1. Destructive Deny Action
+        if (hasDeny) ...[
+          Expanded(
+            flex: actionCount == 3 ? 10 : 1,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                key: const ValueKey('visit_card_destructive_action'),
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  onDeny!();
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  height: 40,
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF4C0519).withValues(alpha: 0.35)
+                        : const Color(0xFFFFF1F2),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isDark
+                          ? const Color(0xFFE2E8F0).withValues(alpha: 0.3)
+                          : const Color(0xFFFECDD3),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.close_rounded,
+                        size: 15,
+                        color: AsmitaPalette.actionRed,
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          denyLabel ?? (actionCount == 3 ? 'Deny' : 'Deny Entry'),
+                          style: const TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AsmitaPalette.actionRed,
+                            letterSpacing: 0.2,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+
+        // Spacing
+        if (hasDeny && (hasAck || hasApprove)) const SizedBox(width: 8),
+
+        // 2. Secondary Acknowledge Action
+        if (hasAck) ...[
+          Expanded(
+            flex: actionCount == 3 ? 10 : 1,
+            child: isAcknowledged
+                ? Container(
+                    height: 40,
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF064E3B).withValues(alpha: 0.35)
+                          : const Color(0xFFECFDF5),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isDark
+                            ? const Color(0xFF059669).withValues(alpha: 0.4)
+                            : const Color(0xFFA7F3D0),
+                        width: 1.0,
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.check_circle_rounded,
+                          size: 14,
+                          color: Color(0xFF047857),
+                        ),
+                        SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            "Ack'd",
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF047857),
+                              letterSpacing: 0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      key: const ValueKey('visit_card_secondary_action'),
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        onAcknowledge!();
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        height: 40,
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF1E293B)
+                              : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isDark
+                                ? const Color(0xFF334155)
+                                : const Color(0xFFCBD5E1),
+                            width: 1.0,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.touch_app_outlined,
+                              size: 15,
+                              color: isDark
+                                  ? const Color(0xFF93C5FD)
+                                  : AsmitaPalette.deepNavy,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                actionCount == 3 ? 'Acknowledge' : 'Acknowledge Visit',
+                                style: TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? const Color(0xFF93C5FD)
+                                      : AsmitaPalette.deepNavy,
+                                  letterSpacing: 0.2,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+        ],
+
+        // Spacing
+        if (hasAck && hasApprove) const SizedBox(width: 8),
+
+        // 3. Primary Approve Action (Hero Luxury Navy Gradient)
+        if (hasApprove) ...[
+          Expanded(
+            flex: actionCount == 3 ? 13 : 1,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                key: const ValueKey('visit_card_primary_action'),
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  onApprove!();
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  height: 40,
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF27347B),
+                        Color(0xFF1A2352),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF27347B).withValues(alpha: 0.28),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.check_rounded,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
+                          approveLabel ?? (actionCount == 3 ? 'Approve' : 'Approve Entry'),
+                          style: const TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 0.2,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  _StatusThemeConfig _resolveStatusConfig({
+    required String? rawStatus,
+    required bool isDark,
+    Color? overrideFill,
+    Color? overrideText,
+    IconData? overrideIcon,
+  }) {
+    final clean = (rawStatus ?? 'PENDING').trim().toUpperCase();
+
+    // 1. Pending / Awaiting Host / Escalated / Submitted
+    if (clean.contains('PENDING') ||
+        clean.contains('AWAIT') ||
+        clean.contains('WAIT') ||
+        clean.contains('SUBMIT')) {
+      return _StatusThemeConfig(
+        label: rawStatus ?? 'Awaiting Host',
+        icon: Icons.hourglass_top_rounded,
+        bgColor: isDark
+            ? const Color(0xFF451A03).withValues(alpha: 0.5)
+            : const Color(0xFFFEF3C7),
+        borderColor: isDark
+            ? const Color(0xFFD97706).withValues(alpha: 0.4)
+            : const Color(0xFFFDE68A),
+        textColor: isDark ? const Color(0xFFFDE047) : const Color(0xFFB45309),
+      );
+    }
+
+    // 2. Approved / Pre-Approved / Allow In
+    if (clean.contains('APPROV') ||
+        clean.contains('ALLOW') ||
+        clean.contains('PRE_')) {
+      return _StatusThemeConfig(
+        label: rawStatus ?? 'Approved',
+        icon: Icons.check_circle_rounded,
+        bgColor: isDark
+            ? const Color(0xFF064E3B).withValues(alpha: 0.5)
+            : const Color(0xFFECFDF5),
+        borderColor: isDark
+            ? const Color(0xFF059669).withValues(alpha: 0.4)
+            : const Color(0xFFA7F3D0),
+        textColor: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF047857),
+      );
+    }
+
+    // 3. Checked In / Active on Premises / Inside
+    if (clean.contains('CHECKED_IN') ||
+        clean.contains('CHECKED IN') ||
+        clean.contains('INSIDE')) {
+      return _StatusThemeConfig(
+        label: rawStatus ?? 'Checked In',
+        icon: Icons.sensor_door_rounded,
+        bgColor: isDark
+            ? const Color(0xFF134E4A).withValues(alpha: 0.5)
+            : const Color(0xFFF0FDFA),
+        borderColor: isDark
+            ? const Color(0xFF0D9488).withValues(alpha: 0.4)
+            : const Color(0xFF99F6E4),
+        textColor: isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0F766E),
+      );
+    }
+
+    // 4. Checked Out / Completed / Exited
+    if (clean.contains('OUT') ||
+        clean.contains('EXIT') ||
+        clean.contains('COMPLET')) {
+      return _StatusThemeConfig(
+        label: rawStatus ?? 'Checked Out',
+        icon: Icons.logout_rounded,
+        bgColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+        borderColor: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+        textColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+      );
+    }
+
+    // 5. Denied / Rejected / Revoked / Blocked
+    if (clean.contains('REJECT') ||
+        clean.contains('DENI') ||
+        clean.contains('REVOK') ||
+        clean.contains('BLOCK')) {
+      return _StatusThemeConfig(
+        label: rawStatus ?? 'Denied',
+        icon: Icons.cancel_rounded,
+        bgColor: isDark
+            ? const Color(0xFF4C0519).withValues(alpha: 0.5)
+            : const Color(0xFFFFF1F2),
+        borderColor: isDark
+            ? const Color(0xFFE11D48).withValues(alpha: 0.3)
+            : const Color(0xFFFECDD3),
+        textColor: isDark ? const Color(0xFFFDA4AF) : const Color(0xFFBE123C),
+      );
+    }
+
+    // 6. Expired / Overstay
+    if (clean.contains('EXPIR') || clean.contains('OVERSTAY')) {
+      return _StatusThemeConfig(
+        label: rawStatus ?? 'Expired',
+        icon: Icons.timer_off_rounded,
+        bgColor: isDark ? const Color(0xFF1F2937) : const Color(0xFFF3F4F6),
+        borderColor: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
+        textColor: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+      );
+    }
+
+    // 7. Assigned / Host Acknowledged
+    if (clean.contains('ASSIGN') || clean.contains('HOST_ACK')) {
+      return _StatusThemeConfig(
+        label: rawStatus ?? 'Assigned',
+        icon: Icons.person_add_alt_1_rounded,
+        bgColor: isDark
+            ? const Color(0xFF2E1065).withValues(alpha: 0.5)
+            : const Color(0xFFEDE9FE),
+        borderColor: isDark
+            ? const Color(0xFF7C3AED).withValues(alpha: 0.4)
+            : const Color(0xFFDDD6FE),
+        textColor: isDark ? const Color(0xFFC4B5FD) : const Color(0xFF5B21B6),
+      );
+    }
+
+    // Explicit override fallback
+    if (overrideFill != null && overrideText != null) {
+      return _StatusThemeConfig(
+        label: rawStatus ?? 'Active',
+        icon: overrideIcon ?? Icons.info_outline_rounded,
+        bgColor: overrideFill,
+        borderColor: overrideText.withValues(alpha: 0.25),
+        textColor: overrideText,
+      );
+    }
+
+    // Default neutral fallback
+    return _StatusThemeConfig(
+      label: rawStatus ?? 'Active',
+      icon: overrideIcon ?? Icons.info_outline_rounded,
+      bgColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+      borderColor: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+      textColor: isDark ? Colors.white70 : AsmitaPalette.textDark,
     );
   }
 
@@ -897,4 +1369,20 @@ class AsmitaVisitorCard extends StatelessWidget {
       return const [Color(0xFF1E3A8A), Color(0xFF2563EB)];
     }
   }
+}
+
+class _StatusThemeConfig {
+  final String label;
+  final IconData icon;
+  final Color bgColor;
+  final Color borderColor;
+  final Color textColor;
+
+  const _StatusThemeConfig({
+    required this.label,
+    required this.icon,
+    required this.bgColor,
+    required this.borderColor,
+    required this.textColor,
+  });
 }
