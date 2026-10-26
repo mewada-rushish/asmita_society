@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/config/env_config.dart';
 import 'package:asmita_society/core/services/incoming_visitor_service.dart';
 import 'package:asmita_society/features/visitor_management/data/repositories/industrial_visit_repository.dart';
 import 'package:asmita_society/core/di/injection_container.dart' as di;
@@ -154,27 +156,37 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
             .toUpperCase()
         : 'V';
 
-    final hasVehicle = widget.data.vehicleNumber != null &&
-        widget.data.vehicleNumber!.trim().isNotEmpty;
+    final isDelivery = widget.data.category?.toUpperCase() == 'DELIVERY' ||
+        (widget.data.company != null && widget.data.company!.trim().isNotEmpty) ||
+        (widget.data.purpose != null &&
+            (widget.data.purpose!.toLowerCase().contains('delivery') ||
+                widget.data.purpose!.toLowerCase().contains('parcel') ||
+                widget.data.purpose!.toLowerCase().contains('courier')));
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AsmitaPalette.systemBGDark : AsmitaPalette.systemBG;
+    final cardColor = isDark ? AsmitaPalette.surfaceDark : AsmitaPalette.surfaceLight;
+    final borderColor = isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey;
+    final primaryTextColor = isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark;
+    final secondaryTextColor = isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight;
+
+    final gateName = widget.data.gateId != null && widget.data.gateId!.isNotEmpty
+        ? 'Gate ${widget.data.gateId}'
+        : 'Security Gate';
+
+    final alertTitle = isDelivery ? 'DELIVERY ARRIVAL ALERT' : 'VISITOR ARRIVAL ALERT';
+    final alertSubtitle = isDelivery
+        ? 'A delivery parcel has arrived at $gateName for you'
+        : 'Someone is waiting at $gateName to meet you';
 
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: const Color(0xFF090C15),
+        backgroundColor: bgColor,
         body: Container(
           width: double.infinity,
           height: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFF070911),
-                Color(0xFF0F1322),
-                Color(0xFF181D30),
-              ],
-            ),
-          ),
+          color: bgColor,
           child: SafeArea(
             child: Column(
               children: [
@@ -184,37 +196,44 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Pulsing Doorbell Alert Beacon
+                      // Alert Beacon Pill
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                         decoration: BoxDecoration(
-                          color: Colors.red.withValues(alpha: 0.15),
+                          color: isDelivery
+                              ? const Color(0xFFFEF3C7)
+                              : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: Colors.red.withValues(alpha: 0.3),
-                            width: 1,
+                            color: isDelivery
+                                ? const Color(0xFFF59E0B).withValues(alpha: 0.4)
+                                : AsmitaPalette.deepNavy.withValues(alpha: 0.2),
+                            width: 1.2,
                           ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFEF4444),
-                                shape: BoxShape.circle,
-                              ),
+                            Icon(
+                              isDelivery
+                                  ? Icons.local_shipping_rounded
+                                  : Icons.notifications_active_rounded,
+                              size: 14,
+                              color: isDelivery
+                                  ? const Color(0xFFD97706)
+                                  : AsmitaPalette.actionRed,
                             ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'GATE DOORBELL CALL',
+                            const SizedBox(width: 7),
+                            Text(
+                              alertTitle,
                               style: TextStyle(
                                 fontFamily: 'Montserrat',
                                 fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.1,
-                                color: Color(0xFFFCA5A5),
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.0,
+                                color: isDelivery
+                                    ? const Color(0xFFB45309)
+                                    : AsmitaPalette.deepNavy,
                               ),
                             ),
                           ],
@@ -223,27 +242,35 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
 
                       // Countdown Timer Pill
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
+                          color: cardColor,
                           borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: borderColor, width: 1.2),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x080F172A),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.timer_outlined,
                               size: 14,
-                              color: Colors.white70,
+                              color: secondaryTextColor,
                             ),
                             const SizedBox(width: 5),
                             Text(
                               '${_secondsRemaining}s',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Montserrat',
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: primaryTextColor,
                               ),
                             ),
                           ],
@@ -253,11 +280,26 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                   ),
                 ),
 
+                // Clear informative subtitle
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 2),
+                  child: Text(
+                    alertSubtitle,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: secondaryTextColor,
+                    ),
+                  ),
+                ),
+
                 const Spacer(flex: 1),
 
                 // Decision confirmation overlay (if already approved/rejected)
                 if (_decisionStatus != null) ...[
-                  _buildDecisionState(),
+                  _buildDecisionState(isDark, cardColor, borderColor, primaryTextColor, secondaryTextColor),
                   const Spacer(flex: 3),
                 ] else ...[
                   // Visitor Avatar with Radar Pulse
@@ -276,9 +318,9 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                               height: 160,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: const Color(0xFF10B981).withValues(alpha: 0.08),
+                                color: AsmitaPalette.deepNavy.withValues(alpha: 0.05),
                                 border: Border.all(
-                                  color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.18),
                                   width: 1.5,
                                 ),
                               ),
@@ -291,7 +333,7 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                             height: 130,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                              color: AsmitaPalette.deepNavy.withValues(alpha: 0.09),
                             ),
                           ),
 
@@ -302,33 +344,19 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Colors.white,
-                                width: 3,
+                                color: cardColor,
+                                width: 3.5,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.4),
-                                  blurRadius: 20,
+                                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.18),
+                                  blurRadius: 22,
                                   offset: const Offset(0, 8),
                                 ),
                               ],
                             ),
                             child: ClipOval(
-                              child: widget.data.photoUrl != null &&
-                                      widget.data.photoUrl!.isNotEmpty
-                                  ? CachedNetworkImage(
-                                      imageUrl: widget.data.photoUrl!,
-                                      fit: BoxFit.cover,
-                                      placeholder: (context, url) => const Center(
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Color(0xFF10B981),
-                                        ),
-                                      ),
-                                      errorWidget: (context, url, error) =>
-                                          _buildInitialsFallback(initials),
-                                    )
-                                  : _buildInitialsFallback(initials),
+                              child: _buildVisitorAvatar(initials),
                             ),
                           ),
                         ],
@@ -344,12 +372,12 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                     child: Text(
                       widget.data.visitorName,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Montserrat',
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: 0.2,
+                        color: primaryTextColor,
+                        letterSpacing: -0.3,
                       ),
                     ),
                   ),
@@ -357,22 +385,29 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                   const SizedBox(height: 8),
 
                   // Category & Company Chip
-                  _buildCategoryBadge(),
+                  _buildCategoryBadge(isDark, isDelivery),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // Destination & Purpose Card
+                  // Destination & Purpose Card (NO vehicle plate for employees)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 28),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.06),
-                        borderRadius: BorderRadius.circular(18),
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          width: 1,
+                          color: borderColor,
+                          width: 1.2,
                         ),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x080F172A),
+                            blurRadius: 16,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: Column(
                         children: [
@@ -380,77 +415,110 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.home_work_outlined,
-                                    size: 16,
-                                    color: Color(0xFF93C5FD),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    widget.data.department != null &&
-                                            widget.data.department!.isNotEmpty
-                                        ? widget.data.department!
-                                        : 'Host Unit',
-                                    style: const TextStyle(
-                                      fontFamily: 'Montserrat',
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(7),
+                                      decoration: BoxDecoration(
+                                        color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(
+                                        Icons.business_rounded,
+                                        size: 16,
+                                        color: AsmitaPalette.deepNavy,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            widget.data.department != null &&
+                                                    widget.data.department!.isNotEmpty
+                                                ? widget.data.department!
+                                                : 'Host Department',
+                                            style: TextStyle(
+                                              fontFamily: 'Montserrat',
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w700,
+                                              color: primaryTextColor,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          if (widget.data.floor != null &&
+                                              widget.data.floor!.isNotEmpty)
+                                            Text(
+                                              'Floor ${widget.data.floor}',
+                                              style: TextStyle(
+                                                fontFamily: 'Poppins',
+                                                fontSize: 11.5,
+                                                color: secondaryTextColor,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                               if (widget.data.gateId != null &&
-                                  widget.data.gateId!.isNotEmpty)
+                                  widget.data.gateId!.isNotEmpty) ...[
+                                const SizedBox(width: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 3),
+                                      horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(6),
+                                    color: isDark ? const Color(0xFF1E293B) : AsmitaPalette.systemBG,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: borderColor, width: 1),
                                   ),
                                   child: Text(
-                                    'Gate: ${widget.data.gateId}',
-                                    style: const TextStyle(
+                                    'Gate ${widget.data.gateId}',
+                                    style: TextStyle(
                                       fontFamily: 'Montserrat',
                                       fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white70,
+                                      fontWeight: FontWeight.w700,
+                                      color: primaryTextColor,
                                     ),
                                   ),
                                 ),
+                              ],
                             ],
                           ),
 
-                          const SizedBox(height: 10),
-                          Divider(
-                            color: Colors.white.withValues(alpha: 0.08),
-                            height: 1,
-                          ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 12),
+                          Divider(color: borderColor, height: 1),
+                          const SizedBox(height: 12),
 
-                          // Purpose of Visit
+                          // Purpose of Visit / Delivery
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(
-                                Icons.badge_outlined,
+                              Icon(
+                                isDelivery
+                                    ? Icons.local_shipping_outlined
+                                    : Icons.badge_rounded,
                                 size: 16,
-                                color: Colors.white60,
+                                color: secondaryTextColor,
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   widget.data.purpose != null &&
                                           widget.data.purpose!.isNotEmpty
                                       ? widget.data.purpose!
-                                      : 'General Visitor / Official Visit',
-                                  style: const TextStyle(
+                                      : (isDelivery
+                                          ? 'Parcel Delivery'
+                                          : 'Official Visit / Meeting'),
+                                  style: TextStyle(
                                     fontFamily: 'Poppins',
-                                    fontSize: 12.5,
-                                    color: Colors.white70,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: primaryTextColor,
                                   ),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
@@ -459,49 +527,60 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                             ],
                           ),
 
-                          // Vehicle Number Plate Badge (if present)
-                          if (hasVehicle) ...[
-                            const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFEF08A),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: Colors.black, width: 1.5),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 4, vertical: 1),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF1E3A8A),
-                                      borderRadius: BorderRadius.circular(2),
-                                    ),
-                                    child: const Text(
-                                      'IND',
-                                      style: TextStyle(
-                                        fontSize: 8,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    widget.data.vehicleNumber!.toUpperCase(),
-                                    style: const TextStyle(
+                          // Cabin / Desk (if assigned)
+                          if ((widget.data.cabinCode != null &&
+                                  widget.data.cabinCode!.isNotEmpty) ||
+                              (widget.data.deskCode != null &&
+                                  widget.data.deskCode!.isNotEmpty)) ...[
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Icon(Icons.meeting_room_outlined,
+                                    size: 16, color: secondaryTextColor),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    [
+                                      if (widget.data.cabinCode != null &&
+                                          widget.data.cabinCode!.isNotEmpty)
+                                        'Cabin ${widget.data.cabinCode}',
+                                      if (widget.data.deskCode != null &&
+                                          widget.data.deskCode!.isNotEmpty)
+                                        'Desk ${widget.data.deskCode}',
+                                    ].join(' • '),
+                                    style: TextStyle(
                                       fontFamily: 'Montserrat',
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 1.2,
-                                      color: Colors.black,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: secondaryTextColor,
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
+                            ),
+                          ],
+
+                          // Visitor Phone (if present)
+                          if (widget.data.visitorPhone != null &&
+                              widget.data.visitorPhone!.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Icon(Icons.phone_outlined,
+                                    size: 16, color: secondaryTextColor),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    widget.data.visitorPhone!,
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: secondaryTextColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ],
@@ -511,112 +590,113 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
 
                   const Spacer(flex: 2),
 
-                  // Bottom Action Buttons
+                  // Bottom Action Buttons (Material 3 AsmitA Corporate Style)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                     child: _isSubmitting
                         ? const Center(
                             child: CircularProgressIndicator(
-                              color: Color(0xFF10B981),
+                              color: AsmitaPalette.deepNavy,
                             ),
                           )
                         : Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              // Decline (Red) Button
-                              Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  GestureDetector(
+                              // Deny Entry Button
+                              Expanded(
+                                flex: 1,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
                                     onTap: () => _handleDecision('REJECT'),
+                                    borderRadius: BorderRadius.circular(16),
                                     child: Container(
-                                      width: 68,
-                                      height: 68,
+                                      height: 52,
+                                      alignment: Alignment.center,
                                       decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: const LinearGradient(
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                          colors: [
-                                            Color(0xFFEF4444),
-                                            Color(0xFFB91C1C),
-                                          ],
+                                        color: isDark
+                                            ? const Color(0xFF4C0519).withValues(alpha: 0.35)
+                                            : const Color(0xFFFFF1F2),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: isDark
+                                              ? const Color(0xFFBE123C).withValues(alpha: 0.4)
+                                              : const Color(0xFFFECDD3),
+                                          width: 1.2,
                                         ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color(0xFFEF4444)
-                                                .withValues(alpha: 0.4),
-                                            blurRadius: 18,
-                                            offset: const Offset(0, 6),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: const [
+                                          Icon(
+                                            Icons.close_rounded,
+                                            size: 20,
+                                            color: AsmitaPalette.actionRed,
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Deny Entry',
+                                            style: TextStyle(
+                                              fontFamily: 'Montserrat',
+                                              fontSize: 14.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: AsmitaPalette.actionRed,
+                                            ),
                                           ),
                                         ],
                                       ),
-                                      child: const Icon(
-                                        Icons.call_end_rounded,
-                                        color: Colors.white,
-                                        size: 32,
-                                      ),
                                     ),
                                   ),
-                                  const SizedBox(height: 10),
-                                  const Text(
-                                    'Deny Entry',
-                                    style: TextStyle(
-                                      fontFamily: 'Montserrat',
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFFFCA5A5),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
 
-                              // Allow Entry (Green) Button
-                              Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  GestureDetector(
+                              const SizedBox(width: 14),
+
+                              // Allow Entry Button
+                              Expanded(
+                                flex: 1,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
                                     onTap: () => _handleDecision('APPROVE'),
+                                    borderRadius: BorderRadius.circular(16),
                                     child: Container(
-                                      width: 76,
-                                      height: 76,
+                                      height: 52,
+                                      alignment: Alignment.center,
                                       decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: const LinearGradient(
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                          colors: [
-                                            Color(0xFF10B981),
-                                            Color(0xFF047857),
-                                          ],
-                                        ),
+                                        color: AsmitaPalette.successGreen,
+                                        borderRadius: BorderRadius.circular(16),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: const Color(0xFF10B981)
-                                                .withValues(alpha: 0.5),
-                                            blurRadius: 22,
-                                            offset: const Offset(0, 8),
+                                            color: AsmitaPalette.successGreen
+                                                .withValues(alpha: 0.35),
+                                            blurRadius: 14,
+                                            offset: const Offset(0, 5),
                                           ),
                                         ],
                                       ),
-                                      child: const Icon(
-                                        Icons.check_rounded,
-                                        color: Colors.white,
-                                        size: 40,
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: const [
+                                          Icon(
+                                            Icons.check_rounded,
+                                            size: 20,
+                                            color: Colors.white,
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Allow Entry',
+                                            style: TextStyle(
+                                              fontFamily: 'Montserrat',
+                                              fontSize: 14.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 10),
-                                  const Text(
-                                    'Allow Entry',
-                                    style: TextStyle(
-                                      fontFamily: 'Montserrat',
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF6EE7B7),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ],
                           ),
@@ -632,34 +712,46 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
     );
   }
 
-  Widget _buildCategoryBadge() {
+  Widget _buildCategoryBadge(bool isDark, bool isDelivery) {
     final company = widget.data.company;
     final category = widget.data.category?.toUpperCase() ?? 'VISITOR';
 
     String label = category;
     IconData icon = Icons.person_rounded;
-    Color color = const Color(0xFF60A5FA);
+    Color color = AsmitaPalette.deepNavy;
+    Color bg = isDark
+        ? AsmitaPalette.deepNavyDark.withValues(alpha: 0.15)
+        : AsmitaPalette.deepNavy.withValues(alpha: 0.08);
 
-    if (category == 'DELIVERY' || company != null) {
-      label = company != null ? 'Delivery: $company' : 'Delivery Partner';
+    if (isDelivery || category == 'DELIVERY' || company != null) {
+      label = company != null ? 'Delivery • $company' : 'Delivery Parcel';
       icon = Icons.local_shipping_rounded;
-      color = const Color(0xFFFBBF24);
-    } else if (category == 'VEHICLE') {
-      label = company != null ? 'Cab: $company' : 'Vehicle Entry';
-      icon = Icons.local_taxi_rounded;
-      color = const Color(0xFF34D399);
+      color = const Color(0xFFD97706);
+      bg = isDark
+          ? const Color(0xFF78350F).withValues(alpha: 0.35)
+          : const Color(0xFFFEF3C7);
     } else if (category == 'VENDOR') {
       label = 'Vendor / Maintenance';
       icon = Icons.handyman_rounded;
-      color = const Color(0xFFA78BFA);
+      color = const Color(0xFF7C3AED);
+      bg = isDark
+          ? const Color(0xFF4C1D95).withValues(alpha: 0.35)
+          : const Color(0xFFF3E8FF);
+    } else {
+      label = 'Official Visitor';
+      icon = Icons.person_rounded;
+      color = isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy;
+      bg = isDark
+          ? const Color(0xFF1E293B)
+          : const Color(0xFFEEF2FF);
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
+        color: bg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -671,7 +763,7 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
             style: TextStyle(
               fontFamily: 'Montserrat',
               fontSize: 12,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w700,
               color: color,
             ),
           ),
@@ -680,9 +772,78 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
     );
   }
 
+  Widget _buildVisitorAvatar(String initials) {
+    final photo = widget.data.photoUrl?.trim();
+    if (photo == null || photo.isEmpty) {
+      return _buildInitialsFallback(initials);
+    }
+
+    // 1. Base64 data URI (e.g. data:image/jpeg;base64,...)
+    if (photo.startsWith('data:image')) {
+      try {
+        final commaIndex = photo.indexOf(',');
+        final base64Str = commaIndex != -1 ? photo.substring(commaIndex + 1) : photo;
+        final bytes = base64Decode(base64Str);
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) =>
+              _buildInitialsFallback(initials),
+        );
+      } catch (e) {
+        return _buildInitialsFallback(initials);
+      }
+    }
+
+    // 2. Pure base64 string
+    if (!photo.startsWith('http://') &&
+        !photo.startsWith('https://') &&
+        !photo.startsWith('/') &&
+        photo.length > 200) {
+      try {
+        final bytes = base64Decode(photo);
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) =>
+              _buildInitialsFallback(initials),
+        );
+      } catch (e) {
+        return _buildInitialsFallback(initials);
+      }
+    }
+
+    // 3. Network URL (resolve relative paths)
+    String fullUrl = photo;
+    if (photo.startsWith('/')) {
+      fullUrl = '${EnvConfig.baseUrl}$photo';
+    }
+
+    return CachedNetworkImage(
+      imageUrl: fullUrl,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => const Center(
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: AsmitaPalette.deepNavy,
+        ),
+      ),
+      errorWidget: (context, url, error) => _buildInitialsFallback(initials),
+    );
+  }
+
   Widget _buildInitialsFallback(String initials) {
     return Container(
-      color: const Color(0xFF1E293B),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AsmitaPalette.deepNavy,
+            Color(0xFF1B2456),
+          ],
+        ),
+      ),
       child: Center(
         child: Text(
           initials,
@@ -690,27 +851,34 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
             fontFamily: 'Montserrat',
             fontSize: 34,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF10B981),
+            color: Colors.white,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDecisionState() {
+  Widget _buildDecisionState(bool isDark, Color cardColor, Color borderColor, Color primaryTextColor, Color secondaryTextColor) {
     final isApprove = _decisionStatus == 'APPROVE';
+    final accentColor = isApprove ? AsmitaPalette.successGreen : AsmitaPalette.actionRed;
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 32),
+      margin: const EdgeInsets.symmetric(horizontal: 28),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
+        color: cardColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isApprove
-              ? const Color(0xFF10B981).withValues(alpha: 0.4)
-              : const Color(0xFFEF4444).withValues(alpha: 0.4),
+          color: accentColor.withValues(alpha: 0.5),
           width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: 0.12),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -718,35 +886,35 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: (isApprove ? const Color(0xFF10B981) : const Color(0xFFEF4444))
-                  .withValues(alpha: 0.2),
+              color: accentColor.withValues(alpha: 0.12),
             ),
             child: Icon(
               isApprove ? Icons.check_circle_rounded : Icons.cancel_rounded,
               size: 48,
-              color: isApprove ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+              color: accentColor,
             ),
           ),
           const SizedBox(height: 16),
           Text(
             isApprove ? 'Entry Approved!' : 'Entry Denied',
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Montserrat',
               fontSize: 20,
               fontWeight: FontWeight.w800,
-              color: Colors.white,
+              color: primaryTextColor,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             isApprove
-                ? 'Gate informed. Pass code generated.'
+                ? 'Gate informed. Digital pass generated.'
                 : 'Security guard has been notified.',
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Poppins',
               fontSize: 13,
-              color: Colors.white70,
+              fontWeight: FontWeight.w500,
+              color: secondaryTextColor,
             ),
           ),
         ],

@@ -26,7 +26,9 @@ import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'dart:convert';
 import 'dart:math';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
 /// Director Role Dashboard:
@@ -273,37 +275,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.white.withValues(alpha: 0.25),
-                              Colors.white.withValues(alpha: 0.08),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.35),
-                            width: 1.5,
-                          ),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          visit.visitorName.isNotEmpty
-                              ? visit.visitorName[0].toUpperCase()
-                              : 'V',
-                          style: const TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontWeight: FontWeight.bold,
-                            fontSize: 22,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+                      _buildVisitorPhotoAvatar(visit, size: 48),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -340,14 +312,17 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5.5),
                         decoration: BoxDecoration(
-                          color: visit.status.darkCardFillColor,
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: visit.status.darkCardBorderColor,
-                            width: 1,
-                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.18),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -355,16 +330,16 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                             Icon(
                               visit.status.iconData,
                               size: 12,
-                              color: visit.status.darkCardTextColor,
+                              color: visit.status.lightTextColor,
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 4.5),
                             Text(
                               visit.status.label,
                               style: TextStyle(
                                 fontFamily: 'Montserrat',
                                 fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: visit.status.darkCardTextColor,
+                                fontWeight: FontWeight.w800,
+                                color: visit.status.lightTextColor,
                                 letterSpacing: 0.3,
                               ),
                             ),
@@ -630,6 +605,124 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     );
   }
 
+  Widget _buildVisitorPhotoAvatar(IndustrialVisitModel visit, {double size = 48}) {
+    final photo = visit.visitorPhotoUrl?.trim();
+    final initial = visit.visitorName.isNotEmpty
+        ? visit.visitorName[0].toUpperCase()
+        : 'V';
+
+    Widget initialsFallback() {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            colors: [
+              Colors.white.withValues(alpha: 0.25),
+              Colors.white.withValues(alpha: 0.08),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          initial,
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            fontWeight: FontWeight.bold,
+            fontSize: size * 0.45,
+            color: Colors.white,
+          ),
+        ),
+      );
+    }
+
+    Widget content;
+    if (photo == null || photo.isEmpty) {
+      content = initialsFallback();
+    } else if (photo.startsWith('data:image')) {
+      try {
+        final commaIndex = photo.indexOf(',');
+        final base64Str = commaIndex != -1 ? photo.substring(commaIndex + 1) : photo;
+        final bytes = base64Decode(base64Str);
+        content = Image.memory(
+          bytes,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => initialsFallback(),
+        );
+      } catch (_) {
+        content = initialsFallback();
+      }
+    } else if (!photo.startsWith('http://') &&
+        !photo.startsWith('https://') &&
+        !photo.startsWith('/') &&
+        photo.length > 200) {
+      try {
+        final bytes = base64Decode(photo);
+        content = Image.memory(
+          bytes,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => initialsFallback(),
+        );
+      } catch (_) {
+        content = initialsFallback();
+      }
+    } else {
+      String fullUrl = photo;
+      if (photo.startsWith('/')) {
+        fullUrl = '${EnvConfig.baseUrl}$photo';
+      }
+      content = CachedNetworkImage(
+        imageUrl: fullUrl,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          width: size,
+          height: size,
+          color: Colors.white.withValues(alpha: 0.1),
+          child: const Center(
+            child: SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => initialsFallback(),
+      );
+    }
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.4),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipOval(child: content),
+    );
+  }
+
   Widget _buildModalRow(
     BuildContext context, {
     required IconData icon,
@@ -758,9 +851,12 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                 : AsmitaPullToRefresh(
                     onRefresh: () async {
                       if (widget.visits == null) {
-                        context.read<IndustrialVisitBloc>().add(
-                          const LoadIndustrialVisits(),
-                        );
+                        final bloc = context.read<IndustrialVisitBloc>();
+                        final future = bloc.stream
+                            .firstWhere((s) => s.status != IndustrialVisitBlocStatus.loading)
+                            .timeout(const Duration(seconds: 4), onTimeout: () => bloc.state);
+                        bloc.add(const LoadIndustrialVisits());
+                        await future;
                       }
                     },
                     padding: const EdgeInsets.symmetric(

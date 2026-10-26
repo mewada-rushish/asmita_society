@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/utils/property_role_resolver.dart';
+import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../visitor_management/presentation/screens/department_delegation_screen.dart';
@@ -68,7 +69,11 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
             allowPropertySwitching: false,
           ),
           Expanded(
-            child: SingleChildScrollView(
+            child: AsmitaPullToRefresh(
+              onRefresh: () async {
+                await Future.delayed(const Duration(milliseconds: 700));
+                if (mounted) setState(() {});
+              },
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

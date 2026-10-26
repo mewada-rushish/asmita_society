@@ -16,6 +16,9 @@ class IncomingVisitorData {
   final String? vehicleNumber;
   final String? company;
   final String? category;
+  final String? cabinCode;
+  final String? deskCode;
+  final String? visitorPhone;
   final String soundAsset;
 
   const IncomingVisitorData({
@@ -29,6 +32,9 @@ class IncomingVisitorData {
     this.vehicleNumber,
     this.company,
     this.category,
+    this.cabinCode,
+    this.deskCode,
+    this.visitorPhone,
     this.soundAsset = 'assets/audio/notifications/approvals/AsmitA Alert 1.wav',
   });
 
@@ -72,6 +78,16 @@ class IncomingVisitorData {
         map['visitor_type']?.toString() ??
         map['type']?.toString();
 
+    final cabinCode = map['cabin_code']?.toString() ??
+        map['assigned_cabin_code']?.toString();
+
+    final deskCode = map['desk_code']?.toString() ??
+        map['assigned_desk_code']?.toString();
+
+    final visitorPhone = map['visitor_phone']?.toString() ??
+        map['phone']?.toString() ??
+        map['mobile']?.toString();
+
     return IncomingVisitorData(
       visitId: visitId,
       visitorName: visitorName,
@@ -83,6 +99,9 @@ class IncomingVisitorData {
       vehicleNumber: vehicleNumber,
       company: company,
       category: category,
+      cabinCode: cabinCode,
+      deskCode: deskCode,
+      visitorPhone: visitorPhone,
       soundAsset: soundAsset ?? 'assets/audio/notifications/approvals/AsmitA Alert 1.wav',
     );
   }

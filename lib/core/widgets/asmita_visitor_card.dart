@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../config/env_config.dart';
 import '../constants/design_system.dart';
 import 'asmita_toast.dart';
 import '../../features/visitor_management/data/models/industrial_visit_model.dart';
@@ -785,17 +788,47 @@ class AsmitaVisitorCard extends StatelessWidget {
   Widget _buildAvatar(BuildContext context, bool isDark, List<Color> gradientColors) {
     Widget avatarContent;
 
-    if (photoUrl != null && photoUrl!.trim().isNotEmpty) {
-      avatarContent = ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: Image.network(
-          photoUrl!.trim(),
-          fit: BoxFit.cover,
-          width: 48,
-          height: 48,
-          errorBuilder: (_, _, _) => _buildAvatarFallback(),
-        ),
-      );
+    final trimmedPhoto = photoUrl?.trim();
+    if (trimmedPhoto != null && trimmedPhoto.isNotEmpty) {
+      if (trimmedPhoto.startsWith('data:image')) {
+        try {
+          final commaIndex = trimmedPhoto.indexOf(',');
+          final base64Str = commaIndex != -1 ? trimmedPhoto.substring(commaIndex + 1) : trimmedPhoto;
+          final bytes = base64Decode(base64Str);
+          avatarContent = ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Image.memory(
+              bytes,
+              fit: BoxFit.cover,
+              width: 48,
+              height: 48,
+              errorBuilder: (_, _, _) => _buildAvatarFallback(),
+            ),
+          );
+        } catch (_) {
+          avatarContent = _buildAvatarFallback();
+        }
+      } else {
+        String fullUrl = trimmedPhoto;
+        if (trimmedPhoto.startsWith('/')) {
+          fullUrl = '${EnvConfig.baseUrl}$trimmedPhoto';
+        }
+        avatarContent = ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: CachedNetworkImage(
+            imageUrl: fullUrl,
+            fit: BoxFit.cover,
+            width: 48,
+            height: 48,
+            placeholder: (context, url) => Container(
+              width: 48,
+              height: 48,
+              color: Colors.white.withValues(alpha: 0.1),
+            ),
+            errorWidget: (context, url, error) => _buildAvatarFallback(),
+          ),
+        );
+      }
     } else {
       avatarContent = _buildAvatarFallback();
     }

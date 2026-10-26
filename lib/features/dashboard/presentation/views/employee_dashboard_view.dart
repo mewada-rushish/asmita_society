@@ -3,17 +3,28 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_visitor_card.dart';
+import '../../../../core/widgets/asmita_employee_card.dart';
+import '../../../../core/utils/property_role_resolver.dart';
+import '../../../auth/bloc/auth_bloc.dart';
+import '../../../auth/bloc/auth_state.dart';
+import '../../../auth/data/models/user_model.dart';
+import '../../../services/presentation/widgets/asmita_facility_booking_wizard.dart';
+import '../../../services/data/models/amenity_model.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
 import '../../../visitor_management/presentation/widgets/delivery_action_sheet.dart';
+import '../../../../core/config/env_config.dart';
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/security/secure_storage_service.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
 
 /// Team Lead & HOD Role Dashboard:
@@ -30,6 +41,7 @@ class EmployeeDashboardView extends StatefulWidget {
   final String deskNumber;
   final String designation;
   final bool isActive;
+  final bool? canDelegate;
   final List<IndustrialVisitModel>? visits;
   final VoidCallback onOpenDelegation;
   final Function(int visitId, String action)? onDecideVisit;
@@ -43,6 +55,7 @@ class EmployeeDashboardView extends StatefulWidget {
     this.deskNumber = 'IT-DSK-01',
     this.designation = 'Head of Department (HOD)',
     this.isActive = true,
+    this.canDelegate,
     this.visits,
     required this.onOpenDelegation,
     this.onDecideVisit,
@@ -58,11 +71,13 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _showSearchBar = false;
+  String? _activeDelegateName;
 
   @override
   void initState() {
     super.initState();
     if (widget.visits == null) {
+      _fetchDelegationStatus();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         try {
@@ -70,6 +85,31 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         } catch (_) {}
       });
     }
+  }
+
+  Future<void> _fetchDelegationStatus() async {
+    try {
+      final dio = AsmitaDioClient(SecureStorageService()).dio;
+      final res = await dio.get(EnvConfig.employeeDelegationStatus);
+      if (res.statusCode == 200 && res.data['success'] == true) {
+        final dData = res.data['data'] as Map<String, dynamic>?;
+        final outgoing = dData?['outgoingDelegation'] as Map<String, dynamic>?;
+        if (outgoing != null) {
+          final delegate = outgoing['delegate'] as Map<String, dynamic>?;
+          if (mounted) {
+            setState(() {
+              _activeDelegateName = delegate?['full_name'] as String? ?? 'Colleague';
+            });
+          }
+        } else {
+          if (mounted && _activeDelegateName != null) {
+            setState(() {
+              _activeDelegateName = null;
+            });
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   @override
@@ -148,8 +188,17 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: Column(
             children: [
-              const AsmitaPrimaryHeader(
+              AsmitaPrimaryHeader(
                 allowPropertySwitching: false,
+                onSearchPressed: () {
+                  setState(() {
+                    _showSearchBar = !_showSearchBar;
+                    if (!_showSearchBar) {
+                      _searchController.clear();
+                      _searchQuery = '';
+                    }
+                  });
+                },
               ),
               Expanded(
                 child: isLoading
@@ -218,7 +267,13 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
 
     return AsmitaPullToRefresh(
       onRefresh: () async {
-        context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+        final bloc = context.read<IndustrialVisitBloc>();
+        final future = bloc.stream
+            .firstWhere((s) => s.status != IndustrialVisitBlocStatus.loading)
+            .timeout(const Duration(seconds: 4), onTimeout: () => bloc.state);
+        _fetchDelegationStatus();
+        bloc.add(const LoadIndustrialVisits());
+        await future;
       },
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
       child: Column(
@@ -228,8 +283,40 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
           _buildHeroCard(context),
           const SizedBox(height: 16),
 
-          // 2. Executive Quick Action Bar
-          _buildQuickActionBar(context),
+          // Active Delegation Status Banner (if active)
+          if (_activeDelegateName != null) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.sync_alt_rounded, color: Color(0xFF2563EB), size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Visitor approvals currently delegated to $_activeDelegateName. Deliveries & cabs alert you directly.',
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF1E3A8A),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // 2. Quick Action Grid (Square Icon Boxes: Pre-approve, Delegate, Meeting Rooms, Bill payments)
+          _buildQuickActionsGrid(context),
           const SizedBox(height: 18),
 
           // 3. Operational KPI Overview Metrics (4 interactive cards)
@@ -269,144 +356,139 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 1. EXECUTIVE HERO CARD
+  // 1. EXECUTIVE HERO CARD (Global AsmitaEmployeeCard)
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildHeroCard(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            AsmitaPalette.deepNavy,
-            Color(0xFF1B2A6B),
-            Color(0xFF142055),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.15),
-          width: 1.1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AsmitaPalette.deepNavy.withValues(alpha: 0.28),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+    return AsmitaEmployeeCard(
+      name: widget.employeeName,
+      designation: widget.designation,
+      departmentName: widget.departmentName,
+      cabinNumber: widget.cabinNumber,
+      deskNumber: widget.deskNumber,
+      isActive: widget.isActive,
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  Widget _buildQuickActionsGrid(BuildContext context) {
+    UserModel? user;
+    try {
+      final authBloc = context.read<AuthBloc?>();
+      final authState = authBloc?.state;
+      if (authState is AuthAuthenticated) {
+        user = authState.user;
+      }
+    } catch (_) {
+      user = null;
+    }
+    final canDelegate = widget.canDelegate ??
+        PropertyRoleResolver.canDelegate(user, designation: widget.designation);
+
+    final actions = <_QuickActionItemData>[
+      _QuickActionItemData(
+        label: 'Pre-approve',
+        icon: Icons.person_add_alt_1_rounded,
+        onTap: () => _showPreApproveModal(context),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
+      if (canDelegate)
+        _QuickActionItemData(
+          label: 'Delegate',
+          icon: Icons.sync_alt_rounded,
+          onTap: widget.onOpenDelegation,
+        ),
+      _QuickActionItemData(
+        label: 'Meeting Rooms',
+        icon: Icons.meeting_room_rounded,
+        onTap: () => _openMeetingRoomReservation(context),
+      ),
+      _QuickActionItemData(
+        label: 'Pay Bills',
+        icon: Icons.receipt_long_rounded,
+        onTap: () => _openBillPayments(context),
+      ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: actions.map((item) {
+          return Expanded(
+            child: _buildSquareActionBox(
+              context,
+              icon: item.icon,
+              label: item.label,
+              onTap: item.onTap,
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildSquareActionBox(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Semantics(
+      label: label.replaceAll('\n', ' '),
+      button: true,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(16),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Top row: (Name & Designation on left) + (Active/Inactive status on top right)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.employeeName,
-                        style: const TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          letterSpacing: 0.2,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF10B981), // active green dot
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            Flexible(
-                              child: Text(
-                                widget.designation.toUpperCase(),
-                                style: const TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  letterSpacing: 0.5,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.shadowColor.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
+                ],
+              ),
+              child: Center(
+                child: Icon(
+                  icon,
+                  color: isDark ? Colors.black : Colors.white,
+                  size: 24,
                 ),
-                const SizedBox(width: 10),
-                _statusPill(widget.isActive),
-              ],
+              ),
             ),
-            const SizedBox(height: 12),
-
-            // Department row
-            Row(
-              children: [
-                Icon(
-                  Icons.business_rounded,
-                  size: 14,
-                  color: Colors.white.withValues(alpha: 0.8),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    '${widget.departmentName} Department',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
-                    overflow: TextOverflow.ellipsis,
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 28,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    height: 1.2,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 14),
-
-            // Location badges row: Cabin & Desk ID
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (widget.cabinNumber.trim().isNotEmpty)
-                  _locationBadge(
-                    Icons.meeting_room_outlined,
-                    _formatCabinLabel(widget.cabinNumber),
-                  ),
-                if (widget.deskNumber.trim().isNotEmpty)
-                  _locationBadge(
-                    Icons.desk_outlined,
-                    _formatDeskLabel(widget.deskNumber),
-                  ),
-              ],
+              ),
             ),
           ],
         ),
@@ -414,213 +496,28 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
     );
   }
 
-  String _formatDeskLabel(String raw) {
-    var clean = raw.trim();
-    while (clean.toLowerCase().startsWith('desk')) {
-      clean = clean.substring(4).trim().replaceAll(RegExp(r'^[:\-\s]+'), '');
-    }
-    if (clean.isEmpty) {
-      return 'Desk';
-    }
-    return 'Desk ID: $clean';
-  }
-
-  String _formatCabinLabel(String raw) {
-    var clean = raw.trim();
-    while (clean.toLowerCase().startsWith('cabin')) {
-      clean = clean.substring(5).trim().replaceAll(RegExp(r'^[:\-\s]+'), '');
-    }
-    if (clean.isEmpty) {
-      return 'Cabin';
-    }
-    return 'Cabin $clean';
-  }
-
-  Widget _statusPill(bool isActive) {
-    final statusColor = isActive ? const Color(0xFF10B981) : const Color(0xFF94A3B8);
-    final textColor = isActive ? const Color(0xFFD1FAE5) : const Color(0xFFE2E8F0);
-    final label = isActive ? 'Active' : 'Inactive';
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: statusColor.withValues(alpha: 0.22),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: statusColor.withValues(alpha: 0.5),
-          width: 1.0,
+  void _openMeetingRoomReservation(BuildContext context) {
+    AsmitaDialog.show(
+      context: context,
+      title: 'Meeting Room Reservation',
+      content: const AsmitaFacilityBookingWizard(
+        initialAmenity: AmenityModel(
+          amenityId: 991,
+          name: 'Conference & Meeting Room',
+          type: 'booking',
+          description: 'High-Speed Smart AV & Video Conferencing Room',
+          capacity: 20,
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(
-              color: statusColor,
-              shape: BoxShape.circle,
-              boxShadow: isActive
-                  ? [
-                      BoxShadow(
-                        color: statusColor.withValues(alpha: 0.8),
-                        blurRadius: 6,
-                        spreadRadius: 1,
-                      ),
-                    ]
-                  : null,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: textColor,
-              letterSpacing: 0.3,
-            ),
-          ),
-        ],
       ),
     );
   }
 
-  Widget _locationBadge(IconData icon, String label, {bool isAccent = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: isAccent
-            ? const Color(0xFF10B981).withValues(alpha: 0.22)
-            : Colors.white.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(9),
-        border: Border.all(
-          color: isAccent
-              ? const Color(0xFF10B981).withValues(alpha: 0.5)
-              : Colors.white.withValues(alpha: 0.22),
-          width: 0.9,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 13,
-            color: isAccent ? const Color(0xFF6EE7B7) : Colors.white,
-          ),
-          const SizedBox(width: 5),
-          Flexible(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
-                color: isAccent ? const Color(0xFFE6FFFA) : Colors.white,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // 2. QUICK ACTION BAR
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildQuickActionBar(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Row(
-      children: [
-        // Primary Action: Issue Guest Pass
-        Expanded(
-          flex: 3,
-          child: ElevatedButton.icon(
-            onPressed: () => _showPreApproveModal(context),
-            icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
-            label: const Text(
-              'Issue Guest Pass',
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AsmitaPalette.deepNavy,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              elevation: 0,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-
-        // Delegation Rules Action
-        Expanded(
-          flex: 2,
-          child: OutlinedButton.icon(
-            onPressed: widget.onOpenDelegation,
-            icon: const Icon(Icons.sync_alt_rounded, size: 16),
-            label: const Text(
-              'Delegation',
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: isDark ? Colors.white : AsmitaPalette.deepNavy,
-              side: BorderSide(
-                color: isDark ? const Color(0xFF475569) : AsmitaPalette.deepNavy.withValues(alpha: 0.5),
-                width: 1.2,
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-
-        // Search toggle button
-        Container(
-          decoration: BoxDecoration(
-            color: _showSearchBar
-                ? AsmitaPalette.deepNavy
-                : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-            ),
-          ),
-          child: IconButton(
-            tooltip: 'Search Visitors',
-            onPressed: () {
-              setState(() {
-                _showSearchBar = !_showSearchBar;
-                if (!_showSearchBar) {
-                  _searchController.clear();
-                  _searchQuery = '';
-                }
-              });
-            },
-            icon: Icon(
-              _showSearchBar ? Icons.close_rounded : Icons.search_rounded,
-              size: 20,
-              color: _showSearchBar
-                  ? Colors.white
-                  : (isDark ? Colors.white70 : const Color(0xFF475569)),
-            ),
-          ),
-        ),
-      ],
+  void _openBillPayments(BuildContext context) {
+    showAsmitaBottomSheet(
+      context: context,
+      title: 'Bill Payments (BBPS)',
+      subtitle: 'Bharat BillPay • Unified Utility & Operational Clearance',
+      child: const _BbpsBillPaymentsSheet(),
     );
   }
 
@@ -1143,6 +1040,243 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
                 fontWeight: FontWeight.w700,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickActionItemData {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _QuickActionItemData({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+}
+
+class _BbpsBillPaymentsSheet extends StatelessWidget {
+  const _BbpsBillPaymentsSheet();
+
+  static const List<Map<String, dynamic>> _billCategories = [
+    {
+      'title': 'Electricity',
+      'subtitle': 'Power utility bills',
+      'icon': Icons.bolt_rounded,
+      'color': Color(0xFFEAB308),
+    },
+    {
+      'title': 'Water',
+      'subtitle': 'Municipal & corporate supply',
+      'icon': Icons.water_drop_rounded,
+      'color': Color(0xFF0284C7),
+    },
+    {
+      'title': 'Piped Gas',
+      'subtitle': 'City gas distribution',
+      'icon': Icons.local_fire_department_rounded,
+      'color': Color(0xFFEA580C),
+    },
+    {
+      'title': 'Broadband',
+      'subtitle': 'Office internet & Wi-Fi',
+      'icon': Icons.wifi_rounded,
+      'color': Color(0xFF7C3AED),
+    },
+    {
+      'title': 'Mobile Postpaid',
+      'subtitle': 'Telecom bills',
+      'icon': Icons.phone_android_rounded,
+      'color': Color(0xFF059669),
+    },
+    {
+      'title': 'FASTag / Parking',
+      'subtitle': 'Fleet toll & pass clearance',
+      'icon': Icons.toll_rounded,
+      'color': Color(0xFF2563EB),
+    },
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Trust Badge & Header Card
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+                    : [const Color(0xFFEFF6FF), const Color(0xFFDBEAFE)],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? const Color(0xFF334155) : const Color(0xFFBFDBFE),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AsmitaPalette.deepNavy,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.verified_user_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'BBPS Assured Gateway',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'NPCI',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Direct, secure clearance for recurring commercial & department utility bills.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontSize: 11,
+                          color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          Text(
+            'Select Biller Category',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontFamily: 'Montserrat',
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Categories Grid
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _billCategories.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 2.2,
+            ),
+            itemBuilder: (context, index) {
+              final cat = _billCategories[index];
+              final catColor = cat['color'] as Color;
+              return InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.pop(context);
+                  AsmitaToast.show(
+                    context,
+                    message: 'BBPS: Fetching billing records for ${cat['title']}...',
+                    type: AsmitaToastType.info,
+                  );
+                },
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: theme.dividerColor),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: catColor.withValues(alpha: isDark ? 0.2 : 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          cat['icon'] as IconData,
+                          size: 18,
+                          color: catColor,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              cat['title'] as String,
+                              style: const TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              cat['subtitle'] as String,
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),

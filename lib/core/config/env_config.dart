@@ -98,6 +98,11 @@ class EnvConfig {
   static String get candidateDelegates => '$baseUrl/app-api/masters/departments/candidate-delegates';
   static String get assignDepartmentDelegate => '$baseUrl/app-api/masters/departments/delegate';
 
+  /// Employee Personal & Hierarchical Delegation Endpoints
+  static String get employeeDelegationStatus => '$baseUrl/app-api/employee/delegation/status';
+  static String get employeeDelegation => '$baseUrl/app-api/employee/delegation';
+  static String get employeeDelegationColleagues => '$baseUrl/app-api/employee/delegation/colleagues';
+
   /// Public Visitor OTP Authentication
   static String get publicVisitorOtpSend => '$baseUrl/app-api/public/visitor/otp/send';
   static String get publicVisitorOtpVerify => '$baseUrl/app-api/public/visitor/otp/verify';

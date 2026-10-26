@@ -79,13 +79,13 @@ void main() {
       await tester.pump();
 
       expect(find.text('Rahul Verma'), findsOneWidget);
-      expect(find.text('Engineering Department'), findsOneWidget);
-      expect(find.text('Cabin 201'), findsOneWidget);
-      expect(find.text('Desk 5'), findsOneWidget);
-      expect(find.text('0 Action Needed'), findsOneWidget);
-      expect(find.text('You are all caught up! No pending visitors.'), findsOneWidget);
+      expect(find.text('Engineering'), findsOneWidget);
+      expect(find.text('201'), findsOneWidget);
+      expect(find.text('5'), findsOneWidget);
+      expect(find.text('0'), findsWidgets);
+      expect(find.text('All Caught Up!'), findsOneWidget);
 
-      await tester.tap(find.text('Delegation'));
+      await tester.tap(find.text('Delegate'));
       expect(delegationTapped, isTrue);
     });
 

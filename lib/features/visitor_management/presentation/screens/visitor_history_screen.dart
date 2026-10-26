@@ -1083,10 +1083,12 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                   slivers: [
                     AsmitaAnimatedRefresh(
                       onRefresh: () async {
+                        final bloc = context.read<VisitorBloc>();
+                        final future = bloc.stream
+                            .firstWhere((s) => s is! VisitorLoading)
+                            .timeout(const Duration(seconds: 4), onTimeout: () => bloc.state);
                         _loadHistory(isRefresh: true);
-                        await Future.delayed(
-                          const Duration(seconds: 1),
-                        ); // UX delay
+                        await future;
                       },
                     ),
                     if (rawHistory.isEmpty)
