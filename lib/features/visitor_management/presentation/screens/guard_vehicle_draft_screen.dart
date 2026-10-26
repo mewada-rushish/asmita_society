@@ -174,10 +174,11 @@ class _GuardVehicleDraftScreenState extends State<GuardVehicleDraftScreen> {
                         child: ChoiceChip(
                           label: Text(type),
                           selected: isSelected,
+                          checkmarkColor: Colors.white,
                           onSelected: (selected) {
                             if (selected) setState(() => _selectedVehicleType = type);
                           },
-                          selectedColor: AsmitaPalette.actionRed,
+                          selectedColor: AsmitaPalette.deepNavy,
                           labelStyle: TextStyle(
                             fontFamily: 'Montserrat',
                             fontSize: 12,

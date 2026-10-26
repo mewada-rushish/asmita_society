@@ -298,6 +298,7 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                     return ChoiceChip(
                       label: Text(type),
                       selected: isSelected,
+                      checkmarkColor: Colors.white,
                       onSelected: (selected) {
                         if (selected) _onCategoryChanged(type);
                       },
@@ -326,10 +327,11 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                           child: ChoiceChip(
                             label: Text(comp),
                             selected: isSelected,
+                            checkmarkColor: Colors.white,
                             onSelected: (selected) {
                               if (selected) setState(() => _selectedCompany = comp);
                             },
-                            selectedColor: AsmitaPalette.actionRed,
+                            selectedColor: AsmitaPalette.deepNavy,
                             labelStyle: TextStyle(
                               fontFamily: 'Montserrat',
                               fontSize: 12,
@@ -380,10 +382,11 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                           child: ChoiceChip(
                             label: Text(provider),
                             selected: isSelected,
+                            checkmarkColor: Colors.white,
                             onSelected: (selected) {
                               if (selected) setState(() => _selectedCompany = provider);
                             },
-                            selectedColor: AsmitaPalette.actionRed,
+                            selectedColor: AsmitaPalette.deepNavy,
                             labelStyle: TextStyle(
                               fontFamily: 'Montserrat',
                               fontSize: 12,
@@ -428,6 +431,7 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                     return ChoiceChip(
                       label: Text(freq == 'ONCE' ? 'One Time' : 'Frequent'),
                       selected: isSelected,
+                      checkmarkColor: Colors.white,
                       onSelected: (selected) {
                         if (selected) setState(() => _inviteSubType = freq);
                       },
@@ -516,7 +520,8 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                           child: ChoiceChip(
                             label: Text(p),
                             selected: isSelected,
-                            selectedColor: AsmitaPalette.actionRed,
+                            checkmarkColor: Colors.white,
+                            selectedColor: AsmitaPalette.deepNavy,
                             labelStyle: TextStyle(
                               fontFamily: 'Montserrat',
                               fontSize: 12,
