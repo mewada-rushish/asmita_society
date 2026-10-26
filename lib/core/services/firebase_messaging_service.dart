@@ -52,6 +52,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           AndroidInitializationSettings('@mipmap/ic_launcher');
       await localNotifications.initialize(
         settings: const InitializationSettings(android: initializationSettingsAndroid),
+        onDidReceiveNotificationResponse: notificationTapBackground,
+        onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
       );
 
       final title = message.notification?.title ??

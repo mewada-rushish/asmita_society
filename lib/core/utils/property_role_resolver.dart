@@ -246,4 +246,21 @@ class PropertyRoleResolver {
     final normalized = normalizeRole(role ?? user?.primaryRole);
     return normalized != 'guard';
   }
+
+  /// Checks whether an employee/corporate user has authority to delegate approvals.
+  /// All corporate/commercial employee types can delegate visitor approvals to a colleague.
+  static bool canDelegate(UserModel? user, {String? designation, String? role}) {
+    if (user != null) {
+      if (user.hasPermission('canDelegate')) return true;
+    }
+
+    final normalized = normalizeRole(role ?? user?.primaryRole);
+    // Security guards and visitors cannot delegate visitor approvals
+    if (normalized == 'guard' || normalized == 'visitor') {
+      return false;
+    }
+
+    // All employee, staff, and leadership roles in corporate/commercial properties can delegate
+    return true;
+  }
 }

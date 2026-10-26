@@ -233,6 +233,10 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       case 'employee':
         final authState = context.watch<AuthBloc>().state;
         final user = authState is AuthAuthenticated ? authState.user : null;
+        final canDelegate = PropertyRoleResolver.canDelegate(
+          user,
+          designation: user?.designation,
+        );
         return _wrapWithIndustrialBloc(
           context,
           EmployeeDashboardView(
@@ -242,6 +246,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
             deskNumber: (user?.deskCode != null && user!.deskCode.isNotEmpty) ? user.deskCode : 'IT-DSK-01',
             designation: user?.designation ?? 'Head of Department (HOD)',
             isActive: user?.isActive ?? true,
+            canDelegate: canDelegate,
             onOpenDelegation: () {
               Navigator.push(
                 context,

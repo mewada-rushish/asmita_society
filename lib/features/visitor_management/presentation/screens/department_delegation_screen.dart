@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -32,8 +33,6 @@ class DepartmentDelegationScreen extends StatefulWidget {
 class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen> {
   bool _isDelegationEnabled = true;
   int? _selectedDelegateId;
-  int? _resolvedDepartmentId;
-  String? _resolvedDepartmentName;
   bool _isTillTurnOff = true;
   DateTime _startDate = DateTime.now();
   DateTime? _endDate;
@@ -52,11 +51,12 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
     Color(0xFFD97706),
   ];
 
+  Map<String, dynamic>? _activeOutgoing;
+  List<Map<String, dynamic>> _incomingDelegations = [];
+
   @override
   void initState() {
     super.initState();
-    _resolvedDepartmentId = widget.departmentId;
-    _resolvedDepartmentName = widget.departmentName;
     _fetchCandidateDelegates();
   }
 
@@ -64,31 +64,96 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
     setState(() => _isLoadingStaff = true);
     try {
       final dio = AsmitaDioClient(SecureStorageService()).dio;
-      final query = <String, dynamic>{};
-      if (_resolvedDepartmentId != null && _resolvedDepartmentId! > 0) {
-        query['department_id'] = _resolvedDepartmentId;
-      }
-      final response = await dio.get(
-        EnvConfig.candidateDelegates,
-        queryParameters: query.isNotEmpty ? query : null,
-      );
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        if (response.data['department'] != null && response.data['department'] is Map) {
-          final dept = response.data['department'] as Map;
-          _resolvedDepartmentId = dept['id'] as int? ?? _resolvedDepartmentId;
-          _resolvedDepartmentName = dept['name'] as String? ?? _resolvedDepartmentName;
+
+      // 1. Fetch current user delegation status
+      try {
+        final statusRes = await dio.get(EnvConfig.employeeDelegationStatus);
+        if (statusRes.statusCode == 200 && statusRes.data['success'] == true) {
+          final dData = statusRes.data['data'] as Map<String, dynamic>?;
+          if (dData != null) {
+            _activeOutgoing = dData['outgoingDelegation'] as Map<String, dynamic>?;
+            _incomingDelegations = (dData['incomingDelegations'] as List? ?? [])
+                .map((x) => Map<String, dynamic>.from(x as Map))
+                .toList();
+            if (_activeOutgoing != null) {
+              _isDelegationEnabled = true;
+              _selectedDelegateId = _activeOutgoing!['delegate_user_id'] as int?;
+              _isTillTurnOff = _activeOutgoing!['end_date'] == null;
+              if (_activeOutgoing!['start_date'] != null) {
+                _startDate = DateTime.tryParse(_activeOutgoing!['start_date'].toString()) ?? DateTime.now();
+              }
+              if (_activeOutgoing!['end_date'] != null) {
+                _endDate = DateTime.tryParse(_activeOutgoing!['end_date'].toString());
+              }
+            }
+          }
         }
-        final rawList = response.data['data'] as List? ?? [];
+      } catch (stErr) {
+        debugPrint('[Delegation] Note: status endpoint fallback: $stErr');
+      }
+
+      // 2. Fetch eligible colleagues for personal delegation
+      List<dynamic> rawList = [];
+      try {
+        final response = await dio.get(
+          EnvConfig.employeeDelegationColleagues,
+        );
+        if (response.statusCode == 200 && response.data['success'] == true) {
+          rawList = response.data['data'] as List? ?? [];
+        }
+      } catch (colleagueErr) {
+        debugPrint('[Delegation] Note: colleagues endpoint error, falling back: $colleagueErr');
+      }
+
+      // If colleagues list is empty, query the candidateDelegates endpoint
+      if (rawList.isEmpty) {
+        try {
+          final queryParams = <String, dynamic>{};
+          if (widget.departmentId != null) {
+            queryParams['departmentId'] = widget.departmentId;
+          }
+          final legacyRes = await dio.get(
+            EnvConfig.candidateDelegates,
+            queryParameters: queryParams.isNotEmpty ? queryParams : null,
+          );
+          if (legacyRes.statusCode == 200 && legacyRes.data['success'] == true) {
+            rawList = legacyRes.data['data'] as List? ?? [];
+          }
+        } catch (legacyErr) {
+          debugPrint('[Delegation] Legacy candidate delegates error: $legacyErr');
+        }
+      }
+
+      if (rawList.isNotEmpty) {
         final parsed = rawList.asMap().entries.map((entry) {
           final idx = entry.key;
           final m = Map<String, dynamic>.from(entry.value as Map);
+          m['id'] = m['user_id'] ?? m['id'];
           m['avatarColor'] = _avatarColors[idx % _avatarColors.length];
-          if (m['category'] == 'Floor Receptionist') {
-            m['category'] = 'Receptionist';
+
+          // Determine role and designation
+          final desig = m['designation']?.toString() ?? m['role']?.toString() ?? 'Colleague';
+          final dept = m['department']?.toString() ?? 'General';
+          m['role'] = desig;
+
+          // Categorize correctly for filter chips
+          String category = m['category']?.toString() ?? '';
+          if (category.isEmpty || category == 'General' || category == 'All') {
+            final lower = desig.toLowerCase();
+            final lowerDept = dept.toLowerCase();
+            if (m['is_hod'] == true || lower.contains('hod') || lower.contains('head')) {
+              category = 'HOD';
+            } else if (lower.contains('reception') || lowerDept.contains('reception')) {
+              category = 'Receptionist';
+            } else if (lower.contains('lead') || lower.contains('manager') || lower.contains('tl')) {
+              category = 'Team Lead';
+            } else if (lower.contains('intern') || lower.contains('trainee')) {
+              category = 'Intern';
+            } else {
+              category = 'Team Member';
+            }
           }
-          if (m['role'] == 'Floor Receptionist') {
-            m['role'] = 'Receptionist';
-          }
+          m['category'] = category;
           return m;
         }).toList();
 
@@ -163,59 +228,63 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
     try {
       final dio = AsmitaDioClient(SecureStorageService()).dio;
+
+      if (!_isDelegationEnabled) {
+        // Revoke active delegation
+        await dio.delete(EnvConfig.employeeDelegation);
+        if (mounted) {
+          AsmitaToast.show(
+            context,
+            message: 'Visitor delegation has been deactivated. Approvals will route directly to you.',
+            type: AsmitaToastType.success,
+          );
+          Navigator.pop(context, true);
+        }
+        return;
+      }
+
       final payload = {
-        'department_id': _resolvedDepartmentId ?? widget.departmentId,
         'delegate_user_id': _selectedDelegateId,
         'start_date': _startDate.toIso8601String(),
         'end_date': _isTillTurnOff ? null : _endDate?.toIso8601String(),
-        'till_turned_off': _isTillTurnOff,
-        'is_active': _isDelegationEnabled,
       };
 
-      await dio.post(
-        EnvConfig.assignDepartmentDelegate,
+      final response = await dio.post(
+        EnvConfig.employeeDelegation,
         data: payload,
       );
 
       final delegate = _candidates.firstWhere(
         (s) => s['id'] == _selectedDelegateId,
-        orElse: () => {'name': 'Selected Staff'},
+        orElse: () => {'name': 'Selected Colleague'},
       );
 
       final durationText = _isTillTurnOff
           ? 'Till I turn off'
           : '${DateFormat('dd MMM').format(_startDate)} - ${DateFormat('dd MMM').format(_endDate ?? _startDate)}';
 
-      final msg = _isDelegationEnabled
-          ? 'Delegation active for ${delegate['name']} ($durationText)'
-          : 'Department delegation has been disabled.';
+      final msg = 'Visitor approvals delegated to ${delegate['name']} ($durationText)';
 
       if (mounted) {
         AsmitaToast.show(
           context,
-          message: msg,
+          message: response.data?['message'] ?? msg,
           type: AsmitaToastType.success,
         );
         Navigator.pop(context, true);
       }
     } catch (e) {
-      final delegate = _candidates.firstWhere(
-        (s) => s['id'] == _selectedDelegateId,
-        orElse: () => {'name': 'Selected Staff'},
-      );
-      final durationText = _isTillTurnOff
-          ? 'Till I turn off'
-          : '${DateFormat('dd MMM').format(_startDate)} - ${DateFormat('dd MMM').format(_endDate ?? _startDate)}';
-      final msg = _isDelegationEnabled
-          ? 'Delegation active for ${delegate['name']} ($durationText)'
-          : 'Department delegation has been disabled.';
+      debugPrint('[Delegation] Submit error: $e');
+      String errMsg = 'Failed to update delegation.';
+      if (e is DioException && e.response?.data is Map) {
+        errMsg = e.response!.data['message'] ?? errMsg;
+      }
       if (mounted) {
         AsmitaToast.show(
           context,
-          message: msg,
-          type: AsmitaToastType.success,
+          message: errMsg,
+          type: AsmitaToastType.error,
         );
-        Navigator.pop(context, true);
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -233,7 +302,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         child: Column(
           children: [
             // Standard Unified SubHeader
-            const AsmitaSubHeader(title: 'Department Delegation'),
+            const AsmitaSubHeader(title: 'Visitor Approval Delegation'),
 
             // Scrollable Settings Content
             Expanded(
@@ -263,27 +332,27 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Icon(
-                              Icons.admin_panel_settings_rounded,
+                              Icons.sync_alt_rounded,
                               color: AsmitaPalette.deepNavy,
                               size: 22,
                             ),
                           ),
                           const SizedBox(width: 12),
-                          Expanded(
+                          const Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '${_resolvedDepartmentName ?? widget.departmentName ?? 'Department'} Authority',
-                                  style: const TextStyle(
+                                  'Visitor Approval Hand-off',
+                                  style: TextStyle(
                                     fontFamily: 'Montserrat',
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                const SizedBox(height: 3),
-                                const Text(
-                                  'When you are away or out of office, your chosen delegate will receive visitor pass approval notifications on your behalf.',
+                                SizedBox(height: 3),
+                                Text(
+                                  'When delegated, your chosen colleague will receive live visitor alerts on your behalf. Deliveries, cabs, and history remain direct to you.',
                                   style: TextStyle(fontSize: 12, height: 1.4, color: AsmitaPalette.textLight),
                                 ),
                               ],
@@ -292,7 +361,58 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
+
+                    // Incoming Delegations Card (if colleagues have delegated to this user)
+                    if (_incomingDelegations.isNotEmpty) ...[
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.15 : 0.08),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.35 : 0.25),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.assignment_ind_rounded, color: Color(0xFF059669), size: 18),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Handling Approvals For (${_incomingDelegations.length})',
+                                  style: const TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF065F46),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            ..._incomingDelegations.map((inc) {
+                              final delegator = inc['delegator'] as Map?;
+                              final name = delegator?['full_name'] ?? 'Colleague';
+                              final role = delegator?['primary_role'] ?? 'Employee';
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 2),
+                                child: Text(
+                                  '• $name ($role)',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              );
+                            }),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
 
                     // Master Toggle Card
                     Container(
