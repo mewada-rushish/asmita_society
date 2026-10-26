@@ -420,7 +420,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
           } else if (normalizedRole == 'director') {
             flatDetails = 'Executive Suite';
           } else if (normalizedRole == 'employee') {
-            flatDetails = 'Corporate Host Desk';
+            flatDetails = 'Employee Workspace';
           } else if (normalizedRole == 'receptionist') {
             flatDetails = 'Front Desk & Reception';
           } else if (normalizedRole == 'facility') {

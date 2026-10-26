@@ -92,8 +92,17 @@ class UserModel {
   /// Dynamic capability check based on backend platform settings
   bool hasPermission(String key) => permissions[key] ?? false;
 
-  String get cabinCode => roleDetails?['cabin_code']?.toString() ?? '';
-  String get deskCode => roleDetails?['desk_code']?.toString() ?? '';
+  String get cabinCode =>
+      roleDetails?['cabin_code']?.toString() ??
+      roleDetails?['cabin']?.toString() ??
+      '';
+  String get deskCode =>
+      roleDetails?['desk_code']?.toString() ??
+      roleDetails?['desk_number']?.toString() ??
+      roleDetails?['desk_id']?.toString() ??
+      roleDetails?['workstation_code']?.toString() ??
+      roleDetails?['desk']?.toString() ??
+      '';
   String get designation =>
       roleDetails?['designation']?.toString() ??
       roleDetails?['leadership_role']?.toString() ??
@@ -123,6 +132,14 @@ class UserModel {
   bool get canManageFeedback => hasPermission('canManageFeedback');
   bool get canManagePolling => hasPermission('canManagePolling');
   bool get canIssuePasses => canManageVisitors;
+  bool get isActive {
+    if (roleDetails != null) {
+      if (roleDetails!['is_active'] == false) return false;
+      final duty = roleDetails!['duty_status']?.toString().toLowerCase();
+      if (duty == 'inactive' || duty == 'off-duty' || duty == 'offline') return false;
+    }
+    return true;
+  }
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     var mappings = <FlatMapping>[];
