@@ -851,20 +851,23 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: null,
-        onPressed: () => _showPreApproveModal(context),
-        backgroundColor: AsmitaPalette.deepNavy,
-        foregroundColor: Colors.white,
-        elevation: 3,
-        icon: const Icon(Icons.add_rounded, size: 20),
-        label: const Text(
-          'Schedule',
-          style: TextStyle(
-            fontFamily: 'Montserrat',
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-            letterSpacing: 0.3,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 84.0),
+        child: FloatingActionButton.extended(
+          heroTag: null,
+          onPressed: () => _showPreApproveModal(context),
+          backgroundColor: AsmitaPalette.deepNavy,
+          foregroundColor: Colors.white,
+          elevation: 3,
+          icon: const Icon(Icons.add_rounded, size: 20),
+          label: const Text(
+            'Schedule',
+            style: TextStyle(
+              fontFamily: 'Montserrat',
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              letterSpacing: 0.3,
+            ),
           ),
         ),
       ),
@@ -1027,13 +1030,13 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                     if (filteredVisits.isEmpty)
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 20, 16, 120),
+                          padding: const EdgeInsets.fromLTRB(16, 20, 16, 200),
                           child: _buildEmptyState(context),
                         ),
                       )
                     else
                       SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 200),
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {

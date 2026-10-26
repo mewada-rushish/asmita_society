@@ -1117,7 +1117,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                       )
                     else
                       SliverPadding(
-                        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 160),
+                        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 200),
                         sliver: SliverList.separated(
                           itemCount: rawHistory.length,
                           separatorBuilder: (context, index) =>
@@ -1138,24 +1138,27 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: null, // Fixes Hero overlay bug in IndexedStack
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => const AsmitaDialog(
-              title: 'Pre-Approve Entry',
-              content: AsmitaPreApproveWizard(),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 84.0),
+        child: FloatingActionButton.extended(
+          heroTag: null, // Fixes Hero overlay bug in IndexedStack
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (context) => const AsmitaDialog(
+                title: 'Pre-Approve Entry',
+                content: AsmitaPreApproveWizard(),
+              ),
+            );
+          },
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          icon: Icon(Icons.add, color: Theme.of(context).colorScheme.surface),
+          label: Text(
+            'Add Visitor',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.surface,
+              fontWeight: FontWeight.w600,
             ),
-          );
-        },
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        icon: Icon(Icons.add, color: Theme.of(context).colorScheme.surface),
-        label: Text(
-          'Add Visitor',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.surface,
-            fontWeight: FontWeight.w600,
           ),
         ),
       ),

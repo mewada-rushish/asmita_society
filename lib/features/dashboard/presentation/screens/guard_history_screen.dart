@@ -141,7 +141,7 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                       },
                     ),
                     SliverPadding(
-                      padding: const EdgeInsets.all(16).copyWith(bottom: 100),
+                      padding: const EdgeInsets.all(16).copyWith(bottom: 180),
                       sliver: SliverList.builder(
                         itemCount: state.historyRecords.length,
                         itemBuilder: (context, index) {

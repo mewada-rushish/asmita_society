@@ -275,7 +275,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         bloc.add(const LoadIndustrialVisits());
         await future;
       },
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 180),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

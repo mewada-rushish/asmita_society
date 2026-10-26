@@ -274,7 +274,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                   ),
 
                   // 5. Bottom clearance above floating curved nav bar
-                  const SizedBox(height: 120),
+                  const SizedBox(height: 180),
                 ],
               ),
             ),
