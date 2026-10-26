@@ -144,9 +144,13 @@ class AsmitaBottomSheet extends StatelessWidget {
           ),
           // Content Area (Grey Background from the BottomSheet itself)
           Flexible(
-            child: Padding(
-              padding: contentPadding ?? EdgeInsets.fromLTRB(24, 16, 24, bottomPadding + 24),
-              child: child,
+            child: SafeArea(
+              top: false,
+              maintainBottomViewPadding: true,
+              child: Padding(
+                padding: contentPadding ?? EdgeInsets.fromLTRB(24, 16, 24, bottomPadding > 0 ? bottomPadding + 16 : 24),
+                child: child,
+              ),
             ),
           ),
         ],
