@@ -185,7 +185,7 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                       },
                     ),
                     SliverPadding(
-                      padding: const EdgeInsets.all(16).copyWith(bottom: 100),
+                      padding: const EdgeInsets.all(16).copyWith(bottom: 180),
                       sliver: SliverList.builder(
                         itemCount: state.checkedInVisitors.length,
                         itemBuilder: (context, index) {

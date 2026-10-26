@@ -76,7 +76,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                 await Future.delayed(const Duration(milliseconds: 700));
                 if (mounted) setState(() {});
               },
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 180),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
