@@ -317,7 +317,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
 
           // 2. Quick Action Grid (Square Icon Boxes: Pre-approve, Delegate, Meeting Rooms, Bill payments)
           _buildQuickActionsGrid(context),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
 
           // 3. Operational KPI Overview Metrics (4 interactive cards)
           _buildMetricsOverview(

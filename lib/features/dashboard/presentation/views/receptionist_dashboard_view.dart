@@ -267,7 +267,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
 
   Widget _buildDutyStatusBanner(BuildContext context, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
@@ -417,7 +417,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
 
   Widget _buildQuickActionBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -549,7 +549,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
     bool isDark,
   ) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.fromLTRB(16, 14, 16, 6),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
