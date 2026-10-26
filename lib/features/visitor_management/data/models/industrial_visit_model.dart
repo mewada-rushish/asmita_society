@@ -198,7 +198,7 @@ enum IndustrialVisitStatus {
       case IndustrialVisitStatus.rejected:
         return const Color(0xFF991B1B);
       case IndustrialVisitStatus.expired:
-        return const Color(0xFF64748B);
+        return const Color(0xFF475569);
       case IndustrialVisitStatus.cancelled:
         return const Color(0xFF475569);
       case IndustrialVisitStatus.revoked:
