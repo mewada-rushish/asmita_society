@@ -47,6 +47,21 @@ class AsmitaTheme {
         surface: AsmitaPalette.surfaceLight,
         outline: AsmitaPalette.borderGrey,
       ),
+      chipTheme: ChipThemeData(
+        checkmarkColor: Colors.white,
+        selectedColor: AsmitaPalette.deepNavy,
+        secondarySelectedColor: AsmitaPalette.deepNavy,
+        labelStyle: GoogleFonts.montserrat(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: AsmitaPalette.deepNavy,
+        ),
+        secondaryLabelStyle: GoogleFonts.montserrat(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+      ),
       iconTheme: const IconThemeData(color: AsmitaPalette.textLight),
       textTheme: TextTheme(
         displayLarge: GoogleFonts.montserrat(fontWeight: FontWeight.bold, color: AsmitaPalette.textDark),
@@ -71,6 +86,21 @@ class AsmitaTheme {
         secondary: AsmitaPalette.actionRed,
         surface: AsmitaPalette.surfaceDark,
         outline: AsmitaPalette.borderGreyDark,
+      ),
+      chipTheme: ChipThemeData(
+        checkmarkColor: Colors.white,
+        selectedColor: AsmitaPalette.deepNavyDark,
+        secondarySelectedColor: AsmitaPalette.deepNavyDark,
+        labelStyle: GoogleFonts.montserrat(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Colors.white70,
+        ),
+        secondaryLabelStyle: GoogleFonts.montserrat(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
       ),
       iconTheme: const IconThemeData(color: AsmitaPalette.textDarkModeMuted),
       textTheme: TextTheme(

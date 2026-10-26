@@ -381,6 +381,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   ),
                   selected: isSelected,
                   selectedColor: AsmitaPalette.deepNavy,
+                  checkmarkColor: Colors.white,
                   backgroundColor: AsmitaPalette.systemBG,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
@@ -459,6 +460,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                     ),
                     selected: isSelected,
                     selectedColor: AsmitaPalette.deepNavy,
+                    checkmarkColor: Colors.white,
                     backgroundColor: AsmitaPalette.systemBG,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
@@ -547,6 +549,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                     ),
                     selected: isSelected,
                     selectedColor: AsmitaPalette.deepNavy,
+                    checkmarkColor: Colors.white,
                     backgroundColor: AsmitaPalette.systemBG,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
@@ -619,6 +622,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   label: Text(vType),
                   selected: isSelected,
                   selectedColor: AsmitaPalette.deepNavy,
+                  checkmarkColor: Colors.white,
                   backgroundColor: AsmitaPalette.systemBG,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
