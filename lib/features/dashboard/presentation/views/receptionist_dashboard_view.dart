@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_toast.dart';
@@ -415,137 +416,127 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
   }
 
   Widget _buildQuickActionBar(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 1. New Walk-in
-          _buildQuickActionCard(
-            context,
-            icon: Icons.person_add_alt_1_rounded,
-            label: 'New Walk-in',
-            subtitle: 'Lobby guest',
-            color: AsmitaPalette.deepNavy,
-            onTap: () => _showNewVisitorModal(context),
+          Expanded(
+            child: _buildSquareActionBox(
+              context,
+              icon: Icons.person_add_alt_1_rounded,
+              label: 'New Walk-in',
+              onTap: () => _showNewVisitorModal(context),
+            ),
           ),
-          const SizedBox(width: 8),
-
           // 2. Digital Pass (QR Scan & Check-in Code)
-          _buildQuickActionCard(
-            context,
-            icon: Icons.qr_code_scanner_rounded,
-            label: 'Digital Pass',
-            subtitle: 'Scan or code',
-            color: const Color(0xFF059669),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => GuardQrScannerScreen(
-                    isActive: true,
-                    onScanComplete: () => Navigator.pop(context),
+          Expanded(
+            child: _buildSquareActionBox(
+              context,
+              icon: Icons.qr_code_scanner_rounded,
+              label: 'Digital Pass',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => GuardQrScannerScreen(
+                      isActive: true,
+                      onScanComplete: () => Navigator.pop(context),
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-          const SizedBox(width: 8),
-
           // 3. Employee Registry (Check-in / Check-out)
-          _buildQuickActionCard(
-            context,
-            icon: Icons.badge_rounded,
-            label: 'Staff Registry',
-            subtitle: 'Check in / out',
-            color: const Color(0xFF7C3AED),
-            onTap: () => EmployeeRegistrySheet.show(context),
+          Expanded(
+            child: _buildSquareActionBox(
+              context,
+              icon: Icons.badge_rounded,
+              label: 'Staff Registry',
+              onTap: () => EmployeeRegistrySheet.show(context),
+            ),
           ),
-          const SizedBox(width: 8),
-
           // 4. BBPS Bill Payments
-          _buildQuickActionCard(
-            context,
-            icon: Icons.receipt_long_rounded,
-            label: 'BBPS Bills',
-            subtitle: 'Utilities',
-            color: const Color(0xFFD97706),
-            onTap: () => BbpsBillPaymentsSheet.show(context),
+          Expanded(
+            child: _buildSquareActionBox(
+              context,
+              icon: Icons.receipt_long_rounded,
+              label: 'BBPS Bills',
+              onTap: () => BbpsBillPaymentsSheet.show(context),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildQuickActionCard(
+  Widget _buildSquareActionBox(
     BuildContext context, {
     required IconData icon,
     required String label,
-    required String subtitle,
-    required Color color,
     required VoidCallback onTap,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    return Material(
-      color: Colors.transparent,
+    return Semantics(
+      label: label.replaceAll('\n', ' '),
+      button: true,
       child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          width: 108,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(16),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.shadowColor.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Icon(
+                  icon,
+                  color: isDark ? Colors.black : Colors.white,
+                  size: 24,
+                ),
+              ),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 28,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    height: 1.2,
+                  ),
                 ),
-                child: Icon(icon, size: 16, color: color),
               ),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
