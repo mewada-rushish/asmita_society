@@ -3,8 +3,10 @@ import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/utils/property_role_resolver.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
+import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
+import '../../../dashboard/widgets/asmita_pre_approve_wizard.dart';
 import '../../../visitor_management/presentation/screens/department_delegation_screen.dart';
 
 class IndustrialDirectoryScreen extends StatefulWidget {
@@ -798,7 +800,7 @@ class _DepartmentEmployeesSheetState extends State<_DepartmentEmployeesSheet> {
                       )
                     : ListView.separated(
                         itemCount: displayed.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final emp = displayed[index];
                           final name = emp['name'] ?? emp['full_name'] ?? 'Staff Member';
@@ -936,5 +938,4 @@ class _DepartmentEmployeesSheetState extends State<_DepartmentEmployeesSheet> {
       ),
     );
   }
-}
 }
