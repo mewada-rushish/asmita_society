@@ -513,12 +513,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
   }
 
   void _openBillPayments(BuildContext context) {
-    showAsmitaBottomSheet(
-      context: context,
-      title: 'Bill Payments (BBPS)',
-      subtitle: 'Bharat BillPay • Unified Utility & Operational Clearance',
-      child: const _BbpsBillPaymentsSheet(),
-    );
+    BbpsBillPaymentsSheet.show(context);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1059,8 +1054,17 @@ class _QuickActionItemData {
   });
 }
 
-class _BbpsBillPaymentsSheet extends StatelessWidget {
-  const _BbpsBillPaymentsSheet();
+class BbpsBillPaymentsSheet extends StatelessWidget {
+  const BbpsBillPaymentsSheet({super.key});
+
+  static Future<void> show(BuildContext context) async {
+    showAsmitaBottomSheet(
+      context: context,
+      title: 'Bill Payments (BBPS)',
+      subtitle: 'Bharat BillPay • Unified Utility & Operational Clearance',
+      child: const BbpsBillPaymentsSheet(),
+    );
+  }
 
   static const List<Map<String, dynamic>> _billCategories = [
     {
