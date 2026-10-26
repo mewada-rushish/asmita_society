@@ -101,7 +101,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                         contactNumber: '+91 98201 10101',
                         extensionNumber: '101',
                         icon: Icons.support_agent_rounded,
-                        color: AsmitaPalette.deepNavy,
+                        color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
                       ),
                       const SizedBox(width: 12),
                       _buildHotlineCard(
@@ -110,7 +110,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                         contactNumber: '+91 98201 10104',
                         extensionNumber: '104',
                         icon: Icons.shield_rounded,
-                        color: const Color(0xFF1E40AF),
+                        color: isDark ? const Color(0xFF818CF8) : const Color(0xFF1E40AF),
                       ),
                     ],
                   ),
@@ -123,7 +123,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                         contactNumber: '+91 98201 10108',
                         extensionNumber: '108',
                         icon: Icons.local_shipping_rounded,
-                        color: const Color(0xFFD97706),
+                        color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
                       ),
                       const SizedBox(width: 12),
                       _buildHotlineCard(
@@ -132,7 +132,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                         contactNumber: '+91 98201 10911',
                         extensionNumber: '911',
                         icon: Icons.emergency_rounded,
-                        color: AsmitaPalette.actionRed,
+                        color: isDark ? const Color(0xFFF87171) : AsmitaPalette.actionRed,
                       ),
                     ],
                   ),
@@ -342,6 +342,9 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
     required IconData icon,
     required Color color,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Expanded(
       child: InkWell(
         onTap: () => _callContact(title, contactNumber),
@@ -349,12 +352,15 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
+            color: isDark ? const Color(0xFF1E293B) : theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Theme.of(context).dividerColor),
+            border: Border.all(
+              color: isDark ? const Color(0xFF334155) : theme.dividerColor,
+              width: 1.2,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -370,7 +376,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
+                      color: color.withValues(alpha: isDark ? 0.2 : 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(icon, color: color, size: 20),
@@ -378,7 +384,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
+                      color: color.withValues(alpha: isDark ? 0.2 : 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -403,13 +409,14 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
 
               const SizedBox(height: 12),
 
-              // Title with balanced line height
+              // Title with balanced line height & dark mode text color
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Montserrat',
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : AsmitaPalette.textDark,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -420,9 +427,9 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
               // Subtitle/Role
               Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
-                  color: AsmitaPalette.textLight,
+                  color: isDark ? const Color(0xFF94A3B8) : AsmitaPalette.textLight,
                   fontWeight: FontWeight.w500,
                 ),
                 maxLines: 1,
@@ -458,7 +465,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                       decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.1),
+                        color: color.withValues(alpha: isDark ? 0.22 : 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -487,18 +494,24 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
     required String cabins,
     required IconData icon,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return InkWell(
       onTap: () => _showDepartmentEmployeesModal(title, floor),
       borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: isDark ? const Color(0xFF1E293B) : theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Theme.of(context).dividerColor),
+          border: Border.all(
+            color: isDark ? const Color(0xFF334155) : theme.dividerColor,
+            width: 1.2,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
+              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.02),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -509,10 +522,16 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AsmitaPalette.deepNavy.withValues(alpha: 0.06),
+                color: isDark
+                    ? const Color(0xFF60A5FA).withValues(alpha: 0.15)
+                    : AsmitaPalette.deepNavy.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: AsmitaPalette.deepNavy, size: 22),
+              child: Icon(
+                icon,
+                color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -521,10 +540,11 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Montserrat',
                       fontWeight: FontWeight.bold,
                       fontSize: 13.5,
+                      color: isDark ? Colors.white : AsmitaPalette.textDark,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -532,10 +552,10 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                   const SizedBox(height: 4),
                   Text(
                     floor,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 11.5,
-                      color: AsmitaPalette.textLight,
+                      color: isDark ? const Color(0xFF94A3B8) : AsmitaPalette.textLight,
                       fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
@@ -548,7 +568,9 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Theme.of(context).dividerColor.withValues(alpha: 0.15),
+                color: isDark
+                    ? const Color(0xFF334155).withValues(alpha: 0.6)
+                    : theme.dividerColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -556,17 +578,17 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                 children: [
                   Text(
                     cabins,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: AsmitaPalette.textLight,
+                      color: isDark ? const Color(0xFFCBD5E1) : AsmitaPalette.textLight,
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(
+                  Icon(
                     Icons.arrow_forward_ios_rounded,
                     size: 11,
-                    color: AsmitaPalette.textLight,
+                    color: isDark ? const Color(0xFF94A3B8) : AsmitaPalette.textLight,
                   ),
                 ],
               ),
