@@ -1146,12 +1146,16 @@ class _BbpsBillPaymentsSheet extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            'BBPS Assured Gateway',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
+                          Flexible(
+                            child: Text(
+                              'BBPS Assured Gateway',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 6),
