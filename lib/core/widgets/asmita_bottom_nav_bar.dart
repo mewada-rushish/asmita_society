@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../utils/property_role_resolver.dart';
 
 class AsmitaBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -68,8 +69,7 @@ class AsmitaBottomNavBar extends StatelessWidget {
   }
 
   List<int> _getVisibleIndices() {
-    final role = userRole?.toLowerCase() ?? '';
-    if (role == 'guard' || role.contains('guard') || role.contains('receptionist')) {
+    if (PropertyRoleResolver.normalizeRole(userRole) == 'guard') {
       return [0, 6, 3, 5, 4]; // Home, Checked In, History, Scan, Menu
     }
     return [0, 1, 2, 3, 4]; // All tabs
@@ -118,22 +118,34 @@ class AsmitaBottomNavBar extends StatelessWidget {
     const iconColor = Colors.white;
     const colorFilter = ColorFilter.mode(iconColor, BlendMode.srcIn);
 
+    final normalized = PropertyRoleResolver.normalizeRole(userRole);
+    final isIndustrial = normalized == 'director' ||
+        normalized == 'employee' ||
+        normalized == 'receptionist' ||
+        normalized == 'facility';
+
     switch (index) {
       case 0:
         return SvgPicture.asset('assets/icons/home.svg', width: 24, height: 24, colorFilter: colorFilter);
       case 1:
+        if (isIndustrial) {
+          return const Icon(Icons.assignment_ind_rounded, size: 28, color: iconColor);
+        }
         return SvgPicture.asset('assets/icons/services.svg', width: 32, height: 32, colorFilter: colorFilter);
       case 2:
+        if (isIndustrial) {
+          return const Icon(Icons.corporate_fare_rounded, size: 28, color: iconColor);
+        }
         return SvgPicture.asset('assets/icons/community.svg', width: 32, height: 32, colorFilter: colorFilter);
       case 3:
         return SvgPicture.asset('assets/icons/history.svg', width: 32, height: 32, colorFilter: colorFilter);
       case 5:
-        return Icon(Icons.qr_code_scanner_rounded, size: 30, color: iconColor);
+        return const Icon(Icons.qr_code_scanner_rounded, size: 30, color: iconColor);
       case 6:
-        return Icon(Icons.how_to_reg, size: 30, color: iconColor);
+        return const Icon(Icons.how_to_reg, size: 30, color: iconColor);
       case 4:
       default:
-        return Icon(Icons.more_horiz_rounded, size: 32, color: iconColor);
+        return const Icon(Icons.more_horiz_rounded, size: 32, color: iconColor);
     }
   }
 }

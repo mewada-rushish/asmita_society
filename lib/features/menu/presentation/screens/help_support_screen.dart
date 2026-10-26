@@ -9,6 +9,8 @@ import 'package:asmita_society/features/menu/bloc/support_event.dart';
 import 'package:asmita_society/features/menu/bloc/support_state.dart';
 import '../widgets/ticket_conversation_bottom_sheet.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_select_field.dart';
 import 'package:asmita_society/features/menu/presentation/screens/all_tickets_screen.dart';
 
 class HelpSupportScreen extends StatelessWidget {
@@ -158,32 +160,168 @@ class HelpSupportScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                  DropdownButtonFormField<String>(
-                    initialValue: category,
-                    decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
+                  AsmitaSelectField<String>(
+                    label: 'Category',
+                    hint: 'Select issue category',
+                    value: category,
+                    prefixIcon: Icons.category_outlined,
+                    sheetTitle: 'Select Issue Category',
+                    sheetSubtitle: 'Choose the area most relevant to your ticket',
                     items: const [
-                      DropdownMenuItem(value: 'Bug Report', child: Text('Bug Report')),
-                      DropdownMenuItem(value: 'Account Issue', child: Text('Account Issue')),
-                      DropdownMenuItem(value: 'Feature Request', child: Text('Feature Request')),
-                      DropdownMenuItem(value: 'Billing', child: Text('Billing')),
-                      DropdownMenuItem(value: 'Other', child: Text('Other')),
+                      AsmitaSelectItem(
+                        value: 'Bug Report',
+                        label: 'Bug Report',
+                        subtitle: 'App glitch, crash, or unexpected behavior',
+                        icon: Icons.bug_report_outlined,
+                        iconColor: AsmitaPalette.actionRed,
+                      ),
+                      AsmitaSelectItem(
+                        value: 'Account Issue',
+                        label: 'Account Issue',
+                        subtitle: 'Login, permissions, or profile details',
+                        icon: Icons.person_outline_rounded,
+                        iconColor: AsmitaPalette.deepNavy,
+                      ),
+                      AsmitaSelectItem(
+                        value: 'Feature Request',
+                        label: 'Feature Request',
+                        subtitle: 'Suggest a new feature or improvement',
+                        icon: Icons.lightbulb_outline_rounded,
+                        iconColor: Colors.amber,
+                      ),
+                      AsmitaSelectItem(
+                        value: 'Billing',
+                        label: 'Billing',
+                        subtitle: 'Maintenance dues, receipts, or payments',
+                        icon: Icons.receipt_long_outlined,
+                        iconColor: AsmitaPalette.successGreen,
+                      ),
+                      AsmitaSelectItem(
+                        value: 'Other',
+                        label: 'Other',
+                        subtitle: 'General inquiries or uncategorized support',
+                        icon: Icons.help_outline_rounded,
+                        iconColor: AsmitaPalette.textLight,
+                      ),
                     ],
                     onChanged: (val) {
                       if (val != null) setState(() => category = val);
                     },
                   ),
-                  SizedBox(height: 12),
-                  TextField(
-                    controller: titleCtrl,
-                    decoration: const InputDecoration(labelText: 'Issue Title', border: OutlineInputBorder()),
+                  const SizedBox(height: 14),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Issue Title',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AsmitaPalette.textDarkModeMuted
+                              : AsmitaPalette.textDark,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: titleCtrl,
+                        decoration: InputDecoration(
+                          hintText: 'e.g. Cannot download gate pass PDF',
+                          hintStyle: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 13,
+                            color: AsmitaPalette.textLight.withValues(alpha: 0.6),
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(context).brightness == Brightness.dark
+                              ? AsmitaPalette.surfaceDark
+                              : AsmitaPalette.systemBG,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? AsmitaPalette.borderGreyDark
+                                  : AsmitaPalette.borderGrey,
+                              width: 1.2,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? AsmitaPalette.borderGreyDark
+                                  : AsmitaPalette.borderGrey,
+                              width: 1.2,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AsmitaPalette.deepNavy, width: 1.5),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 12),
-                  TextField(
-                    controller: descCtrl,
-                    maxLines: 3,
-                    decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+                  const SizedBox(height: 14),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Description',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AsmitaPalette.textDarkModeMuted
+                              : AsmitaPalette.textDark,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: descCtrl,
+                        maxLines: 3,
+                        decoration: InputDecoration(
+                          hintText: 'Provide details on what happened or what you need...',
+                          hintStyle: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 13,
+                            color: AsmitaPalette.textLight.withValues(alpha: 0.6),
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(context).brightness == Brightness.dark
+                              ? AsmitaPalette.surfaceDark
+                              : AsmitaPalette.systemBG,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? AsmitaPalette.borderGreyDark
+                                  : AsmitaPalette.borderGrey,
+                              width: 1.2,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? AsmitaPalette.borderGreyDark
+                                  : AsmitaPalette.borderGrey,
+                              width: 1.2,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AsmitaPalette.deepNavy, width: 1.5),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -197,18 +335,32 @@ class HelpSupportScreen extends StatelessWidget {
                         ));
                         if (context.mounted) {
                           Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ticket raised successfully')));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Ticket raised successfully'),
+                              backgroundColor: AsmitaPalette.deepNavy,
+                            ),
+                          );
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: AsmitaPalette.deepNavy,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
                       ),
-                      child: Text('Submit Ticket', style: TextStyle(color: Theme.of(context).colorScheme.surface, fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Submit Ticket',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 16),
                 ],
               ),
             );

@@ -82,24 +82,19 @@ class _CommunityScreenState extends State<CommunityScreen> {
     super.dispose();
   }
 
-  PreferredSizeWidget _buildAppBar(CommunityState state) {
-    return const PreferredSize(
-      preferredSize: Size.fromHeight(85),
-      child: AsmitaPrimaryHeader(),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<CommunityBloc, CommunityState>(
-      builder: (context, state) {
-        return Scaffold(
-          extendBodyBehindAppBar: true,
-          extendBody: true,
+    final state = ref.watch(communityProvider);
+
+    return Scaffold(
+      extendBody: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: _buildAppBar(state),
       body: Column(
         children: [
+          AsmitaPrimaryHeader(
+            onSearchPressed: widget.onNavigateToSearch,
+            onChatPressed: widget.onNavigateToCommunity,
+          ),
           Expanded(
             child: RotatedBox(
               quarterTurns: 2,

@@ -23,6 +23,7 @@ class GuardQrScannerScreen extends StatefulWidget {
 
 class _GuardQrScannerScreenState extends State<GuardQrScannerScreen> {
   bool _isProcessing = false;
+  final TextEditingController _manualCodeController = TextEditingController();
   late final MobileScannerController _scannerController = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
     returnImage: false,
@@ -45,8 +46,20 @@ class _GuardQrScannerScreenState extends State<GuardQrScannerScreen> {
 
   @override
   void dispose() {
+    _manualCodeController.dispose();
     _scannerController.dispose();
     super.dispose();
+  }
+
+  void _handleManualSubmit(String rawCode) {
+    final code = rawCode.trim().toUpperCase();
+    if (code.isEmpty || _isProcessing) return;
+
+    setState(() => _isProcessing = true);
+    _scannerController.stop();
+
+    context.read<GuardGateBloc>().add(SearchInviteByCode(code));
+    widget.onScanComplete();
   }
 
   void _onDetect(BarcodeCapture capture) {
@@ -147,16 +160,100 @@ class _GuardQrScannerScreenState extends State<GuardQrScannerScreen> {
               ),
             ),
             Positioned(
-              bottom: 100,
-              left: 0,
-              right: 0,
-              child: const Text(
-                'Align QR Code within the frame',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+              bottom: 24,
+              left: 20,
+              right: 20,
+              child: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Align QR Code within the frame',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        shadows: [
+                          Shadow(color: Colors.black54, blurRadius: 4, offset: Offset(0, 1)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Manual Check-in Code Field (fallback when scanner does not work)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.75),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.25),
+                          width: 1,
+                        ),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black45,
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.pin_rounded,
+                            color: Colors.white70,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: _manualCodeController,
+                              textCapitalization: TextCapitalization.characters,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                letterSpacing: 1.1,
+                              ),
+                              decoration: const InputDecoration(
+                                hintText: 'Enter Pass / Check-in Code',
+                                hintStyle: TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                                border: InputBorder.none,
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(vertical: 8),
+                              ),
+                              onSubmitted: (val) => _handleManualSubmit(val),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () => _handleManualSubmit(_manualCodeController.text),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AsmitaPalette.actionRed,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text(
+                              'Verify',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

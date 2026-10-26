@@ -62,7 +62,11 @@ class UserModel {
   final String? profilePictureUrl;
   final String? societyName;
   final List<FlatMapping> flatMappings;
-  final List<String> permissions;
+  final Map<String, bool> permissions;
+  final String? roleScope;
+  final int? rolePower;
+  final String? propertyType;
+  final Map<String, dynamic>? roleDetails;
 
   UserModel({
     required this.userId,
@@ -78,8 +82,64 @@ class UserModel {
     this.profilePictureUrl,
     this.societyName,
     this.flatMappings = const [],
-    this.permissions = const [],
+    this.permissions = const {},
+    this.roleScope,
+    this.rolePower,
+    this.propertyType,
+    this.roleDetails,
   });
+
+  /// Dynamic capability check based on backend platform settings
+  bool hasPermission(String key) => permissions[key] ?? false;
+
+  String get cabinCode =>
+      roleDetails?['cabin_code']?.toString() ??
+      roleDetails?['cabin']?.toString() ??
+      '';
+  String get deskCode =>
+      roleDetails?['desk_code']?.toString() ??
+      roleDetails?['desk_number']?.toString() ??
+      roleDetails?['desk_id']?.toString() ??
+      roleDetails?['workstation_code']?.toString() ??
+      roleDetails?['desk']?.toString() ??
+      '';
+  String get designation =>
+      roleDetails?['designation']?.toString() ??
+      roleDetails?['leadership_role']?.toString() ??
+      primaryRole;
+  int? get departmentId {
+    if (roleDetails?['department_id'] != null) {
+      return int.tryParse(roleDetails!['department_id'].toString());
+    }
+    return null;
+  }
+  String get departmentName {
+    if (flatMappings.isNotEmpty && flatMappings.first.flatNumber.isNotEmpty) {
+      return flatMappings.first.flatNumber;
+    }
+    return roleDetails?['department_name']?.toString() ?? 'Department';
+  }
+
+  bool get canManageVisitors => hasPermission('canManageVisitors');
+  bool get canManageServiceBookings => hasPermission('canManageServiceBookings');
+  bool get canManagePayments => hasPermission('canManagePayments');
+  bool get canManageNotices => hasPermission('canManageNotices');
+  bool get canManageMembers => hasPermission('canManageMembers');
+  bool get canManageUsers => hasPermission('canManageUsers');
+  bool get canManageDomesticStaff => hasPermission('canManageDomesticStaff');
+  bool get canManageVehicleTracking => hasPermission('canManageVehicleTracking');
+  bool get canManageFormsPolicies => hasPermission('canManageFormsPolicies');
+  bool get canManageFeedback => hasPermission('canManageFeedback');
+  bool get canManagePolling => hasPermission('canManagePolling');
+  bool get canIssuePasses => canManageVisitors;
+  bool get isActive {
+    if (roleDetails != null) {
+      if (roleDetails!['is_active'] == false) return false;
+      final duty = roleDetails!['duty_status']?.toString().toLowerCase();
+      if (duty == 'inactive' || duty == 'off-duty' || duty == 'offline') return false;
+    }
+    return true;
+  }
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     var mappings = <FlatMapping>[];
@@ -89,9 +149,12 @@ class UserModel {
       mappings = (json['flat_mappings'] as List).map((m) => FlatMapping.fromJson(m)).toList();
     }
 
-    var permissionsList = <String>[];
-    if (json['permissions'] != null && json['permissions'] is List) {
-      permissionsList = List<String>.from(json['permissions']);
+    final parsedPermissions = <String, bool>{};
+    final permsRaw = json['permissions'] ?? json['role_permissions'];
+    if (permsRaw is Map) {
+      permsRaw.forEach((k, v) {
+        parsedPermissions[k.toString()] = v == true;
+      });
     }
 
     return UserModel(
@@ -112,7 +175,13 @@ class UserModel {
       profilePictureUrl: json['profile_picture_url']?.toString(),
       societyName: json['society_name']?.toString(),
       flatMappings: mappings,
-      permissions: permissionsList,
+      permissions: parsedPermissions,
+      roleScope: json['role_scope']?.toString() ?? json['scope']?.toString(),
+      rolePower: json['role_power'] is int
+          ? json['role_power'] as int
+          : int.tryParse(json['role_power']?.toString() ?? json['power']?.toString() ?? ''),
+      propertyType: json['property_type']?.toString() ?? json['property_profile']?.toString(),
+      roleDetails: json['role_details'] is Map ? Map<String, dynamic>.from(json['role_details'] as Map) : null,
     );
   }
 
@@ -132,6 +201,10 @@ class UserModel {
       'society_name': societyName,
       'user_flat_mapping': flatMappings.map((m) => m.toJson()).toList(),
       'permissions': permissions,
+      'role_scope': roleScope,
+      'role_power': rolePower,
+      'property_type': propertyType,
+      'role_details': roleDetails,
     };
   }
 
@@ -149,7 +222,10 @@ class UserModel {
     String? profilePictureUrl,
     String? societyName,
     List<FlatMapping>? flatMappings,
-    List<String>? permissions,
+    Map<String, bool>? permissions,
+    String? roleScope,
+    int? rolePower,
+    String? propertyType,
   }) {
     return UserModel(
       userId: userId ?? this.userId,
@@ -166,6 +242,9 @@ class UserModel {
       societyName: societyName ?? this.societyName,
       flatMappings: flatMappings ?? this.flatMappings,
       permissions: permissions ?? this.permissions,
+      roleScope: roleScope ?? this.roleScope,
+      rolePower: rolePower ?? this.rolePower,
+      propertyType: propertyType ?? this.propertyType,
     );
   }
 }

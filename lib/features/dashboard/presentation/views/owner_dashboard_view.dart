@@ -5,7 +5,8 @@ import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
-import 'package:asmita_society/core/widgets/permission_gate.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
+import 'package:asmita_society/core/utils/property_role_resolver.dart';
 import 'package:asmita_society/core/utils/dashboard_scroll_physics.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_security_wizard.dart';
@@ -63,14 +64,17 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authState = context.read<AuthBloc>().state;
-      int residentId = 1;
-      if (authState is AuthAuthenticated) {
-        residentId = authState.user.userId;
-      }
-      context.read<VisitorBloc>().add(
-        LoadMyHistory(residentId: residentId, isRefresh: true),
-      );
+      if (!mounted) return;
+      try {
+        final authState = context.read<AuthBloc>().state;
+        int residentId = 1;
+        if (authState is AuthAuthenticated) {
+          residentId = authState.user.userId;
+        }
+        context.read<VisitorBloc>().add(
+          LoadMyHistory(residentId: residentId, isRefresh: true),
+        );
+      } catch (_) {}
     });
   }
 
@@ -80,14 +84,31 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
     super.dispose();
   }
 
-  void _showPreApproveModal(BuildContext context) {
-    showDialog(
+  Future<void> _showPreApproveModal(BuildContext context) async {
+    final authState = context.read<AuthBloc>().state;
+    final user = authState is AuthAuthenticated ? authState.user : null;
+    if (!PropertyRoleResolver.canIssuePasses(user)) {
+      AsmitaToast.show(
+        context,
+        message: 'Your role does not have permission to pre-approve visitors.',
+        type: AsmitaToastType.error,
+      );
+      return;
+    }
+    await showDialog(
       context: context,
       builder: (context) => const AsmitaDialog(
         title: 'Pre-Approve Entry',
         content: AsmitaPreApproveWizard(),
       ),
     );
+
+    if (!context.mounted) return;
+    if (user != null) {
+      context.read<VisitorBloc>().add(
+        LoadMyHistory(residentId: user.userId, isRefresh: true),
+      );
+    }
   }
 
   void _showSecurityModal(BuildContext context) {
@@ -112,6 +133,19 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
 
   @override
   Widget build(BuildContext context) {
+    String userInitials = 'RM';
+    try {
+      final authState = context.watch<AuthBloc>().state;
+      if (authState is AuthAuthenticated && authState.user.fullName.trim().isNotEmpty) {
+        final parts = authState.user.fullName.trim().split(RegExp(r'\s+'));
+        if (parts.length >= 2) {
+          userInitials = '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+        } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
+          userInitials = parts[0][0].toUpperCase();
+        }
+      }
+    } catch (_) {}
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
@@ -241,7 +275,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
             left: 0,
             right: 0,
             child: AsmitaPrimaryHeader(
-              userInitials: 'RM',
+              userInitials: userInitials,
               onSearchPressed: widget.onNavigateToSearch,
               onChatPressed: widget.onNavigateToCommunity,
             ),

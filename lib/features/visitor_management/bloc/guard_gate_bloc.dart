@@ -229,7 +229,11 @@ class GuardGateBloc extends Bloc<GuardGateEvent, GuardGateState> {
         ),
       );
       try {
-        await repository.checkInPreApproved(event.inviteId, isPreApproved: event.isPreApproved);
+        await repository.checkInPreApproved(
+          event.inviteId,
+          isPreApproved: event.isPreApproved,
+          photoBase64: event.photoBase64,
+        );
         emit(
           state.copyWith(
             status: GuardGateStatus.success,

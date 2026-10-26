@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../core/widgets/asmita_toast.dart';
+import '../../../core/utils/property_role_resolver.dart';
 import '../../dashboard/presentation/main_dashboard_screen.dart'; // Added dashboard routing import
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -87,10 +88,11 @@ class _OtpScreenState extends State<OtpScreen> {
               message: 'Identity verified successfully.',
               type: AsmitaToastType.success,
             );
+            final normalizedRole = PropertyRoleResolver.normalizeRole(state.sessionRole);
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
-                builder: (_) => MainDashboardScreen(userRole: state.sessionRole), // Fixed placeholder navigation to match architecture roles
+                builder: (_) => MainDashboardScreen(userRole: normalizedRole),
               ),
               (route) => false,
             );
@@ -109,6 +111,8 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
             );
           } else if (state is AuthError) {
+            setState(() => _otp = '');
+            FocusScope.of(context).requestFocus(_focusNode);
             AsmitaToast.show(
               context,
               message: state.message,
@@ -240,20 +244,26 @@ class _OtpScreenState extends State<OtpScreen> {
                             builder: (context, state) {
                               final isLoading = state is AuthLoading;
                               final isComplete = _otp.length == 6;
+                              final primaryColor = Theme.of(context).colorScheme.primary;
                               return SizedBox(
                                 width: double.infinity, height: 56,
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: isComplete ? Theme.of(context).colorScheme.primary : Colors.grey.shade300,
-                                    disabledBackgroundColor: Colors.grey.shade300,
-                                    disabledForegroundColor: Colors.grey.shade600,
+                                    backgroundColor: isComplete ? primaryColor : primaryColor.withValues(alpha: 0.38), 
                                     elevation: 0, 
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                   ),
                                   onPressed: isLoading || !isComplete ? null : _verifyOtp,
                                   child: isLoading 
                                     ? SizedBox(height: 24, width: 24, child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.onPrimary, size: 24))
-                                    : Text('Verify Secure Code', style: TextStyle(color: isComplete ? Theme.of(context).colorScheme.onPrimary : Colors.grey.shade600, fontSize: 16, fontWeight: FontWeight.w600)),
+                                    : Text(
+                                        'Verify Secure Code', 
+                                        style: TextStyle(
+                                          color: isComplete ? Theme.of(context).colorScheme.onPrimary : Colors.white.withValues(alpha: 0.85), 
+                                          fontSize: 16, 
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                 ),
                               );
                             },

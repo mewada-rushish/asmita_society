@@ -72,14 +72,11 @@ class _BiometricLockWrapperState extends State<BiometricLockWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<PreferencesBloc, PreferencesState>(
-      builder: (context, prefsState) {
-        if (prefsState is PreferencesInitial) {
-          debugPrint('Biometrics - Waiting for preferences to load...');
-          return Scaffold(
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          );
-        }
+    final prefsState = ref.watch(preferencesProvider);
+    
+    if (prefsState.isLoading && !prefsState.hasValue) {
+      return widget.child;
+    }
 
         final isBiometricEnabled = prefsState is PreferencesLoaded ? prefsState.items?.biometricLogin ?? false : false;
         debugPrint('Biometrics - Loaded! enabled: $isBiometricEnabled, hasPrompted: $_hasPrompted, isAuth: $_isAuthenticated');

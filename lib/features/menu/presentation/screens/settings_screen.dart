@@ -16,6 +16,8 @@ import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 
 import 'package:asmita_society/l10n/app_localizations.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:asmita_society/core/services/permission_manager_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -68,8 +70,39 @@ class SettingsScreen extends StatelessWidget {
                             Icons.email_rounded, 
                             'Email Alerts', 
                             prefs.emailAlerts, 
+                            true,
+                            (val) => ref.read(preferencesProvider.notifier).updatePreference(emailAlerts: val)
+                          ),
+                          _buildActionRow(
+                            context,
+                            textTheme,
+                            Icons.layers_rounded,
+                            'Background Overlay & Alert',
+                            'Configure',
+                            true,
+                            () => PermissionManagerService.showPermissionSetupDialog(
+                              context,
+                              directToSettingsOnIOS: true,
+                              force: true,
+                            ),
+                          ),
+                          _buildActionRow(
+                            context,
+                            textTheme,
+                            Icons.notification_important_rounded,
+                            'Approval Alert Sound',
+                            prefs.approvalSound == 'asmita_alert_2' ? 'AsmitA Alert 2' : 'AsmitA Alert 1 (Default)',
+                            true,
+                            () => _showApprovalSoundPicker(context, ref, prefs.approvalSound),
+                          ),
+                          _buildActionRow(
+                            context,
+                            textTheme,
+                            Icons.volume_up_rounded,
+                            'Notification Sound',
+                            prefs.notificationSound == 'asmita_notification_2' ? 'AsmitA Notification 2' : 'AsmitA Notification 1 (Default)',
                             false,
-                            (val) => context.read<PreferencesBloc>().add(UpdatePreferences(emailAlerts: val))
+                            () => _showNotificationSoundPicker(context, ref, prefs.notificationSound),
                           ),
                         ],
                       ),
@@ -184,7 +217,10 @@ class SettingsScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(children: children),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(19),
+        child: Column(children: children),
+      ),
     );
   }
 
@@ -197,9 +233,15 @@ class SettingsScreen extends StatelessWidget {
       child: Row(
         children: [
           Icon(icon, color: Theme.of(context).iconTheme.color, size: 22),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
-            child: Text(title, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+            child: Text(
+              title,
+              style: textTheme.bodyLarge?.copyWith(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           Switch(
             value: value,
@@ -212,26 +254,47 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildActionRow(BuildContext context, TextTheme textTheme, IconData icon, String title, String trailingText, bool showBorder, VoidCallback onTap, {Color? textColor, Color? iconColor}) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          border: showBorder ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1)) : null,
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: iconColor ?? Theme.of(context).iconTheme.color, size: 22),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(title, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: textColor)),
-            ),
-            if (trailingText.isNotEmpty) ...[
-              Text(trailingText, style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodySmall?.color)),
-              const SizedBox(width: 8),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          color: Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          decoration: BoxDecoration(
+            border: showBorder ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1)) : null,
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: iconColor ?? Theme.of(context).iconTheme.color, size: 22),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  title,
+                  style: textTheme.bodyLarge?.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              if (trailingText.isNotEmpty) ...[
+                Text(
+                  trailingText,
+                  textAlign: TextAlign.end,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontSize: 13,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              Icon(Icons.arrow_forward_ios_rounded, size: 14, color: iconColor ?? Theme.of(context).iconTheme.color),
             ],
-            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: iconColor ?? Theme.of(context).iconTheme.color),
-          ],
+          ),
         ),
       ),
     );
@@ -296,7 +359,151 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  void _showLanguagePicker(BuildContext context, String currentLanguage) {
+  void _showApprovalSoundPicker(BuildContext context, WidgetRef ref, String currentSound) {
+    final sounds = [
+      {
+        'key': 'asmita_alert_1',
+        'label': 'AsmitA Alert 1 (Default)',
+        'asset': 'assets/audio/notifications/approvals/AsmitA Alert 1.wav'
+      },
+      {
+        'key': 'asmita_alert_2',
+        'label': 'AsmitA Alert 2',
+        'asset': 'assets/audio/notifications/approvals/AsmitA Alert 2.wav'
+      },
+    ];
+    final player = AudioPlayer();
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (modalContext) => SafeArea(
+        child: CupertinoActionSheet(
+          title: const Text('Select Approval Alert Sound'),
+          message: const Text('Plays when visitors request entry at the gate'),
+          actions: sounds.map((s) {
+            final key = s['key']!;
+            final label = s['label']!;
+            final asset = s['asset']!;
+            final isSelected = key == currentSound;
+            return CupertinoActionSheetAction(
+              onPressed: () async {
+                try {
+                  await player.setAsset(asset);
+                  await player.play();
+                } catch (_) {}
+                if (key != currentSound) {
+                  ref.read(preferencesProvider.notifier).updatePreference(approvalSound: key);
+                  if (context.mounted) {
+                    AsmitaToast.show(context, message: 'Approval sound: $label', type: AsmitaToastType.success);
+                  }
+                }
+                if (modalContext.mounted) {
+                  Navigator.pop(modalContext);
+                }
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (isSelected)
+                    Icon(Icons.check_circle_rounded, size: 18, color: Theme.of(context).colorScheme.primary),
+                  if (isSelected) const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyLarge?.color,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          cancelButton: CupertinoActionSheetAction(
+            onPressed: () {
+              player.dispose();
+              Navigator.pop(modalContext);
+            },
+            isDestructiveAction: true,
+            child: const Text('Cancel'),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showNotificationSoundPicker(BuildContext context, WidgetRef ref, String currentSound) {
+    final sounds = [
+      {
+        'key': 'asmita_notification_1',
+        'label': 'AsmitA Notification 1 (Default)',
+        'asset': 'assets/audio/notifications/campaigns/AsmitA Notifications 1.wav'
+      },
+      {
+        'key': 'asmita_notification_2',
+        'label': 'AsmitA Notification 2',
+        'asset': 'assets/audio/notifications/campaigns/AsmitA Notifications 2.wav'
+      },
+    ];
+    final player = AudioPlayer();
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (modalContext) => SafeArea(
+        child: CupertinoActionSheet(
+          title: const Text('Select Notification Sound'),
+          message: const Text('Plays for society announcements and general updates'),
+          actions: sounds.map((s) {
+            final key = s['key']!;
+            final label = s['label']!;
+            final asset = s['asset']!;
+            final isSelected = key == currentSound;
+            return CupertinoActionSheetAction(
+              onPressed: () async {
+                try {
+                  await player.setAsset(asset);
+                  await player.play();
+                } catch (_) {}
+                if (key != currentSound) {
+                  ref.read(preferencesProvider.notifier).updatePreference(notificationSound: key);
+                  if (context.mounted) {
+                    AsmitaToast.show(context, message: 'Notification sound: $label', type: AsmitaToastType.success);
+                  }
+                }
+                if (modalContext.mounted) {
+                  Navigator.pop(modalContext);
+                }
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (isSelected)
+                    Icon(Icons.check_circle_rounded, size: 18, color: Theme.of(context).colorScheme.primary),
+                  if (isSelected) const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyLarge?.color,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          cancelButton: CupertinoActionSheetAction(
+            onPressed: () {
+              player.dispose();
+              Navigator.pop(modalContext);
+            },
+            isDestructiveAction: true,
+            child: const Text('Cancel'),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showLanguagePicker(BuildContext context, WidgetRef ref, String currentLanguage) {
     final l10n = AppLocalizations.of(context)!;
     final languages = [
       {'name': 'English', 'localName': l10n.english}, 

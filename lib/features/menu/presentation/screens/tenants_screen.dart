@@ -44,14 +44,16 @@ class TenantsScreen extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           FloatingActionButton(
+            key: const Key('request_history_fab'),
             heroTag: 'request_history_fab',
             onPressed: () => _onHistoryRequestFabTapped(context),
             backgroundColor: Theme.of(context).colorScheme.primary,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Icon(Icons.history, color: Theme.of(context).colorScheme.surface),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           FloatingActionButton(
+            key: const Key('add_tenant_fab'),
             heroTag: 'add_tenant_fab',
             onPressed: () => _showAddEditSheet(context),
             backgroundColor: Theme.of(context).colorScheme.primary,
@@ -73,24 +75,43 @@ class TenantsScreen extends StatelessWidget {
             ),
             const AsmitaSubHeader(title: 'Tenants'),
             Expanded(
-              child: BlocBuilder<TenantBloc, TenantState>(
-                builder: (context, state) {
-                  if (state is TenantLoading) {
-                    return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
-                  } else if (state is TenantError) {
-                    return Center(
-                      child: Text('Error: ${state.message}', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
-                    );
-                  } else if (state is TenantLoaded) {
-                    final members = state.items;
-                    return CustomScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                      slivers: [
-                        AsmitaAnimatedRefresh(
-                          onRefresh: () async {
-                            context.read<TenantBloc>().add(const LoadTenant());
-                            await Future.delayed(const Duration(milliseconds: 1000));
-                          },
+              child: tenantState.when(
+                data: (members) {
+                  return CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    slivers: [
+                      AsmitaAnimatedRefresh(
+                        onRefresh: () async {
+                          ref.invalidate(tenantProvider);
+                          await Future.delayed(const Duration(milliseconds: 1000));
+                        },
+                      ),
+                      if (members.isEmpty)
+                        SliverFillRemaining(
+                          child: Center(
+                            child: Text(
+                              'No Tenants added yet.',
+                              style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color),
+                            ),
+                          ),
+                        )
+                      else
+                        SliverPadding(
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          sliver: SliverGrid(
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.80,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                            ),
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                return _buildTenantGridCard(context, ref, textTheme, members[index]);
+                              },
+                              childCount: members.length,
+                            ),
+                          ),
                         ),
                         if (members.isEmpty)
                           SliverFillRemaining(
