@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_event.dart';
@@ -130,8 +131,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 if (isLoading)
                   const LinearProgressIndicator(),
                 Expanded(
-                  child: SingleChildScrollView(
-                    physics: const ClampingScrollPhysics(),
+                  child: AsmitaPullToRefresh(
+                    onRefresh: () async {
+                      context.read<AuthBloc>().add(AuthCheckRequested());
+                      await Future.delayed(const Duration(milliseconds: 700));
+                    },
                     padding: const EdgeInsets.all(16),
                     child: user == null
                         ? const Center(child: Text('Failed to load profile data.'))

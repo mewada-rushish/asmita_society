@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -38,15 +39,24 @@ class SettingsScreen extends ConsumerWidget {
               child: prefsState.when(
                 data: (prefs) {
                   if (prefs == null) return const Center(child: Text('Failed to load preferences'));
-                  return ListView(
-                    physics: const ClampingScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      _buildSectionTitle(context, textTheme, 'Notifications'),
-                      const SizedBox(height: 12),
-                      _buildSettingsCard(
-                        context,
-                        children: [
+                  return CustomScrollView(
+                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                    slivers: [
+                      AsmitaAnimatedRefresh(
+                        onRefresh: () async {
+                          ref.invalidate(preferencesProvider);
+                          await ref.read(preferencesProvider.future);
+                        },
+                      ),
+                      SliverPadding(
+                        padding: const EdgeInsets.all(16),
+                        sliver: SliverList.list(
+                          children: [
+                            _buildSectionTitle(context, textTheme, 'Notifications'),
+                            const SizedBox(height: 12),
+                            _buildSettingsCard(
+                              context,
+                              children: [
                           _buildToggleRow(
                             context,
                             textTheme, 
@@ -167,8 +177,11 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 24),
                     ],
-                  );
-                },
+                  ),
+                ),
+              ],
+            );
+          },
                 loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
                 error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
               ),
