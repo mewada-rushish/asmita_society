@@ -602,7 +602,7 @@ class AsmitaVisitorCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: isDark ? const Color(0xFF1E293B) : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isOutsideSchedule
@@ -762,7 +762,7 @@ class AsmitaVisitorCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? const Color(0xFF1E293B).withValues(alpha: 0.7)
+                        ? const Color(0xFF0F172A).withValues(alpha: 0.65)
                         : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
