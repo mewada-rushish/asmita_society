@@ -846,8 +846,11 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: theme.scaffoldBackgroundColor,
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,
         onPressed: () => _showPreApproveModal(context),
@@ -958,12 +961,15 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
+                            color: isDark ? const Color(0xFF1E293B) : Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Theme.of(context).dividerColor),
+                            border: Border.all(
+                              color: isDark ? const Color(0xFF334155) : Theme.of(context).dividerColor,
+                              width: 1.2,
+                            ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.03),
+                                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.03),
                                 blurRadius: 10,
                                 offset: const Offset(0, 3),
                               ),
@@ -972,13 +978,29 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                           child: TextField(
                             controller: _searchController,
                             onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 13,
+                              color: isDark ? Colors.white : AsmitaPalette.textDark,
+                            ),
                             decoration: InputDecoration(
                               hintText: 'Search visitor, company, pass code, vehicle...',
-                              hintStyle: const TextStyle(fontSize: 13, color: AsmitaPalette.textLight),
-                              prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AsmitaPalette.textLight),
+                              hintStyle: TextStyle(
+                                fontSize: 13,
+                                color: isDark ? const Color(0xFF94A3B8) : AsmitaPalette.textLight,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.search_rounded,
+                                size: 20,
+                                color: isDark ? const Color(0xFF94A3B8) : AsmitaPalette.textLight,
+                              ),
                               suffixIcon: _searchQuery.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(Icons.clear_rounded, size: 18, color: AsmitaPalette.textLight),
+                                   ? IconButton(
+                                      icon: Icon(
+                                        Icons.clear_rounded,
+                                        size: 18,
+                                        color: isDark ? const Color(0xFF94A3B8) : AsmitaPalette.textLight,
+                                      ),
                                       onPressed: () {
                                         _searchController.clear();
                                         setState(() => _searchQuery = '');
@@ -1037,6 +1059,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     final approvedCount = visits.where((v) => v.status == IndustrialVisitStatus.approved).length;
     final insideCount = visits.where((v) => v.status == IndustrialVisitStatus.checkedIn).length;
     final totalCount = visits.length;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Row(
       children: [
@@ -1046,7 +1069,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             label: 'Total',
             count: totalCount,
             icon: Icons.groups_rounded,
-            accentColor: AsmitaPalette.deepNavy,
+            accentColor: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
             filterKey: 'ALL',
           ),
         ),
@@ -1057,7 +1080,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             label: 'Pending',
             count: pendingCount,
             icon: Icons.pending_actions_rounded,
-            accentColor: AsmitaPalette.actionRed,
+            accentColor: isDark ? const Color(0xFFF87171) : AsmitaPalette.actionRed,
             filterKey: 'PENDING',
             showPulse: pendingCount > 0,
           ),
@@ -1069,7 +1092,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             label: 'Approved',
             count: approvedCount,
             icon: Icons.verified_rounded,
-            accentColor: const Color(0xFF1E88E5),
+            accentColor: isDark ? const Color(0xFF38BDF8) : const Color(0xFF1E88E5),
             filterKey: 'APPROVED',
           ),
         ),
@@ -1080,7 +1103,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             label: 'Inside',
             count: insideCount,
             icon: Icons.meeting_room_rounded,
-            accentColor: AsmitaPalette.successGreen,
+            accentColor: isDark ? const Color(0xFF34D399) : AsmitaPalette.successGreen,
             filterKey: 'INSIDE',
           ),
         ),
@@ -1111,16 +1134,18 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? accentColor.withValues(alpha: isDark ? 0.25 : 0.12)
-              : Theme.of(context).colorScheme.surface,
+              ? accentColor.withValues(alpha: isDark ? 0.22 : 0.12)
+              : (isDark ? const Color(0xFF1E293B) : Theme.of(context).colorScheme.surface),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? accentColor : Theme.of(context).dividerColor,
+            color: isSelected
+                ? accentColor
+                : (isDark ? const Color(0xFF334155) : Theme.of(context).dividerColor),
             width: isSelected ? 1.5 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.03),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
