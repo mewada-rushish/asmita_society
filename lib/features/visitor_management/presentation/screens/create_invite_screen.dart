@@ -52,7 +52,6 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
     'Uber',
     'Ola',
     'Rapido',
-    'BluSmart',
     'Other',
   ];
 
