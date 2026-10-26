@@ -4593,17 +4593,20 @@ class _VisitorOtpSheetWidgetState extends State<_VisitorOtpSheetWidget> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 24,
-        bottom: bottomInset + 20,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    final systemBottomPadding = MediaQuery.of(context).padding.bottom;
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 24,
+          bottom: bottomInset > 0 ? bottomInset + 12 : (systemBottomPadding > 0 ? systemBottomPadding + 16 : 24),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -4649,43 +4652,6 @@ class _VisitorOtpSheetWidgetState extends State<_VisitorOtpSheetWidget> {
               height: 1.4,
             ),
           ),
-          if (_devOtp != null && _devOtp!.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: InkWell(
-                onTap: () {
-                  _otpController.text = _devOtp!;
-                  setState(() {});
-                },
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.amber.shade300),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.bolt_rounded, size: 16, color: Colors.amber),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Demo OTP: $_devOtp (Tap to fill)',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.amber.shade900,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
           const SizedBox(height: 20),
           TextField(
             controller: _otpController,
@@ -4793,6 +4759,7 @@ class _VisitorOtpSheetWidgetState extends State<_VisitorOtpSheetWidget> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

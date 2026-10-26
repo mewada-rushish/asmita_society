@@ -113,8 +113,10 @@ class GuardGateRepository {
         throw Exception(errorMsg ?? 'Failed to create walk-in visitor');
       }
     } on DioException catch (e) {
+      debugPrint('[GuardGateRepository] submitWalkInVisitor 500 error: ${e.response?.data}');
       throw _handleDioError(e, 'Submit Walk-in Visitor');
     } catch (e, stackTrace) {
+      debugPrint('[GuardGateRepository] submitWalkInVisitor error: $e');
       FirebaseCrashlytics.instance.recordError(
         e,
         stackTrace,
