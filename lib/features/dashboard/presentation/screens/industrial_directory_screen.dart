@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/utils/property_role_resolver.dart';
@@ -6,6 +7,8 @@ import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
+import '../../../auth/bloc/auth_bloc.dart';
+import '../../../auth/bloc/auth_state.dart';
 import '../../../dashboard/widgets/asmita_pre_approve_wizard.dart';
 import '../../../visitor_management/presentation/screens/department_delegation_screen.dart';
 
@@ -20,6 +23,64 @@ class IndustrialDirectoryScreen extends StatefulWidget {
 
 class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
   bool _isDelegationActive = false;
+  List<Map<String, dynamic>> _dynamicDepartments = [];
+  bool _isLoadingDepartments = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDepartments();
+  }
+
+  int? _resolveSocietyId() {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthAuthenticated) {
+      return authState.user.societyId;
+    }
+    return 114;
+  }
+
+  Future<void> _loadDepartments({bool forceRefresh = false}) async {
+    final societyId = _resolveSocietyId();
+    if (societyId == null) {
+      if (mounted) setState(() => _isLoadingDepartments = false);
+      return;
+    }
+
+    try {
+      final depts = await AsmitaPreApproveWizard.loadSocietyDepartments(societyId);
+      if (mounted) {
+        setState(() {
+          _dynamicDepartments = depts;
+          _isLoadingDepartments = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingDepartments = false);
+    }
+  }
+
+  IconData _iconForDept(String name) {
+    final n = name.toLowerCase();
+    if (n.contains('tech') || n.contains('it') || n.contains('system')) {
+      return Icons.memory_rounded;
+    } else if (n.contains('finance') || n.contains('account')) {
+      return Icons.account_balance_rounded;
+    } else if (n.contains('security') || n.contains('guard') || n.contains('gate')) {
+      return Icons.shield_rounded;
+    } else if (n.contains('executive') || n.contains('board') || n.contains('hq')) {
+      return Icons.workspace_premium_rounded;
+    } else if (n.contains('hr') || n.contains('human') || n.contains('admin')) {
+      return Icons.people_alt_rounded;
+    } else if (n.contains('supply') || n.contains('logistic') || n.contains('facility')) {
+      return Icons.inventory_2_rounded;
+    } else if (n.contains('market')) {
+      return Icons.campaign_rounded;
+    } else if (n.contains('valet') || n.contains('park')) {
+      return Icons.local_parking_rounded;
+    }
+    return Icons.domain_rounded;
+  }
 
   Future<void> _callContact(String title, String phone) async {
     final cleanPhone = phone.replaceAll(RegExp(r'\s+'), '');
@@ -73,7 +134,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
           Expanded(
             child: AsmitaPullToRefresh(
               onRefresh: () async {
-                await Future.delayed(const Duration(milliseconds: 700));
+                await _loadDepartments(forceRefresh: true);
                 if (mounted) setState(() {});
               },
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 180),
@@ -291,40 +352,69 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                   ),
                   const SizedBox(height: 14),
 
-                  _buildDeptCard(
-                    title: 'Executive Suite & Boardroom',
-                    floor: 'Floor 4 • Executive Wing',
-                    cabins: 'Cabins 401 - 406',
-                    icon: Icons.workspace_premium_rounded,
-                  ),
-                  const SizedBox(height: 10),
-                  _buildDeptCard(
-                    title: 'Accounts & Finance',
-                    floor: 'Floor 2 • East Wing',
-                    cabins: 'Cabins 201 - 210',
-                    icon: Icons.account_balance_rounded,
-                  ),
-                  const SizedBox(height: 10),
-                  _buildDeptCard(
-                    title: 'Technology & IT Operations',
-                    floor: 'Floor 3 • Innovation Hub',
-                    cabins: 'Workstations 301 - 340',
-                    icon: Icons.memory_rounded,
-                  ),
-                  const SizedBox(height: 10),
-                  _buildDeptCard(
-                    title: 'Human Resources & Admin',
-                    floor: 'Floor 1 • Main Lobby Wing',
-                    cabins: 'Cabins 101 - 106',
-                    icon: Icons.people_alt_rounded,
-                  ),
-                  const SizedBox(height: 10),
-                  _buildDeptCard(
-                    title: 'Supply Chain & Logistics',
-                    floor: 'Ground Floor • Loading Dock B',
-                    cabins: 'Bays 1 - 4',
-                    icon: Icons.inventory_2_rounded,
-                  ),
+                  if (_isLoadingDepartments)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: AsmitaLoadingIndicator(
+                          color: AsmitaPalette.deepNavy,
+                          size: 24,
+                        ),
+                      ),
+                    )
+                  else if (_dynamicDepartments.isNotEmpty)
+                    ..._dynamicDepartments.map((dept) {
+                      final name = (dept['department_name'] ?? dept['name'] ?? 'Department').toString();
+                      final floor = (dept['floor_number'] ?? dept['floor'] ?? 'General').toString();
+                      final deptId = dept['id'] is int ? dept['id'] as int : int.tryParse(dept['id']?.toString() ?? '');
+                      final floorLabel = floor.toLowerCase().contains('floor') ? floor : 'Floor $floor';
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _buildDeptCard(
+                          title: name,
+                          floor: floorLabel,
+                          cabins: 'Explore Staff',
+                          icon: _iconForDept(name),
+                          departmentId: deptId,
+                        ),
+                      );
+                    })
+                  else ...[
+                    _buildDeptCard(
+                      title: 'Executive Suite & Boardroom',
+                      floor: 'Floor 4 • Executive Wing',
+                      cabins: 'Cabins 401 - 406',
+                      icon: Icons.workspace_premium_rounded,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildDeptCard(
+                      title: 'Accounts & Finance',
+                      floor: 'Floor 2 • East Wing',
+                      cabins: 'Cabins 201 - 210',
+                      icon: Icons.account_balance_rounded,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildDeptCard(
+                      title: 'Technology & IT Operations',
+                      floor: 'Floor 3 • Innovation Hub',
+                      cabins: 'Workstations 301 - 340',
+                      icon: Icons.memory_rounded,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildDeptCard(
+                      title: 'Human Resources & Admin',
+                      floor: 'Floor 1 • Main Lobby Wing',
+                      cabins: 'Cabins 101 - 106',
+                      icon: Icons.people_alt_rounded,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildDeptCard(
+                      title: 'Supply Chain & Logistics',
+                      floor: 'Ground Floor • Loading Dock B',
+                      cabins: 'Bays 1 - 4',
+                      icon: Icons.inventory_2_rounded,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -493,12 +583,13 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
     required String floor,
     required String cabins,
     required IconData icon,
+    int? departmentId,
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return InkWell(
-      onTap: () => _showDepartmentEmployeesModal(title, floor),
+      onTap: () => _showDepartmentEmployeesModal(title, floor, departmentId: departmentId),
       borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.all(14),
@@ -599,7 +690,8 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
     );
   }
 
-  void _showDepartmentEmployeesModal(String deptName, String floor) {
+  void _showDepartmentEmployeesModal(String deptName, String floor, {int? departmentId}) {
+    final societyId = _resolveSocietyId();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -608,6 +700,8 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
         return _DepartmentEmployeesSheet(
           departmentName: deptName,
           floor: floor,
+          departmentId: departmentId,
+          societyId: societyId,
           onCall: _callContact,
         );
       },
@@ -618,11 +712,15 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
 class _DepartmentEmployeesSheet extends StatefulWidget {
   final String departmentName;
   final String floor;
+  final int? departmentId;
+  final int? societyId;
   final Future<void> Function(String title, String phone) onCall;
 
   const _DepartmentEmployeesSheet({
     required this.departmentName,
     required this.floor,
+    this.departmentId,
+    this.societyId,
     required this.onCall,
   });
 
@@ -650,30 +748,58 @@ class _DepartmentEmployeesSheetState extends State<_DepartmentEmployeesSheet> {
 
   Future<void> _loadEmployees() async {
     try {
-      final list = await AsmitaPreApproveWizard.loadSocietyEmployees(114);
+      final sId = widget.societyId ?? 114;
+      final list = await AsmitaPreApproveWizard.loadSocietyEmployees(sId);
       if (!mounted) return;
 
       // Filter employees belonging to this department
-      final normalizedDept = widget.departmentName.toLowerCase();
+      final normalizedDept = widget.departmentName.toLowerCase().trim();
       final filtered = list.where((emp) {
-        final empDept = (emp['department_name'] ?? emp['department'] ?? '').toString().toLowerCase();
-        final role = (emp['role'] ?? emp['primary_role'] ?? '').toString().toLowerCase();
-        if (normalizedDept.contains('it') || normalizedDept.contains('tech')) {
-          return empDept.contains('tech') || empDept.contains('it') || role.contains('tech') || role.contains('developer');
-        } else if (normalizedDept.contains('finance') || normalizedDept.contains('accounts')) {
-          return empDept.contains('account') || empDept.contains('finance') || role.contains('account');
-        } else if (normalizedDept.contains('hr') || normalizedDept.contains('human')) {
-          return empDept.contains('hr') || empDept.contains('human') || role.contains('hr') || role.contains('admin');
-        } else if (normalizedDept.contains('supply') || normalizedDept.contains('logistics')) {
-          return empDept.contains('supply') || empDept.contains('logistics') || role.contains('logistics');
-        } else if (normalizedDept.contains('executive')) {
-          return empDept.contains('executive') || role.contains('director') || role.contains('lead') || role.contains('manager');
+        // Direct department_id check
+        if (widget.departmentId != null) {
+          final empDeptId = emp['department_id'] is int
+              ? emp['department_id'] as int
+              : int.tryParse(emp['department_id']?.toString() ?? '');
+          if (empDeptId == widget.departmentId) return true;
         }
-        return empDept.contains(normalizedDept) || normalizedDept.contains(empDept);
+
+        final empDept = (emp['department_name'] ?? emp['department'] ?? '').toString().toLowerCase().trim();
+        final role = (emp['role'] ?? emp['primary_role'] ?? '').toString().toLowerCase().trim();
+        final designation = (emp['designation'] ?? '').toString().toLowerCase().trim();
+
+        // Exact or substring department match
+        if (empDept.isNotEmpty && (empDept == normalizedDept || normalizedDept.contains(empDept) || empDept.contains(normalizedDept))) {
+          return true;
+        }
+
+        // Specific category mappings
+        if (normalizedDept.contains('it') || normalizedDept.contains('tech')) {
+          return empDept.contains('tech') || empDept.contains('it') || role.contains('tech') || role.contains('developer') || designation.contains('it');
+        } else if (normalizedDept.contains('finance') || normalizedDept.contains('account')) {
+          return empDept.contains('account') || empDept.contains('finance') || role.contains('account') || designation.contains('finance');
+        } else if (normalizedDept.contains('hr') || normalizedDept.contains('human')) {
+          return empDept.contains('hr') || empDept.contains('human') || role.contains('hr') || designation.contains('hr');
+        } else if (normalizedDept.contains('supply') || normalizedDept.contains('logistic') || normalizedDept.contains('facility')) {
+          return empDept.contains('supply') || empDept.contains('logistic') || empDept.contains('facility') || role.contains('logistic');
+        } else if (normalizedDept.contains('executive') || normalizedDept.contains('board')) {
+          // Exclude security / guards from executive
+          if (role.contains('security') || role.contains('guard') || empDept.contains('security')) {
+            return false;
+          }
+          return empDept.contains('executive') || empDept.contains('board') || role.contains('director') || role.contains('executive') || designation.contains('director');
+        } else if (normalizedDept.contains('security') || normalizedDept.contains('command') || normalizedDept.contains('gate')) {
+          return empDept.contains('security') || role.contains('security') || role.contains('guard');
+        } else if (normalizedDept.contains('market')) {
+          return empDept.contains('market') || role.contains('market') || designation.contains('market');
+        } else if (normalizedDept.contains('valet')) {
+          return empDept.contains('valet') || role.contains('valet');
+        }
+
+        return false;
       }).toList();
 
       setState(() {
-        _employees = filtered.isNotEmpty ? filtered : list.take(8).toList();
+        _employees = filtered;
         _isLoading = false;
       });
     } catch (_) {

@@ -96,8 +96,13 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
       // 2. Fetch eligible colleagues for personal delegation
       List<dynamic> rawList = [];
       try {
+        final queryParams = <String, dynamic>{};
+        if (widget.departmentId != null) {
+          queryParams['department_id'] = widget.departmentId;
+        }
         final response = await dio.get(
           EnvConfig.employeeDelegationColleagues,
+          queryParameters: queryParams.isNotEmpty ? queryParams : null,
         );
         if (response.statusCode == 200 && response.data['success'] == true) {
           rawList = response.data['data'] as List? ?? [];

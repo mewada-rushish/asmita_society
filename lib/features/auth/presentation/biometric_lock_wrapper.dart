@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:asmita_society/features/menu/presentation/providers/preferences_provider.dart';
 import 'package:flutter/services.dart';
+import '../../../core/utils/asmita_logger.dart';
 
 class BiometricLockWrapper extends ConsumerStatefulWidget {
   final Widget child;
@@ -78,7 +79,7 @@ class _BiometricLockWrapperState extends ConsumerState<BiometricLockWrapper> {
     }
 
     final isBiometricEnabled = prefsState.value?.biometricLogin ?? false;
-    debugPrint('Biometrics - Loaded! enabled: $isBiometricEnabled, hasPrompted: $_hasPrompted, isAuth: $_isAuthenticated');
+    AsmitaLogger.info('Biometrics', 'Loaded - enabled: $isBiometricEnabled, hasPrompted: $_hasPrompted, isAuth: $_isAuthenticated');
 
     if (isBiometricEnabled && !_isAuthenticated && !_hasPrompted && !_isAuthenticating) {
       _hasPrompted = true;

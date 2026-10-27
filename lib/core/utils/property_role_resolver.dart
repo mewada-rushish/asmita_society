@@ -248,19 +248,28 @@ class PropertyRoleResolver {
   }
 
   /// Checks whether an employee/corporate user has authority to delegate approvals.
-  /// All corporate/commercial employee types can delegate visitor approvals to a colleague.
+  /// Dynamically consults portal-configured permissions if loaded (canDelegate);
+  /// gracefully falls back to corporate hierarchy heuristic when permissions are not present.
   static bool canDelegate(UserModel? user, {String? designation, String? role}) {
-    if (user != null) {
-      if (user.hasPermission('canDelegate')) return true;
+    if (user != null && user.permissions.isNotEmpty) {
+      if (user.permissions.containsKey('canDelegate')) {
+        return user.canDelegate;
+      }
     }
 
     final normalized = normalizeRole(role ?? user?.primaryRole);
-    // Security guards and visitors cannot delegate visitor approvals
-    if (normalized == 'guard' || normalized == 'visitor') {
+    // Security guards, visitors, front desk receptionists, and facility staff cannot delegate visitor approvals
+    if (normalized == 'guard' ||
+        normalized == 'visitor' ||
+        normalized == 'receptionist' ||
+        normalized == 'facility') {
       return false;
     }
 
-    // All employee, staff, and leadership roles in corporate/commercial properties can delegate
-    return true;
+    // Corporate leadership and employee hosts can delegate
+    return normalized == 'director' ||
+        normalized == 'employee' ||
+        normalized == 'owner' ||
+        normalized == 'tenant';
   }
 }

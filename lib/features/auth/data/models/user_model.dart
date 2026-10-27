@@ -131,6 +131,7 @@ class UserModel {
   bool get canManageFormsPolicies => hasPermission('canManageFormsPolicies');
   bool get canManageFeedback => hasPermission('canManageFeedback');
   bool get canManagePolling => hasPermission('canManagePolling');
+  bool get canDelegate => hasPermission('canDelegate');
   bool get canIssuePasses => canManageVisitors;
   bool get isActive {
     if (roleDetails != null) {
