@@ -21,6 +21,8 @@ void main() {
   setUp(() {
     mockAuthRepository = MockAuthRepository();
     mockSecureStorageService = MockSecureStorageService();
+    when(() => mockSecureStorageService.read(key: any(named: 'key')))
+        .thenAnswer((_) async => null);
     authBloc = AuthBloc(
       authRepository: mockAuthRepository,
       secureStorage: mockSecureStorageService,
