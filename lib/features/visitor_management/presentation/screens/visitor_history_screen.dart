@@ -1104,13 +1104,37 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                       SliverFillRemaining(
                         hasScrollBody: false,
                         child: Center(
-                          child: Text(
-                            'No visitor history found',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodyMedium?.color,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 60.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.history_toggle_off_rounded,
+                                    size: 40,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'No visitor history found',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium?.color,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -1139,7 +1163,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 84.0),
+        padding: const EdgeInsets.only(bottom: 96.0),
         child: FloatingActionButton.extended(
           heroTag: null, // Fixes Hero overlay bug in IndexedStack
           onPressed: () {
