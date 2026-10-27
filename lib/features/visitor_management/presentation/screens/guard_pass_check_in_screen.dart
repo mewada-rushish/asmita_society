@@ -264,7 +264,7 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
                             ],
                           ),
                           const Divider(height: 24),
-                          _detailRow('Host / Executive', _matchedVisit!.hostName ?? 'Not Assigned'),
+                          _detailRow('Person to Meet', _matchedVisit!.hostName ?? 'Not Assigned'),
                           _detailRow('Department', _matchedVisit!.departmentName ?? 'General Operations'),
                           _detailRow('Arrival Mode', _matchedVisit!.arrivalMode),
                           if (_matchedVisit!.vehicleNumber != null)

@@ -565,7 +565,7 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
 
                           AsmitaToast.show(
                             context,
-                            message: 'BBPS: Fetching bill dues for $selectedProvider (#$acct)...',
+                            message: 'Fetching bill for $selectedProvider...',
                             type: AsmitaToastType.success,
                           );
                         },

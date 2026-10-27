@@ -346,7 +346,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          _isOnDuty ? 'RECEPTION ACTIVE' : 'DESK ON BREAK',
+                          _isOnDuty ? 'Reception Open' : 'Desk On Break',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -365,8 +365,8 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                   const SizedBox(height: 2),
                   Text(
                     _isOnDuty
-                        ? 'Processing arrivals & visitor passes'
-                        : 'Forwarding incoming guests to gate security',
+                        ? 'Ready for visitors & passes'
+                        : 'Forwarding guests to security',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
