@@ -439,10 +439,10 @@ class AsmitaPrimaryHeader extends StatelessWidget {
         final Color brandingColor;
         if (isGuard) {
           brandingIcon = Icons.shield_outlined;
-          brandingColor = AsmitaPalette.deepNavy;
+          brandingColor = isDark ? const Color(0xFF818CF8) : AsmitaPalette.deepNavy;
         } else if (isIndustrial) {
           brandingIcon = Icons.corporate_fare_rounded;
-          brandingColor = AsmitaPalette.deepNavy;
+          brandingColor = isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy;
         } else {
           brandingIcon = Icons.apartment_rounded;
           brandingColor = AsmitaPalette.actionRed;
@@ -489,11 +489,11 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                         }
                       },
                       borderRadius: BorderRadius.circular(20),
-                      child: const Padding(
-                        padding: EdgeInsets.all(4.0),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
                         child: Icon(
                           Icons.arrow_back_ios_new_rounded,
-                          color: AsmitaPalette.deepNavy,
+                          color: isDark ? Colors.white : AsmitaPalette.deepNavy,
                           size: 20,
                         ),
                       ),

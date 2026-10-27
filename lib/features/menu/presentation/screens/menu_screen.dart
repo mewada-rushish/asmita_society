@@ -103,8 +103,11 @@ class MenuScreen extends StatelessWidget {
                           context,
                           title: _getIndustrialSectionTitle(normalized),
                           items: [
-                            _buildMenuItem(context, Icons.swap_horiz_rounded, 'Department Delegation'),
-                            _buildMenuItem(context, Icons.directions_car_filled_outlined, 'Workplace Vehicles'),
+                            if (PropertyRoleResolver.canDelegate(currentUser, role: resolvedRole))
+                              _buildMenuItem(context, Icons.swap_horiz_rounded, 'Department Delegation'),
+                            if (PropertyRoleResolver.canManageVehicles(currentUser, role: resolvedRole))
+                              _buildMenuItem(context, Icons.directions_car_filled_outlined, 'Workplace Vehicles'),
+                            _buildMenuItem(context, Icons.contact_phone_outlined, 'Campus Directory & Hotlines'),
                             _buildMenuItem(context, Icons.notifications_active_outlined, 'Notification & Sound Alerts'),
                             _buildMenuItem(context, Icons.fingerprint_rounded, 'Security & Biometric Access'),
                           ],

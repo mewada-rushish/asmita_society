@@ -377,6 +377,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       return GuardQrScannerScreen(
         isActive: _currentIndex == 5,
         onScanComplete: () => setState(() => _currentIndex = 0),
+        onBack: () => setState(() => _currentIndex = 0),
       );
     }
     return const SizedBox.shrink();

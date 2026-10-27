@@ -8,6 +8,7 @@ import '../../../../core/constants/design_system.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/security/secure_storage_service.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_sub_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 
@@ -304,10 +305,12 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
             // Standard Unified SubHeader
             const AsmitaSubHeader(title: 'Visitor Approval Delegation'),
 
-            // Scrollable Settings Content
+            // Scrollable Settings Content with Pull to Refresh
             Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+              child: AsmitaPullToRefresh(
+                onRefresh: () async {
+                  await _fetchCandidateDelegates();
+                },
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,

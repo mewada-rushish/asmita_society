@@ -4,6 +4,7 @@ import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_visitor_card.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -691,31 +692,39 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                           'CHECKED_OUT',
                         ]
                         .map(
-                          (s) => ChoiceChip(
-                            label: Text(s),
-                            selected:
-                                tempStatus == s ||
-                                (s == 'ALL' && tempStatus == null),
-                            onSelected: (selected) {
-                              if (selected) {
-                                setModalState(
-                                  () => tempStatus = s == 'ALL' ? null : s,
-                                );
-                              }
-                            },
-                            selectedColor: Theme.of(
-                              context,
-                            ).colorScheme.error.withValues(alpha: 0.1),
-                            labelStyle: TextStyle(
-                              fontFamily: 'Poppins',
-                              color:
-                                  (tempStatus == s ||
-                                      (s == 'ALL' && tempStatus == null))
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          (s) {
+                            final isSelected = tempStatus == s || (s == 'ALL' && tempStatus == null);
+                            return ChoiceChip(
+                              label: Text(s),
+                              selected: isSelected,
+                              checkmarkColor: Colors.white,
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setModalState(
+                                    () => tempStatus = s == 'ALL' ? null : s,
+                                  );
+                                }
+                              },
+                              selectedColor: AsmitaPalette.deepNavy,
+                              backgroundColor: Theme.of(context).colorScheme.surface,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                side: BorderSide(
+                                  color: isSelected
+                                      ? AsmitaPalette.deepNavy
+                                      : Theme.of(context).dividerColor,
+                                ),
+                              ),
+                              labelStyle: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 11.5,
+                                color: isSelected
+                                    ? Colors.white
+                                    : Theme.of(context).textTheme.bodyLarge?.color,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                              ),
+                            );
+                          },
                         )
                         .toList(),
               ),
@@ -1094,7 +1103,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                       )
                     else
                       SliverPadding(
-                        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 160),
+                        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 200),
                         sliver: SliverList.separated(
                           itemCount: historyList.length,
                           separatorBuilder: (context, index) =>
@@ -1115,24 +1124,27 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: null, // Fixes Hero overlay bug in IndexedStack
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => const AsmitaDialog(
-              title: 'Pre-Approve Entry',
-              content: AsmitaPreApproveWizard(),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 84.0),
+        child: FloatingActionButton.extended(
+          heroTag: null, // Fixes Hero overlay bug in IndexedStack
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (context) => const AsmitaDialog(
+                title: 'Pre-Approve Entry',
+                content: AsmitaPreApproveWizard(),
+              ),
+            );
+          },
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          icon: Icon(Icons.add, color: Theme.of(context).colorScheme.surface),
+          label: Text(
+            'Add Visitor',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.surface,
+              fontWeight: FontWeight.w600,
             ),
-          );
-        },
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        icon: Icon(Icons.add, color: Theme.of(context).colorScheme.surface),
-        label: Text(
-          'Add Visitor',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.surface,
-            fontWeight: FontWeight.w600,
           ),
         ),
       ),
