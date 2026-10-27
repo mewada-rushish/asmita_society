@@ -316,7 +316,7 @@ class _EmployeeRegistrySheetState extends State<EmployeeRegistrySheet> {
                       HapticFeedback.mediumImpact();
                       AsmitaToast.show(
                         context,
-                        message: '${isCheckIn ? "Checked IN" : "Checked OUT"} $empName at ${DateFormat("hh:mm a").format(recordedTime)}',
+                        message: '${isCheckIn ? "Checked in" : "Checked out"} $empName.',
                         type: AsmitaToastType.success,
                       );
                     },

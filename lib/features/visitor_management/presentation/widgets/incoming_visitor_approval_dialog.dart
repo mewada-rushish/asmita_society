@@ -146,8 +146,8 @@ class _IncomingVisitorApprovalDialogState
         AsmitaToast.show(
           context,
           message: action == 'APPROVE'
-              ? 'Visitor entry approved!'
-              : 'Visitor entry rejected.',
+              ? 'Visitor approved.'
+              : 'Visitor rejected.',
           type: action == 'APPROVE'
               ? AsmitaToastType.success
               : AsmitaToastType.info,
@@ -159,7 +159,7 @@ class _IncomingVisitorApprovalDialogState
         setState(() => _isSubmitting = false);
         AsmitaToast.show(
           context,
-          message: 'Failed to $action visit: $e',
+          message: 'Could not update visitor. Please try again.',
           type: AsmitaToastType.error,
         );
       }

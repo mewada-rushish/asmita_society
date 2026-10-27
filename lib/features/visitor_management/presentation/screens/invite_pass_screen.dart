@@ -210,7 +210,7 @@ class _InvitePassScreenState extends State<InvitePassScreen> {
                     _buildPassDetailRow(context, 'Pass Code', '#${invite.passCode}'),
                     const SizedBox(height: 12),
                   ],
-                  _buildPassDetailRow(context, 'Person to Meet (PTM)', _hostName ?? 'Assigned Host'),
+                  _buildPassDetailRow(context, 'Person to Meet', _hostName ?? 'Not Assigned'),
                   const SizedBox(height: 12),
                   _buildPassDetailRow(context, 'Valid Until', _formatDate(invite.validTo?.toIso8601String())),
                   const SizedBox(height: 12),

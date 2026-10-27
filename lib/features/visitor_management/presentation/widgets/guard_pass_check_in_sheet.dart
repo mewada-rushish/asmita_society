@@ -85,8 +85,8 @@ class _GuardPassCheckInSheetState extends State<GuardPassCheckInSheet> {
       AsmitaToast.show(
         context,
         message: _isLockedOut
-            ? 'Security Lockout: 3 failed attempts. Terminal locked.'
-            : 'Pass code not found or expired. Attempt $_failedAttempts/3.',
+            ? 'Too many attempts. Terminal locked.'
+            : 'Pass not found or expired ($_failedAttempts/3).',
         type: AsmitaToastType.error,
       );
     }
@@ -188,7 +188,7 @@ class _GuardPassCheckInSheetState extends State<GuardPassCheckInSheet> {
                   if (state.status == IndustrialVisitBlocStatus.actionSuccess) {
                     AsmitaToast.show(
                       context,
-                      message: state.successMessage ?? 'Pass updated successfully!',
+                      message: state.successMessage ?? 'Pass updated.',
                       type: AsmitaToastType.success,
                     );
                     Navigator.pop(context);
@@ -446,7 +446,7 @@ class _GuardPassCheckInSheetState extends State<GuardPassCheckInSheet> {
                                   children: [
                                     Expanded(
                                       child: _detailRow(
-                                        'Host / Executive',
+                                        'Person to Meet',
                                         _matchedVisit!.hostName ?? 'Not Assigned',
                                       ),
                                     ),
