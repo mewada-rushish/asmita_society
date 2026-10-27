@@ -1,10 +1,8 @@
 import 'package:dio/dio.dart';
 import '../../../../core/config/env_config.dart';
+import '../../../../core/utils/asmita_logger.dart';
 import '../models/invite_model.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/foundation.dart';
-
-import '../models/visitor_history_item.dart';
 
 class VisitorRepository {
   final Dio _dio;
@@ -42,7 +40,7 @@ class VisitorRepository {
   }
 
   /// Fetches resident's pre-approved invites and on-the-spot visitor requests
-  Future<List<VisitorHistoryItem>> getMyHistory({
+  Future<List<dynamic>> getMyHistory({
     required int residentId,
     String? status,
     DateTime? startDate,
@@ -66,27 +64,29 @@ class VisitorRepository {
 
       final invitesResp = responses[0];
       final requestsResp = responses[1];
-      
-      debugPrint('Invites Response: ${invitesResp.statusCode} ${invitesResp.data}');
-      debugPrint('Requests Response: ${requestsResp.statusCode} ${requestsResp.data}');
 
-      final List<Map<String, dynamic>> mergedHistory = [];
+      AsmitaLogger.info(
+        'VisitorRepository',
+        'History responses received - Invites: ${invitesResp.statusCode}, Requests: ${requestsResp.statusCode}',
+      );
+
+      final List<dynamic> mergedHistory = [];
 
       if (invitesResp.statusCode == 200) {
         final data = invitesResp.data;
         if (data is Map) {
           final invitesList = (data['invites'] ?? data['entries'] ?? data['data'] ?? []) as List<dynamic>;
           mergedHistory.addAll(invitesList.map((e) => {
-            ...(e as Map<String, dynamic>),
+            ...e,
             'record_type': 'PRE_APPROVED'
           }));
         } else if (data is List) {
           mergedHistory.addAll(data.map((e) => {
-            ...(e as Map<String, dynamic>),
+            ...e,
             'record_type': 'PRE_APPROVED'
           }));
         } else {
-          debugPrint('Unexpected invites response format: ${data.runtimeType}');
+          AsmitaLogger.warn('VisitorRepository', 'Unexpected invites response format: ${data.runtimeType}');
         }
       }
 
@@ -95,16 +95,16 @@ class VisitorRepository {
         if (data is Map) {
           final requestsList = (data['requests'] ?? data['entries'] ?? data['data'] ?? []) as List<dynamic>;
           mergedHistory.addAll(requestsList.map((e) => {
-            ...(e as Map<String, dynamic>),
+            ...e,
             'record_type': 'WALK_IN'
           }));
         } else if (data is List) {
           mergedHistory.addAll(data.map((e) => {
-            ...(e as Map<String, dynamic>),
+            ...e,
             'record_type': 'WALK_IN'
           }));
         } else {
-          debugPrint('Unexpected requests response format: ${data.runtimeType}');
+          AsmitaLogger.warn('VisitorRepository', 'Unexpected requests response format: ${data.runtimeType}');
         }
       }
 
@@ -115,8 +115,8 @@ class VisitorRepository {
         return dateB.compareTo(dateA);
       });
 
-      debugPrint('mergedHistory count: ${mergedHistory.length}');
-      return mergedHistory.map((e) => VisitorHistoryItem.fromJson(e)).toList();
+      AsmitaLogger.info('VisitorRepository', 'Merged history items count: ${mergedHistory.length}');
+      return mergedHistory;
     } on DioException catch (e) {
       String msg = 'Network error fetching history';
       if (e.response?.data != null) {
