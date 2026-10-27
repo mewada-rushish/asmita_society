@@ -158,7 +158,7 @@ class _ReceptionistReassignSheetState extends State<ReceptionistReassignSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Update Person to Meet (PTM)',
+                          'Change Person to Meet',
                           style: TextStyle(
                             fontFamily: 'Montserrat',
                             fontSize: 17,
@@ -251,7 +251,7 @@ class _ReceptionistReassignSheetState extends State<ReceptionistReassignSheet> {
                 controller: _searchController,
                 onChanged: (val) => setState(() => _searchQuery = val),
                 decoration: InputDecoration(
-                  hintText: 'Search new host / employee name or dept...',
+                  hintText: 'Search person or department...',
                   hintStyle: const TextStyle(fontSize: 13, fontFamily: 'Poppins'),
                   prefixIcon: const Icon(Icons.search_rounded, size: 20),
                   suffixIcon: _searchQuery.isNotEmpty
@@ -458,7 +458,7 @@ class _ReceptionistReassignSheetState extends State<ReceptionistReassignSheet> {
                 },
                 icon: const Icon(Icons.check_rounded, size: 18),
                 label: const Text(
-                  'Confirm & Update PTM',
+                  'Confirm Person to Meet',
                   style: TextStyle(
                     fontFamily: 'Montserrat',
                     fontSize: 14,

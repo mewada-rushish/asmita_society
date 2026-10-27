@@ -338,7 +338,7 @@ class SettingsScreen extends ConsumerWidget {
                           }
                         } catch (e) {
                           if (context.mounted) {
-                            AsmitaToast.show(context, message: e.toString().replaceAll('Exception: ', ''), type: AsmitaToastType.error);
+                            AsmitaToast.show(context, message: 'Could not delete account. Please try again.', type: AsmitaToastType.error);
                           }
                         } finally {
                           if (context.mounted) {
@@ -652,7 +652,7 @@ class SettingsScreen extends ConsumerWidget {
                           }
                         } catch (e) {
                           if (context.mounted) {
-                            AsmitaToast.show(context, message: e.toString().replaceAll('Exception: ', ''), type: AsmitaToastType.error);
+                            AsmitaToast.show(context, message: 'Could not change password. Please check your current password.', type: AsmitaToastType.error);
                           }
                         } finally {
                           if (context.mounted) {
