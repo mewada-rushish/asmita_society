@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 /// Universal, Production-Safe Logger for AsmitA
-/// 
+///
 /// In `kDebugMode`:
 ///   Outputs formatted, tagged diagnostics to developer console.
 /// In `kReleaseMode`:
@@ -33,7 +33,7 @@ class AsmitaLogger {
   }
 
   /// Logs an error gracefully.
-  /// 
+  ///
   /// In debug mode: prints stack trace to console.
   /// In release mode: passes non-fatal error and non-PII diagnostic metadata to Crashlytics.
   static void error(
@@ -78,7 +78,9 @@ class AsmitaLogger {
   /// Adds a non-PII operational breadcrumb to Crashlytics (e.g. "guard_gate_opened", "visitor_approved")
   static void breadcrumb(String action, {Map<String, dynamic>? params}) {
     if (kDebugMode) {
-      debugPrint('📍 [Breadcrumb] $action ${params != null ? params.toString() : ''}');
+      debugPrint(
+        '📍 [Breadcrumb] $action ${params != null ? params.toString() : ''}',
+      );
     }
     try {
       final paramStr = params != null ? ' ${params.toString()}' : '';

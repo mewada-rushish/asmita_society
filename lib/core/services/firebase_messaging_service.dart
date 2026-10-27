@@ -227,12 +227,20 @@ class FirebaseMessagingService {
         sound: RawResourceAndroidNotificationSound('asmita_notification_1'),
       ),
       const AndroidNotificationChannel(
-        'campaign_channel_2',
-        'Campaigns & Announcements (Sound 2)',
-        description: 'Used for society announcements with alternative sound.',
-        importance: Importance.defaultImportance,
+        'chat_channel',
+        'Community & Internal Chat',
+        description: 'Used for internal team chat and community messages.',
+        importance: Importance.high,
         playSound: true,
-        sound: RawResourceAndroidNotificationSound('asmita_notification_2'),
+        sound: RawResourceAndroidNotificationSound('asmita_notification_1'),
+      ),
+      const AndroidNotificationChannel(
+        'helpdesk_channel',
+        'Helpdesk & Support Tickets',
+        description: 'Used for helpdesk tickets, updates, and replies.',
+        importance: Importance.high,
+        playSound: true,
+        sound: RawResourceAndroidNotificationSound('asmita_alert_1'),
       ),
     ];
 
