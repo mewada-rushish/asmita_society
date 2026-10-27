@@ -500,7 +500,7 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                     }
                   } catch (e) {
                     if (context.mounted) {
-                      AsmitaToast.show(context, message: 'Error: ${e.toString()}', type: AsmitaToastType.error);
+                      AsmitaToast.show(context, message: 'Could not save contact. Please try again.', type: AsmitaToastType.error);
                     }
                   }
                 },

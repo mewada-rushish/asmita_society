@@ -260,11 +260,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         orElse: () => {'name': 'Selected Colleague'},
       );
 
-      final durationText = _isTillTurnOff
-          ? 'Till I turn off'
-          : '${DateFormat('dd MMM').format(_startDate)} - ${DateFormat('dd MMM').format(_endDate ?? _startDate)}';
-
-      final msg = 'Visitor approvals delegated to ${delegate['name']} ($durationText)';
+      final msg = 'Approvals sent to ${delegate['name']}.';
 
       if (mounted) {
         AsmitaToast.show(

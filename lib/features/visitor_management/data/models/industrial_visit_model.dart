@@ -77,7 +77,7 @@ enum IndustrialVisitStatus {
       case IndustrialVisitStatus.submitted:
         return 'Submitted';
       case IndustrialVisitStatus.awaitingHost:
-        return 'Awaiting Host';
+        return 'Awaiting Approval';
       case IndustrialVisitStatus.assigned:
         return 'Assigned';
       case IndustrialVisitStatus.approved:
