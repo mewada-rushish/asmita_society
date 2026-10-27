@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../../../core/config/env_config.dart';
+import '../../../../core/utils/asmita_logger.dart';
 
 class GuardGateRepository {
   final Dio _dio;
@@ -113,13 +113,18 @@ class GuardGateRepository {
         throw Exception(errorMsg ?? 'Failed to create walk-in visitor');
       }
     } on DioException catch (e) {
-      debugPrint('[GuardGateRepository] submitWalkInVisitor 500 error: ${e.response?.data}');
+      AsmitaLogger.error(
+        'GuardGateRepository',
+        'Walk-in visitor submission failed with status ${e.response?.statusCode}',
+        reason: 'Submit Walk-in Visitor',
+        metadata: {'statusCode': e.response?.statusCode},
+      );
       throw _handleDioError(e, 'Submit Walk-in Visitor');
     } catch (e, stackTrace) {
-      debugPrint('[GuardGateRepository] submitWalkInVisitor error: $e');
-      FirebaseCrashlytics.instance.recordError(
+      AsmitaLogger.error(
+        'GuardGateRepository',
         e,
-        stackTrace,
+        stackTrace: stackTrace,
         reason: 'Submit Walk-in Visitor Failure',
       );
       throw Exception('Unexpected error occurred');
@@ -198,8 +203,9 @@ class GuardGateRepository {
       try {
         gateLogsResp = await _dio.get(EnvConfig.gateLogs);
       } catch (e) {
-        debugPrint(
-          'Warning: Failed to fetch gateLogs (endpoint might not be deployed yet): $e',
+        AsmitaLogger.warn(
+          'GuardGateRepository',
+          'Failed to fetch gateLogs (endpoint might not be deployed yet): $e',
         );
       }
 
@@ -253,7 +259,7 @@ class GuardGateRepository {
             ),
           );
         } else {
-          debugPrint('Warning: gateLogs returned non-JSON 200 response: $data');
+          AsmitaLogger.warn('GuardGateRepository', 'gateLogs returned non-JSON 200 response');
         }
       }
 

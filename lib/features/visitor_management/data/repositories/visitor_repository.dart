@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import '../../../../core/config/env_config.dart';
+import '../../../../core/utils/asmita_logger.dart';
 import '../models/invite_model.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/foundation.dart';
 
 class VisitorRepository {
   final Dio _dio;
@@ -64,9 +64,11 @@ class VisitorRepository {
 
       final invitesResp = responses[0];
       final requestsResp = responses[1];
-      
-      debugPrint('Invites Response: ${invitesResp.statusCode} ${invitesResp.data}');
-      debugPrint('Requests Response: ${requestsResp.statusCode} ${requestsResp.data}');
+
+      AsmitaLogger.info(
+        'VisitorRepository',
+        'History responses received - Invites: ${invitesResp.statusCode}, Requests: ${requestsResp.statusCode}',
+      );
 
       final List<dynamic> mergedHistory = [];
 
@@ -84,7 +86,7 @@ class VisitorRepository {
             'record_type': 'PRE_APPROVED'
           }));
         } else {
-          debugPrint('Unexpected invites response format: ${data.runtimeType}');
+          AsmitaLogger.warn('VisitorRepository', 'Unexpected invites response format: ${data.runtimeType}');
         }
       }
 
@@ -102,7 +104,7 @@ class VisitorRepository {
             'record_type': 'WALK_IN'
           }));
         } else {
-          debugPrint('Unexpected requests response format: ${data.runtimeType}');
+          AsmitaLogger.warn('VisitorRepository', 'Unexpected requests response format: ${data.runtimeType}');
         }
       }
 
@@ -113,7 +115,7 @@ class VisitorRepository {
         return dateB.compareTo(dateA);
       });
 
-      debugPrint('mergedHistory count: ${mergedHistory.length}');
+      AsmitaLogger.info('VisitorRepository', 'Merged history items count: ${mergedHistory.length}');
       return mergedHistory;
     } on DioException catch (e) {
       String msg = 'Network error fetching history';
