@@ -334,12 +334,15 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddTaskDialog(context),
-        backgroundColor: AsmitaPalette.deepNavy,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_task),
-        label: const Text('New Task', style: TextStyle(fontWeight: FontWeight.bold)),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 84.0),
+        child: FloatingActionButton.extended(
+          onPressed: () => _showAddTaskDialog(context),
+          backgroundColor: AsmitaPalette.deepNavy,
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.add_task),
+          label: const Text('New Task', style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
       ),
       body: Column(
         children: [

@@ -274,7 +274,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                   ),
 
                   // 5. Bottom clearance above floating curved nav bar
-                  const SizedBox(height: 120),
+                  const SizedBox(height: 180),
                 ],
               ),
             ),
@@ -436,7 +436,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
 
   Widget _buildQuickActionBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.fromLTRB(16, 26, 16, 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -462,6 +462,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                     builder: (_) => GuardQrScannerScreen(
                       isActive: true,
                       onScanComplete: () => Navigator.pop(context),
+                      onBack: () => Navigator.pop(context),
                     ),
                   ),
                 );

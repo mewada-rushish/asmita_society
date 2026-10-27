@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../bloc/guard_gate_bloc.dart';
@@ -10,11 +10,13 @@ import '../../bloc/guard_gate_event.dart';
 class GuardQrScannerScreen extends StatefulWidget {
   final VoidCallback onScanComplete;
   final bool isActive;
+  final VoidCallback? onBack;
 
   const GuardQrScannerScreen({
     super.key,
     required this.onScanComplete,
     required this.isActive,
+    this.onBack,
   });
 
   @override
@@ -49,6 +51,15 @@ class _GuardQrScannerScreenState extends State<GuardQrScannerScreen> {
     _manualCodeController.dispose();
     _scannerController.dispose();
     super.dispose();
+  }
+
+  void _handleBack() {
+    _scannerController.stop();
+    if (widget.onBack != null) {
+      widget.onBack!();
+    } else if (Navigator.canPop(context)) {
+      Navigator.of(context).pop();
+    }
   }
 
   void _handleManualSubmit(String rawCode) {
@@ -87,32 +98,53 @@ class _GuardQrScannerScreenState extends State<GuardQrScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          MobileScanner(
-            controller: _scannerController,
-            fit: BoxFit.cover,
-            onDetect: _onDetect,
-          ),
-          _buildScannerOverlay(),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: AsmitaPrimaryHeader(
-              subtitleOverride: 'Scan QR Code',
-              allowPropertySwitching: false,
-              onProfilePressed: () {},
-              trailingActions: const SizedBox(),
+    final canDirectPop = widget.onBack == null && Navigator.canPop(context);
+    return PopScope(
+      canPop: canDirectPop,
+      onPopInvokedWithResult: (didPop, result) {
+        _scannerController.stop();
+        if (!didPop && widget.onBack != null) {
+          widget.onBack!();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            MobileScanner(
+              controller: _scannerController,
+              fit: BoxFit.cover,
+              onDetect: _onDetect,
             ),
-          ),
-          if (_isProcessing)
-            Center(
-              child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28),
+            _buildScannerOverlay(),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: AsmitaPrimaryHeader(
+                subtitleOverride: 'Scan QR Code',
+                allowPropertySwitching: false,
+                showBackButton: true,
+                onBackPressed: _handleBack,
+                onProfilePressed: () {},
+                trailingActions: IconButton(
+                  icon: const Icon(Icons.flash_on_rounded, size: 20),
+                  tooltip: 'Flashlight',
+                  color: Theme.of(context).colorScheme.onSurface,
+                  onPressed: () async {
+                    try {
+                      await _scannerController.toggleTorch();
+                    } catch (_) {}
+                  },
+                ),
+              ),
             ),
-        ],
+            if (_isProcessing)
+              const Center(
+                child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -154,7 +186,7 @@ class _GuardQrScannerScreenState extends State<GuardQrScannerScreen> {
                 height: scanWindowSize,
                 width: scanWindowSize,
                 decoration: BoxDecoration(
-                  border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
+                  border: Border.all(color: AsmitaPalette.actionRed, width: 2),
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),

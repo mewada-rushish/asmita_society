@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
+import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
-import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
-import 'package:asmita_society/features/menu/bloc/preferences_bloc.dart';
-import 'package:asmita_society/features/menu/bloc/preferences_event.dart';
-import 'package:asmita_society/features/menu/bloc/preferences_state.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/features/menu/presentation/screens/privacy_policy_screen.dart';
 import 'package:asmita_society/core/di/injection_container.dart' as di;
@@ -13,18 +12,20 @@ import 'package:asmita_society/features/auth/data/repositories/auth_repository.d
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_event.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
-
+import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/l10n/app_localizations.dart';
+import 'package:asmita_society/features/menu/presentation/providers/preferences_provider.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:asmita_society/core/services/permission_manager_service.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
+    final prefsState = ref.watch(preferencesProvider);
 
     final l10n = AppLocalizations.of(context)!;
 
@@ -35,26 +36,27 @@ class SettingsScreen extends StatelessWidget {
           children: [
             AsmitaSubHeader(title: l10n.settings),
             Expanded(
-              child: BlocBuilder<PreferencesBloc, PreferencesState>(
-                builder: (context, state) {
-                  if (state is PreferencesLoading) {
-                    return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
-                  } else if (state is PreferencesError) {
-                    return Center(
-                      child: Text('Error: ${state.message}', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
-                    );
-                  } else if (state is PreferencesLoaded) {
-                    final prefs = state.items;
-                    if (prefs == null) return const Center(child: Text('Failed to load preferences'));
-                    return ListView(
-                      physics: const ClampingScrollPhysics(),
-                      padding: const EdgeInsets.all(16),
-                      children: [
-                      _buildSectionTitle(context, textTheme, 'Notifications'),
-                      const SizedBox(height: 12),
-                      _buildSettingsCard(
-                        context,
-                        children: [
+              child: prefsState.when(
+                data: (prefs) {
+                  if (prefs == null) return const Center(child: Text('Failed to load preferences'));
+                  return CustomScrollView(
+                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                    slivers: [
+                      AsmitaAnimatedRefresh(
+                        onRefresh: () async {
+                          ref.invalidate(preferencesProvider);
+                          await ref.read(preferencesProvider.future);
+                        },
+                      ),
+                      SliverPadding(
+                        padding: const EdgeInsets.all(16),
+                        sliver: SliverList.list(
+                          children: [
+                            _buildSectionTitle(context, textTheme, 'Notifications'),
+                            const SizedBox(height: 12),
+                            _buildSettingsCard(
+                              context,
+                              children: [
                           _buildToggleRow(
                             context,
                             textTheme, 
@@ -62,7 +64,7 @@ class SettingsScreen extends StatelessWidget {
                             'Push Notifications', 
                             prefs.pushNotifications, 
                             true,
-                            (val) => context.read<PreferencesBloc>().add(UpdatePreferences(pushNotifications: val))
+                            (val) => ref.read(preferencesProvider.notifier).updatePreference(pushNotifications: val)
                           ),
                           _buildToggleRow(
                             context,
@@ -114,10 +116,10 @@ class SettingsScreen extends StatelessWidget {
                         context,
                         children: [
                           _buildActionRow(context, textTheme, Icons.language_rounded, l10n.language, prefs.language, true, () {
-                            _showLanguagePicker(context, prefs.language);
+                            _showLanguagePicker(context, ref, prefs.language);
                           }),
                           _buildActionRow(context, textTheme, Icons.dark_mode_rounded, l10n.theme, prefs.appTheme, false, () {
-                            _showThemePicker(context, prefs.appTheme);
+                            _showThemePicker(context, ref, prefs.appTheme);
                           }),
                         ],
                       ),
@@ -150,9 +152,7 @@ class SettingsScreen extends StatelessWidget {
                                   return;
                                 }
                               }
-                              if (context.mounted) {
-                                context.read<PreferencesBloc>().add(UpdatePreferences(biometricLogin: val));
-                              }
+                              ref.read(preferencesProvider.notifier).updatePreference(biometricLogin: val);
                             }
                           ),
                         ],
@@ -172,15 +172,18 @@ class SettingsScreen extends StatelessWidget {
                           }),
                           _buildActionRow(context, textTheme, Icons.delete_forever_rounded, l10n.deleteAccount, '', false, () {
                             _showDeleteAccountDialog(context);
-                          }, textColor: Theme.of(context).colorScheme.error, iconColor: Theme.of(context).colorScheme.error),
+                          }, textColor: AsmitaPalette.actionRed, iconColor: AsmitaPalette.actionRed),
                         ],
                       ),
                       const SizedBox(height: 24),
                     ],
-                  );
-                  }
-                  return const SizedBox.shrink();
-                },
+                  ),
+                ),
+              ],
+            );
+          },
+                loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
+                error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
               ),
             ),
           ],
@@ -259,7 +262,6 @@ class SettingsScreen extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          color: Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           decoration: BoxDecoration(
             border: showBorder ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1)) : null,
@@ -525,7 +527,7 @@ class SettingsScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.pop(context);
                 if (lang != currentLanguage) {
-                  context.read<PreferencesBloc>().add(UpdatePreferences(language: lang));
+                  ref.read(preferencesProvider.notifier).updatePreference(language: lang);
                 }
               },
               child: Text(
@@ -547,7 +549,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  void _showThemePicker(BuildContext context, String currentTheme) {
+  void _showThemePicker(BuildContext context, WidgetRef ref, String currentTheme) {
     final themes = ['System', 'Light', 'Dark'];
     showCupertinoModalPopup(
       context: context,
@@ -559,7 +561,7 @@ class SettingsScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.pop(context);
                 if (theme != currentTheme) {
-                  context.read<PreferencesBloc>().add(UpdatePreferences(appTheme: theme));
+                  ref.read(preferencesProvider.notifier).updatePreference(appTheme: theme);
                   AsmitaToast.show(context, message: 'Theme changed to $theme', type: AsmitaToastType.success);
                 }
               },

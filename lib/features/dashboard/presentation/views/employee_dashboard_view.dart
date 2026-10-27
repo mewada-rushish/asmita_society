@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/design_system.dart';
-import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
@@ -26,6 +25,8 @@ import '../../../../core/config/env_config.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/security/secure_storage_service.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
+import '../../widgets/bbps_bill_payments_sheet.dart';
+export '../../widgets/bbps_bill_payments_sheet.dart';
 
 /// Team Lead & HOD Role Dashboard:
 /// - Real-time approval feed for assigned / department visitors
@@ -275,7 +276,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         bloc.add(const LoadIndustrialVisits());
         await future;
       },
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 180),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1052,242 +1053,4 @@ class _QuickActionItemData {
     required this.icon,
     required this.onTap,
   });
-}
-
-class BbpsBillPaymentsSheet extends StatelessWidget {
-  const BbpsBillPaymentsSheet({super.key});
-
-  static Future<void> show(BuildContext context) async {
-    showAsmitaBottomSheet(
-      context: context,
-      title: 'Bill Payments (BBPS)',
-      subtitle: 'Bharat BillPay • Unified Utility & Operational Clearance',
-      child: const BbpsBillPaymentsSheet(),
-    );
-  }
-
-  static const List<Map<String, dynamic>> _billCategories = [
-    {
-      'title': 'Electricity',
-      'subtitle': 'Power utility bills',
-      'icon': Icons.bolt_rounded,
-      'color': Color(0xFFEAB308),
-    },
-    {
-      'title': 'Water',
-      'subtitle': 'Municipal & corporate supply',
-      'icon': Icons.water_drop_rounded,
-      'color': Color(0xFF0284C7),
-    },
-    {
-      'title': 'Piped Gas',
-      'subtitle': 'City gas distribution',
-      'icon': Icons.local_fire_department_rounded,
-      'color': Color(0xFFEA580C),
-    },
-    {
-      'title': 'Broadband',
-      'subtitle': 'Office internet & Wi-Fi',
-      'icon': Icons.wifi_rounded,
-      'color': Color(0xFF7C3AED),
-    },
-    {
-      'title': 'Mobile Postpaid',
-      'subtitle': 'Telecom bills',
-      'icon': Icons.phone_android_rounded,
-      'color': Color(0xFF059669),
-    },
-    {
-      'title': 'FASTag / Parking',
-      'subtitle': 'Fleet toll & pass clearance',
-      'icon': Icons.toll_rounded,
-      'color': Color(0xFF2563EB),
-    },
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Trust Badge & Header Card
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isDark
-                    ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-                    : [const Color(0xFFEFF6FF), const Color(0xFFDBEAFE)],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFBFDBFE),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AsmitaPalette.deepNavy,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.verified_user_rounded,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              'BBPS Assured Gateway',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF10B981),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              'NPCI',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        'Direct, secure clearance for recurring commercial & department utility bills.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontSize: 11,
-                          color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-
-          Text(
-            'Select Biller Category',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontFamily: 'Montserrat',
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Categories Grid
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _billCategories.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 2.2,
-            ),
-            itemBuilder: (context, index) {
-              final cat = _billCategories[index];
-              final catColor = cat['color'] as Color;
-              return InkWell(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  Navigator.pop(context);
-                  AsmitaToast.show(
-                    context,
-                    message: 'BBPS: Fetching billing records for ${cat['title']}...',
-                    type: AsmitaToastType.info,
-                  );
-                },
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: theme.dividerColor),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: catColor.withValues(alpha: isDark ? 0.2 : 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          cat['icon'] as IconData,
-                          size: 18,
-                          color: catColor,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              cat['title'] as String,
-                              style: const TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              cat['subtitle'] as String,
-                              style: TextStyle(
-                                fontSize: 9.5,
-                                color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
 }

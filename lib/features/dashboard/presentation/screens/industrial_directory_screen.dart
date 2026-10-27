@@ -3,8 +3,10 @@ import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/utils/property_role_resolver.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
+import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
+import '../../../dashboard/widgets/asmita_pre_approve_wizard.dart';
 import '../../../visitor_management/presentation/screens/department_delegation_screen.dart';
 
 class IndustrialDirectoryScreen extends StatefulWidget {
@@ -74,7 +76,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                 await Future.delayed(const Duration(milliseconds: 700));
                 if (mounted) setState(() {});
               },
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 180),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -97,16 +99,18 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                         title: 'Front Desk',
                         subtitle: 'Receptionist • Lobby',
                         contactNumber: '+91 98201 10101',
+                        extensionNumber: '101',
                         icon: Icons.support_agent_rounded,
-                        color: AsmitaPalette.deepNavy,
+                        color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
                       ),
                       const SizedBox(width: 12),
                       _buildHotlineCard(
                         title: 'Main Gate 1',
                         subtitle: 'Security Post • Gate 1',
                         contactNumber: '+91 98201 10104',
+                        extensionNumber: '104',
                         icon: Icons.shield_rounded,
-                        color: const Color(0xFF1E40AF),
+                        color: isDark ? const Color(0xFF818CF8) : const Color(0xFF1E40AF),
                       ),
                     ],
                   ),
@@ -117,16 +121,18 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                         title: 'Loading Bay',
                         subtitle: 'Dock & Logistics • Bay 2',
                         contactNumber: '+91 98201 10108',
+                        extensionNumber: '108',
                         icon: Icons.local_shipping_rounded,
-                        color: const Color(0xFFD97706),
+                        color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
                       ),
                       const SizedBox(width: 12),
                       _buildHotlineCard(
                         title: 'Emergency',
                         subtitle: 'Safety & Rapid Response',
                         contactNumber: '+91 98201 10911',
+                        extensionNumber: '911',
                         icon: Icons.emergency_rounded,
-                        color: AsmitaPalette.actionRed,
+                        color: isDark ? const Color(0xFFF87171) : AsmitaPalette.actionRed,
                       ),
                     ],
                   ),
@@ -289,7 +295,6 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                     title: 'Executive Suite & Boardroom',
                     floor: 'Floor 4 • Executive Wing',
                     cabins: 'Cabins 401 - 406',
-                    contactNumber: '+91 98201 10401',
                     icon: Icons.workspace_premium_rounded,
                   ),
                   const SizedBox(height: 10),
@@ -297,7 +302,6 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                     title: 'Accounts & Finance',
                     floor: 'Floor 2 • East Wing',
                     cabins: 'Cabins 201 - 210',
-                    contactNumber: '+91 98201 10201',
                     icon: Icons.account_balance_rounded,
                   ),
                   const SizedBox(height: 10),
@@ -305,7 +309,6 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                     title: 'Technology & IT Operations',
                     floor: 'Floor 3 • Innovation Hub',
                     cabins: 'Workstations 301 - 340',
-                    contactNumber: '+91 98201 10301',
                     icon: Icons.memory_rounded,
                   ),
                   const SizedBox(height: 10),
@@ -313,7 +316,6 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                     title: 'Human Resources & Admin',
                     floor: 'Floor 1 • Main Lobby Wing',
                     cabins: 'Cabins 101 - 106',
-                    contactNumber: '+91 98201 10106',
                     icon: Icons.people_alt_rounded,
                   ),
                   const SizedBox(height: 10),
@@ -321,7 +323,6 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                     title: 'Supply Chain & Logistics',
                     floor: 'Ground Floor • Loading Dock B',
                     cabins: 'Bays 1 - 4',
-                    contactNumber: '+91 98201 10008',
                     icon: Icons.inventory_2_rounded,
                   ),
                 ],
@@ -337,9 +338,13 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
     required String title,
     required String subtitle,
     required String contactNumber,
+    String? extensionNumber,
     required IconData icon,
     required Color color,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Expanded(
       child: InkWell(
         onTap: () => _callContact(title, contactNumber),
@@ -347,12 +352,15 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
+            color: isDark ? const Color(0xFF1E293B) : theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Theme.of(context).dividerColor),
+            border: Border.all(
+              color: isDark ? const Color(0xFF334155) : theme.dividerColor,
+              width: 1.2,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -368,7 +376,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
+                      color: color.withValues(alpha: isDark ? 0.2 : 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(icon, color: color, size: 20),
@@ -376,7 +384,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
+                      color: color.withValues(alpha: isDark ? 0.2 : 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -401,35 +409,36 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
 
               const SizedBox(height: 12),
 
-              // Title with balanced line height
+              // Title with balanced line height & dark mode text color
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Montserrat',
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : AsmitaPalette.textDark,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
 
-              const SizedBox(height: 4), // Generous label spacing
+              const SizedBox(height: 4),
 
               // Subtitle/Role
               Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
-                  color: AsmitaPalette.textLight,
+                  color: isDark ? const Color(0xFF94A3B8) : AsmitaPalette.textLight,
                   fontWeight: FontWeight.w500,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
 
-              const SizedBox(height: 10), // Clean separation before contact number
+              const SizedBox(height: 10),
 
-              // Contact Number Row
+              // Contact Number & Extension Badges Row
               Row(
                 children: [
                   Icon(
@@ -443,7 +452,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                       contactNumber,
                       style: TextStyle(
                         fontFamily: 'Montserrat',
-                        fontSize: 11,
+                        fontSize: 10.5,
                         fontWeight: FontWeight.w700,
                         color: color,
                       ),
@@ -451,6 +460,25 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  if (extensionNumber != null && extensionNumber.isNotEmpty) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: isDark ? 0.22 : 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'Ext $extensionNumber',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: color,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],
@@ -464,21 +492,26 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
     required String title,
     required String floor,
     required String cabins,
-    required String contactNumber,
     required IconData icon,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return InkWell(
-      onTap: () => _callContact(title, contactNumber),
+      onTap: () => _showDepartmentEmployeesModal(title, floor),
       borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: isDark ? const Color(0xFF1E293B) : theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Theme.of(context).dividerColor),
+          border: Border.all(
+            color: isDark ? const Color(0xFF334155) : theme.dividerColor,
+            width: 1.2,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
+              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.02),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -489,10 +522,16 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AsmitaPalette.deepNavy.withValues(alpha: 0.06),
+                color: isDark
+                    ? const Color(0xFF60A5FA).withValues(alpha: 0.15)
+                    : AsmitaPalette.deepNavy.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: AsmitaPalette.deepNavy, size: 22),
+              child: Icon(
+                icon,
+                color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -501,53 +540,423 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Montserrat',
                       fontWeight: FontWeight.bold,
-                      fontSize: 13,
+                      fontSize: 13.5,
+                      color: isDark ? Colors.white : AsmitaPalette.textDark,
                     ),
-                  ),
-                  const SizedBox(height: 4), // Proper label spacing
-                  Text(
-                    floor,
-                    style: const TextStyle(fontSize: 11, color: AsmitaPalette.textLight),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.phone_rounded, size: 11, color: AsmitaPalette.deepNavy),
-                      const SizedBox(width: 4),
-                      Text(
-                        contactNumber,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: AsmitaPalette.deepNavy,
-                          fontFamily: 'Montserrat',
-                        ),
-                      ),
-                    ],
+                  Text(
+                    floor,
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 11.5,
+                      color: isDark ? const Color(0xFF94A3B8) : AsmitaPalette.textLight,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Theme.of(context).dividerColor.withValues(alpha: 0.15),
+                color: isDark
+                    ? const Color(0xFF334155).withValues(alpha: 0.6)
+                    : theme.dividerColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(
-                cabins,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: AsmitaPalette.textLight,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    cabins,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? const Color(0xFFCBD5E1) : AsmitaPalette.textLight,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 11,
+                    color: isDark ? const Color(0xFF94A3B8) : AsmitaPalette.textLight,
+                  ),
+                ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showDepartmentEmployeesModal(String deptName, String floor) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return _DepartmentEmployeesSheet(
+          departmentName: deptName,
+          floor: floor,
+          onCall: _callContact,
+        );
+      },
+    );
+  }
+}
+
+class _DepartmentEmployeesSheet extends StatefulWidget {
+  final String departmentName;
+  final String floor;
+  final Future<void> Function(String title, String phone) onCall;
+
+  const _DepartmentEmployeesSheet({
+    required this.departmentName,
+    required this.floor,
+    required this.onCall,
+  });
+
+  @override
+  State<_DepartmentEmployeesSheet> createState() => _DepartmentEmployeesSheetState();
+}
+
+class _DepartmentEmployeesSheetState extends State<_DepartmentEmployeesSheet> {
+  final TextEditingController _searchCtrl = TextEditingController();
+  List<Map<String, dynamic>> _employees = [];
+  bool _isLoading = true;
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEmployees();
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadEmployees() async {
+    try {
+      final list = await AsmitaPreApproveWizard.loadSocietyEmployees(114);
+      if (!mounted) return;
+
+      // Filter employees belonging to this department
+      final normalizedDept = widget.departmentName.toLowerCase();
+      final filtered = list.where((emp) {
+        final empDept = (emp['department_name'] ?? emp['department'] ?? '').toString().toLowerCase();
+        final role = (emp['role'] ?? emp['primary_role'] ?? '').toString().toLowerCase();
+        if (normalizedDept.contains('it') || normalizedDept.contains('tech')) {
+          return empDept.contains('tech') || empDept.contains('it') || role.contains('tech') || role.contains('developer');
+        } else if (normalizedDept.contains('finance') || normalizedDept.contains('accounts')) {
+          return empDept.contains('account') || empDept.contains('finance') || role.contains('account');
+        } else if (normalizedDept.contains('hr') || normalizedDept.contains('human')) {
+          return empDept.contains('hr') || empDept.contains('human') || role.contains('hr') || role.contains('admin');
+        } else if (normalizedDept.contains('supply') || normalizedDept.contains('logistics')) {
+          return empDept.contains('supply') || empDept.contains('logistics') || role.contains('logistics');
+        } else if (normalizedDept.contains('executive')) {
+          return empDept.contains('executive') || role.contains('director') || role.contains('lead') || role.contains('manager');
+        }
+        return empDept.contains(normalizedDept) || normalizedDept.contains(empDept);
+      }).toList();
+
+      setState(() {
+        _employees = filtered.isNotEmpty ? filtered : list.take(8).toList();
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final displayed = _employees.where((emp) {
+      if (_query.isEmpty) return true;
+      final q = _query.toLowerCase();
+      final name = (emp['name'] ?? emp['full_name'] ?? '').toString().toLowerCase();
+      final phone = (emp['phone'] ?? emp['mobile_number'] ?? '').toString();
+      final ext = (emp['extension'] ?? emp['ext'] ?? '').toString();
+      return name.contains(q) || phone.contains(q) || ext.contains(q);
+    }).toList();
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.only(
+        top: 12,
+        left: 20,
+        right: 20,
+        bottom: MediaQuery.of(context).padding.bottom + 16,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.dividerColor.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.departmentName,
+                      style: const TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.floor,
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                        color: AsmitaPalette.textLight,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close_rounded, size: 20),
+                onPressed: () => Navigator.pop(context),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // Search within Department
+          Container(
+            height: 42,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: theme.dividerColor),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.search_rounded, size: 18, color: AsmitaPalette.textLight),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _searchCtrl,
+                    onChanged: (val) => setState(() => _query = val.trim()),
+                    style: const TextStyle(fontFamily: 'Poppins', fontSize: 13),
+                    decoration: const InputDecoration(
+                      hintText: 'Search by employee name or extension...',
+                      hintStyle: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                        color: AsmitaPalette.textLight,
+                      ),
+                      border: InputBorder.none,
+                      isDense: true,
+                    ),
+                  ),
+                ),
+                if (_query.isNotEmpty)
+                  GestureDetector(
+                    onTap: () {
+                      _searchCtrl.clear();
+                      setState(() => _query = '');
+                    },
+                    child: const Icon(Icons.clear_rounded, size: 16),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          Expanded(
+            child: _isLoading
+                ? const Center(
+                    child: AsmitaLoadingIndicator(
+                      color: AsmitaPalette.deepNavy,
+                      size: 28,
+                    ),
+                  )
+                : displayed.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No employees found in this department',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: displayed.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final emp = displayed[index];
+                          final name = emp['name'] ?? emp['full_name'] ?? 'Staff Member';
+                          final designation = emp['designation'] ?? emp['role'] ?? 'Team Member';
+                          final phone = emp['phone'] ?? emp['mobile_number'] ?? '';
+                          final extension = emp['extension'] ?? emp['ext'] ?? '10${index + 1}';
+                          final desk = emp['desk_number'] ?? emp['desk_code'] ?? 'D-${201 + index}';
+
+                          return Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: theme.dividerColor.withValues(alpha: 0.6),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 20,
+                                  backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.12),
+                                  child: Text(
+                                    name.isNotEmpty ? name[0].toUpperCase() : 'E',
+                                    style: const TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontWeight: FontWeight.bold,
+                                      color: AsmitaPalette.deepNavy,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        name,
+                                        style: const TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13.5,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        designation,
+                                        style: const TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 11,
+                                          color: AsmitaPalette.textLight,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 4,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(Icons.dialer_sip_rounded, size: 10, color: AsmitaPalette.deepNavy),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  'Ext: $extension',
+                                                  style: const TextStyle(
+                                                    fontFamily: 'Montserrat',
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: AsmitaPalette.deepNavy,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: theme.dividerColor.withValues(alpha: 0.15),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(Icons.chair_outlined, size: 10, color: AsmitaPalette.textLight),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  desk,
+                                                  style: const TextStyle(
+                                                    fontFamily: 'Montserrat',
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: AsmitaPalette.textLight,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (phone.isNotEmpty)
+                                  IconButton(
+                                    onPressed: () => widget.onCall(name, phone),
+                                    icon: const Icon(
+                                      Icons.phone_in_talk_rounded,
+                                      size: 18,
+                                      color: AsmitaPalette.successGreen,
+                                    ),
+                                    style: IconButton.styleFrom(
+                                      backgroundColor: AsmitaPalette.successGreen.withValues(alpha: 0.12),
+                                      padding: const EdgeInsets.all(8),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+          ),
+        ],
       ),
     );
   }
