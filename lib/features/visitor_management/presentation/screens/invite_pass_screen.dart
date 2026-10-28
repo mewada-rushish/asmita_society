@@ -272,17 +272,19 @@ class _InvitePassScreenState extends State<InvitePassScreen> {
           ),
           child: ElevatedButton.icon(
             onPressed: () {
+              final tokenPart = invite.passCode ?? invite.id.toString();
+              final guestPassUrl = 'https://admin.myasmita.com/invite/pass/$tokenPart';
               final String passDetails = '''
-Visitor Pass for ${invite.companyName ?? 'Visitor'}
+AsmitA Digital Guest Pass
+Visitor: ${invite.companyName ?? 'Guest'}
 Unit: Flat ${invite.unitId}
-Pass Type: ${invite.inviteType}
 Valid Until: ${_formatDate(invite.validTo?.toIso8601String())}
-Pass Code: ${invite.passCode ?? 'N/A'}
 
-Please present this code at the gate.
+View and present your secure digital pass at the gate:
+$guestPassUrl
 ''';
               // ignore: deprecated_member_use
-              Share.share(passDetails);
+              Share.share(passDetails, subject: 'Your AsmitA Guest Pass');
             },
             icon: Icon(Icons.share_rounded, color: Theme.of(context).colorScheme.surface, size: 18),
             label: Text(
@@ -321,4 +323,4 @@ Please present this code at the gate.
     if (date == null) return dateStr;
     return AppDateFormatter.formatDate(date);
   }
-}
+}
