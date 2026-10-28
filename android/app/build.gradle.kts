@@ -28,7 +28,7 @@ android {
     defaultConfig {
         applicationId = "com.asmita.app.asmita_society"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36 // Mandated by Google Play Store for late-2026 submissions (K-20, D5)
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
