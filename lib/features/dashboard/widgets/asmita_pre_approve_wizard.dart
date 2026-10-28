@@ -181,6 +181,24 @@ class AsmitaPreApproveWizard extends StatefulWidget {
     return [];
   }
 
+  static Future<List<Map<String, dynamic>>> loadSocietyHotlines(int? societyId) async {
+    if (societyId == null) return [];
+    try {
+      final secureStorage = SecureStorageService();
+      final client = AsmitaDioClient(secureStorage).dio;
+      final response = await client.get(
+        '${EnvConfig.baseUrl}/api/public/visitor/hotlines?society_id=$societyId',
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final List<dynamic> list = response.data['hotlines'] ?? response.data['data'] ?? [];
+        return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      }
+    } catch (e) {
+      debugPrint('Error fetching hotlines: $e');
+    }
+    return [];
+  }
+
   @override
   State<AsmitaPreApproveWizard> createState() => _AsmitaPreApproveWizardState();
 }
