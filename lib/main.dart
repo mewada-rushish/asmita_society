@@ -17,6 +17,7 @@ import 'features/community/bloc/community_post_bloc.dart';
 import 'features/visitor_management/bloc/guard_gate_bloc.dart';
 import 'core/di/injection_container.dart' as di;
 import 'core/services/firebase_messaging_service.dart';
+import 'core/services/deep_link_handler.dart';
 import 'features/visitor_management/bloc/visitor_bloc.dart';
 import 'features/visitor_management/bloc/industrial_visit_bloc.dart';
 import 'features/visitor_management/data/repositories/industrial_visit_repository.dart';
@@ -87,6 +88,7 @@ Future<void> main() async {
 
       await di.init();
       await di.sl<FirebaseMessagingService>().initialize();
+      DeepLinkHandler.init(rootNavigatorKey);
 
       bool isDeviceSafe = true;
       // Bypassing SafeDevice check completely for Simulator testing
