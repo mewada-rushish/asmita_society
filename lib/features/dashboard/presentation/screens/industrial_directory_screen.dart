@@ -25,11 +25,13 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
   bool _isDelegationActive = false;
   List<Map<String, dynamic>> _dynamicDepartments = [];
   bool _isLoadingDepartments = true;
+  List<Map<String, dynamic>> _dynamicHotlines = [];
 
   @override
   void initState() {
     super.initState();
     _loadDepartments();
+    _loadHotlines();
   }
 
   int? _resolveSocietyId() {
@@ -38,6 +40,49 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
       return authState.user.societyId;
     }
     return 114;
+  }
+
+  Future<void> _loadHotlines({bool forceRefresh = false}) async {
+    final societyId = _resolveSocietyId();
+    if (societyId == null) return;
+    try {
+      final hotlines = await AsmitaPreApproveWizard.loadSocietyHotlines(societyId);
+      if (mounted && hotlines.isNotEmpty) {
+        setState(() {
+          _dynamicHotlines = hotlines;
+        });
+      }
+    } catch (_) {}
+  }
+
+  IconData _iconForHotline(String title, String category) {
+    final t = title.toLowerCase();
+    final c = category.toUpperCase();
+    if (c == 'EMERGENCY' || t.contains('emergency') || t.contains('fire') || t.contains('ambulance')) {
+      return Icons.emergency_rounded;
+    } else if (c == 'SECURITY' || t.contains('gate') || t.contains('guard') || t.contains('security')) {
+      return Icons.shield_rounded;
+    } else if (c == 'LOGISTICS' || t.contains('loading') || t.contains('bay') || t.contains('dock') || t.contains('delivery')) {
+      return Icons.local_shipping_rounded;
+    } else if (c == 'RECEPTION' || t.contains('desk') || t.contains('front') || t.contains('lobby')) {
+      return Icons.support_agent_rounded;
+    }
+    return Icons.phone_in_talk_rounded;
+  }
+
+  Color _colorForHotline(String title, String category, bool isDark) {
+    final t = title.toLowerCase();
+    final c = category.toUpperCase();
+    if (c == 'EMERGENCY' || t.contains('emergency')) {
+      return isDark ? const Color(0xFFF87171) : AsmitaPalette.actionRed;
+    } else if (c == 'SECURITY' || t.contains('gate')) {
+      return isDark ? const Color(0xFF818CF8) : const Color(0xFF1E40AF);
+    } else if (c == 'LOGISTICS' || t.contains('loading') || t.contains('bay')) {
+      return isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706);
+    } else if (c == 'RECEPTION' || t.contains('desk') || t.contains('front')) {
+      return isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy;
+    }
+    return isDark ? const Color(0xFF34D399) : const Color(0xFF059669);
   }
 
   Future<void> _loadDepartments({bool forceRefresh = false}) async {
@@ -134,7 +179,10 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
           Expanded(
             child: AsmitaPullToRefresh(
               onRefresh: () async {
-                await _loadDepartments(forceRefresh: true);
+                await Future.wait([
+                  _loadDepartments(forceRefresh: true),
+                  _loadHotlines(forceRefresh: true),
+                ]);
                 if (mounted) setState(() {});
               },
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 180),
@@ -153,50 +201,95 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                   ),
                   const SizedBox(height: 14),
 
-                  // 2x2 Grid of quick calls linked directly to contact numbers
-                  Row(
-                    children: [
-                      _buildHotlineCard(
-                        title: 'Front Desk',
-                        subtitle: 'Receptionist • Lobby',
-                        contactNumber: '+91 98201 10101',
-                        extensionNumber: '101',
-                        icon: Icons.support_agent_rounded,
-                        color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                  // Grid of quick calls linked directly to contact numbers (4 Mandatory Defaults or Custom)
+                  if (_dynamicHotlines.isNotEmpty) ...[
+                    for (int i = 0; i < _dynamicHotlines.length; i += 2) ...[
+                      Row(
+                        children: [
+                          _buildHotlineCard(
+                            title: (_dynamicHotlines[i]['title'] ?? 'Hotline').toString(),
+                            subtitle: (_dynamicHotlines[i]['subtitle'] ?? '').toString(),
+                            contactNumber: (_dynamicHotlines[i]['contact_number'] ?? '').toString(),
+                            extensionNumber: _dynamicHotlines[i]['extension']?.toString(),
+                            icon: _iconForHotline(
+                              (_dynamicHotlines[i]['title'] ?? '').toString(),
+                              (_dynamicHotlines[i]['category'] ?? '').toString(),
+                            ),
+                            color: _colorForHotline(
+                              (_dynamicHotlines[i]['title'] ?? '').toString(),
+                              (_dynamicHotlines[i]['category'] ?? '').toString(),
+                              isDark,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          if (i + 1 < _dynamicHotlines.length)
+                            _buildHotlineCard(
+                              title: (_dynamicHotlines[i + 1]['title'] ?? 'Hotline').toString(),
+                              subtitle: (_dynamicHotlines[i + 1]['subtitle'] ?? '').toString(),
+                              contactNumber: (_dynamicHotlines[i + 1]['contact_number'] ?? '').toString(),
+                              extensionNumber: _dynamicHotlines[i + 1]['extension']?.toString(),
+                              icon: _iconForHotline(
+                                (_dynamicHotlines[i + 1]['title'] ?? '').toString(),
+                                (_dynamicHotlines[i + 1]['category'] ?? '').toString(),
+                              ),
+                              color: _colorForHotline(
+                                (_dynamicHotlines[i + 1]['title'] ?? '').toString(),
+                                (_dynamicHotlines[i + 1]['category'] ?? '').toString(),
+                                isDark,
+                              ),
+                            )
+                          else
+                            const Expanded(child: SizedBox.shrink()),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      _buildHotlineCard(
-                        title: 'Main Gate 1',
-                        subtitle: 'Security Post • Gate 1',
-                        contactNumber: '+91 98201 10104',
-                        extensionNumber: '104',
-                        icon: Icons.shield_rounded,
-                        color: isDark ? const Color(0xFF818CF8) : const Color(0xFF1E40AF),
-                      ),
+                      const SizedBox(height: 12),
                     ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      _buildHotlineCard(
-                        title: 'Loading Bay',
-                        subtitle: 'Dock & Logistics • Bay 2',
-                        contactNumber: '+91 98201 10108',
-                        extensionNumber: '108',
-                        icon: Icons.local_shipping_rounded,
-                        color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
-                      ),
-                      const SizedBox(width: 12),
-                      _buildHotlineCard(
-                        title: 'Emergency',
-                        subtitle: 'Safety & Rapid Response',
-                        contactNumber: '+91 98201 10911',
-                        extensionNumber: '911',
-                        icon: Icons.emergency_rounded,
-                        color: isDark ? const Color(0xFFF87171) : AsmitaPalette.actionRed,
-                      ),
-                    ],
-                  ),
+                  ] else ...[
+                    // Fallback 4 Mandatory Campus Hotlines
+                    Row(
+                      children: [
+                        _buildHotlineCard(
+                          title: 'Front Desk',
+                          subtitle: 'Receptionist • Lobby',
+                          contactNumber: '+91 98201 10101',
+                          extensionNumber: '101',
+                          icon: Icons.support_agent_rounded,
+                          color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                        ),
+                        const SizedBox(width: 12),
+                        _buildHotlineCard(
+                          title: 'Main Gate 1',
+                          subtitle: 'Security Post • Gate 1',
+                          contactNumber: '+91 98201 10104',
+                          extensionNumber: '104',
+                          icon: Icons.shield_rounded,
+                          color: isDark ? const Color(0xFF818CF8) : const Color(0xFF1E40AF),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        _buildHotlineCard(
+                          title: 'Loading Bay',
+                          subtitle: 'Dock & Logistics • Bay 2',
+                          contactNumber: '+91 98201 10108',
+                          extensionNumber: '108',
+                          icon: Icons.local_shipping_rounded,
+                          color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
+                        ),
+                        const SizedBox(width: 12),
+                        _buildHotlineCard(
+                          title: 'Emergency',
+                          subtitle: 'Safety & Rapid Response',
+                          contactNumber: '+91 98201 10911',
+                          extensionNumber: '911',
+                          icon: Icons.emergency_rounded,
+                          color: isDark ? const Color(0xFFF87171) : AsmitaPalette.actionRed,
+                        ),
+                      ],
+                    ),
+                  ],
 
                   const SizedBox(height: 14),
 
