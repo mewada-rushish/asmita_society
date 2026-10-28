@@ -7,6 +7,7 @@ import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
+import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
 import '../../../dashboard/widgets/asmita_pre_approve_wizard.dart';
@@ -785,19 +786,18 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
 
   void _showDepartmentEmployeesModal(String deptName, String floor, {int? departmentId}) {
     final societyId = _resolveSocietyId();
-    showModalBottomSheet(
+    showAsmitaBottomSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return _DepartmentEmployeesSheet(
-          departmentName: deptName,
-          floor: floor,
-          departmentId: departmentId,
-          societyId: societyId,
-          onCall: _callContact,
-        );
-      },
+      title: deptName,
+      subtitle: floor,
+      contentPadding: EdgeInsets.zero,
+      child: _DepartmentEmployeesSheet(
+        departmentName: deptName,
+        floor: floor,
+        departmentId: departmentId,
+        societyId: societyId,
+        onCall: _callContact,
+      ),
     );
   }
 }
@@ -914,71 +914,11 @@ class _DepartmentEmployeesSheetState extends State<_DepartmentEmployeesSheet> {
       return name.contains(q) || phone.contains(q) || ext.contains(q);
     }).toList();
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.75,
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: EdgeInsets.only(
-        top: 12,
-        left: 20,
-        right: 20,
-        bottom: MediaQuery.of(context).padding.bottom + 16,
-      ),
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.70,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: theme.dividerColor.withValues(alpha: 0.8),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.departmentName,
-                      style: const TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      widget.floor,
-                      style: const TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 12,
-                        color: AsmitaPalette.textLight,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close_rounded, size: 20),
-                onPressed: () => Navigator.pop(context),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
           // Search within Department
           Container(
             height: 42,
