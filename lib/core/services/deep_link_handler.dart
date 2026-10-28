@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:app_links/app_links.dart';
-import '../routes/app_routes.dart';
+import '../../features/auth/presentation/registration_screen.dart';
+import '../../features/visitor_management/presentation/screens/guard_pass_check_in_screen.dart';
 
 class DeepLinkHandler {
   static final AppLinks _appLinks = AppLinks();
@@ -29,14 +30,18 @@ class DeepLinkHandler {
       if (context == null) return;
 
       if (type == 'join') {
-        Navigator.of(context).pushNamed(
-          AppRoutes.register,
-          arguments: {'inviteToken': token},
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => RegistrationScreen(
+              verifiedMobile: token,
+            ),
+          ),
         );
       } else if (type == 'pass') {
-        Navigator.of(context).pushNamed(
-          AppRoutes.guardPassCheckIn,
-          arguments: {'passToken': token},
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const GuardPassCheckInScreen(),
+          ),
         );
       }
     }
