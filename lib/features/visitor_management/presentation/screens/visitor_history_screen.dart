@@ -1163,7 +1163,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 96.0),
+        padding: EdgeInsets.only(bottom: 96.0 + MediaQuery.viewPaddingOf(context).bottom + 16.0),
         child: FloatingActionButton.extended(
           heroTag: null, // Fixes Hero overlay bug in IndexedStack
           onPressed: () {
