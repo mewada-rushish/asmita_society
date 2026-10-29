@@ -392,6 +392,10 @@ class IndustrialVisitModel {
       status == IndustrialVisitStatus.assigned;
   bool get isApproved => status == IndustrialVisitStatus.approved;
   bool get isCheckedIn => status == IndustrialVisitStatus.checkedIn;
+  /// Active/live entries that are still ongoing (pending decision, approved, or currently checked in)
+  bool get isActiveOrPending => isPending || isApproved || isCheckedIn;
+  /// Historic entries that are completely resolved/finalized
+  bool get isFinalizedHistory => status == IndustrialVisitStatus.checkedOut || status == IndustrialVisitStatus.expired || status == IndustrialVisitStatus.cancelled || status == IndustrialVisitStatus.rejected || status == IndustrialVisitStatus.revoked;
   bool get isPassValid =>
       passCode != null &&
       passCodeExpiresAt != null &&

@@ -916,6 +916,10 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                 }
 
                 final filteredVisits = state.visits.where((v) {
+                  // Visits & Passes only displays live ongoing entries until checkout/expiry
+                  if (!v.isActiveOrPending) {
+                    return false;
+                  }
                   if (_selectedFilter == 'PENDING' && !v.isPending) {
                     return false;
                   }
@@ -1062,7 +1066,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     final pendingCount = visits.where((v) => v.isPending).length;
     final approvedCount = visits.where((v) => v.status == IndustrialVisitStatus.approved).length;
     final insideCount = visits.where((v) => v.status == IndustrialVisitStatus.checkedIn).length;
-    final totalCount = visits.length;
+    final totalCount = visits.where((v) => v.isActiveOrPending).length;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Row(
