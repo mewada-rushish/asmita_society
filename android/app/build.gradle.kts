@@ -35,13 +35,14 @@ android {
 
     signingConfigs {
         create("release") {
-            val keyStorePath = keystoreProperties.getProperty("storeFile") ?: System.getenv("KEYSTORE_PATH")
+            val keyStoreProp = keystoreProperties.getProperty("storeFile") ?: System.getenv("KEYSTORE_PATH")
+            val keyStoreFile = if (!keyStoreProp.isNullOrEmpty()) rootProject.file(keyStoreProp) else null
             val keyStorePassword = keystoreProperties.getProperty("storePassword") ?: System.getenv("KEYSTORE_PASSWORD")
             val keyStoreAlias = keystoreProperties.getProperty("keyAlias") ?: System.getenv("KEY_ALIAS")
             val keyPasswordVal = keystoreProperties.getProperty("keyPassword") ?: System.getenv("KEY_PASSWORD")
 
-            if (!keyStorePath.isNullOrEmpty() && file(keyStorePath).exists()) {
-                storeFile = file(keyStorePath)
+            if (keyStoreFile != null && keyStoreFile.exists()) {
+                storeFile = keyStoreFile
                 storePassword = keyStorePassword
                 keyAlias = keyStoreAlias
                 keyPassword = keyPasswordVal
