@@ -1179,9 +1179,15 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     List<IndustrialVisitModel> visits,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final waitingVisits = visits
-        .where((v) => v.isPending || v.heldAtGate)
-        .toList();
+    final waitingVisits = visits.where((v) {
+      if (v.status == IndustrialVisitStatus.expired ||
+          v.status == IndustrialVisitStatus.checkedOut ||
+          v.status == IndustrialVisitStatus.rejected ||
+          v.status == IndustrialVisitStatus.cancelled) {
+        return false;
+      }
+      return v.isPending || (v.isCheckedIn && v.heldAtGate);
+    }).toList();
 
     // Sort by oldest arrival first
     waitingVisits.sort((a, b) {
@@ -1717,26 +1723,30 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         ),
         child: Row(
         children: [
-          // Left: Avatar + Details
+          // Left: Consistent Squircle Avatar
           Container(
-            width: 36,
-            height: 36,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Theme.of(context).dividerColor),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
+              ),
+              borderRadius: BorderRadius.circular(11),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF2563EB).withValues(alpha: isDark ? 0.3 : 0.2),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             alignment: Alignment.center,
-            child: Text(
-              visit.visitorName.isNotEmpty
-                  ? visit.visitorName[0].toUpperCase()
-                  : 'V',
-              style: const TextStyle(
-                fontFamily: 'Montserrat',
-                fontWeight: FontWeight.w800,
-                color: AsmitaPalette.deepNavy,
-                fontSize: 14,
-              ),
+            child: const Icon(
+              Icons.person_rounded,
+              color: Colors.white,
+              size: 20,
             ),
           ),
           const SizedBox(width: 10),
