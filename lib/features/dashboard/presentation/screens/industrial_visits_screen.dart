@@ -27,15 +27,16 @@ import '../../../../core/config/env_config.dart';
 
 class IndustrialVisitsScreen extends StatefulWidget {
   final VoidCallback? onBack;
+  final String initialFilter;
 
-  const IndustrialVisitsScreen({super.key, this.onBack});
+  const IndustrialVisitsScreen({super.key, this.onBack, this.initialFilter = 'ALL'});
 
   @override
   State<IndustrialVisitsScreen> createState() => _IndustrialVisitsScreenState();
 }
 
 class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
-  String _selectedFilter = 'ALL';
+  late String _selectedFilter = widget.initialFilter;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   final Set<int> _acknowledgedIds = {};

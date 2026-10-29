@@ -1,3 +1,4 @@
+import '../screens/industrial_visits_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -41,6 +42,7 @@ class DirectorDashboardView extends StatefulWidget {
   final VoidCallback? onContactReceptionist;
   final Function(int visitId, String action)? onDecideVisit;
   final Function(int visitId)? onAcknowledgeVisit;
+  final Function(String filter)? onNavigateToVisits;
 
   const DirectorDashboardView({
     super.key,
@@ -48,6 +50,7 @@ class DirectorDashboardView extends StatefulWidget {
     this.onContactReceptionist,
     this.onDecideVisit,
     this.onAcknowledgeVisit,
+    this.onNavigateToVisits,
   });
 
   @override
@@ -906,6 +909,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           color: AsmitaPalette.actionRed,
           icon: Icons.pending_actions_rounded,
           showPulse: pendingCount > 0,
+          onTap: () => _openVisitsWithFilter(context, 'PENDING'),
         ),
         const SizedBox(width: 8),
         _kpiCard(
@@ -914,6 +918,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           value: '$approvedCount',
           color: AsmitaPalette.deepNavy,
           icon: Icons.verified_rounded,
+          onTap: () => _openVisitsWithFilter(context, 'APPROVED'),
         ),
         const SizedBox(width: 8),
         _kpiCard(
@@ -922,8 +927,26 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           value: '$checkedInCount',
           color: AsmitaPalette.successGreen,
           icon: Icons.meeting_room_rounded,
+          onTap: () => _openVisitsWithFilter(context, 'INSIDE'),
         ),
       ],
+    );
+  }
+
+  void _openVisitsWithFilter(BuildContext context, String filter) {
+    HapticFeedback.selectionClick();
+    if (widget.onNavigateToVisits != null) {
+      widget.onNavigateToVisits!(filter);
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => IndustrialVisitsScreen(
+          initialFilter: filter,
+          onBack: () => Navigator.pop(context),
+        ),
+      ),
     );
   }
 
@@ -934,11 +957,15 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     required Color color,
     required IconData icon,
     bool showPulse = false,
+    VoidCallback? onTap,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Expanded(
-      child: Container(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
@@ -1024,6 +1051,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
