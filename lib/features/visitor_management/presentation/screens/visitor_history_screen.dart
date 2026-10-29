@@ -904,58 +904,19 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
-          // Aligned Unified Header Structure matches Dashboard Layouts seamlessly
-          const AsmitaPrimaryHeader(),
-
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (widget.onBack != null || Navigator.canPop(context))
-                  GestureDetector(
-                    onTap: () {
-                      if (widget.onBack != null) {
-                        widget.onBack!();
-                      } else {
-                        Navigator.pop(context);
-                      }
-                    },
-                    behavior: HitTestBehavior.opaque,
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        right: 12.0,
-                        top: 4.0,
-                        bottom: 4.0,
-                      ),
-                      child: Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 18,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                Expanded(
-                  child: Text(
-                    'Visitor History',
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.filter_list_rounded,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  onPressed: _showFilterModal,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
+          // Unified Primary Header identical to Visits & Passes
+          AsmitaPrimaryHeader(
+            subtitleOverride: 'Visitor History',
+            allowPropertySwitching: false,
+            showBackButton: widget.onBack != null || Navigator.canPop(context),
+            onBackPressed: widget.onBack,
+            extraAction: IconButton(
+              icon: Icon(
+                Icons.filter_list_rounded,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              onPressed: _showFilterModal,
+              tooltip: 'Filter History',
             ),
           ),
 
