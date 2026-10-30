@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:asmita_society/features/dashboard/presentation/main_dashboard_screen.dart';
 import 'package:asmita_society/features/dashboard/presentation/views/owner_dashboard_view.dart';
@@ -32,7 +31,8 @@ import 'package:asmita_society/features/visitor_management/bloc/industrial_visit
 import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_state.dart';
 import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_event.dart';
 
-import 'package:asmita_society/features/community/presentation/providers/community_provider.dart';
+import 'package:asmita_society/features/community/bloc/community_bloc.dart';
+import 'package:asmita_society/features/community/bloc/community_event.dart';
 import 'package:asmita_society/features/community/bloc/community_state.dart';
 
 class MockAuthBloc extends Mock implements AuthBloc {}
@@ -42,22 +42,9 @@ class MockCommunityPostBloc extends Mock implements CommunityPostBloc {}
 class MockAmenitiesBloc extends Mock implements AmenitiesBloc {}
 class MockGuardGateBloc extends Mock implements GuardGateBloc {}
 class MockIndustrialVisitBloc extends Mock implements IndustrialVisitBloc {}
+class MockCommunityBloc extends Mock implements CommunityBloc {}
 
-class FakeCommunityNotifier extends CommunityNotifier {
-  @override
-  CommunityState build() {
-    return const CommunityLoaded([]);
-  }
-
-  @override
-  Future<void> loadMessages({int? currentUserId, String? currentUserName, bool isRefresh = false}) async {}
-
-  @override
-  void startPolling({bool Function()? isAtBottom}) {}
-
-  @override
-  void stopPolling() {}
-}
+class FakeCommunityEvent extends Fake implements CommunityEvent {}
 
 void main() {
   late MockAuthBloc mockAuthBloc;
@@ -67,6 +54,8 @@ void main() {
   late MockAmenitiesBloc mockAmenitiesBloc;
   late MockGuardGateBloc mockGuardGateBloc;
   late MockIndustrialVisitBloc mockIndustrialVisitBloc;
+  late MockCommunityBloc mockCommunityBloc;
+  late StreamController<CommunityState> communityStateController;
 
   late StreamController<AuthState> authStateController;
   late StreamController<VisitorState> visitorStateController;
@@ -89,6 +78,7 @@ void main() {
     registerFallbackValue(LoadQuickActions());
     registerFallbackValue(LoadCommunityPosts());
     registerFallbackValue(const LoadIndustrialVisits());
+    registerFallbackValue(FakeCommunityEvent());
   });
 
   setUp(() {
@@ -99,8 +89,10 @@ void main() {
     mockAmenitiesBloc = MockAmenitiesBloc();
     mockGuardGateBloc = MockGuardGateBloc();
     mockIndustrialVisitBloc = MockIndustrialVisitBloc();
+    mockCommunityBloc = MockCommunityBloc();
 
     authStateController = StreamController<AuthState>.broadcast();
+    communityStateController = StreamController<CommunityState>.broadcast();
     visitorStateController = StreamController<VisitorState>.broadcast();
     quickActionsStateController = StreamController<QuickActionsState>.broadcast();
     communityPostStateController = StreamController<CommunityPostState>.broadcast();
@@ -145,6 +137,11 @@ void main() {
     when(() => mockIndustrialVisitBloc.state).thenReturn(const IndustrialVisitState());
     when(() => mockIndustrialVisitBloc.close()).thenAnswer((_) async {});
     when(() => mockIndustrialVisitBloc.add(any())).thenReturn(null);
+
+    when(() => mockCommunityBloc.stream).thenAnswer((_) => communityStateController.stream);
+    when(() => mockCommunityBloc.state).thenReturn(const CommunityLoaded([]));
+    when(() => mockCommunityBloc.close()).thenAnswer((_) async {});
+    when(() => mockCommunityBloc.add(any())).thenReturn(null);
   });
 
   tearDown(() async {
@@ -155,26 +152,23 @@ void main() {
     await amenitiesStateController.close();
     await guardGateStateController.close();
     await industrialVisitStateController.close();
+    await communityStateController.close();
   });
 
   Widget buildTestableWidget(String userRole) {
-    return ProviderScope(
-      overrides: [
-        communityProvider.overrideWith(() => FakeCommunityNotifier()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>.value(value: mockAuthBloc),
+        BlocProvider<VisitorBloc>.value(value: mockVisitorBloc),
+        BlocProvider<QuickActionsBloc>.value(value: mockQuickActionsBloc),
+        BlocProvider<CommunityPostBloc>.value(value: mockCommunityPostBloc),
+        BlocProvider<AmenitiesBloc>.value(value: mockAmenitiesBloc),
+        BlocProvider<GuardGateBloc>.value(value: mockGuardGateBloc),
+        BlocProvider<IndustrialVisitBloc>.value(value: mockIndustrialVisitBloc),
+        BlocProvider<CommunityBloc>.value(value: mockCommunityBloc),
       ],
-      child: MultiBlocProvider(
-        providers: [
-          BlocProvider<AuthBloc>.value(value: mockAuthBloc),
-          BlocProvider<VisitorBloc>.value(value: mockVisitorBloc),
-          BlocProvider<QuickActionsBloc>.value(value: mockQuickActionsBloc),
-          BlocProvider<CommunityPostBloc>.value(value: mockCommunityPostBloc),
-          BlocProvider<AmenitiesBloc>.value(value: mockAmenitiesBloc),
-          BlocProvider<GuardGateBloc>.value(value: mockGuardGateBloc),
-          BlocProvider<IndustrialVisitBloc>.value(value: mockIndustrialVisitBloc),
-        ],
-        child: MaterialApp(
-          home: MainDashboardScreen(userRole: userRole),
-        ),
+      child: MaterialApp(
+        home: MainDashboardScreen(userRole: userRole),
       ),
     );
   }

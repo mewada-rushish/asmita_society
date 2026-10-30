@@ -204,11 +204,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   List<Map<String, dynamic>> _societyDepartments = [];
   bool _isLoadingEmployees = false;
 
-  List<Map<String, dynamic>> _meetingRooms = [];
-  int? _selectedMeetingRoomId;
-  String? _selectedMeetingRoomName;
-  bool _isHostAbsent = false;
-
   List<Map<String, dynamic>> _getTowers() {
     final towers = <int, String>{};
     for (final flat in _societyFlats) {
@@ -1637,71 +1632,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             ],
           );
         },
-      ),
-    );
-  }
-
-  void _showMeetingRoomPicker() {
-    if (_meetingRooms.isEmpty) return;
-
-    showAsmitaBottomSheet(
-      context: context,
-      title: 'Allot Meeting Room',
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.not_interested, color: Colors.grey),
-            title: const Text('None (Wait at Reception)'),
-            selected: _selectedMeetingRoomId == null,
-            onTap: () {
-              setState(() {
-                _selectedMeetingRoomId = null;
-                _selectedMeetingRoomName = null;
-              });
-              Navigator.pop(context);
-            },
-          ),
-          const Divider(),
-          Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: _meetingRooms.length,
-              itemBuilder: (context, index) {
-                final room = _meetingRooms[index];
-                final isSelected = _selectedMeetingRoomId == room['id'];
-                final floorStr = room['floor'] != null ? ' (Floor ${room['floor']})' : '';
-                return ListTile(
-                  leading: Icon(
-                    Icons.meeting_room,
-                    color: isSelected
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.grey.shade600,
-                  ),
-                  title: Text(
-                    '${room['name']}$floorStr',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
-                  selected: isSelected,
-                  trailing: isSelected
-                      ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
-                      : null,
-                  onTap: () {
-                    setState(() {
-                      _selectedMeetingRoomId = room['id'] as int?;
-                      _selectedMeetingRoomName = room['name'] as String?;
-                    });
-                    Navigator.pop(context);
-                  },
-                );
-              },
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -2,11 +2,12 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:asmita_society/features/menu/presentation/screens/family_members_screen.dart';
-import 'package:asmita_society/features/menu/presentation/providers/family_provider.dart';
+import 'package:asmita_society/features/menu/bloc/family_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/family_event.dart';
+import 'package:asmita_society/features/menu/bloc/family_state.dart';
 import 'package:asmita_society/features/menu/data/models/family_member_model.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
@@ -14,38 +15,19 @@ import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/auth/data/models/user_model.dart';
 
 class MockAuthBloc extends Mock implements AuthBloc {}
+class MockFamilyBloc extends Mock implements FamilyBloc {}
 
-class TestFamilyNotifier extends FamilyNotifier {
-  final FutureOr<List<FamilyMemberModel>> Function() onBuild;
-  bool addMemberCalled = false;
-  bool deleteMemberCalled = false;
-
-  TestFamilyNotifier(this.onBuild);
-
-  @override
-  FutureOr<List<FamilyMemberModel>> build() => onBuild();
-
-  @override
-  Future<bool> addMember({
-    required String name,
-    required String relationship,
-    String? contactNumber,
-    bool isEmergencyContact = false,
-  }) async {
-    addMemberCalled = true;
-    return true;
-  }
-
-  @override
-  Future<bool> deleteMember(int id) async {
-    deleteMemberCalled = true;
-    return true;
-  }
-}
+class FakeFamilyEvent extends Fake implements FamilyEvent {}
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(FakeFamilyEvent());
+  });
+
   late MockAuthBloc mockAuthBloc;
+  late MockFamilyBloc mockFamilyBloc;
   late StreamController<AuthState> authStateController;
+  late StreamController<FamilyState> familyStateController;
 
   final testUser = UserModel(
     userId: 701,
@@ -81,31 +63,54 @@ void main() {
 
   setUp(() {
     mockAuthBloc = MockAuthBloc();
+    mockFamilyBloc = MockFamilyBloc();
     authStateController = StreamController<AuthState>.broadcast();
+    familyStateController = StreamController<FamilyState>.broadcast();
 
     when(() => mockAuthBloc.stream).thenAnswer((_) => authStateController.stream);
     when(() => mockAuthBloc.state).thenReturn(
       AuthAuthenticated(user: testUser, sessionRole: 'owner'),
     );
     when(() => mockAuthBloc.close()).thenAnswer((_) async {});
+
+    when(() => mockFamilyBloc.stream).thenAnswer((_) => familyStateController.stream);
+    when(() => mockFamilyBloc.state).thenReturn(FamilyLoaded(sampleMembers));
+    when(() => mockFamilyBloc.close()).thenAnswer((_) async {});
+    when(() => mockFamilyBloc.add(any())).thenReturn(null);
   });
 
   tearDown(() async {
     await authStateController.close();
+    await familyStateController.close();
   });
 
   Widget buildTestableWidget({
-    required FutureOr<List<FamilyMemberModel>> Function() onBuild,
+    FutureOr<List<FamilyMemberModel>> Function()? onBuild,
+    FamilyState? state,
   }) {
-    return ProviderScope(
-      overrides: [
-        familyProvider.overrideWith(() => TestFamilyNotifier(onBuild)),
+    final FamilyState resolvedState;
+    if (state != null) {
+      resolvedState = state;
+    } else if (onBuild != null) {
+      final res = onBuild();
+      if (res is Future) {
+        resolvedState = FamilyLoading();
+      } else {
+        resolvedState = FamilyLoaded(res);
+      }
+    } else {
+      resolvedState = const FamilyLoaded([]);
+    }
+
+    when(() => mockFamilyBloc.state).thenReturn(resolvedState);
+
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>.value(value: mockAuthBloc),
+        BlocProvider<FamilyBloc>.value(value: mockFamilyBloc),
       ],
-      child: BlocProvider<AuthBloc>.value(
-        value: mockAuthBloc,
-        child: const MaterialApp(
-          home: FamilyMembersScreen(),
-        ),
+      child: const MaterialApp(
+        home: FamilyMembersScreen(),
       ),
     );
   }

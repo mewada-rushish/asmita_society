@@ -10,6 +10,7 @@ import 'package:asmita_society/features/auth/data/models/user_model.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_bloc.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_event.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_state.dart';
+import 'package:asmita_society/features/visitor_management/data/models/visitor_history_item.dart';
 import 'package:asmita_society/features/dashboard/bloc/quick_actions/quick_actions_bloc.dart';
 import 'package:asmita_society/features/dashboard/bloc/quick_actions/quick_actions_state.dart';
 import 'package:asmita_society/features/dashboard/data/models/quick_action_registry.dart';
@@ -266,7 +267,7 @@ void main() {
       ];
 
       when(() => mockVisitorBloc.state).thenReturn(
-        VisitorHistoryLoaded(history: testHistory),
+        VisitorHistoryLoaded(history: testHistory.map((e) => VisitorHistoryItem.fromJson(e)).toList()),
       );
 
       await tester.pumpWidget(

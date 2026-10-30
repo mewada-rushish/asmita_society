@@ -2,44 +2,40 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:asmita_society/features/menu/presentation/screens/vehicles_screen.dart';
-import 'package:asmita_society/features/menu/presentation/providers/vehicles_provider.dart';
+import 'package:asmita_society/features/menu/bloc/vehicles_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/vehicles_event.dart';
+import 'package:asmita_society/features/menu/bloc/vehicles_state.dart';
 import 'package:asmita_society/features/menu/data/models/vehicle_model.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/auth/data/models/user_model.dart';
 
-import 'package:asmita_society/features/menu/data/repositories/vehicles_repository.dart';
-
 class MockAuthBloc extends Mock implements AuthBloc {}
-class MockVehiclesRepository extends Mock implements VehiclesRepository {}
+class MockVehiclesBloc extends Mock implements VehiclesBloc {}
 
-class TestVehiclesNotifier extends VehiclesNotifier {
+class FakeVehiclesEvent extends Fake implements VehiclesEvent {}
+
+class TestVehiclesNotifier {
   final FutureOr<List<VehicleModel>> Function() onBuild;
   bool deleteVehicleCalled = false;
   int? deletedVehicleId;
 
   TestVehiclesNotifier(this.onBuild);
-
-  @override
-  FutureOr<List<VehicleModel>> build() => onBuild();
-
-  @override
-  Future<bool> deleteVehicle(int id) async {
-    deleteVehicleCalled = true;
-    deletedVehicleId = id;
-    return true;
-  }
 }
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(FakeVehiclesEvent());
+  });
+
   late MockAuthBloc mockAuthBloc;
-  late MockVehiclesRepository mockVehiclesRepository;
+  late MockVehiclesBloc mockVehiclesBloc;
   late StreamController<AuthState> authStateController;
+  late StreamController<VehiclesState> vehiclesStateController;
 
   final testUser = UserModel(
     userId: 901,
@@ -62,53 +58,82 @@ void main() {
   final sampleVehicles = [
     VehicleModel(
       id: 201,
-      type: '4-wheeler',
+      type: 'four_wheeler',
       makeModel: 'Honda City',
       licensePlate: 'MH 02 CZ 4421',
       parkingSlot: 'P-12',
-      flatId: 501,
     ),
     VehicleModel(
       id: 202,
-      type: '2-wheeler',
+      type: 'two_wheeler',
       makeModel: 'Royal Enfield',
       licensePlate: 'MH 02 DK 9912',
       parkingSlot: 'B-04',
-      flatId: 501,
     ),
   ];
 
   setUp(() {
     mockAuthBloc = MockAuthBloc();
-    mockVehiclesRepository = MockVehiclesRepository();
+    mockVehiclesBloc = MockVehiclesBloc();
     authStateController = StreamController<AuthState>.broadcast();
+    vehiclesStateController = StreamController<VehiclesState>.broadcast();
 
     when(() => mockAuthBloc.stream).thenAnswer((_) => authStateController.stream);
     when(() => mockAuthBloc.state).thenReturn(
       AuthAuthenticated(user: testUser, sessionRole: 'owner'),
     );
     when(() => mockAuthBloc.close()).thenAnswer((_) async {});
-    when(() => mockVehiclesRepository.getParkingSlots()).thenAnswer((_) async => ['P-1', 'P-2']);
+
+    when(() => mockVehiclesBloc.stream).thenAnswer((_) => vehiclesStateController.stream);
+    when(() => mockVehiclesBloc.state).thenReturn(VehiclesLoaded(sampleVehicles));
+    when(() => mockVehiclesBloc.close()).thenAnswer((_) async {});
+    when(() => mockVehiclesBloc.add(any())).thenReturn(null);
   });
 
   tearDown(() async {
     await authStateController.close();
+    await vehiclesStateController.close();
   });
 
   Widget buildTestableWidget({
-    required FutureOr<List<VehicleModel>> Function() onBuild,
+    FutureOr<List<VehicleModel>> Function()? onBuild,
     TestVehiclesNotifier? notifier,
+    VehiclesState? state,
   }) {
-    return ProviderScope(
-      overrides: [
-        vehiclesRepositoryProvider.overrideWithValue(mockVehiclesRepository),
-        vehiclesProvider.overrideWith(() => notifier ?? TestVehiclesNotifier(onBuild)),
+    final VehiclesState resolvedState;
+    if (state != null) {
+      resolvedState = state;
+    } else if (notifier != null) {
+      resolvedState = VehiclesLoaded(notifier.onBuild() as dynamic);
+    } else if (onBuild != null) {
+      final res = onBuild();
+      if (res is Future) {
+        resolvedState = VehiclesLoading();
+      } else {
+        resolvedState = VehiclesLoaded(res as dynamic);
+      }
+    } else {
+      resolvedState = const VehiclesLoaded([]);
+    }
+
+    when(() => mockVehiclesBloc.state).thenReturn(resolvedState);
+    if (notifier != null) {
+      when(() => mockVehiclesBloc.add(any())).thenAnswer((invocation) {
+        final event = invocation.positionalArguments[0];
+        if (event is DeleteVehicle) {
+          notifier.deleteVehicleCalled = true;
+          notifier.deletedVehicleId = event.id;
+        }
+      });
+    }
+
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>.value(value: mockAuthBloc),
+        BlocProvider<VehiclesBloc>.value(value: mockVehiclesBloc),
       ],
-      child: BlocProvider<AuthBloc>.value(
-        value: mockAuthBloc,
-        child: const MaterialApp(
-          home: VehiclesScreen(),
-        ),
+      child: const MaterialApp(
+        home: VehiclesScreen(),
       ),
     );
   }
