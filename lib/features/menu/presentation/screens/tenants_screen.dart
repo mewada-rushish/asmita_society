@@ -75,43 +75,22 @@ class TenantsScreen extends StatelessWidget {
             ),
             const AsmitaSubHeader(title: 'Tenants'),
             Expanded(
-              child: tenantState.when(
-                data: (members) {
-                  return CustomScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                    slivers: [
-                      AsmitaAnimatedRefresh(
-                        onRefresh: () async {
-                          ref.invalidate(tenantProvider);
-                          await Future.delayed(const Duration(milliseconds: 1000));
-                        },
-                      ),
-                      if (members.isEmpty)
-                        SliverFillRemaining(
-                          child: Center(
-                            child: Text(
-                              'No Tenants added yet.',
-                              style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color),
-                            ),
-                          ),
-                        )
-                      else
-                        SliverPadding(
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                          sliver: SliverGrid(
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 0.80,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                            ),
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                return _buildTenantGridCard(context, ref, textTheme, members[index]);
-                              },
-                              childCount: members.length,
-                            ),
-                          ),
+              child: BlocBuilder<TenantBloc, TenantState>(
+                builder: (context, state) {
+                  if (state is TenantLoading) {
+                    return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+                  } else if (state is TenantError) {
+                    return Center(child: Text('Error: ${state.message}', style: textTheme.bodyLarge?.copyWith(color: Colors.red)));
+                  } else if (state is TenantLoaded) {
+                    final members = state.items;
+                    return CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                      slivers: [
+                        AsmitaAnimatedRefresh(
+                          onRefresh: () async {
+                            context.read<TenantBloc>().add(const LoadTenant());
+                            await Future.delayed(const Duration(milliseconds: 1000));
+                          },
                         ),
                         if (members.isEmpty)
                           SliverFillRemaining(
@@ -124,11 +103,11 @@ class TenantsScreen extends StatelessWidget {
                           )
                         else
                           SliverPadding(
-                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                             sliver: SliverGrid(
                               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
-                                childAspectRatio: 0.85,
+                                childAspectRatio: 0.80,
                                 crossAxisSpacing: 16,
                                 mainAxisSpacing: 16,
                               ),

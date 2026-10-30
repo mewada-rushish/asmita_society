@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../bloc/community_state.dart';
 import '../attachments/attachment_bottom_sheet.dart';
+import '../../../../core/constants/design_system.dart';
 
 class ChatComposer extends StatefulWidget {
   const ChatComposer({super.key});
@@ -680,44 +681,44 @@ class _ChatComposerState extends State<ChatComposer>
                 ),
               ),
             ),
-          ),
-        ),
-        SizeTransition(
-          sizeFactor: _emojiAnim,
-          alignment: Alignment.topCenter,
-          child: Container(
-            color: Colors.white,
-            child: RepaintBoundary(
-              child: SizedBox(
-                height: 250,
-                child: (_emojiShowing || _emojiAnim.value > 0)
-                    ? EmojiPicker(
-                        textEditingController: _controller,
-                        config: Config(
-                          bottomActionBarConfig: const BottomActionBarConfig(
-                            showBackspaceButton: false,
-                            showSearchViewButton: false,
-                          ),
-                          categoryViewConfig: const CategoryViewConfig(
-                            backgroundColor: Colors.white,
-                            iconColor: AsmitaPalette.textLight,
-                            iconColorSelected: AsmitaPalette.deepNavy,
-                            indicatorColor: AsmitaPalette.deepNavy,
-                            dividerColor: Colors.black12,
-                          ),
-                          emojiViewConfig: EmojiViewConfig(
-                            backgroundColor: Colors.white,
-                            columns: 7,
-                            emojiSizeMax:
-                                28 *
-                                (foundation.defaultTargetPlatform ==
-                                        TargetPlatform.iOS
-                                    ? 1.30
-                                    : 1.0),
-                          ),
-                        ),
-                      )
-                    : const SizedBox.shrink(),
+            SizeTransition(
+              sizeFactor: _emojiAnim,
+              alignment: Alignment.topCenter,
+              child: Container(
+                color: Colors.white,
+                child: RepaintBoundary(
+                  child: SizedBox(
+                    height: 250,
+                    child: (_emojiShowing || _emojiAnim.value > 0)
+                        ? EmojiPicker(
+                            textEditingController: _controller,
+                            config: Config(
+                              bottomActionBarConfig: const BottomActionBarConfig(
+                                showBackspaceButton: false,
+                                showSearchViewButton: false,
+                              ),
+                              categoryViewConfig: const CategoryViewConfig(
+                                backgroundColor: Colors.white,
+                                iconColor: AsmitaPalette.textLight,
+                                iconColorSelected: AsmitaPalette.deepNavy,
+                                indicatorColor: AsmitaPalette.deepNavy,
+                                dividerColor: Colors.black12,
+                              ),
+                              emojiViewConfig: EmojiViewConfig(
+                                backgroundColor: Colors.white,
+                                columns: 7,
+                                emojiSizeMax:
+                                    28 *
+                                    (foundation.defaultTargetPlatform ==
+                                            TargetPlatform.iOS
+                                        ? 1.30
+                                        : 1.0),
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ),
               ),
             ),
             SizedBox(height: MediaQuery.paddingOf(context).bottom),

@@ -23,7 +23,6 @@ import 'profile_screen.dart';
 import 'rules_screen.dart';
 import 'settings_screen.dart';
 import 'vehicles_screen.dart';
-import '../../../visitor_management/data/models/property_config.dart';
 
 class MenuScreen extends StatelessWidget {
   final String userRole;

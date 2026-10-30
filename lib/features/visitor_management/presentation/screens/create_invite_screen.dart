@@ -9,7 +9,6 @@ import '../../bloc/visitor_state.dart';
 import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_state.dart';
 import '../../../visitor_management/data/models/property_config.dart';
-import '../../../../core/utils/property_label_resolver.dart';
 
 class CreateInviteScreen extends StatefulWidget {
   final PropertyConfig? propertyConfig;

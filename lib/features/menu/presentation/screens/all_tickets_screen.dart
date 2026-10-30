@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
-import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
-import 'package:asmita_society/features/menu/presentation/providers/support_provider.dart';
+import '../../bloc/support_bloc.dart';
+import '../../bloc/support_event.dart';
+import '../../bloc/support_state.dart';
 import '../widgets/ticket_conversation_bottom_sheet.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -70,19 +71,7 @@ class AllTicketsScreen extends StatelessWidget {
               ),
             );
           }
-          
-          return AsmitaRefreshableListView(
-            onRefresh: () async {
-              await ref.read(supportProvider.notifier).fetchTickets();
-            },
-            padding: const EdgeInsets.all(16),
-            itemCount: tickets.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final t = tickets[index];
-              return _buildTicketCard(context, t, textTheme);
-            },
-          );
+          return const SizedBox.shrink();
         },
       ),
     );

@@ -14,14 +14,6 @@ import '../../features/dashboard/data/repositories/search_repository.dart';
 import '../../features/visitor_management/data/repositories/guard_gate_repository.dart';
 import '../../features/visitor_management/data/repositories/industrial_visit_repository.dart';
 
-import '../../features/menu/bloc/family_bloc.dart';
-import '../../features/menu/bloc/pets_bloc.dart';
-import '../../features/menu/bloc/vehicles_bloc.dart';
-import '../../features/menu/bloc/tenant_bloc.dart';
-import '../../features/menu/bloc/preferences_bloc.dart';
-import '../../features/menu/bloc/society_bloc.dart';
-import '../../features/menu/bloc/support_bloc.dart';
-import '../../features/menu/bloc/historyrequest_bloc.dart';
 final sl = GetIt.instance;
 
 Future<void> init() async {

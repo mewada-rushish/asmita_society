@@ -72,11 +72,11 @@ class _BiometricLockWrapperState extends State<BiometricLockWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    final prefsState = ref.watch(preferencesProvider);
-    
-    if (prefsState.isLoading && !prefsState.hasValue) {
-      return widget.child;
-    }
+    return BlocBuilder<PreferencesBloc, PreferencesState>(
+      builder: (context, prefsState) {
+        if (prefsState is PreferencesLoading) {
+          return widget.child;
+        }
 
         final isBiometricEnabled = prefsState is PreferencesLoaded ? prefsState.items?.biometricLogin ?? false : false;
         debugPrint('Biometrics - Loaded! enabled: $isBiometricEnabled, hasPrompted: $_hasPrompted, isAuth: $_isAuthenticated');
@@ -95,54 +95,54 @@ class _BiometricLockWrapperState extends State<BiometricLockWrapper> {
 
         // Otherwise, show the lock screen
         return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.lock_person_rounded,
-                size: 80,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'App Locked',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Please authenticate to access your account.',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 48),
-              if (_isAuthenticating)
-                const CircularProgressIndicator()
-              else
-                ElevatedButton.icon(
-                  onPressed: _authenticate,
-                  icon: Icon(Icons.fingerprint, color: Theme.of(context).colorScheme.surface),
-                  label: Text(
-                    'Unlock',
-                    style: TextStyle(color: Theme.of(context).colorScheme.surface),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          body: SafeArea(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.lock_person_rounded,
+                    size: 80,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 24),
+                  Text(
+                    'App Locked',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
-                ),
-            ],
+                  const SizedBox(height: 12),
+                  Text(
+                    'Please authenticate to access your account.',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 48),
+                  if (_isAuthenticating)
+                    const CircularProgressIndicator()
+                  else
+                    ElevatedButton.icon(
+                      onPressed: _authenticate,
+                      icon: Icon(Icons.fingerprint, color: Theme.of(context).colorScheme.surface),
+                      label: Text(
+                        'Unlock',
+                        style: TextStyle(color: Theme.of(context).colorScheme.surface),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
-    );
+        );
       },
     );
   }

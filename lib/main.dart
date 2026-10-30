@@ -28,15 +28,8 @@ import 'features/services/bloc/daily_help_bloc.dart';
 import 'features/dashboard/bloc/search/search_bloc.dart';
 import 'features/community/bloc/community_post_event.dart';
 import 'features/dashboard/bloc/quick_actions/quick_actions_bloc.dart';
-import 'features/menu/bloc/family_bloc.dart';
-import 'features/menu/bloc/pets_bloc.dart';
-import 'features/menu/bloc/vehicles_bloc.dart';
-import 'features/menu/bloc/tenant_bloc.dart';
 import 'features/menu/bloc/preferences_bloc.dart';
 import 'features/menu/bloc/preferences_state.dart';
-import 'features/menu/bloc/society_bloc.dart';
-import 'features/menu/bloc/support_bloc.dart';
-import 'features/menu/bloc/historyrequest_bloc.dart';
 import 'features/menu/bloc/preferences_event.dart';
 
 import 'package:flutter_quill/flutter_quill.dart'
@@ -204,6 +197,9 @@ class _AsmitaAppState extends State<AsmitaApp> with WidgetsBindingObserver {
         BlocProvider<QuickActionsBloc>(
           create: (context) => QuickActionsBloc()..add(LoadQuickActions()),
         ),
+        BlocProvider<PreferencesBloc>(
+          create: (context) => PreferencesBloc(repository: di.sl())..add(const LoadPreferences()),
+        ),
         BlocProvider<IndustrialVisitBloc>(
           create: (context) {
             di.registerIndustrialDependencies();
@@ -213,23 +209,31 @@ class _AsmitaAppState extends State<AsmitaApp> with WidgetsBindingObserver {
           },
         ),
       ],
-      child: MaterialApp(
-        navigatorKey: rootNavigatorKey,
-        title: 'AsmitA',
-        debugShowCheckedModeBanner: false,
-        theme: AsmitaTheme.lightTheme,
-        darkTheme: AsmitaTheme.darkTheme,
-        themeMode: preferencesAsync.value?.appTheme.toLowerCase() == 'dark' 
-            ? ThemeMode.dark 
-            : (preferencesAsync.value?.appTheme.toLowerCase() == 'light' ? ThemeMode.light : ThemeMode.system),
-        locale: locale,
-        localizationsDelegates: [
-          ...AppLocalizations.localizationsDelegates,
-          FlutterQuillLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
-        navigatorObservers: [CrashlyticsNavigationObserver()],
-        home: isDeviceSafe ? const RootScreen() : const UnsafeDeviceScreen(),
+      child: BlocBuilder<PreferencesBloc, PreferencesState>(
+        builder: (context, prefState) {
+          final prefs = prefState is PreferencesLoaded ? prefState.items : null;
+          final themeMode = prefs?.appTheme.toLowerCase() == 'dark' 
+              ? ThemeMode.dark 
+              : (prefs?.appTheme.toLowerCase() == 'light' ? ThemeMode.light : ThemeMode.system);
+          final locale = _getLocaleFromLanguage(prefs?.language);
+
+          return MaterialApp(
+            navigatorKey: rootNavigatorKey,
+            title: 'AsmitA',
+            debugShowCheckedModeBanner: false,
+            theme: AsmitaTheme.lightTheme,
+            darkTheme: AsmitaTheme.darkTheme,
+            themeMode: themeMode,
+            locale: locale,
+            localizationsDelegates: [
+              ...AppLocalizations.localizationsDelegates,
+              FlutterQuillLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            navigatorObservers: [CrashlyticsNavigationObserver()],
+            home: widget.isDeviceSafe ? const RootScreen() : const UnsafeDeviceScreen(),
+          );
+        },
       ),
     );
   }
