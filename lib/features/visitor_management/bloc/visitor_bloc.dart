@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/repositories/visitor_repository.dart';
+import '../data/models/visitor_history_item.dart';
 import 'visitor_event.dart';
 import 'visitor_state.dart';
 
@@ -24,7 +25,10 @@ class VisitorBloc extends Bloc<VisitorEvent, VisitorState> {
         endDate: event.endDate,
         visitorTypeId: event.visitorTypeId,
       );
-      emit(VisitorHistoryLoaded(history: history));
+      final items = history
+          .map((e) => VisitorHistoryItem.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList();
+      emit(VisitorHistoryLoaded(history: items));
     } catch (e) {
       emit(VisitorError(message: e.toString().replaceAll('Exception: ', '')));
     }

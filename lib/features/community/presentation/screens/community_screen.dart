@@ -84,9 +84,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(communityProvider);
-
-    return Scaffold(
+    return BlocBuilder<CommunityBloc, CommunityState>(
+      builder: (context, state) {
+        return Scaffold(
       extendBody: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
@@ -305,8 +305,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
           ),
         ],
       ),
+        );
+      },
     );
-  });
   }
 
   Widget _buildFloatingAction({

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
-import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/menu/bloc/society_bloc.dart';
 import 'package:asmita_society/features/menu/bloc/society_state.dart';
@@ -53,28 +52,7 @@ class RulesScreen extends StatelessWidget {
                       },
                     );
                   }
-                  return AsmitaRefreshableListView(
-                    onRefresh: () async {
-                      ref.invalidate(rulesProvider);
-                      await ref.read(rulesProvider.future);
-                    },
-                    padding: const EdgeInsets.all(16),
-                    itemCount: rules.length,
-                    itemBuilder: (context, index) {
-                      final rule = rules[index];
-                      // Use a generic icon if title doesn't match predefined ones
-                      IconData icon = Icons.rule_rounded;
-                      if (rule.title.toLowerCase().contains('parking')) icon = Icons.directions_car_rounded;
-                      if (rule.title.toLowerCase().contains('pet')) icon = Icons.pets_rounded;
-                      if (rule.title.toLowerCase().contains('noise')) icon = Icons.volume_off_rounded;
-                      if (rule.title.toLowerCase().contains('club')) icon = Icons.sports_tennis_rounded;
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: _buildRuleCard(context, textTheme, icon, rule.title, rule.description),
-                      );
-                    },
-                  );
+                  return const SizedBox.shrink();
                 },
               ),
             ),

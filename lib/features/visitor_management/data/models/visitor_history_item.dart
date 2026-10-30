@@ -73,4 +73,6 @@ class VisitorHistoryItem {
   }
 
   bool get isPreApproved => recordType == 'PRE_APPROVED';
+
+  dynamic operator [](String key) => rawData[key];
 }

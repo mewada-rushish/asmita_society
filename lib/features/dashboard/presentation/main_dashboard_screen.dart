@@ -33,6 +33,7 @@ import 'package:asmita_society/features/services/data/repositories/daily_help_re
 import '../../../core/di/injection_container.dart' as di;
 import '../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../visitor_management/data/repositories/industrial_visit_repository.dart';
+import '../../../core/services/property_config_service.dart';
 import 'package:asmita_society/core/services/permission_manager_service.dart';
 
 class MainDashboardScreen extends StatefulWidget {
@@ -46,12 +47,16 @@ class MainDashboardScreen extends StatefulWidget {
 
 class _MainDashboardScreenState extends State<MainDashboardScreen> {
   int _currentIndex = 0;
-  PropertyConfig? _propertyConfig;
 
   @override
   void initState() {
     super.initState();
     _loadPropertyConfig();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        PermissionManagerService.showPermissionSetupDialog(context);
+      }
+    });
   }
 
   Future<void> _loadPropertyConfig() async {
@@ -61,23 +66,8 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       societyId = authState.user.societyId ?? 1;
     }
     try {
-      final config = await di.sl<PropertyConfigService>().loadConfigForSociety(societyId);
-      if (mounted) {
-        setState(() {
-          _propertyConfig = config;
-        });
-      }
+      await di.sl<PropertyConfigService>().loadConfigForSociety(societyId);
     } catch (_) {}
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        PermissionManagerService.showPermissionSetupDialog(context);
-      }
-    });
   }
 
   void _navigateToSearch() {
@@ -148,11 +138,12 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   }
 
   // Dynamically builds the view list cleanly to keep callback bindings alive on state mutations
-  List<Widget> _buildScreens() {
-    final normalized = PropertyRoleResolver.normalizeRole(widget.userRole);
+  List<Widget> _buildScreens([String? activeRole]) {
+    final role = activeRole ?? widget.userRole;
+    final normalized = PropertyRoleResolver.normalizeRole(role);
     final isResidential = normalized == 'owner' || normalized == 'tenant';
     return [
-      _resolveRoleBasedHomeView(widget.userRole), // Index 0: Home view
+      _resolveRoleBasedHomeView(role), // Index 0: Home view
       isResidential
           ? ServicesScreen( // Index 1: Services Grid
               onNavigateToSearch: _navigateToSearch,
@@ -168,22 +159,16 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
               onNavigateToCommunity: () => setState(() => _currentIndex = 2),
             )
           : IndustrialDirectoryScreen(onBack: () => setState(() => _currentIndex = 0)),
-      _resolveRoleBasedHistoryView(widget.userRole),               // Index 3: Gate Records (History)
+      _resolveRoleBasedHistoryView(role),               // Index 3: Gate Records (History)
       MenuScreen(
-        userRole: activeRole,
-        propertyConfig: _propertyConfig,
+        userRole: role,
         onNavigateToTab: (index) {
           setState(() => _currentIndex = index);
         },
       ),      // Index 4: Profile Settings
-      _resolveRoleBasedQrScanner(activeRole), // Index 5: QR Scanner
-      _resolveRoleBasedCheckedInView(activeRole), // Index 6: Checked In (Guard/Receptionist only)
+      _resolveRoleBasedQrScanner(role), // Index 5: QR Scanner
+      _resolveRoleBasedCheckedInView(role), // Index 6: Checked In (Guard/Receptionist only)
     ];
-  }
-
-  bool _isGuardOrReceptionist(String role) {
-    final r = role.toLowerCase();
-    return r == 'guard' || r.contains('guard') || r.contains('receptionist');
   }
 
   Widget _resolveRoleBasedCheckedInView(String role) {
@@ -295,65 +280,6 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       default:
         return Center(child: Text('Role Architecture: $role'));
     }
-
-    // 2. Tenants, Corporate Staff, Team Leaders & Department Heads
-    if (r == 'tenant' ||
-        r.contains('tenant') ||
-        r.contains('staff') ||
-        r.contains('employee') ||
-        r.contains('lead') ||
-        r.contains('hod') ||
-        r.contains('head') ||
-        r == 'hr') {
-      return TenantDashboardView(
-        onNavigateToCommunity: () {
-          setState(() {
-            _currentIndex = 2; // Society Chat
-          });
-        },
-        onNavigateToHistory: () {
-          setState(() {
-            _currentIndex = 3; // Gate Records
-          });
-        },
-        onNavigateToViewMore: () {
-          setState(() {
-            _currentIndex = 4; // View More/Menu
-          });
-        },
-        onNavigateToServices: () => setState(() => _currentIndex = 1),
-        onNavigateToDailyHelp: _navigateToDailyHelp,
-        onNavigateToAllNotices: _navigateToAllNotices,
-        onNavigateToSearch: _navigateToSearch,
-      );
-    }
-
-    // 3. Owners, Directors, Executives & Residents
-    return OwnerDashboardView(
-      onNavigateToCommunity: () {
-        setState(() {
-          _currentIndex = 2; // Society Chat
-        });
-      },
-      onNavigateToHistory: () {
-        setState(() {
-          _currentIndex = 3; // Gate Records
-        });
-      },
-      onNavigateToViewMore: () {
-        showViewMoreSheet(context, onNavigationItemSelected: (index) {
-          setState(() => _currentIndex = index);
-        }, onNavigateToPosts: _navigateToAllNotices);
-      },
-      onNavigateToServices: () {
-        setState(() {
-          _currentIndex = 1; // Natively switches view canvas to Services (Index 1)
-        });
-      },
-      onNavigateToDailyHelp: _navigateToDailyHelp,
-      onNavigateToAllNotices: _navigateToAllNotices,
-      onNavigateToSearch: _navigateToSearch,
-    );
   }
 
   Widget _wrapWithIndustrialBloc(BuildContext context, Widget child) {

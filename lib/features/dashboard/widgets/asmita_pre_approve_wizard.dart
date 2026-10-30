@@ -3,8 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/config/env_config.dart';
-import '../../../../core/di/injection_container.dart';
-import '../../../../core/network/dio_client.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -24,6 +22,8 @@ import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/utils/property_role_resolver.dart';
 import 'package:asmita_society/core/widgets/asmita_text_field.dart';
 import 'package:asmita_society/core/widgets/asmita_camera_screen.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/security/secure_storage_service.dart';
 class AsmitaPreApproveWizard extends StatefulWidget {
   final bool isGuardMode;
 

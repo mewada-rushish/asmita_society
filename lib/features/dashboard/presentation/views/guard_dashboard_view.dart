@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:asmita_society/core/config/env_config.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

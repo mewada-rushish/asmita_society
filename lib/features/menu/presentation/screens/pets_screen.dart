@@ -104,10 +104,6 @@ class PetsScreen extends StatelessWidget {
                   }
                   return const SizedBox.shrink();
                 },
-                loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
-                error: (error, _) => Center(
-                  child: Text('Error: $error', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
-                ),
               ),
             ),
           ],
@@ -257,11 +253,9 @@ class PetsScreen extends StatelessWidget {
       ),
     );
     
-    if (confirm == true) {
-      final success = await ref.read(petsProvider.notifier).deletePet(pet.id);
-      if (success && context.mounted) {
-        AsmitaToast.show(context, message: '${pet.name} deleted', type: AsmitaToastType.success);
-      }
+    if (confirm == true && context.mounted) {
+      context.read<PetsBloc>().add(DeletePet(pet.id));
+      AsmitaToast.show(context, message: '${pet.name} deleted', type: AsmitaToastType.success);
     }
   }
 
