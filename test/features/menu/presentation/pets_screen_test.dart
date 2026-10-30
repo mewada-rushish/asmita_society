@@ -2,11 +2,12 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:asmita_society/features/menu/presentation/screens/pets_screen.dart';
-import 'package:asmita_society/features/menu/presentation/providers/pets_provider.dart';
+import 'package:asmita_society/features/menu/bloc/pets_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/pets_event.dart';
+import 'package:asmita_society/features/menu/bloc/pets_state.dart';
 import 'package:asmita_society/features/menu/data/models/pet_model.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
@@ -14,28 +15,27 @@ import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/auth/data/models/user_model.dart';
 
 class MockAuthBloc extends Mock implements AuthBloc {}
+class MockPetsBloc extends Mock implements PetsBloc {}
 
-class TestPetsNotifier extends PetsNotifier {
+class FakePetsEvent extends Fake implements PetsEvent {}
+
+class TestPetsNotifier {
   final FutureOr<List<PetModel>> Function() onBuild;
   bool deletePetCalled = false;
   int? deletedPetId;
 
   TestPetsNotifier(this.onBuild);
-
-  @override
-  FutureOr<List<PetModel>> build() => onBuild();
-
-  @override
-  Future<bool> deletePet(int id) async {
-    deletePetCalled = true;
-    deletedPetId = id;
-    return true;
-  }
 }
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(FakePetsEvent());
+  });
+
   late MockAuthBloc mockAuthBloc;
+  late MockPetsBloc mockPetsBloc;
   late StreamController<AuthState> authStateController;
+  late StreamController<PetsState> petsStateController;
 
   final testUser = UserModel(
     userId: 1001,
@@ -64,32 +64,66 @@ void main() {
 
   setUp(() {
     mockAuthBloc = MockAuthBloc();
+    mockPetsBloc = MockPetsBloc();
     authStateController = StreamController<AuthState>.broadcast();
+    petsStateController = StreamController<PetsState>.broadcast();
 
     when(() => mockAuthBloc.stream).thenAnswer((_) => authStateController.stream);
     when(() => mockAuthBloc.state).thenReturn(
       AuthAuthenticated(user: testUser, sessionRole: 'owner'),
     );
     when(() => mockAuthBloc.close()).thenAnswer((_) async {});
+
+    when(() => mockPetsBloc.stream).thenAnswer((_) => petsStateController.stream);
+    when(() => mockPetsBloc.state).thenReturn(PetsLoaded(samplePets));
+    when(() => mockPetsBloc.close()).thenAnswer((_) async {});
+    when(() => mockPetsBloc.add(any())).thenReturn(null);
   });
 
   tearDown(() async {
     await authStateController.close();
+    await petsStateController.close();
   });
 
   Widget buildTestableWidget({
-    required FutureOr<List<PetModel>> Function() onBuild,
+    FutureOr<List<PetModel>> Function()? onBuild,
     TestPetsNotifier? notifier,
+    PetsState? state,
   }) {
-    return ProviderScope(
-      overrides: [
-        petsProvider.overrideWith(() => notifier ?? TestPetsNotifier(onBuild)),
+    final PetsState resolvedState;
+    if (state != null) {
+      resolvedState = state;
+    } else if (notifier != null) {
+      resolvedState = PetsLoaded(notifier.onBuild() as dynamic);
+    } else if (onBuild != null) {
+      final res = onBuild();
+      if (res is Future) {
+        resolvedState = PetsLoading();
+      } else {
+        resolvedState = PetsLoaded(res);
+      }
+    } else {
+      resolvedState = const PetsLoaded([]);
+    }
+
+    when(() => mockPetsBloc.state).thenReturn(resolvedState);
+    if (notifier != null) {
+      when(() => mockPetsBloc.add(any())).thenAnswer((invocation) {
+        final event = invocation.positionalArguments[0];
+        if (event is DeletePet) {
+          notifier.deletePetCalled = true;
+          notifier.deletedPetId = event.id;
+        }
+      });
+    }
+
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>.value(value: mockAuthBloc),
+        BlocProvider<PetsBloc>.value(value: mockPetsBloc),
       ],
-      child: BlocProvider<AuthBloc>.value(
-        value: mockAuthBloc,
-        child: const MaterialApp(
-          home: PetsScreen(),
-        ),
+      child: const MaterialApp(
+        home: PetsScreen(),
       ),
     );
   }
