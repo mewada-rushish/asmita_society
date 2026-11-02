@@ -120,4 +120,8 @@ class EnvConfig {
   /// Public Visitor OTP Authentication
   static String get publicVisitorOtpSend => '$baseUrl/app-api/public/visitor/otp/send';
   static String get publicVisitorOtpVerify => '$baseUrl/app-api/public/visitor/otp/verify';
+
+  /// Bharat BillPay (BBPS) Endpoints
+  static String get bbpsCategories => '$baseUrl/app-api/bbps/categories';
+  static String get bbpsSessionLink => '$baseUrl/app-api/bbps/session-link';
 }
