@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_toast.dart';
+import 'package:dio/dio.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/config/env_config.dart';
 
 /// BBPS (Bharat BillPay / NPCI) Unified Utility Clearance Sheet
 ///
@@ -30,6 +33,66 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedFilterTag = 'All';
+  Set<String>? _activeCategoryIds;
+  bool _isLoadingActiveCategories = true;
+  bool get isLoadingCategories => _isLoadingActiveCategories;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadActiveCategories();
+  }
+
+  Future<void> _loadActiveCategories() async {
+    try {
+      final dio = Dio();
+      final response = await dio.get(
+        EnvConfig.bbpsCategories,
+        options: Options(receiveTimeout: const Duration(seconds: 8)),
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final List cats = response.data['categories'] ?? [];
+        final ids = cats.map((c) => c['id'].toString()).toSet();
+        if (mounted) {
+          setState(() {
+            _activeCategoryIds = ids;
+            _isLoadingActiveCategories = false;
+          });
+        }
+        return;
+      }
+    } catch (e) {
+      debugPrint('[BBPS] Failed to fetch active categories: $e');
+    }
+    if (mounted) {
+      setState(() {
+        _isLoadingActiveCategories = false;
+      });
+    }
+  }
+
+  Future<void> _launchEtherealBillPay(String categoryName) async {
+    try {
+      if (mounted) AsmitaToast.show(context, message: 'Opening Bharat BillPay portal...', type: AsmitaToastType.info);
+      final dio = Dio();
+      final response = await dio.post(
+        EnvConfig.bbpsSessionLink,
+        data: {'categoryName': categoryName},
+        options: Options(receiveTimeout: const Duration(seconds: 10)),
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final String url = response.data['link'];
+        final uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('[BBPS] Ethereal launch failed: $e');
+    }
+    if (mounted) AsmitaToast.show(context, message: 'Launching BBPS Portal...', type: AsmitaToastType.success);
+  }
 
   static const List<Map<String, dynamic>> _allBillerCategories = [
     {
@@ -337,6 +400,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
   List<Map<String, dynamic>> _getFilteredCategories() {
     final query = _searchQuery.trim().toLowerCase();
     return _allBillerCategories.where((cat) {
+      if (_activeCategoryIds != null && !_activeCategoryIds!.contains(cat['id'])) {
+        return false;
+      }
       final matchesTag = _selectedFilterTag == 'All' || cat['tag'] == _selectedFilterTag;
       if (!matchesTag) return false;
 
@@ -563,11 +629,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                           Navigator.pop(sheetContext); // Close provider modal
                           Navigator.pop(context); // Close BBPS sheet
 
-                          AsmitaToast.show(
-                            context,
-                            message: 'Fetching bill for $selectedProvider...',
-                            type: AsmitaToastType.success,
-                          );
+                          Navigator.pop(sheetContext);
+                          Navigator.pop(context);
+                          _launchEtherealBillPay(category['title'] as String);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AsmitaPalette.deepNavy,
