@@ -40,6 +40,13 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
   String _searchQuery = '';
   final Set<int> _acknowledgedIds = {};
 
+  bool _isToday(DateTime? dt) {
+    if (dt == null) return false;
+    final local = dt.toLocal();
+    final now = DateTime.now();
+    return local.year == now.year && local.month == now.month && local.day == now.day;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -914,7 +921,14 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                   );
                 }
 
-                final filteredVisits = state.visits.where((v) {
+                // Filter visits to current day only
+                final todayVisits = state.visits.where((v) {
+                  return _isToday(v.checkInAt) ||
+                      _isToday(v.createdAt) ||
+                      _isToday(v.passCodeExpiresAt);
+                }).toList();
+
+                final filteredVisits = todayVisits.where((v) {
                   if (_selectedFilter == 'PENDING' && !v.isPending) {
                     return false;
                   }
@@ -1022,7 +1036,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 6, 16, 14),
-                        child: _buildKpiMetrics(context, state.visits),
+                        child: _buildKpiMetrics(context, todayVisits),
                       ),
                     ),
 
