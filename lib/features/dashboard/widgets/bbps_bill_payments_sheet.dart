@@ -71,13 +71,21 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
     }
   }
 
-  Future<void> _launchEtherealBillPay(String categoryName) async {
+  Future<void> _launchEtherealBillPay({
+    required String categoryName,
+    List<Map<String, String>>? billParams,
+    String? redirectTo,
+  }) async {
     try {
       if (mounted) AsmitaToast.show(context, message: 'Opening Bharat BillPay portal...', type: AsmitaToastType.info);
       final dio = Dio();
       final response = await dio.post(
         EnvConfig.bbpsSessionLink,
-        data: {'categoryName': categoryName},
+        data: {
+          'categoryName': categoryName,
+          if (billParams != null && billParams.isNotEmpty) 'billParams': billParams,
+          'redirectTo': ?redirectTo,
+        },
         options: Options(receiveTimeout: const Duration(seconds: 10)),
       );
       if (response.statusCode == 200 && response.data['success'] == true) {
@@ -626,12 +634,17 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                           }
 
                           HapticFeedback.mediumImpact();
-                          Navigator.pop(sheetContext); // Close provider modal
-                          Navigator.pop(context); // Close BBPS sheet
-
                           Navigator.pop(sheetContext);
                           Navigator.pop(context);
-                          _launchEtherealBillPay(category['title'] as String);
+                          _launchEtherealBillPay(
+                            categoryName: category['title'] as String,
+                            billParams: [
+                              {
+                                'name': accountLabel,
+                                'value': acct,
+                              },
+                            ],
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AsmitaPalette.deepNavy,
