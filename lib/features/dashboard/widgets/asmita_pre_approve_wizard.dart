@@ -269,6 +269,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
   bool _surpriseDelivery = false;
   bool _secureCabMode = false;
+  bool _isVipGuestPass = false;
   final TextEditingController _cabNoController = TextEditingController();
 
   bool _leaveAtGate = false;
@@ -897,18 +898,23 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           ? 'DELIVERY'
           : (isCabOrVehicle ? 'VEHICLE' : (isVendor ? 'VENDOR' : 'VISITOR'));
 
-      final purposeText = isDelivery
+      final basePurposeText = isDelivery
           ? 'Delivery / Courier Drop'
           : (_purposeController.text.trim().isNotEmpty
               ? _purposeController.text.trim()
-              : (isVendor ? 'Maintenance & Repair' : 'Official Meeting'));
+              : (isVendor ? 'Maintenance & Repair' : (_isVipGuestPass ? 'VIP Visit' : 'Official Meeting')));
+      final purposeText = _isVipGuestPass && !isDelivery ? '[VIP] $basePurposeText' : basePurposeText;
 
       final effectiveGuestCount = isDelivery ? 1 : _guestCount;
+      final rawVisitorName = _visitorNameController.text.trim();
+      final effectiveVisitorName = _isVipGuestPass && rawVisitorName.isNotEmpty
+          ? '$rawVisitorName (VIP)'
+          : (_isVipGuestPass ? 'VIP Guest' : rawVisitorName);
       final companyName = isDelivery
           ? (_selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany)
           : (isCabOrVehicle
               ? (_selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany)
-              : (_selectedCategory == 'Guest' ? 'Guest' : _selectedCompany));
+              : (_selectedCategory == 'Guest' ? (_isVipGuestPass ? 'VIP Guest' : 'Guest') : _selectedCompany));
 
       final payloads = selectedFlats.isNotEmpty
           ? selectedFlats.map((flat) => {
@@ -919,8 +925,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               'department_id': deptId,
               'visit_type': resolvedVisitType,
               'arrival_mode': resolvedVisitType,
-              'visitor_name': _visitorNameController.text.trim(),
-              'full_name': _visitorNameController.text.trim(),
+              'visitor_name': effectiveVisitorName,
+              'full_name': effectiveVisitorName,
+              'is_vip': _isVipGuestPass,
               'visitor_phone': _mobileNumberController.text.trim(),
               'mobile_number': _mobileNumberController.text.trim(),
               'purpose': purposeText,
@@ -943,8 +950,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               'department_id': deptId,
               'visit_type': resolvedVisitType,
               'arrival_mode': resolvedVisitType,
-              'visitor_name': _visitorNameController.text.trim(),
-              'full_name': _visitorNameController.text.trim(),
+              'visitor_name': effectiveVisitorName,
+              'full_name': effectiveVisitorName,
+              'is_vip': _isVipGuestPass,
               'visitor_phone': _mobileNumberController.text.trim(),
               'mobile_number': _mobileNumberController.text.trim(),
               'purpose': purposeText,
@@ -1030,30 +1038,40 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
     final enteredMobile = _mobileNumberController.text.trim();
     final visitorName = enteredName.isNotEmpty
-        ? enteredName
-        : (_selectedCategory == 'Guest'
+        ? (_isVipGuestPass ? '$enteredName (VIP)' : enteredName)
+        : (_isVipGuestPass
             ? 'VIP Guest'
-            : (isDelivery
-                ? '${_selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany} Partner'
-                : '$_selectedCategory Guest'));
+            : (_selectedCategory == 'Guest'
+                ? 'Guest'
+                : (isDelivery
+                    ? '${_selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany} Partner'
+                    : '$_selectedCategory Guest')));
 
     final inviteType = isDelivery
         ? 'delivery'
         : (isCabOrVehicle ? 'cab' : 'guest');
 
+    final basePurpose = _purposeController.text.trim().isNotEmpty
+        ? _purposeController.text.trim()
+        : (isVendor ? 'Maintenance & Repair' : (_selectedCategory == 'Guest' ? (_isVipGuestPass ? 'VIP Visit' : 'Personal Visit') : _selectedCategory));
     final invitePurpose = isDelivery
         ? 'Delivery / Courier Drop'
-        : (_purposeController.text.trim().isNotEmpty
-            ? _purposeController.text.trim()
-            : (isVendor ? 'Maintenance & Repair' : (_selectedCategory == 'Guest' ? 'VIP Visit' : _selectedCategory)));
+        : (_isVipGuestPass ? '[VIP] $basePurpose' : basePurpose);
 
     final companyName = isDelivery
         ? (_selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany)
         : (isCabOrVehicle
             ? (_selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany)
             : (_selectedCategory == 'Guest'
-                ? (enteredName.isNotEmpty ? enteredName : 'VIP Guest')
+                ? (enteredName.isNotEmpty ? enteredName : (_isVipGuestPass ? 'VIP Guest' : 'Guest'))
                 : _selectedCompany));
+
+    final baseTitle = enteredName.isNotEmpty
+        ? '$enteredName Pass'
+        : (isDelivery
+            ? '$companyName Delivery Pass'
+            : '$_selectedCategory Invite');
+    final inviteTitle = _isVipGuestPass ? '[VIP] $baseTitle' : baseTitle;
 
     final payload = {
       'society_id': user.societyId,
@@ -1062,12 +1080,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       'resident_id': user.userId,
       'invite_type': inviteType,
       'invite_sub_type': isOnce ? 'ONCE' : 'FREQUENT',
-      'title': enteredName.isNotEmpty
-          ? '$enteredName Pass'
-          : (isDelivery
-              ? '$companyName Delivery Pass'
-              : '$_selectedCategory Invite'),
+      'title': inviteTitle,
       'visitor_name': visitorName,
+      'is_vip': _isVipGuestPass,
       'mobile_number': enteredMobile,
       'company_name': companyName,
       'delivery_company': isDelivery ? companyName : null,
@@ -1870,7 +1885,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               ),
             ],
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 12),
+          _buildVipPassToggle(),
+          const SizedBox(height: 16),
         ],
         _buildPrimaryButton(label: 'Authorize Entry', onPressed: _submitInvite),
       ],
@@ -2566,6 +2583,113 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     );
   }
 
+  Widget _buildVipPassToggle() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: () => setState(() => _isVipGuestPass = !_isVipGuestPass),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: _isVipGuestPass
+              ? (isDark
+                  ? const Color(0xFF2E2415)
+                  : const Color(0xFFFFFBEB))
+              : (isDark
+                  ? AsmitaPalette.surfaceDark
+                  : const Color(0xFFF9FAFB)),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _isVipGuestPass
+                ? const Color(0xFFF59E0B)
+                : (isDark ? Colors.white12 : const Color(0xFFE5E7EB)),
+            width: _isVipGuestPass ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: _isVipGuestPass
+                    ? const Color(0xFFF59E0B).withValues(alpha: 0.15)
+                    : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.workspace_premium_rounded,
+                color: _isVipGuestPass
+                    ? const Color(0xFFD97706)
+                    : (isDark ? Colors.white54 : Colors.grey.shade600),
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Mark as VIP Pass',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: _isVipGuestPass
+                              ? const Color(0xFFB45309)
+                              : Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      if (_isVipGuestPass) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF59E0B),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'VIP',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Priority gate lane clearance & executive escort protocol',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 11,
+                      color: isDark ? Colors.white60 : Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch.adaptive(
+              value: _isVipGuestPass,
+              activeTrackColor: const Color(0xFFF59E0B),
+              activeThumbColor: Colors.white,
+              onChanged: (val) => setState(() => _isVipGuestPass = val),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildOnceLayout() {
     final authState = context.read<AuthBloc>().state;
     final user = authState is AuthAuthenticated ? authState.user : null;
@@ -2769,6 +2893,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           const SizedBox(height: 16),
           _buildPurposeSection(),
           const SizedBox(height: 16),
+          _buildVipPassToggle(),
+          const SizedBox(height: 8),
           _buildBottomSheetTrigger(
             label: 'Arrival Time',
             value: _selectedTime.format(context),
