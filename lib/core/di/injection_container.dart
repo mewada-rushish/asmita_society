@@ -11,6 +11,7 @@ import '../../features/visitor_management/data/repositories/visitor_repository.d
 import '../../features/services/data/repositories/amenities_repository.dart';
 import '../../features/services/data/repositories/daily_help_repository.dart';
 import '../../features/dashboard/data/repositories/search_repository.dart';
+import '../../features/menu/data/repositories/preferences_repository.dart';
 import '../../features/visitor_management/data/repositories/guard_gate_repository.dart';
 import '../../features/visitor_management/data/repositories/industrial_visit_repository.dart';
 
@@ -75,6 +76,10 @@ Future<void> init() async {
 
   sl.registerLazySingleton<SearchRepository>(
     () => SearchRepository(dio: sl<AsmitaDioClient>().dio),
+  );
+
+  sl.registerLazySingleton<PreferencesRepository>(
+    () => PreferencesRepository(dio: sl<AsmitaDioClient>().dio),
   );
 
   registerIndustrialDependencies();
