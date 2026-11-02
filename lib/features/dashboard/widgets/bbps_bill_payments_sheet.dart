@@ -6,6 +6,7 @@ import '../../../../core/widgets/asmita_toast.dart';
 import 'package:dio/dio.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/config/env_config.dart';
+import '../../../../core/security/secure_storage_service.dart';
 
 /// BBPS (Bharat BillPay / NPCI) Unified Utility Clearance Sheet
 ///
@@ -78,6 +79,7 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
   }) async {
     try {
       if (mounted) AsmitaToast.show(context, message: 'Opening Bharat BillPay portal...', type: AsmitaToastType.info);
+      final token = await SecureStorageService().getToken();
       final dio = Dio();
       final response = await dio.post(
         EnvConfig.bbpsSessionLink,
@@ -86,7 +88,13 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
           if (billParams != null && billParams.isNotEmpty) 'billParams': billParams,
           'redirectTo': ?redirectTo,
         },
-        options: Options(receiveTimeout: const Duration(seconds: 10)),
+        options: Options(
+          headers: {
+            if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          receiveTimeout: const Duration(seconds: 10),
+        ),
       );
       if (response.statusCode == 200 && response.data['success'] == true) {
         final String url = response.data['link'];
