@@ -1180,7 +1180,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final waitingVisits = visits
-        .where((v) => v.isPending || v.heldAtGate)
+        .where((v) => v.isPending || (v.heldAtGate && v.status == IndustrialVisitStatus.approved && !v.isCheckedIn))
         .toList();
 
     // Sort by oldest arrival first
