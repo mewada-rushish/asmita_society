@@ -134,6 +134,7 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
   static const List<Map<String, dynamic>> _allBillerCategories = [
     {
       'id': 'electricity',
+      'aliases': ['electricity', 'power'],
       'title': 'Electricity',
       'subtitle': 'Power utility bills',
       'icon': Icons.bolt_rounded,
@@ -154,6 +155,7 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
     },
     {
       'id': 'water',
+      'aliases': ['water'],
       'title': 'Water',
       'subtitle': 'Municipal & corporate supply',
       'icon': Icons.water_drop_rounded,
@@ -172,6 +174,7 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
     },
     {
       'id': 'piped_gas',
+      'aliases': ['piped_gas', 'gas'],
       'title': 'Piped Gas',
       'subtitle': 'City gas distribution',
       'icon': Icons.local_fire_department_rounded,
@@ -189,7 +192,22 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'accountHint': 'e.g. 4001928374',
     },
     {
+      'id': 'lpg_cylinder',
+      'aliases': ['lpg_cylinder', 'lpg_gas', 'cylinder'],
+      'title': 'LPG Gas Cylinder',
+      'subtitle': 'Commercial cylinder booking',
+      'icon': Icons.propane_tank_rounded,
+      'color': Color(0xFFDC2626),
+      'tag': 'Utilities',
+      'keywords':
+          'lpg cylinder gas booking bharat gas indane hp commercial cylinder pantry',
+      'providers': ['Bharat Gas (BPCL)', 'Indane Gas (IOCL)', 'HP Gas (HPCL)'],
+      'accountLabel': 'Consumer Number / Registered Mobile',
+      'accountHint': 'e.g. 9820110101',
+    },
+    {
       'id': 'broadband',
+      'aliases': ['broadband', 'internet', 'fiber'],
       'title': 'Broadband & Fiber',
       'subtitle': 'Office internet & Wi-Fi',
       'icon': Icons.wifi_rounded,
@@ -210,10 +228,11 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
     },
     {
       'id': 'mobile_postpaid',
+      'aliases': ['mobile_postpaid', 'postpaid'],
       'title': 'Mobile Postpaid',
       'subtitle': 'Telecom bills',
       'icon': Icons.phone_android_rounded,
-      'color': Color(0xFF059669),
+      'color': Color(0xFF16A34A),
       'tag': 'Telecom',
       'keywords':
           'mobile postpaid cellular airtel jio vi vodafone bsnl telecom corporate connection',
@@ -227,7 +246,27 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'accountHint': 'e.g. 9820110101',
     },
     {
+      'id': 'mobile_prepaid',
+      'aliases': ['mobile_prepaid', 'prepaid', 'recharge'],
+      'title': 'Mobile Prepaid',
+      'subtitle': 'Recharge & instant airtime',
+      'icon': Icons.phonelink_ring_rounded,
+      'color': Color(0xFF0D9488),
+      'tag': 'Telecom',
+      'keywords':
+          'mobile prepaid recharge airtime talktime topup data pack 4g 5g jio airtel vi bsnl',
+      'providers': [
+        'Jio Prepaid Recharge',
+        'Airtel Prepaid Unlimited',
+        'Vodafone Idea (Vi) Prepaid',
+        'BSNL Prepaid',
+      ],
+      'accountLabel': '10-Digit Mobile Number',
+      'accountHint': 'e.g. 9820110101',
+    },
+    {
       'id': 'fastag',
+      'aliases': ['fastag', 'toll'],
       'title': 'FASTag / Parking',
       'subtitle': 'Fleet toll & pass clearance',
       'icon': Icons.toll_rounded,
@@ -247,11 +286,31 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'accountHint': 'e.g. MH 01 DD 2878',
     },
     {
+      'id': 'housing_society',
+      'aliases': ['housing_society', 'society', 'maintenance'],
+      'title': 'Housing Society',
+      'subtitle': 'Maintenance & CAM dues',
+      'icon': Icons.apartment_rounded,
+      'color': Color(0xFF27306F),
+      'tag': 'Premises',
+      'keywords':
+          'housing society maintenance complex flat office commercial dues facility cam maintenance bill',
+      'providers': [
+        'AsmitA Society Maintenance Desk',
+        'AsmitA Corporate Complex CAM',
+        'MyGate Society Clearing',
+        'NoBrokerHood Bills',
+      ],
+      'accountLabel': 'Flat / Unit / Office Code',
+      'accountHint': 'e.g. A-101 or CAB-IT-01',
+    },
+    {
       'id': 'dth',
+      'aliases': ['dth', 'cable_tv'],
       'title': 'DTH & Cable TV',
       'subtitle': 'Satellite broadcast bills',
       'icon': Icons.tv_rounded,
-      'color': Color(0xFFEC4899),
+      'color': Color(0xFF9333EA),
       'tag': 'Telecom',
       'keywords':
           'dth cable tv tata play airtel dth dish tv sun direct videocon set top box',
@@ -266,29 +325,12 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'accountHint': 'e.g. 1092837461',
     },
     {
-      'id': 'landline',
-      'title': 'Landline Telecom',
-      'subtitle': 'Desk intercom & PRI line',
-      'icon': Icons.phone_in_talk_rounded,
-      'color': Color(0xFF6366F1),
-      'tag': 'Telecom',
-      'keywords':
-          'landline fixed line pri bsnl mtnl airtel telecom voice intercom',
-      'providers': [
-        'Airtel Landline',
-        'MTNL Mumbai / Delhi',
-        'BSNL Corporate Landline',
-        'Tata Tele Business',
-      ],
-      'accountLabel': 'Landline Number with STD Code',
-      'accountHint': 'e.g. 02228491029',
-    },
-    {
-      'id': 'municipal_tax',
+      'id': 'municipal_taxes',
+      'aliases': ['municipal_taxes', 'municipal_tax', 'property_tax'],
       'title': 'Municipal Taxes',
       'subtitle': 'Property tax & civic dues',
       'icon': Icons.account_balance_rounded,
-      'color': Color(0xFF14B8A6),
+      'color': Color(0xFF78716C),
       'tag': 'Govt & Taxes',
       'keywords':
           'property tax municipal corporation bmc mcgm mcd bbmp civic cess commercial property',
@@ -303,49 +345,12 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'accountHint': 'e.g. SAC-9820-2026',
     },
     {
-      'id': 'housing_society',
-      'title': 'Housing Society',
-      'subtitle': 'Maintenance & CAM dues',
-      'icon': Icons.apartment_rounded,
-      'color': Color(0xFF8B5CF6),
-      'tag': 'Campus',
-      'keywords':
-          'housing society maintenance complex flat office commercial dues facility cam maintenance bill',
-      'providers': [
-        'AsmitA Society Maintenance Desk',
-        'AsmitA Corporate Complex CAM',
-        'MyGate Society Clearing',
-        'NoBrokerHood Bills',
-      ],
-      'accountLabel': 'Flat / Unit / Office Code',
-      'accountHint': 'e.g. A-101 or CAB-IT-01',
-    },
-    {
-      'id': 'insurance',
-      'title': 'Insurance Premium',
-      'subtitle': 'Life & commercial policies',
-      'icon': Icons.health_and_safety_rounded,
-      'color': Color(0xFF10B981),
-      'tag': 'Financial',
-      'keywords':
-          'insurance lic hdfc ergo star health policy premium commercial fire marine asset liability',
-      'providers': [
-        'Life Insurance Corp (LIC)',
-        'HDFC Life / HDFC ERGO',
-        'ICICI Prudential / Lombard',
-        'SBI Life Insurance',
-        'Star Health & Allied Insurance',
-        'New India Assurance',
-      ],
-      'accountLabel': 'Policy Number',
-      'accountHint': 'e.g. 981029384',
-    },
-    {
-      'id': 'loan_repay',
+      'id': 'loan_repayment',
+      'aliases': ['loan_repayment', 'loan_repay', 'loan'],
       'title': 'Loan Repayment',
       'subtitle': 'Commercial & EMI clearance',
       'icon': Icons.payments_rounded,
-      'color': Color(0xFF3B82F6),
+      'color': Color(0xFFD97706),
       'tag': 'Financial',
       'keywords':
           'loan emi repayment bajaj finance hdfc sbi vehicle home loan asset finance',
@@ -361,10 +366,11 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
     },
     {
       'id': 'credit_card',
+      'aliases': ['credit_card'],
       'title': 'Credit Card Bill',
       'subtitle': 'Corporate & bank credit cards',
       'icon': Icons.credit_card_rounded,
-      'color': Color(0xFFF43F5E),
+      'color': Color(0xFF475569),
       'tag': 'Financial',
       'keywords':
           'credit card visa mastercard rupay bill payment corporate card hdfc sbi icici axis',
@@ -379,24 +385,33 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'accountHint': 'e.g. 4829',
     },
     {
-      'id': 'lpg_gas',
-      'title': 'LPG Gas Cylinder',
-      'subtitle': 'Commercial cylinder booking',
-      'icon': Icons.propane_tank_rounded,
-      'color': Color(0xFFF97316),
-      'tag': 'Utilities',
+      'id': 'insurance',
+      'aliases': ['insurance'],
+      'title': 'Insurance Premium',
+      'subtitle': 'Life & commercial policies',
+      'icon': Icons.health_and_safety_rounded,
+      'color': Color(0xFF059669),
+      'tag': 'Financial',
       'keywords':
-          'lpg cylinder gas booking bharat gas indane hp commercial cylinder pantry',
-      'providers': ['Bharat Gas (BPCL)', 'Indane Gas (IOCL)', 'HP Gas (HPCL)'],
-      'accountLabel': 'Consumer Number / Registered Mobile',
-      'accountHint': 'e.g. 9820110101',
+          'insurance lic hdfc ergo star health policy premium commercial fire marine asset liability',
+      'providers': [
+        'Life Insurance Corp (LIC)',
+        'HDFC Life / HDFC ERGO',
+        'ICICI Prudential / Lombard',
+        'SBI Life Insurance',
+        'Star Health & Allied Insurance',
+        'New India Assurance',
+      ],
+      'accountLabel': 'Policy Number',
+      'accountHint': 'e.g. 981029384',
     },
     {
       'id': 'education',
+      'aliases': ['education'],
       'title': 'Education Fees',
       'subtitle': 'Campus, training & academy',
       'icon': Icons.school_rounded,
-      'color': Color(0xFFF59E0B),
+      'color': Color(0xFF6366F1),
       'tag': 'Campus',
       'keywords':
           'school college university education fees coaching training academy exam',
@@ -409,24 +424,6 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'accountLabel': 'Student Registration / Roll No.',
       'accountHint': 'e.g. STU-2026-88',
     },
-    {
-      'id': 'hospital',
-      'title': 'Hospital & Diagnostics',
-      'subtitle': 'Medical & lab bills',
-      'icon': Icons.local_hospital_rounded,
-      'color': Color(0xFFEF4444),
-      'tag': 'Campus',
-      'keywords':
-          'hospital clinic pathology medical diagnostic pharmacy lab testing healthcare',
-      'providers': [
-        'Fortis Healthcare',
-        'Apollo Hospitals',
-        'Dr Lal PathLabs',
-        'Metropolis Healthcare',
-      ],
-      'accountLabel': 'Patient / Invoice ID',
-      'accountHint': 'e.g. INV-MED-9921',
-    },
   ];
 
   static const List<String> _filterTags = [
@@ -438,21 +435,39 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
     'Campus',
   ];
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
   List<Map<String, dynamic>> _getFilteredCategories() {
     final query = _searchQuery.trim().toLowerCase();
+
+    // Map active IDs with alias support
+    final Set<String>? activeSet = _activeCategoryIds
+        ?.map((id) {
+          final lower = id.toLowerCase();
+          if (lower == 'lpg_gas') return ['lpg_cylinder', 'lpg_gas'];
+          if (lower == 'municipal_tax') {
+            return ['municipal_taxes', 'municipal_tax'];
+          }
+          if (lower == 'loan_repay') return ['loan_repayment', 'loan_repay'];
+          return [lower];
+        })
+        .expand((x) => x)
+        .toSet();
+
     return _allBillerCategories.where((cat) {
-      if (_activeCategoryIds != null &&
-          !_activeCategoryIds!.contains(cat['id'])) {
-        return false;
+      if (activeSet != null) {
+        final catId = (cat['id'] as String).toLowerCase();
+        final aliases =
+            (cat['aliases'] as List<String>?)?.map((a) => a.toLowerCase()) ??
+            [];
+        final hasMatch =
+            activeSet.contains(catId) ||
+            aliases.any((a) => activeSet.contains(a));
+        if (!hasMatch) return false;
       }
+
       final matchesTag =
-          _selectedFilterTag == 'All' || cat['tag'] == _selectedFilterTag;
+          _selectedFilterTag == 'All' ||
+          cat['tag'] == _selectedFilterTag ||
+          (_selectedFilterTag == 'Utilities' && cat['tag'] == 'Premises');
       if (!matchesTag) return false;
 
       if (query.isEmpty) return true;
