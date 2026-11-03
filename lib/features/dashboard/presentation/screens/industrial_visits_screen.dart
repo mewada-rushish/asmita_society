@@ -925,10 +925,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                 }
               },
               builder: (context, state) {
-                final isLoading = state.status == IndustrialVisitBlocStatus.loading &&
-                    state.visits.isEmpty;
+                final isInitialLoading = state.status == IndustrialVisitBlocStatus.initial;
 
-                if (isLoading) {
+                if (isInitialLoading) {
                   return const Center(
                     child: AsmitaLoadingIndicator(
                       color: AsmitaPalette.deepNavy,
@@ -975,7 +974,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                 }).toList();
 
                 return CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
                   slivers: [
                     AsmitaAnimatedRefresh(
                       onRefresh: () async {
@@ -984,6 +985,12 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                             .firstWhere((s) => s.status != IndustrialVisitBlocStatus.loading)
                             .timeout(const Duration(seconds: 4), onTimeout: () => bloc.state);
                         bloc.add(const LoadIndustrialVisits());
+                        final authState = context.read<AuthBloc>().state;
+                        if (authState is AuthAuthenticated) {
+                          context.read<VisitorBloc>().add(
+                            LoadMyHistory(residentId: authState.user.userId, isRefresh: true),
+                          );
+                        }
                         await future;
                       },
                     ),
@@ -1058,9 +1065,10 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
 
                     // Visitor Items or Empty State
                     if (filteredVisits.isEmpty)
-                      SliverToBoxAdapter(
+                      SliverFillRemaining(
+                        hasScrollBody: false,
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 20, 16, 200),
+                          padding: const EdgeInsets.fromLTRB(16, 20, 16, 120),
                           child: _buildEmptyState(context),
                         ),
                       )
