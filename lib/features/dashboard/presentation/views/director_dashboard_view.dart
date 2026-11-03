@@ -42,6 +42,7 @@ class DirectorDashboardView extends StatefulWidget {
   final VoidCallback? onContactReceptionist;
   final Function(int visitId, String action)? onDecideVisit;
   final Function(int visitId)? onAcknowledgeVisit;
+  final Function(String filter)? onNavigateToVisitsWithFilter;
 
   const DirectorDashboardView({
     super.key,
@@ -49,6 +50,7 @@ class DirectorDashboardView extends StatefulWidget {
     this.onContactReceptionist,
     this.onDecideVisit,
     this.onAcknowledgeVisit,
+    this.onNavigateToVisitsWithFilter,
   });
 
   @override
@@ -907,6 +909,11 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           color: AsmitaPalette.actionRed,
           icon: Icons.pending_actions_rounded,
           showPulse: pendingCount > 0,
+          onTap: () {
+            if (widget.onNavigateToVisitsWithFilter != null) {
+              widget.onNavigateToVisitsWithFilter!('PENDING');
+            }
+          },
         ),
         const SizedBox(width: 8),
         _kpiCard(
@@ -915,6 +922,11 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           value: '$approvedCount',
           color: AsmitaPalette.deepNavy,
           icon: Icons.verified_rounded,
+          onTap: () {
+            if (widget.onNavigateToVisitsWithFilter != null) {
+              widget.onNavigateToVisitsWithFilter!('APPROVED');
+            }
+          },
         ),
         const SizedBox(width: 8),
         _kpiCard(
@@ -923,6 +935,11 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           value: '$checkedInCount',
           color: AsmitaPalette.successGreen,
           icon: Icons.meeting_room_rounded,
+          onTap: () {
+            if (widget.onNavigateToVisitsWithFilter != null) {
+              widget.onNavigateToVisitsWithFilter!('INSIDE');
+            }
+          },
         ),
       ],
     );
@@ -935,12 +952,21 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     required Color color,
     required IconData icon,
     bool showPulse = false,
+    VoidCallback? onTap,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+      child: InkWell(
+        onTap: onTap != null
+            ? () {
+                HapticFeedback.selectionClick();
+                onTap();
+              }
+            : null,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
@@ -1024,6 +1050,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
               overflow: TextOverflow.ellipsis,
             ),
           ],
+        ),
         ),
       ),
     );
