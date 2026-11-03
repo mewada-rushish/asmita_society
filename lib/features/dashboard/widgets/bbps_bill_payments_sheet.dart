@@ -7,6 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/security/secure_storage_service.dart';
+import '../../../../core/network/dio_client.dart';
 
 /// BBPS (Bharat BillPay / NPCI) Unified Utility Clearance Sheet
 ///
@@ -46,7 +47,7 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
 
   Future<void> _loadActiveCategories() async {
     try {
-      final dio = Dio();
+      final dio = AsmitaDioClient(SecureStorageService()).dio;
       final response = await dio.get(
         EnvConfig.bbpsCategories,
         options: Options(receiveTimeout: const Duration(seconds: 8)),
@@ -85,22 +86,17 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
           type: AsmitaToastType.info,
         );
       }
-      final token = await SecureStorageService().getToken();
-      final dio = Dio();
+      final dio = AsmitaDioClient(SecureStorageService()).dio;
       final response = await dio.post(
         EnvConfig.bbpsSessionLink,
         data: {
           'categoryName': categoryName,
           if (billParams != null && billParams.isNotEmpty)
             'billParams': billParams,
-          'redirectTo': ?redirectTo,
+          if (redirectTo != null && redirectTo.isNotEmpty)
+            'redirectTo': redirectTo,
         },
         options: Options(
-          headers: {
-            if (token != null && token.isNotEmpty)
-              'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
           receiveTimeout: const Duration(seconds: 10),
         ),
       );
