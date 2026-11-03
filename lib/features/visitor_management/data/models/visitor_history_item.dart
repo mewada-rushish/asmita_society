@@ -15,6 +15,7 @@ class VisitorHistoryItem {
   final String? vehicleNumber;
   final int? maxGuestCount;
   final bool isPrivate;
+  final String? photoUrl;
   
   final Map<String, dynamic> rawData;
 
@@ -35,6 +36,7 @@ class VisitorHistoryItem {
     this.vehicleNumber,
     this.maxGuestCount,
     this.isPrivate = false,
+    this.photoUrl,
     required this.rawData,
   });
 
@@ -50,6 +52,7 @@ class VisitorHistoryItem {
     final entryTimeStr = json['checkin_at'] ?? json['start_time'];
     final exitTimeStr = json['checkout_at'] ?? json['end_time'];
     final dateStr = json['created_at'] ?? json['valid_from'];
+    final photo = json['photo_url'] ?? json['visitor_photo_url'] ?? json['photo'] ?? json['image_url'];
 
     return VisitorHistoryItem(
       recordType: json['record_type'] ?? 'WALK_IN',
@@ -68,6 +71,7 @@ class VisitorHistoryItem {
       vehicleNumber: json['vehicle_number'],
       maxGuestCount: json['max_guest_count'],
       isPrivate: json['is_private'] == true,
+      photoUrl: photo?.toString(),
       rawData: json,
     );
   }

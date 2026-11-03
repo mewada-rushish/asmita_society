@@ -129,6 +129,7 @@ class VisitorRepository {
           if (item is Map<String, dynamic>) {
             final passCode = item['pass_code']?.toString();
             final statusStr = item['status']?.toString();
+            final photo = item['photo_url'] ?? item['visitor_photo_url'] ?? item['photo'];
             mergedHistory.add({
               ...item,
               'record_type': 'PRE_APPROVED',
@@ -143,6 +144,7 @@ class VisitorRepository {
               'checkin_at': item['check_in_at'],
               'checkout_at': item['check_out_at'],
               'vehicle_number': item['vehicle_number'],
+              'photo_url': photo,
             });
           }
         }
