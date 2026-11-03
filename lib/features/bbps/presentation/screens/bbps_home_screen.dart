@@ -10,6 +10,7 @@ import '../../../../core/security/secure_storage_service.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
+import '../../../../core/widgets/asmita_select_field.dart';
 import '../../../../core/widgets/asmita_bottom_nav_bar.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 
@@ -583,56 +584,27 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                       ),
                       const SizedBox(height: 18),
 
-                      Text(
-                        'Select Service Provider / Board',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                          ),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: selectedProvider,
-                            isExpanded: true,
-                            dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                            icon: Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                            ),
-                            items: providers.map((prov) {
-                              return DropdownMenuItem<String>(
-                                value: prov,
-                                child: Text(
-                                  prov,
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w500,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (val) {
-                              if (val != null) {
-                                setModalState(() => selectedProvider = val);
-                              }
-                            },
-                          ),
-                        ),
+                      AsmitaSelectField<String>(
+                        label: 'Select Service Provider / Board',
+                        hint: 'Choose provider or authority',
+                        value: selectedProvider,
+                        prefixIcon: category['icon'] as IconData?,
+                        sheetTitle: 'Select Service Provider',
+                        sheetSubtitle: category['title'] as String?,
+                        showSearch: providers.length > 5,
+                        items: providers.map((prov) {
+                          return AsmitaSelectItem<String>(
+                            value: prov,
+                            label: prov,
+                            icon: category['icon'] as IconData?,
+                            iconColor: catColor,
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setModalState(() => selectedProvider = val);
+                          }
+                        },
                       ),
                       const SizedBox(height: 16),
 
