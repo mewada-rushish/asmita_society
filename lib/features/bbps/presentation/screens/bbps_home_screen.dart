@@ -11,7 +11,6 @@ import '../../../../core/widgets/asmita_animated_refresh.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_bottom_nav_bar.dart';
-import '../../../../core/widgets/asmita_sub_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../widgets/bbps_support_modals.dart';
 
@@ -753,38 +752,13 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
           children: [
             // Standard App Primary Header matching theme
             AsmitaPrimaryHeader(
-              showBackButton: false,
+              subtitleOverride: 'Bill Payments (BBPS)',
+              showBackButton: true,
+              allowPropertySwitching: false,
               backgroundColor: theme.scaffoldBackgroundColor,
               bottomPadding: 0.0,
               onSearchPressed: widget.onNavigateToSearch,
               onChatPressed: widget.onNavigateToCommunity,
-            ),
-            // 1. Standard Unified AsmitaSubHeader
-            AsmitaSubHeader(
-              title: 'Bill Payments (BBPS)',
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    tooltip: 'Clearance History',
-                    icon: Icon(
-                      Icons.receipt_long_rounded,
-                      size: 20,
-                      color: theme.colorScheme.primary,
-                    ),
-                    onPressed: () => BbpsSupportModals.showTransactionHistoryModal(context),
-                  ),
-                  IconButton(
-                    tooltip: 'NPCI Grievance',
-                    icon: Icon(
-                      Icons.support_agent_rounded,
-                      size: 20,
-                      color: theme.colorScheme.primary,
-                    ),
-                    onPressed: () => BbpsSupportModals.showComplaintModal(context),
-                  ),
-                ],
-              ),
             ),
 
             // 2. Scrollable Body with Branded Pull to Refresh (AsmitaPullToRefresh)
