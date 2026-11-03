@@ -5,6 +5,9 @@ import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/menu/bloc/support_bloc.dart';
+import 'package:asmita_society/features/menu/data/repositories/support_repository.dart';
+import 'package:asmita_society/core/network/dio_client.dart';
+import 'package:asmita_society/core/security/secure_storage_service.dart';
 import 'package:asmita_society/features/menu/bloc/support_event.dart';
 import 'package:asmita_society/features/menu/bloc/support_state.dart';
 import '../widgets/ticket_conversation_bottom_sheet.dart';
@@ -19,8 +22,37 @@ class HelpSupportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Builder(
+      builder: (ctx) {
+        SupportBloc? existingBloc;
+        try {
+          existingBloc = ctx.read<SupportBloc>();
+        } catch (_) {}
+
+        if (existingBloc != null) {
+          return const _HelpSupportContent();
+        }
+
+        return BlocProvider<SupportBloc>(
+          create: (_) {
+            final dio = AsmitaDioClient(SecureStorageService()).dio;
+            final repository = SupportRepository(dio: dio);
+            return SupportBloc(repository: repository)..add(const LoadSupport());
+          },
+          child: const _HelpSupportContent(),
+        );
+      },
+    );
+  }
+}
+
+class _HelpSupportContent extends StatelessWidget {
+  const _HelpSupportContent();
+
+  @override
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -72,7 +104,7 @@ class HelpSupportScreen extends StatelessWidget {
                               Center(
                                 child: TextButton.icon(
                                   onPressed: () {
-                                    Navigator.push(context, MaterialPageRoute(builder: (_) => const AllTicketsScreen()));
+                                    Navigator.push(context, MaterialPageRoute(builder: (_) => BlocProvider.value(value: context.read<SupportBloc>(), child: const AllTicketsScreen())));
                                   },
                                   icon: const Icon(Icons.arrow_forward_rounded, size: 16),
                                   label: Text('View All Tickets', style: TextStyle(fontWeight: FontWeight.w600)),
