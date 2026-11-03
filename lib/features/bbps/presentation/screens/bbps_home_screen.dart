@@ -138,7 +138,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.bolt_rounded,
       'color': Color(0xFFEAB308),
       'tag': 'Utilities',
-      'keywords': 'electricity power bescom adani tata mseb torrent bses discom energy bill',
+      'keywords':
+          'electricity power bescom adani tata mseb torrent bses discom energy bill',
       'providers': [
         'Adani Electricity Mumbai',
         'Tata Power - Mumbai',
@@ -196,7 +197,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.propane_tank_rounded,
       'color': Color(0xFFDC2626),
       'tag': 'Utilities',
-      'keywords': 'lpg cylinder gas booking bharat gas indane hp commercial cylinder pantry',
+      'keywords':
+          'lpg cylinder gas booking bharat gas indane hp commercial cylinder pantry',
       'providers': ['Bharat Gas (BPCL)', 'Indane Gas (IOCL)', 'HP Gas (HPCL)'],
       'accountLabel': 'Consumer Number / Registered Mobile',
       'accountHint': 'e.g. 9820110101',
@@ -209,7 +211,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.wifi_rounded,
       'color': Color(0xFF7C3AED),
       'tag': 'Telecom',
-      'keywords': 'broadband internet wifi airtel jio fiber act hathway spectranet tata tele lease',
+      'keywords':
+          'broadband internet wifi airtel jio fiber act hathway spectranet tata tele lease',
       'providers': [
         'JioFiber Commercial / Postpaid',
         'Airtel Xstream Fiber',
@@ -229,7 +232,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.phone_android_rounded,
       'color': Color(0xFF16A34A),
       'tag': 'Telecom',
-      'keywords': 'mobile postpaid cellular airtel jio vi vodafone bsnl telecom corporate connection',
+      'keywords':
+          'mobile postpaid cellular airtel jio vi vodafone bsnl telecom corporate connection',
       'providers': [
         'Airtel Corporate Postpaid',
         'Jio Postpaid Plus',
@@ -247,7 +251,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.phonelink_ring_rounded,
       'color': Color(0xFF0D9488),
       'tag': 'Telecom',
-      'keywords': 'mobile prepaid recharge airtime talktime topup data pack 4g 5g jio airtel vi bsnl',
+      'keywords':
+          'mobile prepaid recharge airtime talktime topup data pack 4g 5g jio airtel vi bsnl',
       'providers': [
         'Jio Prepaid Recharge',
         'Airtel Prepaid Unlimited',
@@ -265,7 +270,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.toll_rounded,
       'color': Color(0xFF2563EB),
       'tag': 'Financial',
-      'keywords': 'fastag toll parking netc highway nhai fleet pass vehicle tollgate barrier',
+      'keywords':
+          'fastag toll parking netc highway nhai fleet pass vehicle tollgate barrier',
       'providers': [
         'ICICI Bank FASTag',
         'State Bank of India (SBI) FASTag',
@@ -285,7 +291,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.apartment_rounded,
       'color': Color(0xFF27306F),
       'tag': 'Premises',
-      'keywords': 'housing society maintenance complex flat office commercial dues facility cam maintenance bill',
+      'keywords':
+          'housing society maintenance complex flat office commercial dues facility cam maintenance bill',
       'providers': [
         'AsmitA Society Maintenance Desk',
         'AsmitA Corporate Complex CAM',
@@ -303,7 +310,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.tv_rounded,
       'color': Color(0xFF9333EA),
       'tag': 'Telecom',
-      'keywords': 'dth cable tv tata play airtel dth dish tv sun direct videocon set top box',
+      'keywords':
+          'dth cable tv tata play airtel dth dish tv sun direct videocon set top box',
       'providers': [
         'Tata Play (formerly Tata Sky)',
         'Airtel Digital TV',
@@ -322,7 +330,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.account_balance_rounded,
       'color': Color(0xFF78716C),
       'tag': 'Govt & Taxes',
-      'keywords': 'property tax municipal corporation bmc mcgm mcd bbmp civic cess commercial property',
+      'keywords':
+          'property tax municipal corporation bmc mcgm mcd bbmp civic cess commercial property',
       'providers': [
         'MCGM (Brihanmumbai Municipal Corp)',
         'Municipal Corporation of Delhi (MCD)',
@@ -341,7 +350,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.payments_rounded,
       'color': Color(0xFFD97706),
       'tag': 'Financial',
-      'keywords': 'loan emi repayment bajaj finance hdfc sbi vehicle home loan asset finance',
+      'keywords':
+          'loan emi repayment bajaj finance hdfc sbi vehicle home loan asset finance',
       'providers': [
         'Bajaj Finance Limited',
         'HDFC Bank Loan Clearance',
@@ -360,7 +370,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.credit_card_rounded,
       'color': Color(0xFF475569),
       'tag': 'Financial',
-      'keywords': 'credit card visa mastercard rupay bill payment corporate card hdfc sbi icici axis',
+      'keywords':
+          'credit card visa mastercard rupay bill payment corporate card hdfc sbi icici axis',
       'providers': [
         'HDFC Bank Credit Cards',
         'SBI Card & Payment Services',
@@ -379,7 +390,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.health_and_safety_rounded,
       'color': Color(0xFF059669),
       'tag': 'Financial',
-      'keywords': 'insurance lic hdfc ergo star health policy premium commercial fire marine asset liability',
+      'keywords':
+          'insurance lic hdfc ergo star health policy premium commercial fire marine asset liability',
       'providers': [
         'Life Insurance Corp (LIC)',
         'HDFC Life / HDFC ERGO',
@@ -399,7 +411,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.school_rounded,
       'color': Color(0xFF6366F1),
       'tag': 'Campus',
-      'keywords': 'school college university education fees coaching training academy exam',
+      'keywords':
+          'school college university education fees coaching training academy exam',
       'providers': [
         'Mumbai University Fees',
         'AsmitA College of Engineering',
@@ -424,23 +437,33 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
     final query = _searchQuery.trim().toLowerCase();
 
     // Map active IDs with alias support
-    final Set<String>? activeSet = _activeCategoryIds?.map((id) {
-      final lower = id.toLowerCase();
-      if (lower == 'lpg_gas') return ['lpg_cylinder', 'lpg_gas'];
-      if (lower == 'municipal_tax') return ['municipal_taxes', 'municipal_tax'];
-      if (lower == 'loan_repay') return ['loan_repayment', 'loan_repay'];
-      return [lower];
-    }).expand((x) => x).toSet();
+    final Set<String>? activeSet = _activeCategoryIds
+        ?.map((id) {
+          final lower = id.toLowerCase();
+          if (lower == 'lpg_gas') return ['lpg_cylinder', 'lpg_gas'];
+          if (lower == 'municipal_tax') {
+            return ['municipal_taxes', 'municipal_tax'];
+          }
+          if (lower == 'loan_repay') return ['loan_repayment', 'loan_repay'];
+          return [lower];
+        })
+        .expand((x) => x)
+        .toSet();
 
     return _allBillerCategories.where((cat) {
       if (activeSet != null) {
         final catId = (cat['id'] as String).toLowerCase();
-        final aliases = (cat['aliases'] as List<String>?)?.map((a) => a.toLowerCase()) ?? [];
-        final hasMatch = activeSet.contains(catId) || aliases.any((a) => activeSet.contains(a));
+        final aliases =
+            (cat['aliases'] as List<String>?)?.map((a) => a.toLowerCase()) ??
+            [];
+        final hasMatch =
+            activeSet.contains(catId) ||
+            aliases.any((a) => activeSet.contains(a));
         if (!hasMatch) return false;
       }
 
-      final matchesTag = _selectedFilterTag == 'All' ||
+      final matchesTag =
+          _selectedFilterTag == 'All' ||
           cat['tag'] == _selectedFilterTag ||
           (_selectedFilterTag == 'Utilities' && cat['tag'] == 'Premises');
       if (!matchesTag) return false;
@@ -450,7 +473,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       final title = (cat['title'] as String).toLowerCase();
       final subtitle = (cat['subtitle'] as String).toLowerCase();
       final keywords = (cat['keywords'] as String).toLowerCase();
-      final providers = (cat['providers'] as List<String>).join(' ').toLowerCase();
+      final providers = (cat['providers'] as List<String>)
+          .join(' ')
+          .toLowerCase();
 
       return title.contains(query) ||
           subtitle.contains(query) ||
@@ -499,7 +524,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                           width: 40,
                           height: 5,
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                            color: isDark
+                                ? const Color(0xFF475569)
+                                : const Color(0xFFCBD5E1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
@@ -511,10 +538,16 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: catColor.withValues(alpha: isDark ? 0.25 : 0.12),
+                              color: catColor.withValues(
+                                alpha: isDark ? 0.25 : 0.12,
+                              ),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Icon(category['icon'] as IconData, color: catColor, size: 22),
+                            child: Icon(
+                              category['icon'] as IconData,
+                              color: catColor,
+                              size: 22,
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -527,7 +560,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                                     fontFamily: 'Montserrat',
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF0F172A),
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -536,7 +571,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 11.5,
-                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                    color: isDark
+                                        ? const Color(0xFF94A3B8)
+                                        : const Color(0xFF64748B),
                                   ),
                                 ),
                               ],
@@ -552,7 +589,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                           fontFamily: 'Montserrat',
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -560,20 +599,28 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                          color: isDark
+                              ? const Color(0xFF1E293B)
+                              : const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                            color: isDark
+                                ? const Color(0xFF334155)
+                                : const Color(0xFFCBD5E1),
                           ),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: selectedProvider,
                             isExpanded: true,
-                            dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                            dropdownColor: isDark
+                                ? const Color(0xFF1E293B)
+                                : Colors.white,
                             icon: Icon(
                               Icons.keyboard_arrow_down_rounded,
-                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              color: isDark
+                                  ? const Color(0xFF94A3B8)
+                                  : const Color(0xFF64748B),
                             ),
                             items: providers.map((prov) {
                               return DropdownMenuItem<String>(
@@ -584,7 +631,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                                     fontFamily: 'Poppins',
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w500,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF0F172A),
                                   ),
                                 ),
                               );
@@ -605,17 +654,23 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                           fontFamily: 'Montserrat',
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
                         ),
                       ),
                       const SizedBox(height: 8),
 
                       Container(
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                          color: isDark
+                              ? const Color(0xFF1E293B)
+                              : const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                            color: isDark
+                                ? const Color(0xFF334155)
+                                : const Color(0xFFCBD5E1),
                           ),
                         ),
                         child: TextField(
@@ -624,17 +679,24 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                             fontFamily: 'Poppins',
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                           decoration: InputDecoration(
                             hintText: accountHint,
                             hintStyle: TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 12,
-                              color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                              color: isDark
+                                  ? const Color(0xFF64748B)
+                                  : const Color(0xFF94A3B8),
                             ),
                             border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
                           ),
                         ),
                       ),
@@ -656,8 +718,14 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                             _launchEtherealBillPay(
                               categoryName: category['title'] as String,
                               billParams: [
-                                {'param_name': accountLabel, 'param_value': acc},
-                                {'param_name': 'Provider', 'param_value': selectedProvider},
+                                {
+                                  'param_name': accountLabel,
+                                  'param_value': acc,
+                                },
+                                {
+                                  'param_name': 'Provider',
+                                  'param_value': selectedProvider,
+                                },
                               ],
                               dialogContext: sheetContext,
                             );
@@ -713,7 +781,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                     width: 40,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                      color: isDark
+                          ? const Color(0xFF475569)
+                          : const Color(0xFFCBD5E1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
@@ -727,7 +797,11 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                         color: AsmitaPalette.deepNavy.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.receipt_long_rounded, color: AsmitaPalette.deepNavy, size: 20),
+                      child: const Icon(
+                        Icons.receipt_long_rounded,
+                        color: AsmitaPalette.deepNavy,
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: 10),
                     Text(
@@ -743,16 +817,31 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                 ),
                 const SizedBox(height: 24),
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 32,
+                    horizontal: 16,
+                  ),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                    color: isDark
+                        ? const Color(0xFF1E293B)
+                        : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                    border: Border.all(
+                      color: isDark
+                          ? const Color(0xFF334155)
+                          : const Color(0xFFE2E8F0),
+                    ),
                   ),
                   child: Column(
                     children: [
-                      Icon(Icons.history_toggle_off_rounded, size: 36, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+                      Icon(
+                        Icons.history_toggle_off_rounded,
+                        size: 36,
+                        color: isDark
+                            ? const Color(0xFF64748B)
+                            : const Color(0xFF94A3B8),
+                      ),
                       const SizedBox(height: 10),
                       Text(
                         'No Recent Utility Clearances',
@@ -760,7 +849,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                           fontFamily: 'Montserrat',
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -770,7 +861,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 11,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          color: isDark
+                              ? const Color(0xFF94A3B8)
+                              : const Color(0xFF64748B),
                         ),
                       ),
                     ],
@@ -782,7 +875,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                   child: OutlinedButton(
                     onPressed: () => Navigator.of(ctx).pop(),
                     style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: const Text('Close'),
                   ),
@@ -817,7 +912,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                     width: 40,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                      color: isDark
+                          ? const Color(0xFF475569)
+                          : const Color(0xFFCBD5E1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
@@ -831,7 +928,11 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                         color: AsmitaPalette.actionRed.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.support_agent_rounded, color: AsmitaPalette.actionRed, size: 20),
+                      child: const Icon(
+                        Icons.support_agent_rounded,
+                        color: AsmitaPalette.actionRed,
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: 10),
                     Text(
@@ -851,7 +952,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                   style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 11.5,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF64748B),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -862,14 +965,17 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                       Navigator.of(ctx).pop();
                       AsmitaToast.show(
                         context,
-                        message: 'Please select the transaction from History to register a dispute.',
+                        message:
+                            'Please select the transaction from History to register a dispute.',
                         type: AsmitaToastType.info,
                       );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AsmitaPalette.deepNavy,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: const Text(
                       'Track or File Dispute',
@@ -939,7 +1045,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                     fontFamily: 'Poppins',
                     fontSize: 10.5,
                     fontWeight: FontWeight.w500,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF64748B),
                   ),
                 ),
               ],
@@ -973,7 +1081,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
           onRefresh: _loadActiveCategories,
           color: AsmitaPalette.deepNavy,
           child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -991,7 +1101,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                     ),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : const Color(0xFFBFDBFE),
+                      color: isDark
+                          ? const Color(0xFF334155)
+                          : const Color(0xFFBFDBFE),
                     ),
                   ),
                   child: Row(
@@ -1021,12 +1133,17 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                                     fontFamily: 'Montserrat',
                                     fontSize: 13,
                                     fontWeight: FontWeight.w800,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF0F172A),
                                   ),
                                 ),
                                 const SizedBox(width: 6),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                    vertical: 1.5,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFF059669),
                                     borderRadius: BorderRadius.circular(4),
@@ -1050,7 +1167,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 10.5,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                color: isDark
+                                    ? const Color(0xFF94A3B8)
+                                    : const Color(0xFF64748B),
                               ),
                             ),
                           ],
@@ -1069,18 +1188,29 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                         onTap: () => _showTransactionHistoryModal(context),
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                            horizontal: 12,
+                          ),
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                            color: isDark
+                                ? const Color(0xFF1E293B)
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                              color: isDark
+                                  ? const Color(0xFF334155)
+                                  : const Color(0xFFE2E8F0),
                             ),
                           ),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.history_rounded, size: 16, color: Color(0xFF4F46E5)),
+                              Icon(
+                                Icons.history_rounded,
+                                size: 16,
+                                color: Color(0xFF4F46E5),
+                              ),
                               SizedBox(width: 6),
                               Text(
                                 'History & Receipts',
@@ -1102,18 +1232,29 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                         onTap: () => _showComplaintModal(context),
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                            horizontal: 12,
+                          ),
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                            color: isDark
+                                ? const Color(0xFF1E293B)
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                              color: isDark
+                                  ? const Color(0xFF334155)
+                                  : const Color(0xFFE2E8F0),
                             ),
                           ),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.support_agent_rounded, size: 16, color: Color(0xFF0284C7)),
+                              Icon(
+                                Icons.support_agent_rounded,
+                                size: 16,
+                                color: Color(0xFF0284C7),
+                              ),
                               SizedBox(width: 6),
                               Text(
                                 'Raise Complaint',
@@ -1139,12 +1280,16 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                     color: isDark ? const Color(0xFF1E293B) : Colors.white,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                      color: isDark
+                          ? const Color(0xFF334155)
+                          : const Color(0xFFCBD5E1),
                       width: 1.2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: isDark ? Colors.black.withValues(alpha: 0.25) : Colors.black.withValues(alpha: 0.03),
+                        color: isDark
+                            ? Colors.black.withValues(alpha: 0.25)
+                            : Colors.black.withValues(alpha: 0.03),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -1164,19 +1309,25 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                       hintStyle: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 12.5,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        color: isDark
+                            ? const Color(0xFF94A3B8)
+                            : const Color(0xFF64748B),
                       ),
                       prefixIcon: Icon(
                         Icons.search_rounded,
                         size: 20,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        color: isDark
+                            ? const Color(0xFF94A3B8)
+                            : const Color(0xFF64748B),
                       ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
                               icon: Icon(
                                 Icons.clear_rounded,
                                 size: 18,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                color: isDark
+                                    ? const Color(0xFF94A3B8)
+                                    : const Color(0xFF64748B),
                               ),
                               onPressed: () {
                                 _searchController.clear();
@@ -1185,7 +1336,10 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                             )
                           : null,
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ),
@@ -1208,16 +1362,27 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                           borderRadius: BorderRadius.circular(10),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 180),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
-                                  : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                                  ? (isDark
+                                        ? const Color(0xFF3B82F6)
+                                        : AsmitaPalette.deepNavy)
+                                  : (isDark
+                                        ? const Color(0xFF1E293B)
+                                        : const Color(0xFFF1F5F9)),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: isSelected
-                                    ? (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
-                                    : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                                    ? (isDark
+                                          ? const Color(0xFF3B82F6)
+                                          : AsmitaPalette.deepNavy)
+                                    : (isDark
+                                          ? const Color(0xFF334155)
+                                          : const Color(0xFFE2E8F0)),
                                 width: 1,
                               ),
                             ),
@@ -1226,10 +1391,14 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                               style: TextStyle(
                                 fontFamily: 'Montserrat',
                                 fontSize: 11,
-                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                fontWeight: isSelected
+                                    ? FontWeight.w700
+                                    : FontWeight.w600,
                                 color: isSelected
                                     ? Colors.white
-                                    : (isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155)),
+                                    : (isDark
+                                          ? const Color(0xFFE2E8F0)
+                                          : const Color(0xFF334155)),
                               ),
                             ),
                           ),
@@ -1268,7 +1437,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                             fontFamily: 'Montserrat',
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.actionRed,
+                            color: isDark
+                                ? const Color(0xFF60A5FA)
+                                : AsmitaPalette.actionRed,
                           ),
                         ),
                       ),
@@ -1289,13 +1460,20 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                   )
                 else if (filteredCategories.isEmpty)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 36,
+                    ),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                      color: isDark
+                          ? const Color(0xFF1E293B)
+                          : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark
+                            ? const Color(0xFF334155)
+                            : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Column(
@@ -1304,7 +1482,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                         Icon(
                           Icons.search_off_rounded,
                           size: 36,
-                          color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                          color: isDark
+                              ? const Color(0xFF64748B)
+                              : const Color(0xFF94A3B8),
                         ),
                         const SizedBox(height: 10),
                         Text(
@@ -1313,7 +1493,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                             fontFamily: 'Montserrat',
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -1323,7 +1505,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 11,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            color: isDark
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xFF64748B),
                           ),
                         ),
                       ],
@@ -1334,12 +1518,13 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: filteredCategories.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                      childAspectRatio: 1.55,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          childAspectRatio: 1.55,
+                        ),
                     itemBuilder: (context, index) {
                       final cat = filteredCategories[index];
                       final catColor = cat['color'] as Color;
@@ -1353,10 +1538,14 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                            color: isDark
+                                ? const Color(0xFF1E293B)
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                              color: isDark
+                                  ? const Color(0xFF334155)
+                                  : const Color(0xFFE2E8F0),
                             ),
                             boxShadow: [
                               BoxShadow(
@@ -1375,7 +1564,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: catColor.withValues(alpha: isDark ? 0.25 : 0.12),
+                                  color: catColor.withValues(
+                                    alpha: isDark ? 0.25 : 0.12,
+                                  ),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Icon(
@@ -1395,7 +1586,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                                       fontFamily: 'Montserrat',
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w700,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDark
+                                          ? Colors.white
+                                          : const Color(0xFF0F172A),
                                     ),
                                   ),
                                   const SizedBox(height: 2),
@@ -1406,7 +1599,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                                     style: TextStyle(
                                       fontFamily: 'Poppins',
                                       fontSize: 10,
-                                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                      color: isDark
+                                          ? const Color(0xFF94A3B8)
+                                          : const Color(0xFF64748B),
                                     ),
                                   ),
                                 ],
