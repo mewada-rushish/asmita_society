@@ -964,14 +964,97 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
             allowPropertySwitching: false,
             showBackButton: widget.onBack != null || Navigator.canPop(context),
             onBackPressed: widget.onBack,
-            trailingExtraAction: IconButton(
-              icon: Icon(
-                Icons.filter_list_rounded,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              onPressed: _showFilterModal,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
+          ),
+
+          // Content section header above all cards with Filter Option
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'All Visitors',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+                InkWell(
+                  onTap: _showFilterModal,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: (_selectedStatus != null ||
+                              _startDate != null ||
+                              _endDate != null)
+                          ? Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withValues(alpha: 0.1)
+                          : Theme.of(context).cardColor,
+                      border: Border.all(
+                        color: (_selectedStatus != null ||
+                                _startDate != null ||
+                                _endDate != null)
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context)
+                                .dividerColor
+                                .withValues(alpha: 0.25),
+                        width: 1,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.filter_list_rounded,
+                          size: 16,
+                          color: (_selectedStatus != null ||
+                                  _startDate != null ||
+                                  _endDate != null)
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).textTheme.bodyMedium?.color,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Filter',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: (_selectedStatus != null ||
+                                    _startDate != null ||
+                                    _endDate != null)
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).textTheme.bodyMedium?.color,
+                          ),
+                        ),
+                        if (_selectedStatus != null ||
+                            _startDate != null ||
+                            _endDate != null) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -1125,7 +1208,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                       )
                     else
                       SliverPadding(
-                        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 200),
+                        padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 200),
                         sliver: SliverList.separated(
                           itemCount: historyList.length,
                           separatorBuilder: (context, index) =>
