@@ -1,5 +1,5 @@
-import java.util.Properties
 import java.io.FileInputStream
+import java.util.Properties
 
 plugins {
     id("com.android.application")
@@ -28,7 +28,7 @@ android {
     defaultConfig {
         applicationId = "com.asmita.app.asmita_society"
         minSdk = flutter.minSdkVersion
-        targetSdk = 36 // Mandated by Google Play Store for late-2026 submissions (K-20, D5)
+        targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -47,7 +47,6 @@ android {
                 keyAlias = keyStoreAlias
                 keyPassword = keyPasswordVal
             } else {
-                // Safe fallback for local debug testing if keystore.properties is not supplied
                 val debugSigning = signingConfigs.getByName("debug")
                 storeFile = debugSigning.storeFile
                 storePassword = debugSigning.storePassword
