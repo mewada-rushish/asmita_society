@@ -960,11 +960,11 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
         children: [
           // Aligned Unified Header Structure matches Dashboard Layouts seamlessly
           AsmitaPrimaryHeader(
-            subtitleOverride: 'Visits & Passes',
+            subtitleOverride: 'Visitor History',
             allowPropertySwitching: false,
             showBackButton: widget.onBack != null || Navigator.canPop(context),
             onBackPressed: widget.onBack,
-            extraAction: IconButton(
+            trailingExtraAction: IconButton(
               icon: Icon(
                 Icons.filter_list_rounded,
                 color: Theme.of(context).colorScheme.primary,
