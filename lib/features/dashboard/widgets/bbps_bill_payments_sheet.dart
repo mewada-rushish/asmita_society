@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../bbps/presentation/screens/bbps_home_screen.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/asmita_select_field.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import 'package:dio/dio.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -593,71 +594,27 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Provider Selector Title
-                      Text(
-                        'Select Registered Biller',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? Colors.white70
-                              : const Color(0xFF334155),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF1E293B)
-                              : const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark
-                                ? const Color(0xFF334155)
-                                : const Color(0xFFCBD5E1),
-                          ),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: selectedProvider,
-                            isExpanded: true,
-                            dropdownColor: isDark
-                                ? const Color(0xFF1E293B)
-                                : Colors.white,
-                            icon: Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              color: isDark
-                                  ? Colors.white70
-                                  : const Color(0xFF475569),
-                            ),
-                            items: providers.map((p) {
-                              return DropdownMenuItem<String>(
-                                value: p,
-                                child: Text(
-                                  p,
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark
-                                        ? Colors.white
-                                        : const Color(0xFF0F172A),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (val) {
-                              if (val != null) {
-                                setModalState(() => selectedProvider = val);
-                              }
-                            },
-                          ),
-                        ),
+                      AsmitaSelectField<String>(
+                        label: 'Select Registered Biller',
+                        hint: 'Choose provider or authority',
+                        value: selectedProvider,
+                        prefixIcon: category['icon'] as IconData?,
+                        sheetTitle: 'Select Service Provider',
+                        sheetSubtitle: category['title'] as String?,
+                        showSearch: providers.length > 5,
+                        items: providers.map((p) {
+                          return AsmitaSelectItem<String>(
+                            value: p,
+                            label: p,
+                            icon: category['icon'] as IconData?,
+                            iconColor: catColor,
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setModalState(() => selectedProvider = val);
+                          }
+                        },
                       ),
                       const SizedBox(height: 14),
 
