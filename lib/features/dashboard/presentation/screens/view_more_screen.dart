@@ -1,3 +1,4 @@
+import 'package:asmita_society/features/dashboard/widgets/bbps_bill_payments_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -194,6 +195,10 @@ class ViewMoreScreen extends StatelessWidget {
                       'label': 'Utility Pay',
                       'icon': Icons.receipt_long_rounded,
                       'color': Theme.of(context).colorScheme.primary,
+                      'onTap': () {
+                        Navigator.pop(context);
+                        BbpsBillPaymentsSheet.show(context);
+                      },
                     },
                     {
                       'label': 'Deliveries',
