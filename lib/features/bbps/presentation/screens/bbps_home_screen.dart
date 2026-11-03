@@ -8,7 +8,9 @@ import '../../../../core/constants/design_system.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/security/secure_storage_service.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
+import 'package:shimmer/shimmer.dart';
+import '../../../../core/widgets/asmita_primary_header.dart';
+import '../../../../core/widgets/asmita_bottom_nav_bar.dart';
 import '../../../../core/widgets/asmita_sub_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../widgets/bbps_support_modals.dart';
@@ -22,12 +24,32 @@ import '../widgets/bbps_support_modals.dart';
 /// - In-memory caching: categories persist across navigation without flashing loading state
 /// - Silent pull-to-refresh without wiping cards from view
 class BbpsHomeScreen extends StatefulWidget {
-  const BbpsHomeScreen({super.key});
+  final ValueChanged<int>? onNavigateToTab;
+  final VoidCallback? onNavigateToCommunity;
+  final VoidCallback? onNavigateToSearch;
 
-  static Future<void> open(BuildContext context) {
+  const BbpsHomeScreen({
+    super.key,
+    this.onNavigateToTab,
+    this.onNavigateToCommunity,
+    this.onNavigateToSearch,
+  });
+
+  static Future<void> open(
+    BuildContext context, {
+    ValueChanged<int>? onNavigateToTab,
+    VoidCallback? onNavigateToCommunity,
+    VoidCallback? onNavigateToSearch,
+  }) {
     return Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const BbpsHomeScreen()),
+      MaterialPageRoute(
+        builder: (_) => BbpsHomeScreen(
+          onNavigateToTab: onNavigateToTab,
+          onNavigateToCommunity: onNavigateToCommunity,
+          onNavigateToSearch: onNavigateToSearch,
+        ),
+      ),
     );
   }
 
@@ -36,12 +58,15 @@ class BbpsHomeScreen extends StatefulWidget {
 }
 
 class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
-  static Set<String>? _cachedActiveCategoryIds;
+  static final Set<String> _defaultCategoryIds = _allBillerCategories
+      .map((c) => c['id'].toString())
+      .toSet();
+  static Set<String>? _cachedActiveCategoryIds = _defaultCategoryIds;
 
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedFilterTag = 'All';
-  Set<String>? _activeCategoryIds;
+  Set<String>? _activeCategoryIds = _defaultCategoryIds;
   bool _isLoadingActiveCategories = false;
 
   @override
@@ -52,8 +77,9 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       _isLoadingActiveCategories = false;
       _loadActiveCategories(isSilent: true);
     } else {
-      _isLoadingActiveCategories = true;
-      _loadActiveCategories(isSilent: false);
+      _activeCategoryIds = _defaultCategoryIds;
+      _isLoadingActiveCategories = false;
+      _loadActiveCategories(isSilent: true);
     }
   }
 
@@ -712,9 +738,27 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      bottomNavigationBar: AsmitaBottomNavBar(
+        currentIndex: -1,
+        onTap: (index) {
+          Navigator.pop(context);
+          if (widget.onNavigateToTab != null) {
+            widget.onNavigateToTab!(index);
+          }
+        },
+      ),
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
+            // Standard App Primary Header matching theme
+            AsmitaPrimaryHeader(
+              showBackButton: false,
+              backgroundColor: theme.scaffoldBackgroundColor,
+              bottomPadding: 0.0,
+              onSearchPressed: widget.onNavigateToSearch,
+              onChatPressed: widget.onNavigateToCommunity,
+            ),
             // 1. Standard Unified AsmitaSubHeader
             AsmitaSubHeader(
               title: 'Bill Payments (BBPS)',
@@ -1052,16 +1096,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                     const SizedBox(height: 8),
 
                     // Categories Grid (or Empty Search State)
-                    if (_isLoadingActiveCategories && _activeCategoryIds == null)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 40),
-                        child: Center(
-                          child: AsmitaLoadingIndicator(
-                            color: AsmitaPalette.deepNavy,
-                            size: 28,
-                          ),
-                        ),
-                      )
+                    if (_isLoadingActiveCategories && (_activeCategoryIds == null || _activeCategoryIds!.isEmpty))
+                      _buildSkeletalCategoryGrid(isDark)
                     else if (filteredCategories.isEmpty)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
@@ -1204,6 +1240,78 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSkeletalCategoryGrid(bool isDark) {
+    final baseColor = isDark ? Colors.grey[800]! : const Color(0xFFE2E8F0);
+    final highlightColor = isDark ? Colors.grey[700]! : const Color(0xFFF8FAFC);
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 8,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        mainAxisExtent: 82,
+      ),
+      itemBuilder: (context, index) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            ),
+          ),
+          child: Shimmer.fromColors(
+            baseColor: baseColor,
+            highlightColor: highlightColor,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        height: 12,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        height: 9,
+                        width: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
