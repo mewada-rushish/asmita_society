@@ -22,6 +22,7 @@ class AsmitaAnimatedRefresh extends StatefulWidget {
 
 class _AsmitaAnimatedRefreshState extends State<AsmitaAnimatedRefresh> {
   bool _hasArmedHapticFired = false;
+  bool _isClosing = false;
 
   @override
   Widget build(BuildContext context) {
@@ -32,12 +33,25 @@ class _AsmitaAnimatedRefreshState extends State<AsmitaAnimatedRefresh> {
     return CupertinoSliverRefreshControl(
       onRefresh: () async {
         HapticFeedback.mediumImpact();
-        await widget.onRefresh();
+        try {
+          await widget.onRefresh();
+        } finally {
+          if (mounted) {
+            setState(() {
+              _isClosing = true;
+            });
+          }
+        }
       },
       refreshTriggerPullDistance: 70.0,
       refreshIndicatorExtent: 56.0,
       builder: (context, refreshState, pulledExtent, refreshTriggerPullDistance, refreshIndicatorExtent) {
         final double percentageComplete = (pulledExtent / refreshTriggerPullDistance).clamp(0.0, 1.0);
+
+        // Reset closing flag when user starts dragging again or goes completely inactive
+        if (refreshState == RefreshIndicatorMode.inactive || (refreshState == RefreshIndicatorMode.drag && pulledExtent <= 0.0)) {
+          _isClosing = false;
+        }
 
         // Fire single light haptic feedback once threshold is armed
         if (refreshState == RefreshIndicatorMode.armed && !_hasArmedHapticFired) {
@@ -48,6 +62,13 @@ class _AsmitaAnimatedRefreshState extends State<AsmitaAnimatedRefresh> {
         }
 
         final isRefreshing = refreshState == RefreshIndicatorMode.armed || refreshState == RefreshIndicatorMode.refresh;
+        final isDone = refreshState == RefreshIndicatorMode.done || refreshState == RefreshIndicatorMode.inactive;
+
+        // When closing or done, completely hide so it NEVER flashes during bounce-back or scroll settle.
+        // Also require at least 25% pull distance before showing pulling indicator.
+        if (_isClosing || isDone || isRefreshing == false && (refreshState != RefreshIndicatorMode.drag || percentageComplete < 0.25)) {
+          return const SizedBox.shrink();
+        }
 
         return Center(
           child: Container(
@@ -56,21 +77,6 @@ class _AsmitaAnimatedRefreshState extends State<AsmitaAnimatedRefresh> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isDark ? const Color(0xFF1E293B) : Colors.white,
-              border: Border.all(
-                color: isRefreshing
-                    ? primaryBrandColor.withValues(alpha: 0.35)
-                    : theme.dividerColor.withValues(alpha: (percentageComplete * 0.7).clamp(0.1, 0.7)),
-                width: 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: isDark
-                      ? Colors.black.withValues(alpha: 0.4)
-                      : primaryBrandColor.withValues(alpha: (isRefreshing ? 0.18 : (percentageComplete * 0.12))),
-                  blurRadius: isRefreshing ? 12 : 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
             ),
             child: Stack(
               alignment: Alignment.center,

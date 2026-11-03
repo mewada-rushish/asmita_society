@@ -8,9 +8,11 @@ import '../../bloc/visitor_event.dart';
 import '../../bloc/visitor_state.dart';
 import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_state.dart';
+import '../../../visitor_management/data/models/property_config.dart';
 
 class CreateInviteScreen extends StatefulWidget {
-  const CreateInviteScreen({super.key});
+  final PropertyConfig? propertyConfig;
+  const CreateInviteScreen({super.key, this.propertyConfig});
 
   @override
   State<CreateInviteScreen> createState() => _CreateInviteScreenState();

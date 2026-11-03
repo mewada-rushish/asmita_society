@@ -4,10 +4,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:asmita_society/core/config/env_config.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../../core/constants/design_system.dart';
+
 import '../../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
@@ -530,7 +531,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
               ElevatedButton(
                 onPressed: isSubmitting ? null : _searchCode,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AsmitaPalette.deepNavy,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   padding: const EdgeInsets.all(16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -587,7 +588,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AsmitaPalette.deepNavy,
+                color: Theme.of(context).colorScheme.primary,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.person_add, color: Colors.white),
@@ -710,7 +711,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AsmitaPalette.deepNavy.withValues(
+                              color: Theme.of(context).colorScheme.primary.withValues(
                                 alpha: 0.1,
                               ),
                               borderRadius: BorderRadius.circular(4),
@@ -922,12 +923,12 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: AsmitaPalette.deepNavy.withValues(alpha: 0.05),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(
         isDelivery ? Icons.local_shipping : Icons.person,
-        color: AsmitaPalette.deepNavy,
+        color: Theme.of(context).colorScheme.primary,
       ),
     );
   }

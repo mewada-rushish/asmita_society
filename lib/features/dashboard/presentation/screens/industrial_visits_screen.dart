@@ -29,27 +29,49 @@ class IndustrialVisitsScreen extends StatefulWidget {
   final VoidCallback? onBack;
   final String initialFilter;
 
-  const IndustrialVisitsScreen({super.key, this.onBack, this.initialFilter = 'ALL'});
+  const IndustrialVisitsScreen({
+    super.key,
+    this.onBack,
+    this.initialFilter = 'ALL',
+  });
 
   @override
   State<IndustrialVisitsScreen> createState() => _IndustrialVisitsScreenState();
 }
 
 class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
-  late String _selectedFilter = widget.initialFilter;
+  late String _selectedFilter;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   final Set<int> _acknowledgedIds = {};
 
+  bool _isToday(DateTime? dt) {
+    if (dt == null) return false;
+    final local = dt.toLocal();
+    final now = DateTime.now();
+    return local.year == now.year && local.month == now.month && local.day == now.day;
+  }
+
   @override
   void initState() {
     super.initState();
+    _selectedFilter = widget.initialFilter;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       try {
         context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
       } catch (_) {}
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant IndustrialVisitsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialFilter != widget.initialFilter) {
+      setState(() {
+        _selectedFilter = widget.initialFilter;
+      });
+    }
   }
 
   @override
@@ -853,7 +875,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       floatingActionButton: Padding(
-        padding: EdgeInsets.only(bottom: 96.0 + MediaQuery.viewPaddingOf(context).bottom + 16.0),
+        padding: const EdgeInsets.only(bottom: 96.0),
         child: FloatingActionButton.extended(
           heroTag: null,
           onPressed: () => _showPreApproveModal(context),
@@ -903,10 +925,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                 }
               },
               builder: (context, state) {
-                final isLoading = state.status == IndustrialVisitBlocStatus.loading &&
-                    state.visits.isEmpty;
+                final isInitialLoading = state.status == IndustrialVisitBlocStatus.initial;
 
-                if (isLoading) {
+                if (isInitialLoading) {
                   return const Center(
                     child: AsmitaLoadingIndicator(
                       color: AsmitaPalette.deepNavy,
@@ -915,11 +936,14 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                   );
                 }
 
-                final filteredVisits = state.visits.where((v) {
-                  // Visits & Passes only displays live ongoing entries until checkout/expiry
-                  if (!v.isActiveOrPending) {
-                    return false;
-                  }
+                // Filter visits to current day only
+                final todayVisits = state.visits.where((v) {
+                  return _isToday(v.checkInAt) ||
+                      _isToday(v.createdAt) ||
+                      _isToday(v.passCodeExpiresAt);
+                }).toList();
+
+                final filteredVisits = todayVisits.where((v) {
                   if (_selectedFilter == 'PENDING' && !v.isPending) {
                     return false;
                   }
@@ -950,7 +974,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                 }).toList();
 
                 return CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
                   slivers: [
                     AsmitaAnimatedRefresh(
                       onRefresh: () async {
@@ -959,6 +985,12 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                             .firstWhere((s) => s.status != IndustrialVisitBlocStatus.loading)
                             .timeout(const Duration(seconds: 4), onTimeout: () => bloc.state);
                         bloc.add(const LoadIndustrialVisits());
+                        final authState = context.read<AuthBloc>().state;
+                        if (authState is AuthAuthenticated) {
+                          context.read<VisitorBloc>().add(
+                            LoadMyHistory(residentId: authState.user.userId, isRefresh: true),
+                          );
+                        }
                         await future;
                       },
                     ),
@@ -1027,15 +1059,16 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 6, 16, 14),
-                        child: _buildKpiMetrics(context, state.visits),
+                        child: _buildKpiMetrics(context, todayVisits),
                       ),
                     ),
 
                     // Visitor Items or Empty State
                     if (filteredVisits.isEmpty)
-                      SliverToBoxAdapter(
+                      SliverFillRemaining(
+                        hasScrollBody: false,
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 20, 16, 200),
+                          padding: const EdgeInsets.fromLTRB(16, 20, 16, 120),
                           child: _buildEmptyState(context),
                         ),
                       )
@@ -1066,7 +1099,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     final pendingCount = visits.where((v) => v.isPending).length;
     final approvedCount = visits.where((v) => v.status == IndustrialVisitStatus.approved).length;
     final insideCount = visits.where((v) => v.status == IndustrialVisitStatus.checkedIn).length;
-    final totalCount = visits.where((v) => v.isActiveOrPending).length;
+    final totalCount = visits.length;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Row(
@@ -1248,12 +1281,11 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       emptyIcon = Icons.event_available_rounded;
     }
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 44, 20, 24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
@@ -1281,30 +1313,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
             ),
-            const SizedBox(height: 18),
-            ElevatedButton.icon(
-              onPressed: () => _showPreApproveModal(context),
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text(
-                'Schedule Visitor',
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AsmitaPalette.deepNavy,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 1,
-              ),
-            ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildVisitItem(BuildContext context, IndustrialVisitModel visit) {

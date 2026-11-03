@@ -1,14 +1,17 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../../../core/di/injection_container.dart';
+import '../../../../../core/security/secure_storage_service.dart';
 import '../../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../data/models/chat_message_model.dart';
-import '../providers/community_provider.dart';
+import '../../bloc/community_bloc.dart';
+import '../../bloc/community_event.dart';
 import '../screens/full_screen_image_viewer.dart';
 import '../widgets/swipe_to_reply.dart';
 
-class ImageGridBubble extends ConsumerWidget {
+class ImageGridBubble extends StatelessWidget {
   final List<ChatMessageModel> messages;
   final bool isMe;
   final String sender;
@@ -28,7 +31,7 @@ class ImageGridBubble extends ConsumerWidget {
     this.onSwipeReply,
   });
 
-  void _openSlideshow(BuildContext context, WidgetRef ref, int initialIndex) {
+  void _openSlideshow(BuildContext context, int initialIndex) {
     // We reverse the messages so they appear oldest to newest in the slideshow
     final chronologicalMessages = messages.reversed.toList();
     // Since we reversed, we need to adjust the initial index
@@ -41,7 +44,7 @@ class ImageGridBubble extends ConsumerWidget {
           imageMessages: chronologicalMessages,
           initialIndex: adjustedIndex,
           onReply: (message) {
-            ref.read(communityProvider.notifier).setReplyTo(message);
+            context.read<CommunityBloc>().add(SetReplyToMessage(message));
           },
         ),
       ),
@@ -50,7 +53,6 @@ class ImageGridBubble extends ConsumerWidget {
 
   Widget _buildImageItem(
     BuildContext context,
-    WidgetRef ref,
     ChatMessageModel msg,
     int index,
     int count,
@@ -62,13 +64,22 @@ class ImageGridBubble extends ConsumerWidget {
     );
 
     if (msg.content.startsWith('http')) {
-      imageWidget = CachedNetworkImage(
-        imageUrl: msg.content,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-        placeholder: (context, url) => Container(color: Colors.grey.shade200),
-        errorWidget: (context, url, error) => placeholder,
+      imageWidget = FutureBuilder<String?>(
+        future: sl<SecureStorageService>().getToken(),
+        builder: (context, snapshot) {
+          return CachedNetworkImage(
+            imageUrl: msg.content,
+            httpHeaders: snapshot.hasData
+                ? {'Authorization': 'Bearer ${snapshot.data}'}
+                : null,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            placeholder: (context, url) =>
+                Container(color: Colors.grey.shade200),
+            errorWidget: (context, url, error) => placeholder,
+          );
+        },
       );
     } else {
       final file = File(msg.content);
@@ -87,13 +98,15 @@ class ImageGridBubble extends ConsumerWidget {
 
     if (index == 3 && count > 4) {
       return GestureDetector(
-        onTap: () => _openSlideshow(context, ref, messages.length - 1 - index),
+        onTap: () => _openSlideshow(context, messages.length - 1 - index),
         child: Stack(
           fit: StackFit.expand,
           children: [
             imageWidget,
             Container(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.54),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.54),
               alignment: Alignment.center,
               child: Text(
                 '+${count - 4}',
@@ -111,15 +124,13 @@ class ImageGridBubble extends ConsumerWidget {
 
     return GestureDetector(
       onLongPress: onLongPress,
-      onTap:
-          onTap ??
-          () => _openSlideshow(context, ref, index),
+      onTap: onTap ?? () => _openSlideshow(context, index),
       child: imageWidget,
     );
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     // We do NOT reverse here, so the newest image (index 0) stays at the top of the grid
     final displayMessages = messages;
     final int count = displayMessages.length;
@@ -144,93 +155,141 @@ class ImageGridBubble extends ConsumerWidget {
           padding: EdgeInsets.symmetric(vertical: 2),
           child: Align(
             alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-            child: Container(
-              width: gridWidth + 8, // add padding space
-              height: count == 1 ? gridHeight + 8 : null,
-              margin: EdgeInsets.only(bottom: 4),
-              padding: EdgeInsets.all(4), // inner padding around images
-              decoration: BoxDecoration(
-                color: isMe ? const Color(0xFFE6EEFA) : Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(16),
-                  topRight: const Radius.circular(16),
-                  bottomLeft: Radius.circular(isMe ? 16 : 4),
-                  bottomRight: Radius.circular(isMe ? 4 : 16),
-                ),
-                border: Border.all(
-                  color: isMe
-                      ? const Color(0xFF142E5C).withValues(
-                          alpha: 0.15,
-                        ) // Theme.of(context).colorScheme.primary
-                      : const Color(0xFFE0E0E0), // Theme.of(context).dividerColor
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Stack(
-                  children: [
-                    _buildGrid(
-                      context,
-                      ref,
-                      displayMessages,
-                      count,
-                      gridHeight,
-                    ),
-                    Positioned(
-                      bottom: 4,
-                      right: 4,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              displayMessages.first.time.contains('|')
-                                  ? displayMessages.first.time.split('|')[1]
-                                  : displayMessages.first.time,
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.surface,
+            child: Column(
+              crossAxisAlignment: isMe
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!isMe)
+                  Padding(
+                    padding: EdgeInsets.only(left: 4, bottom: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          sender,
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
-                            ),
-                            if (isMe) ...[
-                              SizedBox(width: 4),
-                              if (displayMessages.first.id.startsWith('temp_'))
-                                SizedBox(
-                                  height: 10,
-                                  width: 10,
-                                  child: AsmitaLoadingIndicator(
-                                    color: Theme.of(context).colorScheme.surface,
-                                    size: 10,
-                                  ),
-                                )
-                              else
-                                Icon(
-                                  Icons.done_all_rounded,
-                                  color: Theme.of(context).colorScheme.surface,
-                                  size: 10,
-                                ),
-                            ],
-                          ],
                         ),
-                      ),
+                        if (sender.toLowerCase().contains('admin') ||
+                            sender.toLowerCase().contains('security')) ...[
+                          SizedBox(width: 4),
+                          Icon(
+                            Icons.verified_rounded,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 12,
+                          ),
+                        ],
+                      ],
                     ),
-                  ],
+                  ),
+                Container(
+                  width: gridWidth + 8, // add padding space
+                  height: count == 1 ? gridHeight + 8 : null,
+                  margin: EdgeInsets.only(bottom: 4),
+                  padding: EdgeInsets.all(4), // inner padding around images
+                  decoration: BoxDecoration(
+                    color: isMe
+                        ? const Color(0xFFE6EEFA)
+                        : Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(16),
+                      topRight: const Radius.circular(16),
+                      bottomLeft: Radius.circular(isMe ? 16 : 4),
+                      bottomRight: Radius.circular(isMe ? 4 : 16),
+                    ),
+                    border: Border.all(
+                      color: isMe
+                          ? const Color(0xFF142E5C).withValues(
+                              alpha: 0.15,
+                            ) // Theme.of(context).colorScheme.primary
+                          : const Color(
+                              0xFFE0E0E0,
+                            ), // Theme.of(context).dividerColor
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.02),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Stack(
+                      children: [
+                        _buildGrid(context, displayMessages, count, gridHeight),
+                        Positioned(
+                          bottom: 4,
+                          right: 4,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  displayMessages.first.time.contains('|')
+                                      ? displayMessages.first.time.split('|')[1]
+                                      : displayMessages.first.time,
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.surface,
+                                  ),
+                                ),
+                                if (isMe) ...[
+                                  SizedBox(width: 4),
+                                  if (displayMessages.first.id.startsWith(
+                                    'temp_',
+                                  ))
+                                    SizedBox(
+                                      height: 10,
+                                      width: 10,
+                                      child: AsmitaLoadingIndicator(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.surface,
+                                        size: 10,
+                                      ),
+                                    )
+                                  else
+                                    Icon(
+                                      Icons.done_all_rounded,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.surface,
+                                      size: 10,
+                                    ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
@@ -240,13 +299,12 @@ class ImageGridBubble extends ConsumerWidget {
 
   Widget _buildGrid(
     BuildContext context,
-    WidgetRef ref,
     List<ChatMessageModel> displayMessages,
     int count,
     double totalHeight,
   ) {
     if (count == 1) {
-      return _buildImageItem(context, ref, displayMessages[0], 0, count);
+      return _buildImageItem(context, displayMessages[0], 0, count);
     }
 
     if (count == 2) {
@@ -255,11 +313,11 @@ class ImageGridBubble extends ConsumerWidget {
         child: Row(
           children: [
             Expanded(
-              child: _buildImageItem(context, ref, displayMessages[0], 0, count),
+              child: _buildImageItem(context, displayMessages[0], 0, count),
             ),
             SizedBox(width: 2),
             Expanded(
-              child: _buildImageItem(context, ref, displayMessages[1], 1, count),
+              child: _buildImageItem(context, displayMessages[1], 1, count),
             ),
           ],
         ),
@@ -277,7 +335,6 @@ class ImageGridBubble extends ConsumerWidget {
                   Expanded(
                     child: _buildImageItem(
                       context,
-                      ref,
                       displayMessages[0],
                       0,
                       count,
@@ -287,7 +344,6 @@ class ImageGridBubble extends ConsumerWidget {
                   Expanded(
                     child: _buildImageItem(
                       context,
-                      ref,
                       displayMessages[1],
                       1,
                       count,
@@ -300,7 +356,6 @@ class ImageGridBubble extends ConsumerWidget {
             Expanded(
               child: _buildImageItem(
                 context,
-                ref,
                 displayMessages[2],
                 2,
                 count,
@@ -320,23 +375,11 @@ class ImageGridBubble extends ConsumerWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: _buildImageItem(
-                    context,
-                    ref,
-                    displayMessages[0],
-                    0,
-                    count,
-                  ),
+                  child: _buildImageItem(context, displayMessages[0], 0, count),
                 ),
                 SizedBox(width: 2),
                 Expanded(
-                  child: _buildImageItem(
-                    context,
-                    ref,
-                    displayMessages[1],
-                    1,
-                    count,
-                  ),
+                  child: _buildImageItem(context, displayMessages[1], 1, count),
                 ),
               ],
             ),
@@ -346,23 +389,11 @@ class ImageGridBubble extends ConsumerWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: _buildImageItem(
-                    context,
-                    ref,
-                    displayMessages[2],
-                    2,
-                    count,
-                  ),
+                  child: _buildImageItem(context, displayMessages[2], 2, count),
                 ),
                 SizedBox(width: 2),
                 Expanded(
-                  child: _buildImageItem(
-                    context,
-                    ref,
-                    displayMessages[3],
-                    3,
-                    count,
-                  ),
+                  child: _buildImageItem(context, displayMessages[3], 3, count),
                 ),
               ],
             ),

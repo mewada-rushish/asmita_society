@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import '../security/secure_storage_service.dart';
 import '../services/firebase_messaging_service.dart';
+import '../services/property_config_service.dart';
 import '../network/dio_client.dart';
 import '../../features/auth/data/repositories/auth_repository.dart';
 import '../../features/auth/data/repositories/property_repository.dart';
@@ -10,6 +11,7 @@ import '../../features/visitor_management/data/repositories/visitor_repository.d
 import '../../features/services/data/repositories/amenities_repository.dart';
 import '../../features/services/data/repositories/daily_help_repository.dart';
 import '../../features/dashboard/data/repositories/search_repository.dart';
+import '../../features/menu/data/repositories/preferences_repository.dart';
 import '../../features/visitor_management/data/repositories/guard_gate_repository.dart';
 import '../../features/visitor_management/data/repositories/industrial_visit_repository.dart';
 
@@ -25,6 +27,13 @@ Future<void> init() async {
   
   sl.registerLazySingleton<AsmitaDioClient>(
     () => AsmitaDioClient(sl<SecureStorageService>()),
+  );
+
+  sl.registerLazySingleton<PropertyConfigService>(
+    () => PropertyConfigService(
+      dioClient: sl<AsmitaDioClient>(),
+      secureStorage: sl<SecureStorageService>(),
+    ),
   );
 
   // Repositories
@@ -67,6 +76,10 @@ Future<void> init() async {
 
   sl.registerLazySingleton<SearchRepository>(
     () => SearchRepository(dio: sl<AsmitaDioClient>().dio),
+  );
+
+  sl.registerLazySingleton<PreferencesRepository>(
+    () => PreferencesRepository(dio: sl<AsmitaDioClient>().dio),
   );
 
   registerIndustrialDependencies();

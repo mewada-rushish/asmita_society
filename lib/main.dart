@@ -12,7 +12,10 @@ import 'core/security/secure_storage_service.dart';
 import 'firebase_options.dart';
 import 'core/constants/design_system.dart';
 import 'features/auth/bloc/auth_bloc.dart';
+import 'features/auth/bloc/auth_event.dart';
 import 'features/auth/presentation/root_screen.dart';
+import 'features/community/bloc/community_bloc.dart';
+import 'features/community/data/repositories/community_repository.dart';
 import 'features/community/bloc/community_post_bloc.dart';
 import 'features/visitor_management/bloc/guard_gate_bloc.dart';
 import 'core/di/injection_container.dart' as di;
@@ -27,6 +30,9 @@ import 'features/services/bloc/daily_help_bloc.dart';
 import 'features/dashboard/bloc/search/search_bloc.dart';
 import 'features/community/bloc/community_post_event.dart';
 import 'features/dashboard/bloc/quick_actions/quick_actions_bloc.dart';
+import 'features/menu/bloc/preferences_bloc.dart';
+import 'features/menu/bloc/preferences_state.dart';
+import 'features/menu/bloc/preferences_event.dart';
 
 import 'package:flutter_quill/flutter_quill.dart'
     show FlutterQuillLocalizations;
@@ -34,11 +40,11 @@ import 'package:flutter_quill/flutter_quill.dart'
 import 'features/auth/presentation/unsafe_device_screen.dart';
 import 'core/observers/crashlytics_navigation_observer.dart';
 import 'package:asmita_society/l10n/app_localizations.dart';
-import 'features/menu/presentation/providers/preferences_provider.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
+  globalNavigatorKey = GlobalKey<NavigatorState>();
   runZonedGuarded(
     () async {
       WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -99,7 +105,11 @@ Future<void> main() async {
       //   print("safe_device plugin error (ignoring for simulator): $e");
       // }
 
-      runApp(ProviderScope(child: AsmitaApp(isDeviceSafe: isDeviceSafe)));
+      runApp(
+        ProviderScope(
+          child: AsmitaApp(isDeviceSafe: isDeviceSafe),
+        ),
+      );
     },
     (error, stack) {
       // Catch unhandled async errors outside the Flutter framework
@@ -108,10 +118,40 @@ Future<void> main() async {
   );
 }
 
-class AsmitaApp extends ConsumerWidget {
+GlobalKey<NavigatorState> globalNavigatorKey = GlobalKey<NavigatorState>();
+
+class AsmitaApp extends StatefulWidget {
   final bool isDeviceSafe;
 
   const AsmitaApp({super.key, required this.isDeviceSafe});
+
+  @override
+  State<AsmitaApp> createState() => _AsmitaAppState();
+}
+
+class _AsmitaAppState extends State<AsmitaApp> with WidgetsBindingObserver {
+  
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      final context = globalNavigatorKey.currentContext;
+      if (context != null) {
+        context.read<AuthBloc>().add(AuthRefreshProfileRequested());
+      }
+    }
+  }
 
   Locale _getLocaleFromLanguage(String? language) {
     switch (language) {
@@ -130,9 +170,7 @@ class AsmitaApp extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final preferencesAsync = ref.watch(preferencesProvider);
-    final locale = _getLocaleFromLanguage(preferencesAsync.value?.language);
+  Widget build(BuildContext context) {
 
     return MultiBlocProvider(
       providers: [
@@ -165,8 +203,14 @@ class AsmitaApp extends ConsumerWidget {
           create: (context) =>
               CommunityPostBloc(repository: di.sl())..add(LoadCommunityPosts()),
         ),
+        BlocProvider<CommunityBloc>(
+          create: (context) => CommunityBloc(repository: di.sl<ApiCommunityRepository>()),
+        ),
         BlocProvider<QuickActionsBloc>(
           create: (context) => QuickActionsBloc()..add(LoadQuickActions()),
+        ),
+        BlocProvider<PreferencesBloc>(
+          create: (context) => PreferencesBloc(repository: di.sl())..add(const LoadPreferences()),
         ),
         BlocProvider<IndustrialVisitBloc>(
           create: (context) {
@@ -177,23 +221,31 @@ class AsmitaApp extends ConsumerWidget {
           },
         ),
       ],
-      child: MaterialApp(
-        navigatorKey: rootNavigatorKey,
-        title: 'AsmitA',
-        debugShowCheckedModeBanner: false,
-        theme: AsmitaTheme.lightTheme,
-        darkTheme: AsmitaTheme.darkTheme,
-        themeMode: preferencesAsync.value?.appTheme.toLowerCase() == 'dark' 
-            ? ThemeMode.dark 
-            : (preferencesAsync.value?.appTheme.toLowerCase() == 'light' ? ThemeMode.light : ThemeMode.system),
-        locale: locale,
-        localizationsDelegates: [
-          ...AppLocalizations.localizationsDelegates,
-          FlutterQuillLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
-        navigatorObservers: [CrashlyticsNavigationObserver()],
-        home: isDeviceSafe ? const RootScreen() : const UnsafeDeviceScreen(),
+      child: BlocBuilder<PreferencesBloc, PreferencesState>(
+        builder: (context, prefState) {
+          final prefs = prefState is PreferencesLoaded ? prefState.items : null;
+          final themeMode = prefs?.appTheme.toLowerCase() == 'dark' 
+              ? ThemeMode.dark 
+              : (prefs?.appTheme.toLowerCase() == 'light' ? ThemeMode.light : ThemeMode.system);
+          final locale = _getLocaleFromLanguage(prefs?.language);
+
+          return MaterialApp(
+            navigatorKey: rootNavigatorKey,
+            title: 'AsmitA',
+            debugShowCheckedModeBanner: false,
+            theme: AsmitaTheme.lightTheme,
+            darkTheme: AsmitaTheme.darkTheme,
+            themeMode: themeMode,
+            locale: locale,
+            localizationsDelegates: [
+              ...AppLocalizations.localizationsDelegates,
+              FlutterQuillLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            navigatorObservers: [CrashlyticsNavigationObserver()],
+            home: widget.isDeviceSafe ? const RootScreen() : const UnsafeDeviceScreen(),
+          );
+        },
       ),
     );
   }

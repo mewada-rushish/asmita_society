@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../data/models/chat_message_model.dart';
 
 abstract class CommunityEvent extends Equatable {
   const CommunityEvent();
@@ -11,40 +12,96 @@ class LoadCommunityMessages extends CommunityEvent {
   final int? currentUserId;
   final String? currentUserName;
   final bool isRefresh;
-  const LoadCommunityMessages({this.currentUserId, this.currentUserName, this.isRefresh = false});
-  
+  const LoadCommunityMessages({
+    this.currentUserId,
+    this.currentUserName,
+    this.isRefresh = false,
+  });
+
   @override
   List<Object?> get props => [currentUserId, currentUserName, isRefresh];
 }
 
-class LoadMoreMessages extends CommunityEvent {
-  final int? currentUserId;
-  final String? currentUserName;
-  const LoadMoreMessages({this.currentUserId, this.currentUserName});
-  
-  @override
-  List<Object?> get props => [currentUserId, currentUserName];
+class StartPolling extends CommunityEvent {
+  final bool Function()? isAtBottom;
+  const StartPolling({this.isAtBottom});
 }
+
+class StopPolling extends CommunityEvent {}
+
+class PollMessages extends CommunityEvent {}
+
+class LoadMoreCommunityMessages extends CommunityEvent {}
+
+class ToggleMessageSelection extends CommunityEvent {
+  final String messageId;
+  const ToggleMessageSelection(this.messageId);
+
+  @override
+  List<Object?> get props => [messageId];
+}
+
+class ClearMessageSelection extends CommunityEvent {}
+
+class SetReplyToMessage extends CommunityEvent {
+  final ChatMessageModel message;
+  const SetReplyToMessage(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+class ClearReplyToMessage extends CommunityEvent {}
+
+class DeleteSelectedMessages extends CommunityEvent {}
+
+class StarSelectedMessages extends CommunityEvent {}
 
 class SendTextMessage extends CommunityEvent {
   final String text;
   final String? replyToMessageId;
   final String? replyToContent;
 
-  const SendTextMessage(this.text, {this.replyToMessageId, this.replyToContent});
+  const SendTextMessage(
+    this.text, {
+    this.replyToMessageId,
+    this.replyToContent,
+  });
 
   @override
   List<Object?> get props => [text, replyToMessageId, replyToContent];
 }
 
+class SendContactMessage extends CommunityEvent {
+  final String name;
+  final String phone;
+
+  const SendContactMessage(this.name, this.phone);
+
+  @override
+  List<Object?> get props => [name, phone];
+}
+
 class SendAudioMessage extends CommunityEvent {
   final String duration;
   final String audioPath;
+  final String? replyToMessageId;
+  final String? replyToContent;
 
-  const SendAudioMessage(this.duration, this.audioPath);
+  const SendAudioMessage(
+    this.duration,
+    this.audioPath, {
+    this.replyToMessageId,
+    this.replyToContent,
+  });
 
   @override
-  List<Object?> get props => [duration, audioPath];
+  List<Object?> get props => [
+    duration,
+    audioPath,
+    replyToMessageId,
+    replyToContent,
+  ];
 }
 
 class SendPollMessage extends CommunityEvent {
@@ -53,7 +110,7 @@ class SendPollMessage extends CommunityEvent {
   final bool allowMultipleAnswers;
 
   const SendPollMessage({
-    required this.question, 
+    required this.question,
     required this.options,
     this.allowMultipleAnswers = false,
   });
@@ -66,10 +123,7 @@ class VoteOnPollMessage extends CommunityEvent {
   final String messageId;
   final String option;
 
-  const VoteOnPollMessage({
-    required this.messageId,
-    required this.option,
-  });
+  const VoteOnPollMessage({required this.messageId, required this.option});
 
   @override
   List<Object?> get props => [messageId, option];
@@ -77,20 +131,40 @@ class VoteOnPollMessage extends CommunityEvent {
 
 class SendImageMessage extends CommunityEvent {
   final String imagePath;
+  final String? replyToMessageId;
+  final String? replyToContent;
 
-  const SendImageMessage(this.imagePath);
+  const SendImageMessage(
+    this.imagePath, {
+    this.replyToMessageId,
+    this.replyToContent,
+  });
 
   @override
-  List<Object?> get props => [imagePath];
+  List<Object?> get props => [imagePath, replyToMessageId, replyToContent];
 }
 
 class SendDocumentMessage extends CommunityEvent {
   final String documentPath;
   final String fileName;
   final String fileSize;
+  final String? replyToMessageId;
+  final String? replyToContent;
 
-  const SendDocumentMessage(this.documentPath, this.fileName, this.fileSize);
+  const SendDocumentMessage(
+    this.documentPath,
+    this.fileName,
+    this.fileSize, {
+    this.replyToMessageId,
+    this.replyToContent,
+  });
 
   @override
-  List<Object?> get props => [documentPath, fileName, fileSize];
+  List<Object?> get props => [
+    documentPath,
+    fileName,
+    fileSize,
+    replyToMessageId,
+    replyToContent,
+  ];
 }

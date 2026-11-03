@@ -60,6 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: Theme.of(context).colorScheme.primary,
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
+          if (!context.mounted) return;
           if (state is AuthOtpSent) {
             // Added Success Toast
             AsmitaToast.show(
