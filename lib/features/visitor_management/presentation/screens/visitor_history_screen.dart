@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../../../../core/config/env_config.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
@@ -226,9 +229,74 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
       'isOutsideSchedule': isOutsideSchedule,
       'passCode': item['pass_code']?.toString(),
       'qrCode': item['qr_code']?.toString(),
+      'photoUrl': item.photoUrl ?? item['photo_url'] ?? item['visitor_photo_url'],
       'isPreApproved': isPreApproved,
       'rawItem': item,
     };
+  }
+
+  Widget _buildDetailsModalAvatar(Map<String, dynamic> visitor, ThemeData theme) {
+    final photo = visitor['photoUrl']?.toString().trim();
+    final fallbackIcon = Icon(
+      visitor['icon'] as IconData? ?? Icons.person_rounded,
+      color: visitor['brandColor'] as Color? ?? theme.colorScheme.primary,
+      size: 32,
+    );
+
+    if (photo == null || photo.isEmpty) {
+      return CircleAvatar(
+        radius: 36,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        child: fallbackIcon,
+      );
+    }
+
+    if (photo.startsWith('data:image')) {
+      try {
+        final commaIndex = photo.indexOf(',');
+        final base64Str = commaIndex != -1 ? photo.substring(commaIndex + 1) : photo;
+        final bytes = base64Decode(base64Str);
+        return CircleAvatar(
+          radius: 36,
+          backgroundColor: theme.scaffoldBackgroundColor,
+          backgroundImage: MemoryImage(bytes),
+        );
+      } catch (_) {
+        return CircleAvatar(
+          radius: 36,
+          backgroundColor: theme.scaffoldBackgroundColor,
+          child: fallbackIcon,
+        );
+      }
+    }
+
+    String fullUrl = photo;
+    if (photo.startsWith('/')) {
+      fullUrl = '${EnvConfig.baseUrl}$photo';
+    }
+
+    return ClipOval(
+      child: CachedNetworkImage(
+        imageUrl: fullUrl,
+        width: 72,
+        height: 72,
+        fit: BoxFit.cover,
+        placeholder: (_, _) => CircleAvatar(
+          radius: 36,
+          backgroundColor: theme.scaffoldBackgroundColor,
+          child: const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+        errorWidget: (_, _, _) => CircleAvatar(
+          radius: 36,
+          backgroundColor: theme.scaffoldBackgroundColor,
+          child: fallbackIcon,
+        ),
+      ),
+    );
   }
 
   void _showVisitorDetailsModal(
@@ -253,15 +321,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                   width: 2,
                 ),
               ),
-              child: CircleAvatar(
-                radius: 36,
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                child: Icon(
-                  visitor['icon'] as IconData,
-                  color: visitor['brandColor'] as Color? ?? Theme.of(context).colorScheme.primary,
-                  size: 32,
-                ),
-              ),
+              child: _buildDetailsModalAvatar(visitor, Theme.of(context)),
             ),
           ),
           const SizedBox(height: 16),

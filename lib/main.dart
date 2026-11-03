@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
@@ -97,7 +98,11 @@ Future<void> main() async {
       //   print("safe_device plugin error (ignoring for simulator): $e");
       // }
 
-      runApp(AsmitaApp(isDeviceSafe: isDeviceSafe));
+      runApp(
+        ProviderScope(
+          child: AsmitaApp(isDeviceSafe: isDeviceSafe),
+        ),
+      );
     },
     (error, stack) {
       // Catch unhandled async errors outside the Flutter framework

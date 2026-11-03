@@ -55,14 +55,42 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
   Map<String, dynamic>? _activeOutgoing;
   List<Map<String, dynamic>> _incomingDelegations = [];
 
+  static List<Map<String, dynamic>>? _cachedCandidates;
+  static Map<String, dynamic>? _cachedActiveOutgoing;
+  static List<Map<String, dynamic>>? _cachedIncomingDelegations;
+
   @override
   void initState() {
     super.initState();
-    _fetchCandidateDelegates();
+    if (_cachedCandidates != null && _cachedCandidates!.isNotEmpty) {
+      _candidates = List.from(_cachedCandidates!);
+      _activeOutgoing = _cachedActiveOutgoing;
+      _incomingDelegations = _cachedIncomingDelegations ?? [];
+      _isLoadingStaff = false;
+      if (_activeOutgoing != null) {
+        _isDelegationEnabled = true;
+        _selectedDelegateId = _activeOutgoing!['delegate_user_id'] as int?;
+        _isTillTurnOff = _activeOutgoing!['end_date'] == null;
+        if (_activeOutgoing!['start_date'] != null) {
+          _startDate = DateTime.tryParse(_activeOutgoing!['start_date'].toString()) ?? DateTime.now();
+        }
+        if (_activeOutgoing!['end_date'] != null) {
+          _endDate = DateTime.tryParse(_activeOutgoing!['end_date'].toString());
+        }
+      } else if (_selectedDelegateId == null && _candidates.isNotEmpty) {
+        _selectedDelegateId = _candidates.first['id'] as int?;
+      }
+      // Silently refresh in background
+      _fetchCandidateDelegates(isSilent: true);
+    } else {
+      _fetchCandidateDelegates();
+    }
   }
 
-  Future<void> _fetchCandidateDelegates() async {
-    setState(() => _isLoadingStaff = true);
+  Future<void> _fetchCandidateDelegates({bool isSilent = false}) async {
+    if (!isSilent) {
+      setState(() => _isLoadingStaff = true);
+    }
     try {
       final dio = AsmitaDioClient(SecureStorageService()).dio;
 
@@ -158,12 +186,18 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
           return m;
         }).toList();
 
-        setState(() {
-          _candidates = parsed;
-          if (_candidates.isNotEmpty && _selectedDelegateId == null) {
-            _selectedDelegateId = _candidates.first['id'] as int?;
-          }
-        });
+        _cachedCandidates = parsed;
+        _cachedActiveOutgoing = _activeOutgoing;
+        _cachedIncomingDelegations = _incomingDelegations;
+
+        if (mounted) {
+          setState(() {
+            _candidates = parsed;
+            if (_candidates.isNotEmpty && _selectedDelegateId == null) {
+              _selectedDelegateId = _candidates.first['id'] as int?;
+            }
+          });
+        }
       }
     } catch (e) {
       debugPrint('[Delegation] Error fetching candidate delegates: $e');
