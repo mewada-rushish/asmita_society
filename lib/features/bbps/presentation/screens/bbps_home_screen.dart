@@ -856,6 +856,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
 
                     // Interactive Search Bar
                     Container(
+                      height: 44,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF1E293B) : Colors.white,
                         borderRadius: BorderRadius.circular(12),
@@ -871,43 +873,56 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                           ),
                         ],
                       ),
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (val) => setState(() => _searchQuery = val),
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w500,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Search biller, utility, or NPCI service...',
-                          hintStyle: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 12,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                          ),
-                          prefixIcon: Icon(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(
                             Icons.search_rounded,
                             size: 18,
                             color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                           ),
-                          suffixIcon: _searchQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: Icon(
-                                    Icons.clear_rounded,
-                                    size: 16,
-                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                  ),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() => _searchQuery = '');
-                                  },
-                                )
-                              : null,
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              textAlignVertical: TextAlignVertical.center,
+                              onChanged: (val) => setState(() => _searchQuery = val),
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w500,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
+                              decoration: InputDecoration(
+                                isDense: true,
+                                hintText: 'Search biller, utility, or NPCI service...',
+                                hintStyle: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 12,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                            ),
+                          ),
+                          if (_searchQuery.isNotEmpty)
+                            InkWell(
+                              onTap: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: Icon(
+                                  Icons.clear_rounded,
+                                  size: 16,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 10),
