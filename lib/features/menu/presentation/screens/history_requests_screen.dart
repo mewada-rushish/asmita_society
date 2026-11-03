@@ -6,12 +6,44 @@ import '../../bloc/historyrequest_event.dart';
 import '../../bloc/historyrequest_state.dart';
 import '../../data/models/history_request_model.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/features/menu/data/repositories/history_request_repository.dart';
+import 'package:asmita_society/core/network/dio_client.dart';
+import 'package:asmita_society/core/security/secure_storage_service.dart';
+import 'package:asmita_society/core/di/injection_container.dart' as di;
 
 class HistoryRequestsScreen extends StatelessWidget {
   const HistoryRequestsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    return Builder(
+      builder: (ctx) {
+        bool hasBloc = false;
+        try {
+          ctx.read<HistoryRequestBloc>();
+          hasBloc = true;
+        } catch (_) {}
+
+        if (!hasBloc) {
+          final repo = di.sl.isRegistered<HistoryRequestRepository>()
+              ? di.sl<HistoryRequestRepository>()
+              : HistoryRequestRepository(dio: AsmitaDioClient(SecureStorageService()).dio);
+          return BlocProvider<HistoryRequestBloc>(
+            create: (_) => HistoryRequestBloc(repository: repo)..add(const LoadHistoryRequest()),
+            child: _buildScaffold(ctx),
+          );
+        }
+
+        if (ctx.read<HistoryRequestBloc>().state is HistoryRequestInitial) {
+          ctx.read<HistoryRequestBloc>().add(const LoadHistoryRequest());
+        }
+
+        return _buildScaffold(ctx);
+      },
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
