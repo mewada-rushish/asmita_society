@@ -900,76 +900,17 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
     );
   }
 
-  Widget _buildModalFilterChip({
-    required BuildContext context,
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-    IconData? icon,
-    Color? activeColor,
-  }) {
-    final theme = Theme.of(context);
-    final color = activeColor ?? theme.colorScheme.primary;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? color.withValues(alpha: 0.12)
-              : theme.colorScheme.surface,
-          border: Border.all(
-            color: isSelected
-                ? color
-                : theme.dividerColor.withValues(alpha: 0.4),
-            width: isSelected ? 1.5 : 1,
-          ),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 14,
-                color: isSelected ? color : theme.textTheme.bodyMedium?.color,
-              ),
-              const SizedBox(width: 5),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 11.5,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? color : theme.textTheme.bodyLarge?.color,
-              ),
-            ),
-            if (isSelected) ...[
-              const SizedBox(width: 5),
-              Icon(
-                Icons.check_rounded,
-                size: 13,
-                color: color,
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildDateInputCard({
     required BuildContext context,
     required String label,
     required DateTime? value,
     required VoidCallback onTap,
+    VoidCallback? onClear,
   }) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isSet = value != null;
+
     return Expanded(
       child: InkWell(
         onTap: onTap,
@@ -977,42 +918,58 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
+            color: isSet
+                ? theme.colorScheme.primary.withValues(alpha: 0.05)
+                : (isDark ? AsmitaPalette.surfaceDark : theme.colorScheme.surface),
             border: Border.all(
-              color: value != null ? theme.colorScheme.primary : theme.dividerColor,
-              width: value != null ? 1.4 : 1,
+              color: isSet ? theme.colorScheme.primary : theme.dividerColor,
+              width: isSet ? 1.4 : 1,
             ),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 10,
-                  color: theme.textTheme.bodySmall?.color,
-                  fontWeight: FontWeight.w500,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 10.5,
+                      color: isSet ? theme.colorScheme.primary : theme.textTheme.bodySmall?.color,
+                      fontWeight: isSet ? FontWeight.w600 : FontWeight.w500,
+                    ),
+                  ),
+                  if (isSet && onClear != null)
+                    GestureDetector(
+                      onTap: onClear,
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 14,
+                        color: theme.textTheme.bodySmall?.color,
+                      ),
+                    ),
+                ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 5),
               Row(
                 children: [
                   Icon(
                     Icons.calendar_today_rounded,
                     size: 13,
-                    color: value != null ? theme.colorScheme.primary : theme.textTheme.bodyMedium?.color,
+                    color: isSet ? theme.colorScheme.primary : theme.textTheme.bodyMedium?.color,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      value != null ? DateFormat('dd MMM yyyy').format(value) : 'Select date',
+                      isSet ? DateFormat('dd MMM yyyy').format(value) : 'Select date',
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 11.5,
-                        fontWeight: value != null ? FontWeight.w600 : FontWeight.w400,
-                        color: value != null ? theme.colorScheme.primary : theme.textTheme.bodyMedium?.color,
+                        fontWeight: isSet ? FontWeight.w600 : FontWeight.w400,
+                        color: isSet ? theme.colorScheme.primary : theme.textTheme.bodyMedium?.color,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1023,6 +980,210 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildFilterDropdown<T>({
+    required BuildContext context,
+    required T value,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?> onChanged,
+    bool isCustomized = false,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+      decoration: BoxDecoration(
+        color: isCustomized
+            ? theme.colorScheme.primary.withValues(alpha: 0.05)
+            : (isDark ? AsmitaPalette.surfaceDark : theme.colorScheme.surface),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isCustomized
+              ? theme.colorScheme.primary
+              : theme.dividerColor.withValues(alpha: 0.7),
+          width: isCustomized ? 1.4 : 1,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          isExpanded: true,
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: isCustomized
+                ? theme.colorScheme.primary
+                : theme.textTheme.bodyMedium?.color,
+          ),
+          dropdownColor: isDark ? AsmitaPalette.surfaceDark : theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          items: items,
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegmentedControl<T>({
+    required BuildContext context,
+    required T selectedValue,
+    required List<Map<String, dynamic>> options,
+    required ValueChanged<T> onSelected,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: isDark ? AsmitaPalette.surfaceDark : const Color(0xFFF1F3F9),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.dividerColor.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Row(
+        children: options.map((opt) {
+          final val = opt['value'] as T;
+          final label = opt['label'] as String;
+          final icon = opt['icon'] as IconData?;
+          final isSelected = val == selectedValue;
+
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => onSelected(val),
+              behavior: HitTestBehavior.opaque,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? (isDark ? theme.colorScheme.primary : theme.colorScheme.surface)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(9),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (icon != null) ...[
+                      Icon(
+                        icon,
+                        size: 14,
+                        color: isSelected
+                            ? (isDark ? Colors.white : theme.colorScheme.primary)
+                            : theme.textTheme.bodyMedium?.color,
+                      ),
+                      const SizedBox(width: 4),
+                    ],
+                    Flexible(
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 11.5,
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          color: isSelected
+                              ? (isDark ? Colors.white : theme.colorScheme.primary)
+                              : theme.textTheme.bodyMedium?.color,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildVehicleSwitchTile({
+    required BuildContext context,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: value
+            ? theme.colorScheme.primary.withValues(alpha: 0.05)
+            : (isDark ? AsmitaPalette.surfaceDark : theme.colorScheme.surface),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: value
+              ? theme.colorScheme.primary
+              : theme.dividerColor.withValues(alpha: 0.7),
+          width: value ? 1.4 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: value
+                  ? theme.colorScheme.primary.withValues(alpha: 0.15)
+                  : theme.dividerColor.withValues(alpha: 0.3),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.directions_car_rounded,
+              size: 18,
+              color: value ? theme.colorScheme.primary : theme.textTheme.bodySmall?.color,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Only Visitors with Vehicle',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: value ? theme.colorScheme.primary : theme.textTheme.bodyLarge?.color,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Filter records with registered vehicle plate',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 11,
+                    color: theme.textTheme.bodySmall?.color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch.adaptive(
+            value: value,
+            activeTrackColor: theme.colorScheme.primary,
+            onChanged: onChanged,
+          ),
+        ],
       ),
     );
   }
@@ -1141,21 +1302,6 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
             {'key': 'REJECTED', 'label': 'Rejected', 'icon': Icons.cancel_outlined, 'color': AsmitaPalette.actionRed},
           ];
 
-          final datePresets = [
-            {'key': 'ALL', 'label': 'All Time'},
-            {'key': 'TODAY', 'label': 'Today'},
-            {'key': 'YESTERDAY', 'label': 'Yesterday'},
-            {'key': 'THIS_WEEK', 'label': 'This Week'},
-            {'key': 'THIS_MONTH', 'label': 'This Month'},
-            {'key': 'CUSTOM', 'label': 'Custom'},
-          ];
-
-          final passTypeOptions = [
-            {'key': 'ALL', 'label': 'All Passes', 'icon': Icons.all_inbox_rounded},
-            {'key': 'PRE_APPROVED', 'label': 'Pre-Approved', 'icon': Icons.verified_user_outlined},
-            {'key': 'WALK_IN', 'label': 'Walk-ins', 'icon': Icons.directions_walk_rounded},
-          ];
-
           final categoryOptions = [
             {'key': 'ALL', 'label': 'All Categories', 'icon': Icons.grid_view_rounded},
             {'key': 'Guest', 'label': 'Guest / VIP', 'icon': Icons.person_outline_rounded},
@@ -1170,11 +1316,6 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
             {'key': 'FREQUENT', 'label': 'Frequent / Recurring'},
           ];
 
-          final sortOptions = [
-            {'key': 'NEWEST', 'label': 'Newest First', 'icon': Icons.arrow_downward_rounded},
-            {'key': 'OLDEST', 'label': 'Oldest First', 'icon': Icons.arrow_upward_rounded},
-          ];
-
           return Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1186,232 +1327,247 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // 1. Date Range Section
+                      // 1. Date Range Section (Segmented Presets + Explicit From/To Inputs)
                       _buildFilterSectionHeader(
                         context: context,
                         title: 'Date Range',
                         icon: Icons.calendar_today_rounded,
                       ),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: datePresets.map((preset) {
-                          final isSelected = tempDatePreset == preset['key'];
-                          return _buildModalFilterChip(
-                            context: context,
-                            label: preset['label']!,
-                            isSelected: isSelected,
-                            onTap: () {
-                              setModalState(() {
-                                tempDatePreset = preset['key']!;
-                                _applyDatePreset(tempDatePreset, (s, e) {
-                                  tempStartDate = s;
-                                  tempEndDate = e;
-                                });
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-
-                      // Custom Date Pickers (Shown if Custom preset chosen or dates picked)
-                      if (tempDatePreset == 'CUSTOM' || tempStartDate != null || tempEndDate != null) ...[
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            _buildDateInputCard(
-                              context: context,
-                              label: 'Start Date (From)',
-                              value: tempStartDate,
-                              onTap: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: tempStartDate ?? DateTime.now(),
-                                  firstDate: DateTime(2020),
-                                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                                );
-                                if (picked != null) {
-                                  setModalState(() {
-                                    tempStartDate = picked;
-                                    tempDatePreset = 'CUSTOM';
-                                  });
-                                }
-                              },
-                            ),
-                            const SizedBox(width: 12),
-                            _buildDateInputCard(
-                              context: context,
-                              label: 'End Date (To)',
-                              value: tempEndDate,
-                              onTap: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: tempEndDate ?? tempStartDate ?? DateTime.now(),
-                                  firstDate: tempStartDate ?? DateTime(2020),
-                                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                                );
-                                if (picked != null) {
-                                  setModalState(() {
-                                    tempEndDate = picked;
-                                    tempDatePreset = 'CUSTOM';
-                                  });
-                                }
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
-
-                      // 2. Status Section
-                      _buildFilterSectionHeader(
+                      _buildSegmentedControl<String>(
                         context: context,
-                        title: 'Visitor Status',
-                        icon: Icons.verified_outlined,
+                        selectedValue: tempDatePreset,
+                        options: [
+                          {'value': 'ALL', 'label': 'All Time'},
+                          {'value': 'TODAY', 'label': 'Today'},
+                          {'value': 'THIS_WEEK', 'label': 'This Week'},
+                          {'value': 'THIS_MONTH', 'label': 'This Month'},
+                        ],
+                        onSelected: (val) {
+                          setModalState(() {
+                            tempDatePreset = val;
+                            _applyDatePreset(tempDatePreset, (s, e) {
+                              tempStartDate = s;
+                              tempEndDate = e;
+                            });
+                          });
+                        },
                       ),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: statusOptions.map((st) {
-                          final isSelected = (st['key'] == 'ALL' && (tempStatus == null || tempStatus == 'ALL')) ||
-                              tempStatus == st['key'];
-                          return _buildModalFilterChip(
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          _buildDateInputCard(
                             context: context,
-                            label: st['label'] as String,
-                            icon: st['icon'] as IconData,
-                            activeColor: st['color'] as Color,
-                            isSelected: isSelected,
-                            onTap: () {
-                              setModalState(() {
-                                tempStatus = st['key'] == 'ALL' ? null : st['key'] as String;
-                              });
+                            label: 'From Date',
+                            value: tempStartDate,
+                            onTap: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: tempStartDate ?? DateTime.now(),
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime.now().add(const Duration(days: 365)),
+                              );
+                              if (picked != null) {
+                                setModalState(() {
+                                  tempStartDate = picked;
+                                  tempDatePreset = 'CUSTOM';
+                                });
+                              }
                             },
-                          );
-                        }).toList(),
+                            onClear: tempStartDate != null
+                                ? () => setModalState(() {
+                                      tempStartDate = null;
+                                      tempDatePreset = 'CUSTOM';
+                                    })
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          _buildDateInputCard(
+                            context: context,
+                            label: 'To Date',
+                            value: tempEndDate,
+                            onTap: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: tempEndDate ?? tempStartDate ?? DateTime.now(),
+                                firstDate: tempStartDate ?? DateTime(2020),
+                                lastDate: DateTime.now().add(const Duration(days: 365)),
+                              );
+                              if (picked != null) {
+                                setModalState(() {
+                                  tempEndDate = picked;
+                                  tempDatePreset = 'CUSTOM';
+                                });
+                              }
+                            },
+                            onClear: tempEndDate != null
+                                ? () => setModalState(() {
+                                      tempEndDate = null;
+                                      tempDatePreset = 'CUSTOM';
+                                    })
+                                : null,
+                          ),
+                        ],
                       ),
 
-                      // 3. Entry & Pass Type Section
+                      // 2. Pass Type Section (Segmented Control)
                       _buildFilterSectionHeader(
                         context: context,
                         title: 'Pass Type',
                         icon: Icons.badge_outlined,
                       ),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: passTypeOptions.map((opt) {
-                          final isSelected = tempRecordType == opt['key'];
-                          return _buildModalFilterChip(
-                            context: context,
-                            label: opt['label'] as String,
-                            icon: opt['icon'] as IconData,
-                            isSelected: isSelected,
-                            onTap: () {
-                              setModalState(() {
-                                tempRecordType = opt['key'] as String;
-                              });
-                            },
-                          );
-                        }).toList(),
+                      _buildSegmentedControl<String>(
+                        context: context,
+                        selectedValue: tempRecordType,
+                        options: [
+                          {'value': 'ALL', 'label': 'All Passes', 'icon': Icons.all_inbox_rounded},
+                          {'value': 'PRE_APPROVED', 'label': 'Pre-Approved', 'icon': Icons.verified_user_outlined},
+                          {'value': 'WALK_IN', 'label': 'Walk-ins', 'icon': Icons.directions_walk_rounded},
+                        ],
+                        onSelected: (val) => setModalState(() => tempRecordType = val),
                       ),
 
-                      // 4. Visitor Category Section
+                      // 3. Visitor Status Section (Dropdown Input)
+                      _buildFilterSectionHeader(
+                        context: context,
+                        title: 'Visitor Status',
+                        icon: Icons.verified_outlined,
+                      ),
+                      _buildFilterDropdown<String>(
+                        context: context,
+                        value: tempStatus ?? 'ALL',
+                        isCustomized: tempStatus != null && tempStatus != 'ALL',
+                        items: statusOptions.map((st) {
+                          final color = st['color'] as Color;
+                          final isAll = st['key'] == 'ALL';
+                          return DropdownMenuItem<String>(
+                            value: st['key'] as String,
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Icon(st['icon'] as IconData, size: 16, color: color),
+                                const SizedBox(width: 10),
+                                Text(
+                                  st['label'] as String,
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 13,
+                                    fontWeight: isAll ? FontWeight.w500 : FontWeight.w600,
+                                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          setModalState(() {
+                            tempStatus = (val == null || val == 'ALL') ? null : val;
+                          });
+                        },
+                      ),
+
+                      // 4. Visitor Category Section (Dropdown Input)
                       _buildFilterSectionHeader(
                         context: context,
                         title: 'Category',
                         icon: Icons.category_outlined,
                       ),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: categoryOptions.map((opt) {
-                          final isSelected = tempCategory == opt['key'];
-                          return _buildModalFilterChip(
-                            context: context,
-                            label: opt['label'] as String,
-                            icon: opt['icon'] as IconData,
-                            isSelected: isSelected,
-                            onTap: () {
-                              setModalState(() {
-                                tempCategory = opt['key'] as String;
-                              });
-                            },
+                      _buildFilterDropdown<String>(
+                        context: context,
+                        value: tempCategory,
+                        isCustomized: tempCategory != 'ALL',
+                        items: categoryOptions.map((opt) {
+                          final isAll = opt['key'] == 'ALL';
+                          return DropdownMenuItem<String>(
+                            value: opt['key'] as String,
+                            child: Row(
+                              children: [
+                                Icon(opt['icon'] as IconData, size: 16, color: Theme.of(context).colorScheme.primary),
+                                const SizedBox(width: 10),
+                                Text(
+                                  opt['label'] as String,
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 13,
+                                    fontWeight: isAll ? FontWeight.w500 : FontWeight.w600,
+                                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                                  ),
+                                ),
+                              ],
+                            ),
                           );
                         }).toList(),
+                        onChanged: (val) => setModalState(() => tempCategory = val ?? 'ALL'),
                       ),
 
-                      // 5. Pass Validity & Frequency Section
+                      // 5. Pass Validity Section (Dropdown Input)
                       _buildFilterSectionHeader(
                         context: context,
                         title: 'Pass Validity',
                         icon: Icons.repeat_rounded,
                       ),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: frequencyOptions.map((opt) {
-                          final isSelected = tempFrequency == opt['key'];
-                          return _buildModalFilterChip(
-                            context: context,
-                            label: opt['label']!,
-                            isSelected: isSelected,
-                            onTap: () {
-                              setModalState(() {
-                                tempFrequency = opt['key']!;
-                              });
-                            },
+                      _buildFilterDropdown<String>(
+                        context: context,
+                        value: tempFrequency,
+                        isCustomized: tempFrequency != 'ALL',
+                        items: frequencyOptions.map((opt) {
+                          final isAll = opt['key'] == 'ALL';
+                          return DropdownMenuItem<String>(
+                            value: opt['key'] as String,
+                            child: Row(
+                              children: [
+                                Icon(Icons.repeat_rounded, size: 16, color: Theme.of(context).colorScheme.primary),
+                                const SizedBox(width: 10),
+                                Text(
+                                  opt['label']!,
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 13,
+                                    fontWeight: isAll ? FontWeight.w500 : FontWeight.w600,
+                                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                                  ),
+                                ),
+                              ],
+                            ),
                           );
                         }).toList(),
+                        onChanged: (val) => setModalState(() => tempFrequency = val ?? 'ALL'),
                       ),
 
-                      // 6. Vehicle Section
+                      // 6. Vehicle Section (Toggle Switch Card)
                       _buildFilterSectionHeader(
                         context: context,
                         title: 'Vehicle',
                         icon: Icons.directions_car_outlined,
                       ),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          _buildModalFilterChip(
-                            context: context,
-                            label: 'All Visitors',
-                            isSelected: !tempOnlyWithVehicle,
-                            onTap: () => setModalState(() => tempOnlyWithVehicle = false),
-                          ),
-                          _buildModalFilterChip(
-                            context: context,
-                            label: 'With Vehicle Only',
-                            icon: Icons.directions_car_rounded,
-                            isSelected: tempOnlyWithVehicle,
-                            onTap: () => setModalState(() => tempOnlyWithVehicle = true),
-                          ),
-                        ],
+                      _buildVehicleSwitchTile(
+                        context: context,
+                        value: tempOnlyWithVehicle,
+                        onChanged: (val) => setModalState(() => tempOnlyWithVehicle = val),
                       ),
 
-                      // 7. Sort Order Section
+                      // 7. Sort By Section (Segmented Control)
                       _buildFilterSectionHeader(
                         context: context,
                         title: 'Sort By',
                         icon: Icons.sort_rounded,
                       ),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: sortOptions.map((opt) {
-                          final isSelected = tempSortOrder == opt['key'];
-                          return _buildModalFilterChip(
-                            context: context,
-                            label: opt['label'] as String,
-                            icon: opt['icon'] as IconData,
-                            isSelected: isSelected,
-                            onTap: () {
-                              setModalState(() {
-                                tempSortOrder = opt['key'] as String;
-                              });
-                            },
-                          );
-                        }).toList(),
+                      _buildSegmentedControl<String>(
+                        context: context,
+                        selectedValue: tempSortOrder,
+                        options: [
+                          {'value': 'NEWEST', 'label': 'Newest First', 'icon': Icons.arrow_downward_rounded},
+                          {'value': 'OLDEST', 'label': 'Oldest First', 'icon': Icons.arrow_upward_rounded},
+                        ],
+                        onSelected: (val) => setModalState(() => tempSortOrder = val),
                       ),
                     ],
                   ),
