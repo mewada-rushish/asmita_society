@@ -3,11 +3,51 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
+import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/features/menu/bloc/society_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/society_event.dart';
 import 'package:asmita_society/features/menu/bloc/society_state.dart';
+import 'package:asmita_society/features/menu/data/repositories/society_repository.dart';
+import 'package:asmita_society/core/network/dio_client.dart';
+import 'package:asmita_society/core/security/secure_storage_service.dart';
+import 'package:asmita_society/core/di/injection_container.dart' as di;
 
 class DocumentsScreen extends StatelessWidget {
   const DocumentsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Builder(
+      builder: (ctx) {
+        bool hasBloc = false;
+        try {
+          ctx.read<SocietyBloc>();
+          hasBloc = true;
+        } catch (_) {}
+
+        if (!hasBloc) {
+          final repo = di.sl.isRegistered<SocietyRepository>()
+              ? di.sl<SocietyRepository>()
+              : SocietyRepository(dio: AsmitaDioClient(SecureStorageService()).dio);
+          return BlocProvider<SocietyBloc>(
+            create: (_) => SocietyBloc(repository: repo)..add(const LoadSocietyData()),
+            child: const _DocumentsScreenBody(),
+          );
+        }
+
+        // Trigger load if still initial
+        if (ctx.read<SocietyBloc>().state is SocietyInitial) {
+          ctx.read<SocietyBloc>().add(const LoadSocietyData());
+        }
+
+        return const _DocumentsScreenBody();
+      },
+    );
+  }
+}
+
+class _DocumentsScreenBody extends StatelessWidget {
+  const _DocumentsScreenBody();
 
   @override
   Widget build(BuildContext context) {
@@ -25,29 +65,60 @@ class DocumentsScreen extends StatelessWidget {
                   if (societyState is SocietyLoading || societyState is SocietyInitial) {
                     return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
                   } else if (societyState is SocietyError) {
-                    return Center(child: Text('Error: ${societyState.message}', style: const TextStyle(color: Colors.red)));
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('Error: ${societyState.message}', style: const TextStyle(color: Colors.red)),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            onPressed: () => context.read<SocietyBloc>().add(const LoadSocietyData()),
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    );
                   } else if (societyState is SocietyLoaded) {
                     final docs = societyState.documents;
-                    if (docs.isEmpty) {
-                      return Center(
-                        child: Text('No documents found.', style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color)),
-                      );
-                    }
-                    return ListView.builder(
-                      physics: const ClampingScrollPhysics(),
-                      padding: const EdgeInsets.all(16),
-                      itemCount: docs.length,
-                      itemBuilder: (context, index) {
-                        final doc = docs[index];
-                        final dateStr = doc.uploadedAt != null 
-                          ? AppDateFormatter.formatDate(doc.uploadedAt!)
-                          : 'Unknown Date';
-                          
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: _buildDocumentCard(context, textTheme, doc.title, 'Updated: $dateStr', 'Available'),
-                        );
-                      },
+                    return CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                      slivers: [
+                        AsmitaAnimatedRefresh(
+                          onRefresh: () async {
+                            context.read<SocietyBloc>().add(const LoadSocietyData());
+                            await Future.delayed(const Duration(milliseconds: 600));
+                          },
+                        ),
+                        if (docs.isEmpty)
+                          SliverFillRemaining(
+                            child: Center(
+                              child: Text(
+                                'No documents found.',
+                                style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color),
+                              ),
+                            ),
+                          )
+                        else
+                          SliverPadding(
+                            padding: const EdgeInsets.all(16),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final doc = docs[index];
+                                  final dateStr = doc.uploadedAt != null
+                                      ? AppDateFormatter.formatDate(doc.uploadedAt!)
+                                      : 'Unknown Date';
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 16),
+                                    child: _buildDocumentCard(context, textTheme, doc.title, 'Updated: $dateStr', 'Available'),
+                                  );
+                                },
+                                childCount: docs.length,
+                              ),
+                            ),
+                          ),
+                      ],
                     );
                   }
                   return const SizedBox.shrink();
@@ -91,7 +162,7 @@ class DocumentsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title, 
+                  title,
                   style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

@@ -13,6 +13,10 @@ import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 
 import 'package:asmita_society/features/menu/data/models/family_member_model.dart';
+import 'package:asmita_society/features/menu/data/repositories/family_repository.dart';
+import 'package:asmita_society/core/network/dio_client.dart';
+import 'package:asmita_society/core/security/secure_storage_service.dart';
+import 'package:asmita_society/core/di/injection_container.dart' as di;
 
 class FamilyMembersScreen extends StatelessWidget {
   final ValueChanged<int>? onNavigateToTab;
@@ -28,6 +32,34 @@ class FamilyMembersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Builder(
+      builder: (ctx) {
+        bool hasBloc = false;
+        try {
+          ctx.read<FamilyBloc>();
+          hasBloc = true;
+        } catch (_) {}
+
+        if (!hasBloc) {
+          final repo = di.sl.isRegistered<FamilyRepository>()
+              ? di.sl<FamilyRepository>()
+              : FamilyRepository(dio: AsmitaDioClient(SecureStorageService()).dio);
+          return BlocProvider<FamilyBloc>(
+            create: (_) => FamilyBloc(repository: repo)..add(const LoadFamily()),
+            child: _buildScaffold(ctx),
+          );
+        }
+
+        if (ctx.read<FamilyBloc>().state is FamilyInitial) {
+          ctx.read<FamilyBloc>().add(const LoadFamily());
+        }
+
+        return _buildScaffold(ctx);
+      },
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     
 

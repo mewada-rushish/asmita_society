@@ -33,6 +33,20 @@ import 'features/dashboard/bloc/quick_actions/quick_actions_bloc.dart';
 import 'features/menu/bloc/preferences_bloc.dart';
 import 'features/menu/bloc/preferences_state.dart';
 import 'features/menu/bloc/preferences_event.dart';
+import 'features/menu/bloc/society_bloc.dart';
+import 'features/menu/bloc/society_event.dart';
+import 'features/menu/bloc/family_bloc.dart';
+import 'features/menu/bloc/family_event.dart';
+import 'features/menu/bloc/tenant_bloc.dart';
+import 'features/menu/bloc/tenant_event.dart';
+import 'features/menu/bloc/vehicles_bloc.dart';
+import 'features/menu/bloc/vehicles_event.dart';
+import 'features/menu/bloc/pets_bloc.dart';
+import 'features/menu/bloc/pets_event.dart';
+import 'features/menu/bloc/historyrequest_bloc.dart';
+import 'features/menu/bloc/historyrequest_event.dart';
+import 'features/menu/bloc/support_bloc.dart';
+import 'features/menu/bloc/support_event.dart';
 
 import 'package:flutter_quill/flutter_quill.dart'
     show FlutterQuillLocalizations;
@@ -219,6 +233,27 @@ class _AsmitaAppState extends State<AsmitaApp> with WidgetsBindingObserver {
               repository: di.sl<IndustrialVisitRepository>(),
             );
           },
+        ),
+        BlocProvider<SocietyBloc>(
+          create: (context) => SocietyBloc(repository: di.sl())..add(const LoadSocietyData()),
+        ),
+        BlocProvider<FamilyBloc>(
+          create: (context) => FamilyBloc(repository: di.sl())..add(const LoadFamily()),
+        ),
+        BlocProvider<TenantBloc>(
+          create: (context) => TenantBloc(repository: di.sl())..add(const LoadTenant()),
+        ),
+        BlocProvider<VehiclesBloc>(
+          create: (context) => VehiclesBloc(repository: di.sl())..add(const LoadVehicles()),
+        ),
+        BlocProvider<PetsBloc>(
+          create: (context) => PetsBloc(repository: di.sl())..add(const LoadPets()),
+        ),
+        BlocProvider<HistoryRequestBloc>(
+          create: (context) => HistoryRequestBloc(repository: di.sl())..add(const LoadHistoryRequest()),
+        ),
+        BlocProvider<SupportBloc>(
+          create: (context) => SupportBloc(repository: di.sl())..add(const LoadSupport()),
         ),
       ],
       child: BlocBuilder<PreferencesBloc, PreferencesState>(
