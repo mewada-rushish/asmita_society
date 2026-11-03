@@ -11,6 +11,10 @@ import 'package:asmita_society/features/menu/bloc/society_bloc.dart';
 import 'package:asmita_society/features/menu/bloc/society_state.dart';
 import 'package:asmita_society/features/menu/bloc/society_event.dart';
 import 'package:asmita_society/features/menu/data/models/committee_member_model.dart';
+import 'package:asmita_society/features/menu/data/repositories/society_repository.dart';
+import 'package:asmita_society/core/network/dio_client.dart';
+import 'package:asmita_society/core/security/secure_storage_service.dart';
+import 'package:asmita_society/core/di/injection_container.dart' as di;
 
 class CommitteeMembersScreen extends StatelessWidget {
   final ValueChanged<int>? onNavigateToTab;
@@ -26,6 +30,34 @@ class CommitteeMembersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Builder(
+      builder: (ctx) {
+        bool hasBloc = false;
+        try {
+          ctx.read<SocietyBloc>();
+          hasBloc = true;
+        } catch (_) {}
+
+        if (!hasBloc) {
+          final repo = di.sl.isRegistered<SocietyRepository>()
+              ? di.sl<SocietyRepository>()
+              : SocietyRepository(dio: AsmitaDioClient(SecureStorageService()).dio);
+          return BlocProvider<SocietyBloc>(
+            create: (_) => SocietyBloc(repository: repo)..add(const LoadSocietyData()),
+            child: _buildScaffold(ctx),
+          );
+        }
+
+        if (ctx.read<SocietyBloc>().state is SocietyInitial) {
+          ctx.read<SocietyBloc>().add(const LoadSocietyData());
+        }
+
+        return _buildScaffold(ctx);
+      },
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     
     return Scaffold(

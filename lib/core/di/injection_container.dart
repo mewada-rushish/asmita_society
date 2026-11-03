@@ -12,6 +12,13 @@ import '../../features/services/data/repositories/amenities_repository.dart';
 import '../../features/services/data/repositories/daily_help_repository.dart';
 import '../../features/dashboard/data/repositories/search_repository.dart';
 import '../../features/menu/data/repositories/preferences_repository.dart';
+import '../../features/menu/data/repositories/society_repository.dart';
+import '../../features/menu/data/repositories/family_repository.dart';
+import '../../features/menu/data/repositories/tenant_repository.dart';
+import '../../features/menu/data/repositories/vehicles_repository.dart';
+import '../../features/menu/data/repositories/pets_repository.dart';
+import '../../features/menu/data/repositories/history_request_repository.dart';
+import '../../features/menu/data/repositories/support_repository.dart';
 import '../../features/visitor_management/data/repositories/guard_gate_repository.dart';
 import '../../features/visitor_management/data/repositories/industrial_visit_repository.dart';
 
@@ -80,6 +87,34 @@ Future<void> init() async {
 
   sl.registerLazySingleton<PreferencesRepository>(
     () => PreferencesRepository(dio: sl<AsmitaDioClient>().dio),
+  );
+
+  sl.registerLazySingleton<SocietyRepository>(
+    () => SocietyRepository(dio: sl<AsmitaDioClient>().dio),
+  );
+
+  sl.registerLazySingleton<FamilyRepository>(
+    () => FamilyRepository(dio: sl<AsmitaDioClient>().dio),
+  );
+
+  sl.registerLazySingleton<TenantRepository>(
+    () => TenantRepository(dio: sl<AsmitaDioClient>().dio),
+  );
+
+  sl.registerLazySingleton<VehiclesRepository>(
+    () => VehiclesRepository(dio: sl<AsmitaDioClient>().dio),
+  );
+
+  sl.registerLazySingleton<PetsRepository>(
+    () => PetsRepository(dio: sl<AsmitaDioClient>().dio),
+  );
+
+  sl.registerLazySingleton<HistoryRequestRepository>(
+    () => HistoryRequestRepository(dio: sl<AsmitaDioClient>().dio),
+  );
+
+  sl.registerLazySingleton<SupportRepository>(
+    () => SupportRepository(dio: sl<AsmitaDioClient>().dio),
   );
 
   registerIndustrialDependencies();

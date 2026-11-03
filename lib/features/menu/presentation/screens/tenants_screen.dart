@@ -12,6 +12,10 @@ import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/features/menu/data/models/tenant_model.dart';
+import 'package:asmita_society/features/menu/data/repositories/tenant_repository.dart';
+import 'package:asmita_society/core/network/dio_client.dart';
+import 'package:asmita_society/core/security/secure_storage_service.dart';
+import 'package:asmita_society/core/di/injection_container.dart' as di;
 
 class TenantsScreen extends StatelessWidget {
   final ValueChanged<int>? onNavigateToTab;
@@ -27,6 +31,34 @@ class TenantsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Builder(
+      builder: (ctx) {
+        bool hasBloc = false;
+        try {
+          ctx.read<TenantBloc>();
+          hasBloc = true;
+        } catch (_) {}
+
+        if (!hasBloc) {
+          final repo = di.sl.isRegistered<TenantRepository>()
+              ? di.sl<TenantRepository>()
+              : TenantRepository(dio: AsmitaDioClient(SecureStorageService()).dio);
+          return BlocProvider<TenantBloc>(
+            create: (_) => TenantBloc(repository: repo)..add(const LoadTenant()),
+            child: _buildScaffold(ctx),
+          );
+        }
+
+        if (ctx.read<TenantBloc>().state is TenantInitial) {
+          ctx.read<TenantBloc>().add(const LoadTenant());
+        }
+
+        return _buildScaffold(ctx);
+      },
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(

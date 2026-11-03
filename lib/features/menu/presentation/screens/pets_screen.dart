@@ -14,6 +14,10 @@ import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
 
 import 'package:asmita_society/features/menu/data/models/pet_model.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:asmita_society/features/menu/data/repositories/pets_repository.dart';
+import 'package:asmita_society/core/network/dio_client.dart';
+import 'package:asmita_society/core/security/secure_storage_service.dart';
+import 'package:asmita_society/core/di/injection_container.dart' as di;
 
 class PetsScreen extends StatelessWidget {
   final ValueChanged<int>? onNavigateToTab;
@@ -22,6 +26,34 @@ class PetsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Builder(
+      builder: (ctx) {
+        bool hasBloc = false;
+        try {
+          ctx.read<PetsBloc>();
+          hasBloc = true;
+        } catch (_) {}
+
+        if (!hasBloc) {
+          final repo = di.sl.isRegistered<PetsRepository>()
+              ? di.sl<PetsRepository>()
+              : PetsRepository(dio: AsmitaDioClient(SecureStorageService()).dio);
+          return BlocProvider<PetsBloc>(
+            create: (_) => PetsBloc(repository: repo)..add(const LoadPets()),
+            child: _buildScaffold(ctx),
+          );
+        }
+
+        if (ctx.read<PetsBloc>().state is PetsInitial) {
+          ctx.read<PetsBloc>().add(const LoadPets());
+        }
+
+        return _buildScaffold(ctx);
+      },
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     
 

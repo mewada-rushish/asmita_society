@@ -13,6 +13,10 @@ import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 
 import 'package:asmita_society/features/menu/data/models/vehicle_model.dart';
 import 'package:asmita_society/features/menu/presentation/screens/widgets/add_edit_vehicle_sheet.dart';
+import 'package:asmita_society/features/menu/data/repositories/vehicles_repository.dart';
+import 'package:asmita_society/core/network/dio_client.dart';
+import 'package:asmita_society/core/security/secure_storage_service.dart';
+import 'package:asmita_society/core/di/injection_container.dart' as di;
 
 class VehiclesScreen extends StatelessWidget {
   final ValueChanged<int>? onNavigateToTab;
@@ -21,6 +25,34 @@ class VehiclesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Builder(
+      builder: (ctx) {
+        bool hasBloc = false;
+        try {
+          ctx.read<VehiclesBloc>();
+          hasBloc = true;
+        } catch (_) {}
+
+        if (!hasBloc) {
+          final repo = di.sl.isRegistered<VehiclesRepository>()
+              ? di.sl<VehiclesRepository>()
+              : VehiclesRepository(dio: AsmitaDioClient(SecureStorageService()).dio);
+          return BlocProvider<VehiclesBloc>(
+            create: (_) => VehiclesBloc(repository: repo)..add(const LoadVehicles()),
+            child: _buildScaffold(ctx),
+          );
+        }
+
+        if (ctx.read<VehiclesBloc>().state is VehiclesInitial) {
+          ctx.read<VehiclesBloc>().add(const LoadVehicles());
+        }
+
+        return _buildScaffold(ctx);
+      },
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     
 
