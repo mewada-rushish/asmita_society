@@ -1929,43 +1929,38 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+                          horizontal: 14,
+                          vertical: 7,
                         ),
                         decoration: BoxDecoration(
-                          color: _activeFilterCount > 0
-                              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)
-                              : Theme.of(context).cardColor,
-                          border: Border.all(
-                            color: _activeFilterCount > 0
-                                ? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).dividerColor.withValues(alpha: 0.3),
-                            width: _activeFilterCount > 0 ? 1.5 : 1,
-                          ),
+                          color: Theme.of(context).colorScheme.primary,
                           borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.25),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.tune_rounded,
                               size: 15,
-                              color: _activeFilterCount > 0
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context).textTheme.bodyMedium?.color,
+                              color: Colors.white,
                             ),
                             const SizedBox(width: 6),
                             Text(
                               _activeFilterCount > 0
                                   ? 'Filter ($_activeFilterCount)'
                                   : 'Filter',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontFamily: 'Montserrat',
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
-                                color: _activeFilterCount > 0
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Theme.of(context).textTheme.bodyMedium?.color,
+                                color: Colors.white,
                               ),
                             ),
                           ],
