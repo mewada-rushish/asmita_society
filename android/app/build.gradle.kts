@@ -34,26 +34,31 @@ android {
     }
 
     signingConfigs {
-        if (keystorePropertiesFile.exists()) {
-            create("release") {
-                val keyFilePath = keystoreProperties.getProperty("storeFile")
-                if (keyFilePath != null) {
-                    storeFile = rootProject.file(keyFilePath)
-                    storePassword = keystoreProperties.getProperty("storePassword")
-                    keyAlias = keystoreProperties.getProperty("keyAlias")
-                    keyPassword = keystoreProperties.getProperty("keyPassword")
-                }
+        create("release") {
+            val keyStoreProp = keystoreProperties.getProperty("storeFile") ?: System.getenv("KEYSTORE_PATH")
+            val keyStoreFile = if (!keyStoreProp.isNullOrEmpty()) rootProject.file(keyStoreProp) else null
+            val keyStorePassword = keystoreProperties.getProperty("storePassword") ?: System.getenv("KEYSTORE_PASSWORD")
+            val keyStoreAlias = keystoreProperties.getProperty("keyAlias") ?: System.getenv("KEY_ALIAS")
+            val keyPasswordVal = keystoreProperties.getProperty("keyPassword") ?: System.getenv("KEY_PASSWORD")
+
+            if (keyStoreFile != null && keyStoreFile.exists()) {
+                storeFile = keyStoreFile
+                storePassword = keyStorePassword
+                keyAlias = keyStoreAlias
+                keyPassword = keyPasswordVal
+            } else {
+                val debugSigning = signingConfigs.getByName("debug")
+                storeFile = debugSigning.storeFile
+                storePassword = debugSigning.storePassword
+                keyAlias = debugSigning.keyAlias
+                keyPassword = debugSigning.keyPassword
             }
         }
     }
 
     buildTypes {
         release {
-            signingConfig = if (keystorePropertiesFile.exists()) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
