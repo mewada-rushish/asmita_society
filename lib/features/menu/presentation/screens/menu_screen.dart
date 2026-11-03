@@ -498,7 +498,7 @@ class MenuScreen extends StatelessWidget {
             screen = const SettingsScreen();
             break;
           case 'Utility Bill Clearances (BBPS)':
-            screen = const BbpsHomeScreen();
+            screen = BbpsHomeScreen(onNavigateToTab: onNavigateToTab);
             break;
           case 'Help & Support':
             screen = const HelpSupportScreen();
