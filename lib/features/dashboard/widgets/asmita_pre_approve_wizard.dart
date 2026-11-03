@@ -1709,11 +1709,20 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             indicator: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AsmitaPalette.deepNavyDark
+                    : AsmitaPalette.deepNavy,
+                width: 1.2,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? AsmitaPalette.deepNavyDark
+                          : AsmitaPalette.deepNavy)
+                      .withValues(alpha: 0.12),
                   blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  offset: const Offset(0, 1),
                 ),
               ],
             ),
