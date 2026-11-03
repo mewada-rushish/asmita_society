@@ -1281,12 +1281,11 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       emptyIcon = Icons.event_available_rounded;
     }
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 44, 20, 24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
@@ -1316,8 +1315,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildVisitItem(BuildContext context, IndustrialVisitModel visit) {
