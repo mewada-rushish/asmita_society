@@ -93,7 +93,7 @@ class SettingsScreen extends ConsumerWidget {
                             textTheme,
                             Icons.notification_important_rounded,
                             'Approval Alert Sound',
-                            prefs.approvalSound == 'asmita_alert_2' ? 'Alert 2' : 'Alert 1 (Default)',
+                            prefs.approvalSound == 'asmita_alert_2' ? 'Alert 2' : 'Default',
                             true,
                             () => _showApprovalSoundPicker(context, ref, prefs.approvalSound),
                           ),
@@ -102,7 +102,7 @@ class SettingsScreen extends ConsumerWidget {
                             textTheme,
                             Icons.volume_up_rounded,
                             'Notification Sound',
-                            prefs.notificationSound == 'asmita_notification_2' ? 'Notification 2' : 'Notification 1 (Default)',
+                            prefs.notificationSound == 'asmita_notification_2' ? 'Sound 2' : 'Default',
                             false,
                             () => _showNotificationSoundPicker(context, ref, prefs.notificationSound),
                           ),
@@ -227,15 +227,30 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildToggleRow(BuildContext context, TextTheme textTheme, IconData icon, String title, bool value, bool showBorder, ValueChanged<bool> onChanged) {
+  Widget _buildToggleRow(
+    BuildContext context,
+    TextTheme textTheme,
+    IconData icon,
+    String title,
+    bool value,
+    bool showBorder,
+    ValueChanged<bool> onChanged,
+  ) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      constraints: const BoxConstraints(minHeight: 56),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         border: showBorder ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1)) : null,
       ),
       child: Row(
         children: [
-          Icon(icon, color: Theme.of(context).iconTheme.color, size: 22),
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: Center(
+              child: Icon(icon, color: Theme.of(context).iconTheme.color, size: 22),
+            ),
+          ),
           const SizedBox(width: 14),
           Expanded(
             child: Text(
@@ -248,66 +263,86 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: Theme.of(context).colorScheme.primary,
+          const SizedBox(width: 10),
+          SizedBox(
+            height: 32,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeThumbColor: Theme.of(context).colorScheme.primary,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActionRow(BuildContext context, TextTheme textTheme, IconData icon, String title, String trailingText, bool showBorder, VoidCallback onTap, {Color? textColor, Color? iconColor}) {
+  Widget _buildActionRow(
+    BuildContext context,
+    TextTheme textTheme,
+    IconData icon,
+    String title,
+    String trailingText,
+    bool showBorder,
+    VoidCallback onTap, {
+    Color? textColor,
+    Color? iconColor,
+  }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          constraints: const BoxConstraints(minHeight: 56),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             border: showBorder ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1)) : null,
           ),
           child: Row(
             children: [
-              Icon(icon, color: iconColor ?? Theme.of(context).iconTheme.color, size: 22),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Row(
-                  children: [
-                    Flexible(
-                      fit: FlexFit.loose,
-                      child: Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.bodyLarge?.copyWith(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: textColor,
-                        ),
-                      ),
-                    ),
-                    if (trailingText.isNotEmpty) ...[
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          trailingText,
-                          textAlign: TextAlign.end,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: textTheme.bodyMedium?.copyWith(
-                            fontSize: 13,
-                            color: Theme.of(context).textTheme.bodySmall?.color,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: Center(
+                  child: Icon(icon, color: iconColor ?? Theme.of(context).iconTheme.color, size: 22),
                 ),
               ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.bodyLarge?.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                  ),
+                ),
+              ),
+              if (trailingText.isNotEmpty) ...[
+                const SizedBox(width: 10),
+                Text(
+                  trailingText,
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontSize: 13,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
+                ),
+              ],
               const SizedBox(width: 8),
-              Icon(Icons.arrow_forward_ios_rounded, size: 14, color: iconColor ?? Theme.of(context).iconTheme.color),
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: Center(
+                  child: Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: iconColor ?? Theme.of(context).iconTheme.color,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
