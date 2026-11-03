@@ -10,6 +10,8 @@ import '../../../../core/security/secure_storage_service.dart';
 import '../../../../core/network/dio_client.dart';
 
 /// BBPS (Bharat BillPay / NPCI) Unified Utility Clearance Sheet
+/// Compile-time feature flag: defaults to false in release builds to prevent mock clearances
+const bool kEnableBbps = bool.fromEnvironment('ENABLE_BBPS', defaultValue: false);
 ///
 /// Provides searchable access to all official NPCI biller categories,
 /// filtered by category tags and live keyword matching, with tailored
@@ -18,6 +20,15 @@ class BbpsBillPaymentsSheet extends StatefulWidget {
   const BbpsBillPaymentsSheet({super.key});
 
   static Future<void> show(BuildContext context) async {
+    if (!kEnableBbps) {
+      AsmitaToast.show(
+        context,
+        message: 'BBPS utility bill payments will be available soon.',
+        type: AsmitaToastType.info,
+      );
+      return;
+    }
+
     showAsmitaBottomSheet(
       context: context,
       title: 'Bill Payments (BBPS)',

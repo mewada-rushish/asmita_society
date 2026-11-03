@@ -55,3 +55,8 @@ GoogleService-Info.plist
 google-services.json
 *.code-workspace
 problems-report.html
+
+*.jks
+*.keystore
+keystore.properties
+key.properties
