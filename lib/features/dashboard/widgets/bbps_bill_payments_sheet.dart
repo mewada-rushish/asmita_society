@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../bbps/presentation/screens/bbps_home_screen.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/constants/design_system.dart';
-import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import 'package:dio/dio.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -20,13 +20,7 @@ class BbpsBillPaymentsSheet extends StatefulWidget {
   const BbpsBillPaymentsSheet({super.key});
 
   static Future<void> show(BuildContext context) async {
-    showAsmitaBottomSheet(
-      context: context,
-      title: 'Bill Payments (BBPS)',
-      subtitle: 'Bharat BillPay • Unified Utility & Operational Clearance',
-      contentPadding: const EdgeInsets.only(top: 14),
-      child: const BbpsBillPaymentsSheet(),
-    );
+    return BbpsHomeScreen.open(context);
   }
 
   @override
