@@ -1700,27 +1700,19 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainer,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Theme.of(context).dividerColor, width: 1.0),
           ),
           child: TabBar(
             controller: _tabController,
             dividerColor: Colors.transparent,
             indicatorSize: TabBarIndicatorSize.tab,
             indicator: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AsmitaPalette.surfaceDark
+                  : Colors.white,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AsmitaPalette.deepNavyDark
-                    : AsmitaPalette.deepNavy,
-                width: 1.2,
-              ),
               boxShadow: [
                 BoxShadow(
-                  color: (Theme.of(context).brightness == Brightness.dark
-                          ? AsmitaPalette.deepNavyDark
-                          : AsmitaPalette.deepNavy)
-                      .withValues(alpha: 0.12),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 4,
                   offset: const Offset(0, 1),
                 ),
