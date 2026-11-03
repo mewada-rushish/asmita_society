@@ -85,7 +85,7 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
   }
 
   Future<void> _launchEtherealBillPay({
-    required String categoryName,
+    String? categoryName,
     List<Map<String, String>>? billParams,
     String? redirectTo,
   }) async {
@@ -93,41 +93,56 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       if (mounted) {
         AsmitaToast.show(
           context,
-          message: 'Opening Bharat BillPay portal...',
+          message: 'Connecting to Bharat BillPay...',
           type: AsmitaToastType.info,
         );
       }
       final dio = AsmitaDioClient(SecureStorageService()).dio;
+      final payload = <String, dynamic>{};
+      if (categoryName != null && categoryName.isNotEmpty) {
+        payload['categoryName'] = categoryName;
+      }
+      if (billParams != null && billParams.isNotEmpty) {
+        payload['billParams'] = billParams;
+      }
+      if (redirectTo != null && redirectTo.isNotEmpty) {
+        payload['redirectTo'] = redirectTo;
+      }
+
       final response = await dio.post(
         EnvConfig.bbpsSessionLink,
-        data: {
-          'categoryName': categoryName,
-          if (billParams != null && billParams.isNotEmpty)
-            'billParams': billParams,
-          if (redirectTo != null && redirectTo.isNotEmpty)
-            'redirectTo': redirectTo,
-        },
+        data: payload,
         options: Options(
-          receiveTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 12),
         ),
       );
       if (response.statusCode == 200 && response.data['success'] == true) {
-        final String url = response.data['link'];
-        final uri = Uri.parse(url);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
-          return;
+        final String? url = response.data['link'];
+        if (url != null) {
+          final uri = Uri.parse(url);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+            return;
+          }
         }
+      }
+      if (mounted) {
+        AsmitaToast.show(
+          context,
+          message: response.data['error']?.toString() ??
+              'Unable to start BBPS session',
+          type: AsmitaToastType.error,
+        );
       }
     } catch (e) {
       debugPrint('[BBPS] Ethereal launch failed: $e');
-    }
-    if (mounted) {
-      AsmitaToast.show(
-        context,
-        message: 'Launching BBPS Portal...',
-        type: AsmitaToastType.success,
-      );
+      if (mounted) {
+        AsmitaToast.show(
+          context,
+          message: 'Unable to connect to BBPS. Please check connection.',
+          type: AsmitaToastType.error,
+        );
+      }
     }
   }
 
@@ -715,10 +730,7 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                           Navigator.pop(sheetContext);
                           Navigator.pop(context);
                           _launchEtherealBillPay(
-                            categoryName: category['title'] as String,
-                            billParams: [
-                              {'name': accountLabel, 'value': acct},
-                            ],
+                            categoryName: (category['id'] ?? category['title']) as String,
                           );
                         },
                         style: ElevatedButton.styleFrom(
@@ -872,6 +884,92 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 14),
+
+          // Quick Actions: History, Receipts & Disputes
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _launchEtherealBillPay(redirectTo: 'transactions');
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.receipt_long_rounded,
+                          size: 16,
+                          color: AsmitaPalette.deepNavy,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'History & Receipts',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : AsmitaPalette.deepNavy,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _launchEtherealBillPay(redirectTo: 'disputes');
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.support_agent_rounded,
+                          size: 16,
+                          color: Color(0xFF0284C7),
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Raise Complaint',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0284C7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
 
