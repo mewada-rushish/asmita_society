@@ -1,3 +1,4 @@
+import 'package:asmita_society/features/dashboard/widgets/bbps_bill_payments_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -586,6 +587,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
       case QuickActionType.complaints:
       case QuickActionType.management:
       case QuickActionType.utilityPay:
+        return () => BbpsBillPaymentsSheet.show(context);
       case QuickActionType.amenities:
       case QuickActionType.emergency:
         return widget.onNavigateToViewMore;
