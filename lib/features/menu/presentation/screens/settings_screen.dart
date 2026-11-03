@@ -93,7 +93,7 @@ class SettingsScreen extends ConsumerWidget {
                             textTheme,
                             Icons.notification_important_rounded,
                             'Approval Alert Sound',
-                            prefs.approvalSound == 'asmita_alert_2' ? 'AsmitA Alert 2' : 'AsmitA Alert 1 (Default)',
+                            prefs.approvalSound == 'asmita_alert_2' ? 'Alert 2' : 'Alert 1 (Default)',
                             true,
                             () => _showApprovalSoundPicker(context, ref, prefs.approvalSound),
                           ),
@@ -102,7 +102,7 @@ class SettingsScreen extends ConsumerWidget {
                             textTheme,
                             Icons.volume_up_rounded,
                             'Notification Sound',
-                            prefs.notificationSound == 'asmita_notification_2' ? 'AsmitA Notification 2' : 'AsmitA Notification 1 (Default)',
+                            prefs.notificationSound == 'asmita_notification_2' ? 'Notification 2' : 'Notification 1 (Default)',
                             false,
                             () => _showNotificationSoundPicker(context, ref, prefs.notificationSound),
                           ),
@@ -240,6 +240,8 @@ class SettingsScreen extends ConsumerWidget {
           Expanded(
             child: Text(
               title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: textTheme.bodyLarge?.copyWith(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -271,29 +273,40 @@ class SettingsScreen extends ConsumerWidget {
               Icon(icon, color: iconColor ?? Theme.of(context).iconTheme.color, size: 22),
               const SizedBox(width: 14),
               Expanded(
-                child: Text(
-                  title,
-                  style: textTheme.bodyLarge?.copyWith(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                  ),
+                child: Row(
+                  children: [
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodyLarge?.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: textColor,
+                        ),
+                      ),
+                    ),
+                    if (trailingText.isNotEmpty) ...[
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          trailingText,
+                          textAlign: TextAlign.end,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontSize: 13,
+                            color: Theme.of(context).textTheme.bodySmall?.color,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-              if (trailingText.isNotEmpty) ...[
-                Text(
-                  trailingText,
-                  textAlign: TextAlign.end,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.bodyMedium?.copyWith(
-                    fontSize: 13,
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
+              const SizedBox(width: 8),
               Icon(Icons.arrow_forward_ios_rounded, size: 14, color: iconColor ?? Theme.of(context).iconTheme.color),
             ],
           ),
