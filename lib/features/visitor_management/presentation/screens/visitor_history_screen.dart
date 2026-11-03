@@ -1443,17 +1443,8 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                             value: st['key'] as String,
                             child: Row(
                               children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Icon(st['icon'] as IconData, size: 16, color: color),
-                                const SizedBox(width: 10),
+                                Icon(st['icon'] as IconData, size: 18, color: color),
+                                const SizedBox(width: 12),
                                 Text(
                                   st['label'] as String,
                                   style: TextStyle(
