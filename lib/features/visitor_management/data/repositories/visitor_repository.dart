@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/utils/asmita_logger.dart';
 import '../models/invite_model.dart';
@@ -56,14 +57,27 @@ class VisitorRepository {
       if (endDate != null) queryParams['end_date'] = endDate.toIso8601String();
       if (visitorTypeId != null) queryParams['visitor_type_id'] = visitorTypeId;
 
-      // Fetch both simultaneously
+      // Fetch invites, residential visitor requests, and industrial visits simultaneously
       final responses = await Future.wait([
-        _dio.get(EnvConfig.myPreApprovedInvites, queryParameters: queryParams),
-        _dio.get(EnvConfig.residentVisitorRequests, queryParameters: queryParams),
+        _dio.get(EnvConfig.myPreApprovedInvites, queryParameters: queryParams).catchError((e) {
+          debugPrint('[VisitorRepository] myPreApprovedInvites error: $e');
+          return Response(requestOptions: RequestOptions(), statusCode: 500);
+        }),
+        _dio.get(EnvConfig.residentVisitorRequests, queryParameters: queryParams).catchError((e) {
+          debugPrint('[VisitorRepository] residentVisitorRequests error: $e');
+          return Response(requestOptions: RequestOptions(), statusCode: 500);
+        }),
+        _dio.get(EnvConfig.industrialVisits, queryParameters: {
+          if (status != null && status != 'ALL') 'status': status,
+        }).catchError((e) {
+          debugPrint('[VisitorRepository] industrialVisits error: $e');
+          return Response(requestOptions: RequestOptions(), statusCode: 500);
+        }),
       ]);
 
       final invitesResp = responses[0];
       final requestsResp = responses[1];
+      final industrialResp = responses[2];
 
       AsmitaLogger.info(
         'VisitorRepository',
@@ -105,6 +119,34 @@ class VisitorRepository {
           }));
         } else {
           AsmitaLogger.warn('VisitorRepository', 'Unexpected requests response format: ${data.runtimeType}');
+        }
+      }
+
+      if (industrialResp.statusCode == 200 && industrialResp.data != null) {
+        final data = industrialResp.data;
+        final list = (data['data'] ?? data['visits'] ?? (data is List ? data : [])) as List<dynamic>;
+        for (final item in list) {
+          if (item is Map<String, dynamic>) {
+            final passCode = item['pass_code']?.toString();
+            final statusStr = item['status']?.toString();
+            final photo = item['photo_url'] ?? item['visitor_photo_url'] ?? item['photo'];
+            mergedHistory.add({
+              ...item,
+              'record_type': 'PRE_APPROVED',
+              'visitor_name': item['visitor_name'] ?? 'Visitor',
+              'company_name': item['delivery_company'] ?? item['purpose'] ?? 'Industrial Visit',
+              'purpose': item['purpose'] ?? 'Visit',
+              'invite_type': item['is_delivery'] == true ? 'Delivery' : 'Visitor Pass',
+              'pass_code': passCode,
+              'status': statusStr ?? 'Approved',
+              'created_at': item['created_at'],
+              'valid_from': item['created_at'],
+              'checkin_at': item['check_in_at'],
+              'checkout_at': item['check_out_at'],
+              'vehicle_number': item['vehicle_number'],
+              'photo_url': photo,
+            });
+          }
         }
       }
 

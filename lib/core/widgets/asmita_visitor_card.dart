@@ -557,6 +557,7 @@ class AsmitaVisitorCard extends StatelessWidget {
       metaIcon: metaIcon,
       passCode: passCode,
       hasQrCode: hasQr,
+      photoUrl: item['photoUrl'] as String? ?? item['photo_url'] as String? ?? item['visitor_photo_url'] as String?,
       statusLabel: item['status'] as String?,
       onTap: onTap,
       bottomActions: bottomActions,

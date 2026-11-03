@@ -476,7 +476,12 @@ class MenuScreen extends StatelessWidget {
             screen = const HistoryRequestsScreen();
             break;
           case 'Department Delegation':
-            screen = const DepartmentDelegationScreen(departmentName: 'General HQ');
+            final authState = context.read<AuthBloc>().state;
+            final user = authState is AuthAuthenticated ? authState.user : null;
+            screen = DepartmentDelegationScreen(
+              departmentId: user?.departmentId,
+              departmentName: user?.departmentName ?? 'General HQ',
+            );
             break;
           case 'Campus Emergency Hotline':
           case 'Campus Directory & Hotlines':

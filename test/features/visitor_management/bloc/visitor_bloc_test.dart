@@ -5,6 +5,7 @@ import 'package:asmita_society/features/visitor_management/bloc/visitor_bloc.dar
 import 'package:asmita_society/features/visitor_management/bloc/visitor_event.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_state.dart';
 import 'package:asmita_society/features/visitor_management/data/repositories/visitor_repository.dart';
+import 'package:asmita_society/features/visitor_management/data/models/visitor_history_item.dart';
 
 class MockVisitorRepository extends Mock implements VisitorRepository {}
 
@@ -31,7 +32,7 @@ void main() {
       build: () {
         when(() => mockVisitorRepository.getMyHistory(residentId: any(named: 'residentId'))).thenAnswer(
           (_) async => [
-            {'id': 1, 'visitor_name': 'Test Visitor'}
+            VisitorHistoryItem.fromJson({'id': 1, 'visitor_name': 'Test Visitor'})
           ],
         );
         return visitorBloc;

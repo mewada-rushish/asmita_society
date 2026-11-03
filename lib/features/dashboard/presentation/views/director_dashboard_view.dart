@@ -1,4 +1,3 @@
-import '../screens/industrial_visits_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,6 +19,7 @@ import '../../../../core/utils/property_role_resolver.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
+import '../../widgets/bbps_bill_payments_sheet.dart';
 import '../../../visitor_management/bloc/visitor_bloc.dart';
 import '../../../visitor_management/bloc/visitor_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
@@ -42,7 +42,7 @@ class DirectorDashboardView extends StatefulWidget {
   final VoidCallback? onContactReceptionist;
   final Function(int visitId, String action)? onDecideVisit;
   final Function(int visitId)? onAcknowledgeVisit;
-  final Function(String filter)? onNavigateToVisits;
+  final Function(String filter)? onNavigateToVisitsWithFilter;
 
   const DirectorDashboardView({
     super.key,
@@ -50,7 +50,7 @@ class DirectorDashboardView extends StatefulWidget {
     this.onContactReceptionist,
     this.onDecideVisit,
     this.onAcknowledgeVisit,
-    this.onNavigateToVisits,
+    this.onNavigateToVisitsWithFilter,
   });
 
   @override
@@ -909,7 +909,11 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           color: AsmitaPalette.actionRed,
           icon: Icons.pending_actions_rounded,
           showPulse: pendingCount > 0,
-          onTap: () => _openVisitsWithFilter(context, 'PENDING'),
+          onTap: () {
+            if (widget.onNavigateToVisitsWithFilter != null) {
+              widget.onNavigateToVisitsWithFilter!('PENDING');
+            }
+          },
         ),
         const SizedBox(width: 8),
         _kpiCard(
@@ -918,7 +922,11 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           value: '$approvedCount',
           color: AsmitaPalette.deepNavy,
           icon: Icons.verified_rounded,
-          onTap: () => _openVisitsWithFilter(context, 'APPROVED'),
+          onTap: () {
+            if (widget.onNavigateToVisitsWithFilter != null) {
+              widget.onNavigateToVisitsWithFilter!('APPROVED');
+            }
+          },
         ),
         const SizedBox(width: 8),
         _kpiCard(
@@ -927,26 +935,13 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           value: '$checkedInCount',
           color: AsmitaPalette.successGreen,
           icon: Icons.meeting_room_rounded,
-          onTap: () => _openVisitsWithFilter(context, 'INSIDE'),
+          onTap: () {
+            if (widget.onNavigateToVisitsWithFilter != null) {
+              widget.onNavigateToVisitsWithFilter!('INSIDE');
+            }
+          },
         ),
       ],
-    );
-  }
-
-  void _openVisitsWithFilter(BuildContext context, String filter) {
-    HapticFeedback.selectionClick();
-    if (widget.onNavigateToVisits != null) {
-      widget.onNavigateToVisits!(filter);
-      return;
-    }
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => IndustrialVisitsScreen(
-          initialFilter: filter,
-          onBack: () => Navigator.pop(context),
-        ),
-      ),
     );
   }
 
@@ -963,10 +958,15 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
 
     return Expanded(
       child: InkWell(
-        onTap: onTap,
+        onTap: onTap != null
+            ? () {
+                HapticFeedback.selectionClick();
+                onTap();
+              }
+            : null,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
@@ -1051,7 +1051,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
             ),
           ],
         ),
-      ),
+        ),
       ),
     );
   }
@@ -1071,15 +1071,6 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         onTap: () => _showPreApproveModal(context),
       ),
       _ExecutiveActionItem(
-        title: 'Issue VIP Pass',
-        icon: Icons.workspace_premium_rounded,
-        containerColor: isDark
-            ? AsmitaPalette.surfaceDark
-            : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-        iconColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
-        onTap: () => _showVipPassModal(context),
-      ),
-      _ExecutiveActionItem(
         title: 'Car Valet',
         icon: Icons.directions_car_filled_rounded,
         containerColor: isDark
@@ -1096,6 +1087,15 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
             : AsmitaPalette.actionRed.withValues(alpha: 0.08),
         iconColor: AsmitaPalette.actionRed,
         onTap: () => _showSecurityModal(context),
+      ),
+      _ExecutiveActionItem(
+        title: 'BBPS',
+        icon: Icons.bolt_rounded,
+        containerColor: isDark
+            ? AsmitaPalette.surfaceDark
+            : const Color(0xFFF59E0B).withValues(alpha: 0.12),
+        iconColor: const Color(0xFFD97706),
+        onTap: () => BbpsBillPaymentsSheet.show(context),
       ),
     ];
 
@@ -1207,15 +1207,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     List<IndustrialVisitModel> visits,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final waitingVisits = visits.where((v) {
-      if (v.status == IndustrialVisitStatus.expired ||
-          v.status == IndustrialVisitStatus.checkedOut ||
-          v.status == IndustrialVisitStatus.rejected ||
-          v.status == IndustrialVisitStatus.cancelled) {
-        return false;
-      }
-      return v.isPending || (v.isCheckedIn && v.heldAtGate);
-    }).toList();
+    final waitingVisits = visits
+        .where((v) => v.isPending || (v.heldAtGate && v.status == IndustrialVisitStatus.approved && !v.isCheckedIn))
+        .toList();
 
     // Sort by oldest arrival first
     waitingVisits.sort((a, b) {
@@ -1751,30 +1745,26 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         ),
         child: Row(
         children: [
-          // Left: Consistent Squircle Avatar
+          // Left: Avatar + Details
           Container(
-            width: 38,
-            height: 38,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
-              ),
-              borderRadius: BorderRadius.circular(11),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF2563EB).withValues(alpha: isDark ? 0.3 : 0.2),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              color: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Theme.of(context).dividerColor),
             ),
             alignment: Alignment.center,
-            child: const Icon(
-              Icons.person_rounded,
-              color: Colors.white,
-              size: 20,
+            child: Text(
+              visit.visitorName.isNotEmpty
+                  ? visit.visitorName[0].toUpperCase()
+                  : 'V',
+              style: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontWeight: FontWeight.w800,
+                color: AsmitaPalette.deepNavy,
+                fontSize: 14,
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -1893,407 +1883,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   );
   }
 
-  // =========================================================================
-  // FUNCTIONAL MODAL: ISSUE VIP PASS
-  // =========================================================================
-  void _showVipPassModal(BuildContext context) {
-    final nameCtrl = TextEditingController();
-    final orgCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
-    final vehicleCtrl = TextEditingController();
-    bool escortRequired = true;
-    String accessScope = 'Floor 8 Executive HQ';
-
-    showAsmitaBottomSheet(
-      context: context,
-      title: 'Issue Executive VIP Pass',
-      child: StatefulBuilder(
-        builder: (ctx, setModalState) {
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 12,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Pre-authorizes instant priority gate clearance with executive protocol.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AsmitaPalette.textLight,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  AsmitaTextField(
-                    label: 'VIP Visitor Name * (Mandatory)',
-                    hint: 'e.g. Dr. Rajesh Verma',
-                    icon: Icons.person_outline,
-                    controller: nameCtrl,
-                  ),
-                  const SizedBox(height: 14),
-                  AsmitaTextField(
-                    label: 'Company / Organization / Title',
-                    hint: 'e.g. KPMG / Board Member / Govt Delegate',
-                    icon: Icons.business_outlined,
-                    controller: orgCtrl,
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: AsmitaTextField(
-                          label: 'Mobile Number',
-                          hint: '9876543210',
-                          icon: Icons.phone_outlined,
-                          controller: phoneCtrl,
-                          keyboardType: TextInputType.phone,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: AsmitaTextField(
-                          label: 'Vehicle No (Optional)',
-                          hint: 'MH 04 AB 1234',
-                          icon: Icons.directions_car_outlined,
-                          controller: vehicleCtrl,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  AsmitaSelectField<String>(
-                    label: 'VIP Access Level',
-                    hint: 'Select VIP clearance tier',
-                    value: accessScope,
-                    prefixIcon: Icons.lock_open_rounded,
-                    items: const [
-                      AsmitaSelectItem(
-                        value: 'Floor 8 Executive HQ',
-                        label: 'Floor 8 Executive HQ Suite',
-                        subtitle: 'Director cabin & private boardroom suite',
-                        icon: Icons.apartment_rounded,
-                      ),
-                      AsmitaSelectItem(
-                        value: 'Boardroom Suite',
-                        label: 'Boardroom & Conference Wing',
-                        subtitle: 'High-security executive boardroom access',
-                        icon: Icons.meeting_room_rounded,
-                      ),
-                      AsmitaSelectItem(
-                        value: 'Full Campus Access',
-                        label: 'Full Industrial Campus Access',
-                        subtitle:
-                            'Unrestricted clearance across all campus wings',
-                        icon: Icons.verified_user_rounded,
-                      ),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) setModalState(() => accessScope = val);
-                    },
-                  ),
-                  const SizedBox(height: 14),
-                  SwitchListTile(
-                    title: const Text(
-                      'Assign Gate 1 VIP Escort',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: const Text(
-                      'Security staff escorts guest directly to your executive cabin.',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AsmitaPalette.textLight,
-                      ),
-                    ),
-                    value: escortRequired,
-                    activeTrackColor: AsmitaPalette.deepNavy,
-                    onChanged: (val) =>
-                        setModalState(() => escortRequired = val),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  const SizedBox(height: 18),
-                  ElevatedButton(
-                    onPressed: () {
-                      final name = nameCtrl.text.trim();
-                      if (name.isEmpty) {
-                        AsmitaToast.show(
-                          context,
-                          message: 'Visitor Name is mandatory for VIP Passes.',
-                          type: AsmitaToastType.error,
-                        );
-                        return;
-                      }
-
-                      Navigator.pop(ctx);
-                      final randomPass = 'VIP-${1000 + Random().nextInt(9000)}';
-                      final org = orgCtrl.text.trim().isNotEmpty
-                          ? orgCtrl.text.trim()
-                          : 'Executive Guest';
-                      final phone = phoneCtrl.text.trim();
-                      final vehicle = vehicleCtrl.text.trim();
-
-                      // Auto-provision department & persist VIP pass on backend
-                      final authState = context.read<AuthBloc>().state;
-                      final user = authState is AuthAuthenticated
-                          ? authState.user
-                          : null;
-                      final flat = user?.flatMappings.isNotEmpty == true
-                          ? user!.flatMappings.first
-                          : null;
-
-                      if (user != null) {
-                        final payload = {
-                          'society_id': user.societyId,
-                          'tower_id': flat?.towerId ?? 1,
-                          'unit_id': flat?.flatId ?? 1,
-                          'resident_id': user.userId,
-                          'invite_type': 'Guest',
-                          'invite_sub_type': 'ONCE',
-                          'title': '$name VIP Pass',
-                          'visitor_name': name,
-                          'mobile_number': phone,
-                          'company_name': org,
-                          'vehicle_number': vehicle,
-                          'purpose': 'VIP Pass - $accessScope',
-                          'department_name': accessScope,
-                          'max_guest_count': 1,
-                          'valid_from': DateTime.now().toIso8601String(),
-                          'valid_to': DateTime.now()
-                              .add(const Duration(hours: 24))
-                              .toIso8601String(),
-                          'is_private': escortRequired,
-                        };
-
-                        try {
-                          context.read<VisitorBloc>().add(
-                            CreatePreApprovedInviteEvent(payload: payload),
-                          );
-                          context.read<IndustrialVisitBloc>().add(
-                            const LoadIndustrialVisits(),
-                          );
-                        } catch (_) {}
-                      }
-
-                      _showVipPassSuccessDialog(
-                        context,
-                        passCode: randomPass,
-                        visitorName: name,
-                        organization: org,
-                        accessScope: accessScope,
-                        hasEscort: escortRequired,
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AsmitaPalette.deepNavy,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Generate VIP Pass',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _showVipPassSuccessDialog(
-    BuildContext context, {
-    required String passCode,
-    required String visitorName,
-    required String organization,
-    required String accessScope,
-    required bool hasEscort,
-  }) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        contentPadding: const EdgeInsets.all(20),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.workspace_premium_rounded,
-                color: AsmitaPalette.deepNavy,
-                size: 38,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'VIP Pass Issued',
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '$visitorName • $organization',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AsmitaPalette.textLight,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Theme.of(context).dividerColor,
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  QrImageView(
-                    data: passCode,
-                    size: 140,
-                    eyeStyle: const QrEyeStyle(
-                      eyeShape: QrEyeShape.square,
-                      color: AsmitaPalette.deepNavy,
-                    ),
-                    dataModuleStyle: const QrDataModuleStyle(
-                      dataModuleShape: QrDataModuleShape.square,
-                      color: AsmitaPalette.deepNavy,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '#$passCode',
-                    style: const TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.2,
-                      color: AsmitaPalette.deepNavy,
-                    ),
-                  ),
-                  Text(
-                    accessScope,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AsmitaPalette.textLight,
-                    ),
-                  ),
-                  if (hasEscort) ...[
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AsmitaPalette.successGreen.withValues(
-                          alpha: 0.12,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        '✓ Gate 1 Escort Officer Assigned',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: AsmitaPalette.successGreen,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: passCode));
-                      HapticFeedback.selectionClick();
-                      AsmitaToast.show(
-                        context,
-                        message: 'Pass Code #$passCode copied to clipboard',
-                        type: AsmitaToastType.success,
-                      );
-                    },
-                    icon: const Icon(Icons.copy_rounded, size: 16),
-                    label: const Text(
-                      'Copy Code',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 11),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AsmitaPalette.deepNavy,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 11),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text(
-                      'Done',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // FUNCTIONAL MODAL: ISSUE VIP PASS (Integrated into Pre-Approve Wizard toggle)
 
   // =========================================================================
   // FUNCTIONAL MODAL: CAR VALET (Take Out to gate.)

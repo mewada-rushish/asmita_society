@@ -2,11 +2,12 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:asmita_society/features/menu/presentation/screens/tenants_screen.dart';
-import 'package:asmita_society/features/menu/presentation/providers/tenant_provider.dart';
+import 'package:asmita_society/features/menu/bloc/tenant_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/tenant_event.dart';
+import 'package:asmita_society/features/menu/bloc/tenant_state.dart';
 import 'package:asmita_society/features/menu/data/models/tenant_model.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
@@ -14,49 +15,23 @@ import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/auth/data/models/user_model.dart';
 
 class MockAuthBloc extends Mock implements AuthBloc {}
+class MockTenantBloc extends Mock implements TenantBloc {}
 
-class TestTenantNotifier extends TenantNotifier {
-  final FutureOr<List<TenantModel>> Function() onBuild;
-  bool addMemberCalled = false;
-  bool deleteMemberCalled = false;
-  bool requestHistoryCalled = false;
-
-  TestTenantNotifier(this.onBuild);
-
-  @override
-  FutureOr<List<TenantModel>> build() => onBuild();
-
-  @override
-  Future<bool> addMember({
-    required String name,
-    required String relationship,
-    String? contactNumber,
-    bool isEmergencyContact = false,
-  }) async {
-    addMemberCalled = true;
-    return true;
-  }
-
-  @override
-  Future<bool> deleteMember(int id) async {
-    deleteMemberCalled = true;
-    return true;
-  }
-
-  @override
-  Future<bool> requestHistoryAccess(int id) async {
-    requestHistoryCalled = true;
-    return true;
-  }
-}
+class FakeTenantEvent extends Fake implements TenantEvent {}
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(FakeTenantEvent());
+  });
+
   late MockAuthBloc mockAuthBloc;
+  late MockTenantBloc mockTenantBloc;
   late StreamController<AuthState> authStateController;
+  late StreamController<TenantState> tenantStateController;
 
   final testUser = UserModel(
     userId: 801,
-    fullName: 'Rajesh Varma',
+    fullName: 'Rajesh Khanna',
     primaryRole: 'owner',
     accountType: 'app',
     societyName: 'AsmitA Grandeur',
@@ -64,48 +39,71 @@ void main() {
 
   final sampleTenants = [
     TenantModel(
-      id: 11,
+      id: 1,
       name: 'Karan Malhotra',
       relationship: 'Primary Tenant',
-      contactNumber: '9876501234',
+      contactNumber: '9988776655',
       isEmergencyContact: false,
     ),
     TenantModel(
-      id: 12,
+      id: 2,
       name: 'Simran Malhotra',
       relationship: 'Co-Tenant',
-      contactNumber: '9123456789',
+      contactNumber: '9988776644',
       isEmergencyContact: true,
     ),
   ];
 
   setUp(() {
     mockAuthBloc = MockAuthBloc();
+    mockTenantBloc = MockTenantBloc();
     authStateController = StreamController<AuthState>.broadcast();
+    tenantStateController = StreamController<TenantState>.broadcast();
 
     when(() => mockAuthBloc.stream).thenAnswer((_) => authStateController.stream);
     when(() => mockAuthBloc.state).thenReturn(
       AuthAuthenticated(user: testUser, sessionRole: 'owner'),
     );
     when(() => mockAuthBloc.close()).thenAnswer((_) async {});
+
+    when(() => mockTenantBloc.stream).thenAnswer((_) => tenantStateController.stream);
+    when(() => mockTenantBloc.state).thenReturn(TenantLoaded(sampleTenants));
+    when(() => mockTenantBloc.close()).thenAnswer((_) async {});
+    when(() => mockTenantBloc.add(any())).thenReturn(null);
   });
 
   tearDown(() async {
     await authStateController.close();
+    await tenantStateController.close();
   });
 
   Widget buildTestableWidget({
-    required FutureOr<List<TenantModel>> Function() onBuild,
+    FutureOr<List<TenantModel>> Function()? onBuild,
+    TenantState? state,
   }) {
-    return ProviderScope(
-      overrides: [
-        tenantProvider.overrideWith(() => TestTenantNotifier(onBuild)),
+    final TenantState resolvedState;
+    if (state != null) {
+      resolvedState = state;
+    } else if (onBuild != null) {
+      final res = onBuild();
+      if (res is Future) {
+        resolvedState = TenantLoading();
+      } else {
+        resolvedState = TenantLoaded(res as dynamic);
+      }
+    } else {
+      resolvedState = const TenantLoaded([]);
+    }
+
+    when(() => mockTenantBloc.state).thenReturn(resolvedState);
+
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>.value(value: mockAuthBloc),
+        BlocProvider<TenantBloc>.value(value: mockTenantBloc),
       ],
-      child: BlocProvider<AuthBloc>.value(
-        value: mockAuthBloc,
-        child: const MaterialApp(
-          home: TenantsScreen(),
-        ),
+      child: const MaterialApp(
+        home: TenantsScreen(),
       ),
     );
   }

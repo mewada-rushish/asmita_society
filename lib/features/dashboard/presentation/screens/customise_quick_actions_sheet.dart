@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
+
 import 'package:asmita_society/features/dashboard/data/models/quick_action_registry.dart';
 import 'package:asmita_society/features/dashboard/bloc/quick_actions/quick_actions_bloc.dart';
 import 'package:asmita_society/features/dashboard/bloc/quick_actions/quick_actions_state.dart';
@@ -165,7 +165,7 @@ class _CustomiseQuickActionsSheetState extends State<CustomiseQuickActionsSheet>
               IconButton(
                 icon: Icon(
                   isSelected ? Icons.remove_circle_outline : Icons.add_circle_outline,
-                  color: isSelected ? AsmitaPalette.actionRed : Colors.green,
+                  color: isSelected ? Theme.of(context).colorScheme.error : Colors.green,
                 ),
                 onPressed: () => _toggleSelection(meta.type),
               ),
