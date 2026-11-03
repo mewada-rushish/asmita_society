@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../auth/bloc/auth_bloc.dart';
+import '../../../auth/bloc/auth_state.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/config/env_config.dart';
@@ -55,36 +58,10 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
   Map<String, dynamic>? _activeOutgoing;
   List<Map<String, dynamic>> _incomingDelegations = [];
 
-  static List<Map<String, dynamic>>? _cachedCandidates;
-  static Map<String, dynamic>? _cachedActiveOutgoing;
-  static List<Map<String, dynamic>>? _cachedIncomingDelegations;
-
   @override
   void initState() {
     super.initState();
-    if (_cachedCandidates != null && _cachedCandidates!.isNotEmpty) {
-      _candidates = List.from(_cachedCandidates!);
-      _activeOutgoing = _cachedActiveOutgoing;
-      _incomingDelegations = _cachedIncomingDelegations ?? [];
-      _isLoadingStaff = false;
-      if (_activeOutgoing != null) {
-        _isDelegationEnabled = true;
-        _selectedDelegateId = _activeOutgoing!['delegate_user_id'] as int?;
-        _isTillTurnOff = _activeOutgoing!['end_date'] == null;
-        if (_activeOutgoing!['start_date'] != null) {
-          _startDate = DateTime.tryParse(_activeOutgoing!['start_date'].toString()) ?? DateTime.now();
-        }
-        if (_activeOutgoing!['end_date'] != null) {
-          _endDate = DateTime.tryParse(_activeOutgoing!['end_date'].toString());
-        }
-      } else if (_selectedDelegateId == null && _candidates.isNotEmpty) {
-        _selectedDelegateId = _candidates.first['id'] as int?;
-      }
-      // Silently refresh in background
-      _fetchCandidateDelegates(isSilent: true);
-    } else {
-      _fetchCandidateDelegates();
-    }
+    _fetchCandidateDelegates();
   }
 
   Future<void> _fetchCandidateDelegates({bool isSilent = false}) async {
@@ -93,6 +70,16 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
     }
     try {
       final dio = AsmitaDioClient(SecureStorageService()).dio;
+
+      final authState = context.read<AuthBloc>().state;
+      final currentUser = authState is AuthAuthenticated ? authState.user : null;
+      final currentUserId = currentUser?.userId;
+      final userPower = currentUser?.rolePower ?? 100;
+      final userFloor = (currentUser?.roleDetails?['floor']?.toString() ?? '')
+          .toLowerCase()
+          .replaceAll('floor', '')
+          .replaceAll(RegExp(r'th|st|nd|rd'), '')
+          .trim();
 
       // 1. Fetch current user delegation status
       try {
@@ -125,6 +112,9 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
       List<dynamic> rawList = [];
       try {
         final queryParams = <String, dynamic>{};
+        if (currentUserId != null) {
+          queryParams['userId'] = currentUserId;
+        }
         if (widget.departmentId != null) {
           queryParams['department_id'] = widget.departmentId;
         }
@@ -143,6 +133,9 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
       if (rawList.isEmpty) {
         try {
           final queryParams = <String, dynamic>{};
+          if (currentUserId != null) {
+            queryParams['userId'] = currentUserId;
+          }
           if (widget.departmentId != null) {
             queryParams['departmentId'] = widget.departmentId;
           }
@@ -158,51 +151,91 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         }
       }
 
-      if (rawList.isNotEmpty) {
-        final parsed = rawList.asMap().entries.map((entry) {
-          final idx = entry.key;
-          final m = Map<String, dynamic>.from(entry.value as Map);
-          m['id'] = m['user_id'] ?? m['id'];
-          m['avatarColor'] = _avatarColors[idx % _avatarColors.length];
+      // Filter rawList strictly to delegatees, subordinates under the actor with lower power, or matching floor receptionist
+      final filteredRaw = rawList.where((rawItem) {
+        if (rawItem is! Map) return false;
+        final m = Map<String, dynamic>.from(rawItem);
+        final id = m['user_id'] ?? m['id'];
+        if (currentUserId != null && id == currentUserId) return false;
 
-          // Determine role and designation
-          final desig = m['designation']?.toString() ?? m['role']?.toString() ?? 'Colleague';
-          final dept = m['department']?.toString() ?? 'General';
-          m['role'] = desig;
+        // Rule 1: Must be a delegatee (never show anyone who is not a delegatee)
+        if (m['is_delegatee'] == false) return false;
 
-          // Categorize correctly for filter chips
-          String category = m['category']?.toString() ?? '';
-          if (category.isEmpty || category == 'General' || category == 'All') {
-            final lower = desig.toLowerCase();
-            final lowerDept = dept.toLowerCase();
-            if (m['is_hod'] == true || lower.contains('hod') || lower.contains('head')) {
-              category = 'HOD';
-            } else if (lower.contains('reception') || lowerDept.contains('reception')) {
-              category = 'Receptionist';
-            } else if (lower.contains('lead') || lower.contains('manager') || lower.contains('tl')) {
-              category = 'Team Lead';
-            } else if (lower.contains('intern') || lower.contains('trainee')) {
-              category = 'Intern';
-            } else {
-              category = 'Team Member';
-            }
+        final role = (m['role'] ?? m['designation'] ?? '').toString().toLowerCase();
+        final desig = (m['designation'] ?? '').toString().toLowerCase();
+
+        // Gate receptionists are never eligible as delegates
+        if (role.contains('gate') || desig.contains('gate')) return false;
+
+        // Floor receptionist check
+        final isReceptionist = role.contains('reception') || desig.contains('reception');
+        if (isReceptionist) {
+          final candFloor = (m['floor']?.toString() ?? '')
+              .toLowerCase()
+              .replaceAll('floor', '')
+              .replaceAll(RegExp(r'th|st|nd|rd'), '')
+              .trim();
+          if (userFloor.isNotEmpty && candFloor == userFloor) {
+            return true;
           }
-          m['category'] = category;
-          return m;
-        }).toList();
+          return false;
+        }
 
-        _cachedCandidates = parsed;
-        _cachedActiveOutgoing = _activeOutgoing;
-        _cachedIncomingDelegations = _incomingDelegations;
+        // Rule 2: Subordinate with lower power check
+        final candidatePower = m['power'] is int
+            ? m['power'] as int
+            : int.tryParse(m['power']?.toString() ?? '') ?? 100;
 
-        if (mounted) {
-          setState(() {
-            _candidates = parsed;
-            if (_candidates.isNotEmpty && _selectedDelegateId == null) {
+        if (candidatePower >= userPower && userPower < 500) {
+          return false;
+        }
+
+        return true;
+      }).toList();
+
+      final parsed = filteredRaw.asMap().entries.map((entry) {
+        final idx = entry.key;
+        final m = Map<String, dynamic>.from(entry.value as Map);
+        m['id'] = m['user_id'] ?? m['id'];
+        m['avatarColor'] = _avatarColors[idx % _avatarColors.length];
+
+        // Determine role and designation
+        final desig = m['designation']?.toString() ?? m['role']?.toString() ?? 'Colleague';
+        final dept = m['department']?.toString() ?? 'General';
+        m['role'] = desig;
+
+        // Categorize correctly for filter chips
+        String category = m['category']?.toString() ?? '';
+        if (category.isEmpty || category == 'General' || category == 'All') {
+          final lower = desig.toLowerCase();
+          final lowerDept = dept.toLowerCase();
+          if (m['is_hod'] == true || lower.contains('hod') || lower.contains('head')) {
+            category = 'HOD';
+          } else if (lower.contains('reception') || lowerDept.contains('reception')) {
+            category = 'Receptionist';
+          } else if (lower.contains('lead') || lower.contains('manager') || lower.contains('tl')) {
+            category = 'Team Lead';
+          } else if (lower.contains('intern') || lower.contains('trainee')) {
+            category = 'Intern';
+          } else {
+            category = 'Team Member';
+          }
+        }
+        m['category'] = category;
+        return m;
+      }).toList();
+
+      if (mounted) {
+        setState(() {
+          _candidates = parsed;
+          if (_candidates.isNotEmpty) {
+            if (_selectedDelegateId == null || !_candidates.any((c) => c['id'] == _selectedDelegateId)) {
               _selectedDelegateId = _candidates.first['id'] as int?;
             }
-          });
-        }
+          } else {
+            _selectedDelegateId = null;
+          }
+        });
       }
     } catch (e) {
       debugPrint('[Delegation] Error fetching candidate delegates: $e');
@@ -544,21 +577,46 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                     .length,
                               ),
                             ],
-                            const SizedBox(width: 8),
-                            _buildCategoryChip(
-                              'Receptionist',
-                              _candidates
-                                  .where((c) =>
-                                      c['category'] == 'Receptionist' ||
-                                      c['category'] == 'Floor Receptionist')
-                                  .length,
-                            ),
-                            const SizedBox(width: 8),
-                            _buildCategoryChip('Team Lead', _candidates.where((c) => c['category'] == 'Team Lead').length),
-                            const SizedBox(width: 8),
-                            _buildCategoryChip('Team Member', _candidates.where((c) => c['category'] == 'Team Member').length),
-                            const SizedBox(width: 8),
-                            _buildCategoryChip('Intern', _candidates.where((c) => c['category'] == 'Intern').length),
+                            if (_candidates.any((c) =>
+                                c['category'] == 'Receptionist' ||
+                                c['category'] == 'Floor Receptionist')) ...[
+                              const SizedBox(width: 8),
+                              _buildCategoryChip(
+                                'Receptionist',
+                                _candidates
+                                    .where((c) =>
+                                        c['category'] == 'Receptionist' ||
+                                        c['category'] == 'Floor Receptionist')
+                                    .length,
+                              ),
+                            ],
+                            if (_candidates.any((c) => c['category'] == 'Team Lead')) ...[
+                              const SizedBox(width: 8),
+                              _buildCategoryChip(
+                                'Team Lead',
+                                _candidates
+                                    .where((c) => c['category'] == 'Team Lead')
+                                    .length,
+                              ),
+                            ],
+                            if (_candidates.any((c) => c['category'] == 'Team Member')) ...[
+                              const SizedBox(width: 8),
+                              _buildCategoryChip(
+                                'Team Member',
+                                _candidates
+                                    .where((c) => c['category'] == 'Team Member')
+                                    .length,
+                              ),
+                            ],
+                            if (_candidates.any((c) => c['category'] == 'Intern')) ...[
+                              const SizedBox(width: 8),
+                              _buildCategoryChip(
+                                'Intern',
+                                _candidates
+                                    .where((c) => c['category'] == 'Intern')
+                                    .length,
+                              ),
+                            ],
                           ],
                         ),
                       ),
