@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../models/user_preferences_model.dart';
 import 'package:asmita_society/core/config/env_config.dart';
@@ -12,7 +13,22 @@ class PreferencesRepository {
     try {
       final response = await dio.get(EnvConfig.userPreferences);
       if (response.statusCode == 200 && response.data != null) {
-        return UserPreferencesModel.fromJson(response.data);
+        dynamic data = response.data;
+        if (data is String) {
+          try {
+            data = jsonDecode(data);
+          } catch (_) {}
+        }
+        if (data is Map) {
+          if (data['data'] is Map) {
+            return UserPreferencesModel.fromJson(
+              Map<String, dynamic>.from(data['data'] as Map),
+            );
+          }
+          return UserPreferencesModel.fromJson(
+            Map<String, dynamic>.from(data),
+          );
+        }
       }
       return null;
     } catch (e) {
