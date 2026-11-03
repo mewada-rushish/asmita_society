@@ -158,35 +158,64 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         final id = m['user_id'] ?? m['id'];
         if (currentUserId != null && id == currentUserId) return false;
 
-        // Rule 1: Must be a delegatee (never show anyone who is not a delegatee)
-        if (m['is_delegatee'] == false) return false;
-
         final role = (m['role'] ?? m['designation'] ?? '').toString().toLowerCase();
         final desig = (m['designation'] ?? '').toString().toLowerCase();
+        final name = (m['name'] ?? m['full_name'] ?? '').toString().toLowerCase();
 
-        // Gate receptionists are never eligible as delegates
-        if (role.contains('gate') || desig.contains('gate')) return false;
+        // 1. Gate receptionists are NEVER eligible as delegates
+        if (role.contains('gate') || desig.contains('gate') || name.contains('gate')) return false;
 
-        // Floor receptionist check
-        final isReceptionist = role.contains('reception') || desig.contains('reception');
+        // 2. Floor receptionist check: allowed only if assigned to actor's exact floor
+        final isReceptionist = role.contains('reception') || desig.contains('reception') || name.contains('reception');
         if (isReceptionist) {
           final candFloor = (m['floor']?.toString() ?? '')
               .toLowerCase()
               .replaceAll('floor', '')
               .replaceAll(RegExp(r'th|st|nd|rd'), '')
               .trim();
-          if (userFloor.isNotEmpty && candFloor == userFloor) {
+          if (userFloor.isNotEmpty && candFloor.isNotEmpty && candFloor == userFloor) {
+            return true;
+          }
+          if (m['category'] == 'Receptionist' && !name.contains('gate') && !desig.contains('gate')) {
             return true;
           }
           return false;
         }
 
-        // Rule 2: Subordinate with lower power check
+        // 3. For ALL other colleagues: MUST BE EXPLICITLY AN ENABLED DELEGATEE
+        final isDelegatee = m['is_delegatee'] == true ||
+            (m['role_details'] is Map && m['role_details']['is_delegatee'] == true);
+        if (!isDelegatee) return false;
+
+        // 4. Candidate role power MUST be strictly lower than delegator
         final candidatePower = m['power'] is int
             ? m['power'] as int
             : int.tryParse(m['power']?.toString() ?? '') ?? 100;
 
-        if (candidatePower >= userPower && userPower < 500) {
+        if (userPower < 500 && candidatePower >= userPower) {
+          return false;
+        }
+
+        // 5. Must be an employee under the delegator:
+        final reportsTo = m['reports_to_user_id'] ?? m['reports_to_id'] ??
+            (m['role_details'] is Map ? (m['role_details']['reports_to_user_id'] ?? m['role_details']['reports_to_id']) : null);
+        if (currentUserId != null && reportsTo != null && reportsTo.toString() == currentUserId.toString()) {
+          return true;
+        }
+
+        // Director (power 500)
+        if (userPower >= 500) {
+          return true;
+        }
+
+        // Department matching
+        final userDept = (currentUser?.roleDetails?['department'] ?? currentUser?.roleDetails?['department_name'] ?? '').toString().toLowerCase();
+        final candDept = (m['department'] ?? (m['role_details'] is Map ? m['role_details']['department'] : '')).toString().toLowerCase();
+        if (userDept.isNotEmpty && candDept.isNotEmpty && (userDept == candDept || userDept.contains(candDept) || candDept.contains(userDept))) {
+          return true;
+        }
+
+        if (reportsTo != null && currentUserId != null && reportsTo.toString() != currentUserId.toString()) {
           return false;
         }
 

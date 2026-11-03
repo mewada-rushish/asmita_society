@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import '../../bloc/support_bloc.dart';
+import '../../data/repositories/support_repository.dart';
+import 'package:asmita_society/core/network/dio_client.dart';
+import 'package:asmita_society/core/security/secure_storage_service.dart';
 import '../../bloc/support_event.dart';
 import '../../bloc/support_state.dart';
 import '../widgets/ticket_conversation_bottom_sheet.dart';
@@ -22,6 +25,30 @@ class AllTicketsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Builder(
+      builder: (ctx) {
+        SupportBloc? existingBloc;
+        try {
+          existingBloc = ctx.read<SupportBloc>();
+        } catch (_) {}
+
+        if (existingBloc != null) {
+          return _buildContent(ctx);
+        }
+
+        return BlocProvider<SupportBloc>(
+          create: (_) {
+            final dio = AsmitaDioClient(SecureStorageService()).dio;
+            final repository = SupportRepository(dio: dio);
+            return SupportBloc(repository: repository)..add(const LoadSupport());
+          },
+          child: Builder(builder: (c) => _buildContent(c)),
+        );
+      },
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
