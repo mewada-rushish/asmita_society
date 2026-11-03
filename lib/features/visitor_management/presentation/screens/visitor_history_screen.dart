@@ -984,46 +984,232 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
     );
   }
 
-  Widget _buildFilterDropdown<T>({
+  Widget _buildFilterPickerTile({
     required BuildContext context,
-    required T value,
-    required List<DropdownMenuItem<T>> items,
-    required ValueChanged<T?> onChanged,
-    bool isCustomized = false,
+    required String selectedLabel,
+    required IconData selectedIcon,
+    required Color iconColor,
+    required bool isCustomized,
+    required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-      decoration: BoxDecoration(
-        color: isCustomized
-            ? theme.colorScheme.primary.withValues(alpha: 0.05)
-            : (isDark ? AsmitaPalette.surfaceDark : theme.colorScheme.surface),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isCustomized
-              ? theme.colorScheme.primary
-              : theme.dividerColor.withValues(alpha: 0.7),
-          width: isCustomized ? 1.4 : 1,
-        ),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          isExpanded: true,
-          icon: Icon(
-            Icons.keyboard_arrow_down_rounded,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
             color: isCustomized
-                ? theme.colorScheme.primary
-                : theme.textTheme.bodyMedium?.color,
+                ? theme.colorScheme.primary.withValues(alpha: 0.05)
+                : (isDark ? AsmitaPalette.surfaceDark : theme.colorScheme.surface),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isCustomized
+                  ? theme.colorScheme.primary
+                  : theme.dividerColor.withValues(alpha: 0.7),
+              width: isCustomized ? 1.4 : 1,
+            ),
           ),
-          dropdownColor: isDark ? AsmitaPalette.surfaceDark : theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(14),
-          items: items,
-          onChanged: onChanged,
+          child: Row(
+            children: [
+              Icon(selectedIcon, size: 18, color: iconColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  selectedLabel,
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 13,
+                    fontWeight: isCustomized ? FontWeight.w600 : FontWeight.w500,
+                    color: isCustomized
+                        ? (isDark ? Colors.white : theme.colorScheme.primary)
+                        : theme.textTheme.bodyLarge?.color,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 18,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  void _showNativeModalPicker<T>({
+    required BuildContext context,
+    required String title,
+    required T selectedValue,
+    required List<Map<String, dynamic>> items,
+    required ValueChanged<T> onSelected,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surfaceColor = isDark ? AsmitaPalette.surfaceDark : theme.colorScheme.surface;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (pickerCtx) {
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(pickerCtx).size.height * 0.65,
+          ),
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 16,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 12),
+                Center(
+                  child: Container(
+                    width: 38,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 14, 16, 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 20),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => Navigator.pop(pickerCtx),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.5)),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                    itemCount: items.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (_, index) {
+                      final item = items[index];
+                      final val = item['value'] as T;
+                      final label = item['label'] as String;
+                      final icon = item['icon'] as IconData?;
+                      final color = (item['color'] as Color?) ?? theme.colorScheme.primary;
+                      final isSelected = val == selectedValue;
+
+                      return Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.pop(pickerCtx);
+                            onSelected(val);
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.08)
+                                  : (isDark ? AsmitaPalette.systemBGDark.withValues(alpha: 0.4) : AsmitaPalette.systemBG.withValues(alpha: 0.5)),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isSelected
+                                    ? theme.colorScheme.primary
+                                    : theme.dividerColor.withValues(alpha: 0.5),
+                                width: isSelected ? 1.5 : 1.0,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                if (icon != null) ...[
+                                  Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      color: color.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(icon, size: 18, color: color),
+                                  ),
+                                  const SizedBox(width: 12),
+                                ],
+                                Expanded(
+                                  child: Text(
+                                    label,
+                                    style: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: 13.5,
+                                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                      color: isSelected
+                                          ? (isDark ? Colors.white : theme.colorScheme.primary)
+                                          : theme.textTheme.bodyLarge?.color,
+                                    ),
+                                  ),
+                                ),
+                                if (isSelected)
+                                  Icon(
+                                    Icons.check_circle_rounded,
+                                    size: 20,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1426,111 +1612,131 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                         onSelected: (val) => setModalState(() => tempRecordType = val),
                       ),
 
-                      // 3. Visitor Status Section (Dropdown Input)
+                      // 3. Visitor Status Section (Native Mobile Modal Picker)
                       _buildFilterSectionHeader(
                         context: context,
                         title: 'Visitor Status',
                         icon: Icons.verified_outlined,
                       ),
-                      _buildFilterDropdown<String>(
-                        context: context,
-                        value: tempStatus ?? 'ALL',
-                        isCustomized: tempStatus != null && tempStatus != 'ALL',
-                        items: statusOptions.map((st) {
-                          final color = st['color'] as Color;
-                          final isAll = st['key'] == 'ALL';
-                          return DropdownMenuItem<String>(
-                            value: st['key'] as String,
-                            child: Row(
-                              children: [
-                                Icon(st['icon'] as IconData, size: 18, color: color),
-                                const SizedBox(width: 12),
-                                Text(
-                                  st['label'] as String,
-                                  style: TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontSize: 13,
-                                    fontWeight: isAll ? FontWeight.w500 : FontWeight.w600,
-                                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                                  ),
-                                ),
-                              ],
-                            ),
+                      Builder(
+                        builder: (ctx) {
+                          final currentKey = tempStatus ?? 'ALL';
+                          final selected = statusOptions.firstWhere(
+                            (o) => o['key'] == currentKey,
+                            orElse: () => statusOptions.first,
                           );
-                        }).toList(),
-                        onChanged: (val) {
-                          setModalState(() {
-                            tempStatus = (val == null || val == 'ALL') ? null : val;
-                          });
+                          final isCustomized = tempStatus != null && tempStatus != 'ALL';
+
+                          return _buildFilterPickerTile(
+                            context: context,
+                            selectedLabel: selected['label'] as String,
+                            selectedIcon: selected['icon'] as IconData,
+                            iconColor: selected['color'] as Color,
+                            isCustomized: isCustomized,
+                            onTap: () {
+                              _showNativeModalPicker<String>(
+                                context: context,
+                                title: 'Select Visitor Status',
+                                selectedValue: currentKey,
+                                items: statusOptions.map((st) => {
+                                  'value': st['key'] as String,
+                                  'label': st['label'] as String,
+                                  'icon': st['icon'] as IconData,
+                                  'color': st['color'] as Color,
+                                }).toList(),
+                                onSelected: (val) {
+                                  setModalState(() {
+                                    tempStatus = val == 'ALL' ? null : val;
+                                  });
+                                },
+                              );
+                            },
+                          );
                         },
                       ),
 
-                      // 4. Visitor Category Section (Dropdown Input)
+                      // 4. Visitor Category Section (Native Mobile Modal Picker)
                       _buildFilterSectionHeader(
                         context: context,
                         title: 'Category',
                         icon: Icons.category_outlined,
                       ),
-                      _buildFilterDropdown<String>(
-                        context: context,
-                        value: tempCategory,
-                        isCustomized: tempCategory != 'ALL',
-                        items: categoryOptions.map((opt) {
-                          final isAll = opt['key'] == 'ALL';
-                          return DropdownMenuItem<String>(
-                            value: opt['key'] as String,
-                            child: Row(
-                              children: [
-                                Icon(opt['icon'] as IconData, size: 16, color: Theme.of(context).colorScheme.primary),
-                                const SizedBox(width: 10),
-                                Text(
-                                  opt['label'] as String,
-                                  style: TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontSize: 13,
-                                    fontWeight: isAll ? FontWeight.w500 : FontWeight.w600,
-                                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                                  ),
-                                ),
-                              ],
-                            ),
+                      Builder(
+                        builder: (ctx) {
+                          final selected = categoryOptions.firstWhere(
+                            (o) => o['key'] == tempCategory,
+                            orElse: () => categoryOptions.first,
                           );
-                        }).toList(),
-                        onChanged: (val) => setModalState(() => tempCategory = val ?? 'ALL'),
+                          final isCustomized = tempCategory != 'ALL';
+
+                          return _buildFilterPickerTile(
+                            context: context,
+                            selectedLabel: selected['label'] as String,
+                            selectedIcon: selected['icon'] as IconData,
+                            iconColor: Theme.of(context).colorScheme.primary,
+                            isCustomized: isCustomized,
+                            onTap: () {
+                              _showNativeModalPicker<String>(
+                                context: context,
+                                title: 'Select Category',
+                                selectedValue: tempCategory,
+                                items: categoryOptions.map((opt) => {
+                                  'value': opt['key'] as String,
+                                  'label': opt['label'] as String,
+                                  'icon': opt['icon'] as IconData,
+                                  'color': Theme.of(context).colorScheme.primary,
+                                }).toList(),
+                                onSelected: (val) {
+                                  setModalState(() {
+                                    tempCategory = val;
+                                  });
+                                },
+                              );
+                            },
+                          );
+                        },
                       ),
 
-                      // 5. Pass Validity Section (Dropdown Input)
+                      // 5. Pass Validity Section (Native Mobile Modal Picker)
                       _buildFilterSectionHeader(
                         context: context,
                         title: 'Pass Validity',
                         icon: Icons.repeat_rounded,
                       ),
-                      _buildFilterDropdown<String>(
-                        context: context,
-                        value: tempFrequency,
-                        isCustomized: tempFrequency != 'ALL',
-                        items: frequencyOptions.map((opt) {
-                          final isAll = opt['key'] == 'ALL';
-                          return DropdownMenuItem<String>(
-                            value: opt['key'] as String,
-                            child: Row(
-                              children: [
-                                Icon(Icons.repeat_rounded, size: 16, color: Theme.of(context).colorScheme.primary),
-                                const SizedBox(width: 10),
-                                Text(
-                                  opt['label']!,
-                                  style: TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontSize: 13,
-                                    fontWeight: isAll ? FontWeight.w500 : FontWeight.w600,
-                                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                                  ),
-                                ),
-                              ],
-                            ),
+                      Builder(
+                        builder: (ctx) {
+                          final selected = frequencyOptions.firstWhere(
+                            (o) => o['key'] == tempFrequency,
+                            orElse: () => frequencyOptions.first,
                           );
-                        }).toList(),
-                        onChanged: (val) => setModalState(() => tempFrequency = val ?? 'ALL'),
+                          final isCustomized = tempFrequency != 'ALL';
+
+                          return _buildFilterPickerTile(
+                            context: context,
+                            selectedLabel: selected['label']!,
+                            selectedIcon: Icons.repeat_rounded,
+                            iconColor: Theme.of(context).colorScheme.primary,
+                            isCustomized: isCustomized,
+                            onTap: () {
+                              _showNativeModalPicker<String>(
+                                context: context,
+                                title: 'Select Pass Validity',
+                                selectedValue: tempFrequency,
+                                items: frequencyOptions.map((opt) => {
+                                  'value': opt['key'] as String,
+                                  'label': opt['label']!,
+                                  'icon': Icons.repeat_rounded,
+                                  'color': Theme.of(context).colorScheme.primary,
+                                }).toList(),
+                                onSelected: (val) {
+                                  setModalState(() {
+                                    tempFrequency = val;
+                                  });
+                                },
+                              );
+                            },
+                          );
+                        },
                       ),
 
                       // 6. Vehicle Section (Toggle Switch Card)
