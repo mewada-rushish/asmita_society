@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import '../../../../core/config/env_config.dart';
 import '../models/auth_response.dart';
+import '../models/user_model.dart';
 
 /// Repository responsible for authentication, OTP verification, and user onboarding.
 /// Communicates with the backend API via a secure Dio instance.
@@ -173,6 +174,35 @@ class AuthRepository {
       throw Exception('Failed to get profile picture URL');
     } on DioException catch (e) {
       throw _parseError(e, 'Failed to upload profile picture.');
+    }
+  }
+
+  /// Fetches the latest user profile from the backend
+  Future<UserModel> fetchProfile() async {
+    try {
+      final response = await dio.get(EnvConfig.usersMe);
+      final data = _ensureMap(response.data);
+      
+      if (data['success'] == true && data['user'] != null) {
+        final Map<String, dynamic> userData = Map<String, dynamic>.from(_ensureMap(data['user']));
+        
+        // The /users/me endpoint returns flat_mappings and society at the root level
+        if (data.containsKey('flat_mappings')) {
+          userData['flat_mappings'] = data['flat_mappings'];
+        }
+        if (data.containsKey('society') && data['society'] != null) {
+          final societyData = _ensureMap(data['society']);
+          if (societyData.containsKey('society_name')) {
+            userData['society_name'] = societyData['society_name'];
+          }
+        }
+        
+        return UserModel.fromJson(userData);
+      }
+      
+      throw Exception(data['message'] ?? 'Failed to fetch profile');
+    } on DioException catch (e) {
+      throw _parseError(e, 'Failed to fetch profile.');
     }
   }
 

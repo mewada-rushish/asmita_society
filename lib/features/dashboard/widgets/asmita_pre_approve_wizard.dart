@@ -3,8 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/config/env_config.dart';
-import '../../../../core/security/secure_storage_service.dart';
-import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -24,6 +22,8 @@ import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/utils/property_role_resolver.dart';
 import 'package:asmita_society/core/widgets/asmita_text_field.dart';
 import 'package:asmita_society/core/widgets/asmita_camera_screen.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/security/secure_storage_service.dart';
 class AsmitaPreApproveWizard extends StatefulWidget {
   final bool isGuardMode;
 
@@ -287,6 +287,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
   bool _surpriseDelivery = false;
   bool _secureCabMode = false;
+  bool _isVipGuestPass = false;
   final TextEditingController _cabNoController = TextEditingController();
 
   bool _leaveAtGate = false;
@@ -915,18 +916,23 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           ? 'DELIVERY'
           : (isCabOrVehicle ? 'VEHICLE' : (isVendor ? 'VENDOR' : 'VISITOR'));
 
-      final purposeText = isDelivery
+      final basePurposeText = isDelivery
           ? 'Delivery / Courier Drop'
           : (_purposeController.text.trim().isNotEmpty
               ? _purposeController.text.trim()
-              : (isVendor ? 'Maintenance & Repair' : 'Official Meeting'));
+              : (isVendor ? 'Maintenance & Repair' : (_isVipGuestPass ? 'VIP Visit' : 'Official Meeting')));
+      final purposeText = _isVipGuestPass && !isDelivery ? '[VIP] $basePurposeText' : basePurposeText;
 
       final effectiveGuestCount = isDelivery ? 1 : _guestCount;
+      final rawVisitorName = _visitorNameController.text.trim();
+      final effectiveVisitorName = _isVipGuestPass && rawVisitorName.isNotEmpty
+          ? '$rawVisitorName (VIP)'
+          : (_isVipGuestPass ? 'VIP Guest' : rawVisitorName);
       final companyName = isDelivery
           ? (_selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany)
           : (isCabOrVehicle
               ? (_selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany)
-              : (_selectedCategory == 'Guest' ? 'Guest' : _selectedCompany));
+              : (_selectedCategory == 'Guest' ? (_isVipGuestPass ? 'VIP Guest' : 'Guest') : _selectedCompany));
 
       final payloads = selectedFlats.isNotEmpty
           ? selectedFlats.map((flat) => {
@@ -937,8 +943,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               'department_id': deptId,
               'visit_type': resolvedVisitType,
               'arrival_mode': resolvedVisitType,
-              'visitor_name': _visitorNameController.text.trim(),
-              'full_name': _visitorNameController.text.trim(),
+              'visitor_name': effectiveVisitorName,
+              'full_name': effectiveVisitorName,
+              'is_vip': _isVipGuestPass,
               'visitor_phone': _mobileNumberController.text.trim(),
               'mobile_number': _mobileNumberController.text.trim(),
               'purpose': purposeText,
@@ -961,8 +968,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               'department_id': deptId,
               'visit_type': resolvedVisitType,
               'arrival_mode': resolvedVisitType,
-              'visitor_name': _visitorNameController.text.trim(),
-              'full_name': _visitorNameController.text.trim(),
+              'visitor_name': effectiveVisitorName,
+              'full_name': effectiveVisitorName,
+              'is_vip': _isVipGuestPass,
               'visitor_phone': _mobileNumberController.text.trim(),
               'mobile_number': _mobileNumberController.text.trim(),
               'purpose': purposeText,
@@ -1048,30 +1056,40 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
     final enteredMobile = _mobileNumberController.text.trim();
     final visitorName = enteredName.isNotEmpty
-        ? enteredName
-        : (_selectedCategory == 'Guest'
+        ? (_isVipGuestPass ? '$enteredName (VIP)' : enteredName)
+        : (_isVipGuestPass
             ? 'VIP Guest'
-            : (isDelivery
-                ? '${_selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany} Partner'
-                : '$_selectedCategory Guest'));
+            : (_selectedCategory == 'Guest'
+                ? 'Guest'
+                : (isDelivery
+                    ? '${_selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany} Partner'
+                    : '$_selectedCategory Guest')));
 
     final inviteType = isDelivery
         ? 'delivery'
         : (isCabOrVehicle ? 'cab' : 'guest');
 
+    final basePurpose = _purposeController.text.trim().isNotEmpty
+        ? _purposeController.text.trim()
+        : (isVendor ? 'Maintenance & Repair' : (_selectedCategory == 'Guest' ? (_isVipGuestPass ? 'VIP Visit' : 'Personal Visit') : _selectedCategory));
     final invitePurpose = isDelivery
         ? 'Delivery / Courier Drop'
-        : (_purposeController.text.trim().isNotEmpty
-            ? _purposeController.text.trim()
-            : (isVendor ? 'Maintenance & Repair' : (_selectedCategory == 'Guest' ? 'VIP Visit' : _selectedCategory)));
+        : (_isVipGuestPass ? '[VIP] $basePurpose' : basePurpose);
 
     final companyName = isDelivery
         ? (_selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany)
         : (isCabOrVehicle
             ? (_selectedCompany == 'Other' && _customCompanyName.isNotEmpty ? _customCompanyName : _selectedCompany)
             : (_selectedCategory == 'Guest'
-                ? (enteredName.isNotEmpty ? enteredName : 'VIP Guest')
+                ? (enteredName.isNotEmpty ? enteredName : (_isVipGuestPass ? 'VIP Guest' : 'Guest'))
                 : _selectedCompany));
+
+    final baseTitle = enteredName.isNotEmpty
+        ? '$enteredName Pass'
+        : (isDelivery
+            ? '$companyName Delivery Pass'
+            : '$_selectedCategory Invite');
+    final inviteTitle = _isVipGuestPass ? '[VIP] $baseTitle' : baseTitle;
 
     final payload = {
       'society_id': user.societyId,
@@ -1080,12 +1098,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       'resident_id': user.userId,
       'invite_type': inviteType,
       'invite_sub_type': isOnce ? 'ONCE' : 'FREQUENT',
-      'title': enteredName.isNotEmpty
-          ? '$enteredName Pass'
-          : (isDelivery
-              ? '$companyName Delivery Pass'
-              : '$_selectedCategory Invite'),
+      'title': inviteTitle,
       'visitor_name': visitorName,
+      'is_vip': _isVipGuestPass,
       'mobile_number': enteredMobile,
       'company_name': companyName,
       'delivery_company': isDelivery ? companyName : null,
@@ -1222,7 +1237,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 Positioned.fill(
                   child: Container(
                     color: Colors.white.withValues(alpha: 0.7),
-                    child: const Center(
+                    child: Center(
                       child: AsmitaLoadingIndicator(
                         color: AsmitaPalette.deepNavy,
                         size: 28,
@@ -1477,7 +1492,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 14,
-                  color: isSelected ? Colors.white : AsmitaPalette.textDark,
+                  color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 ),
               ),
@@ -1543,7 +1558,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                     fontFamily: 'Poppins',
                     color: Colors.grey.shade500,
                   ),
-                  prefixIcon: const Icon(Icons.search, color: AsmitaPalette.deepNavy),
+                  prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurface),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   filled: true,
                   fillColor: Colors.grey.shade100,
@@ -1620,7 +1635,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 14,
-                                color: isSelected ? Colors.white : AsmitaPalette.textDark,
+                                color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
                                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                               ),
                             ),
@@ -1636,7 +1651,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AsmitaPalette.deepNavy,
+                    backgroundColor: Theme.of(context).colorScheme.onSurface,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1672,23 +1687,23 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             GestureDetector(
               onTap: _prevStep,
               behavior: HitTestBehavior.opaque,
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.only(right: 12.0, top: 4.0, bottom: 4.0),
                 child: Icon(
                   Icons.arrow_back_ios_new_rounded,
                   size: 18,
-                  color: AsmitaPalette.deepNavy,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
             Expanded(
               child: Text(
                 '$_selectedCategory Invitation',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Montserrat',
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: AsmitaPalette.deepNavy,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
@@ -1701,22 +1716,23 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           height: 48,
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: AsmitaPalette.systemBG,
+            color: Theme.of(context).colorScheme.surfaceContainer,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AsmitaPalette.borderGrey, width: 1.0),
           ),
           child: TabBar(
             controller: _tabController,
             dividerColor: Colors.transparent,
             indicatorSize: TabBarIndicatorSize.tab,
             indicator: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AsmitaPalette.surfaceDark
+                  : Colors.white,
               borderRadius: BorderRadius.circular(8),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  offset: const Offset(0, 1),
                 ),
               ],
             ),
@@ -1766,13 +1782,13 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           value: _frequentValidity,
           onTap: _showValidityPickerSheet,
         ),
-        const SizedBox(height: 16),
-        const Text(
+        SizedBox(height: 16),
+        Text(
           'Select time slot',
           style: TextStyle(
             fontFamily: 'Poppins',
             fontSize: 12,
-            color: AsmitaPalette.textDark,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
@@ -1833,7 +1849,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   onTap: _showDatePickerSheet,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: _buildBottomSheetTrigger(
                   label: 'Departure Date',
@@ -1843,17 +1859,17 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Number of Guests:',
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: AsmitaPalette.textDark,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               Row(
@@ -1869,7 +1885,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   ),
                   Text(
                     '$_guestCount',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Montserrat',
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -1888,7 +1904,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
+          _buildVipPassToggle(),
+          const SizedBox(height: 16),
         ],
         _buildPrimaryButton(label: 'Authorize Entry', onPressed: _submitInvite),
       ],
@@ -2506,7 +2524,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             ),
             Text(
               '$_guestCount',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Montserrat',
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -2581,6 +2599,113 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildVipPassToggle() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: () => setState(() => _isVipGuestPass = !_isVipGuestPass),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: _isVipGuestPass
+              ? (isDark
+                  ? const Color(0xFF2E2415)
+                  : const Color(0xFFFFFBEB))
+              : (isDark
+                  ? AsmitaPalette.surfaceDark
+                  : const Color(0xFFF9FAFB)),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _isVipGuestPass
+                ? const Color(0xFFF59E0B)
+                : (isDark ? Colors.white12 : const Color(0xFFE5E7EB)),
+            width: _isVipGuestPass ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: _isVipGuestPass
+                    ? const Color(0xFFF59E0B).withValues(alpha: 0.15)
+                    : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.workspace_premium_rounded,
+                color: _isVipGuestPass
+                    ? const Color(0xFFD97706)
+                    : (isDark ? Colors.white54 : Colors.grey.shade600),
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Mark as VIP Pass',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: _isVipGuestPass
+                              ? const Color(0xFFB45309)
+                              : Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      if (_isVipGuestPass) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF59E0B),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'VIP',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Priority gate lane clearance & executive escort protocol',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 11,
+                      color: isDark ? Colors.white60 : Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch.adaptive(
+              value: _isVipGuestPass,
+              activeTrackColor: const Color(0xFFF59E0B),
+              activeThumbColor: Colors.white,
+              onChanged: (val) => setState(() => _isVipGuestPass = val),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -2787,22 +2912,24 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           const SizedBox(height: 16),
           _buildPurposeSection(),
           const SizedBox(height: 16),
+          _buildVipPassToggle(),
+          const SizedBox(height: 8),
           _buildBottomSheetTrigger(
             label: 'Arrival Time',
             value: _selectedTime.format(context),
             onTap: () => _showTimePickerSheet(),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Number of Guests:',
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: AsmitaPalette.textDark,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               Row(
@@ -2818,7 +2945,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   ),
                   Text(
                     '$_guestCount',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Montserrat',
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -2837,18 +2964,18 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
         ] else ...[
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Allow entry once in next:',
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: AsmitaPalette.textDark,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               Expanded(
@@ -2873,11 +3000,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   setState(() => _showAdvancedOptions = !_showAdvancedOptions),
               behavior: HitTestBehavior.opaque,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                padding: EdgeInsets.symmetric(vertical: 8.0),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
+                    Text(
                       'Advanced Options',
                       style: TextStyle(
                         fontFamily: 'Montserrat',
@@ -2925,13 +3052,13 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                                       : Colors.grey.shade600,
                                   size: 22,
                                 ),
-                                const SizedBox(width: 12),
-                                const Text(
+                                SizedBox(width: 12),
+                                Text(
                                   'Leave at Gate option auto-auth',
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 13,
-                                    color: AsmitaPalette.textLight,
+                                    color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                                   ),
                                 ),
                               ],
@@ -3000,23 +3127,23 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             size: 40,
           ),
         ),
-        const SizedBox(height: 16),
-        const Text(
+        SizedBox(height: 16),
+        Text(
           'Gate Pass Authorized',
           style: TextStyle(
             fontFamily: 'Montserrat',
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: AsmitaPalette.deepNavy,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
-        const SizedBox(height: 8),
-        const Text(
+        SizedBox(height: 8),
+        Text(
           'The security team has been notified.',
           style: TextStyle(
             fontFamily: 'Poppins',
             fontSize: 13,
-            color: AsmitaPalette.textLight,
+            color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
           ),
         ),
         const SizedBox(height: 32),
@@ -3039,7 +3166,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => StatefulBuilder(
@@ -3047,7 +3174,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           return SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -3055,40 +3182,40 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Select Days of Week',
                         style: TextStyle(
                           fontFamily: 'Montserrat',
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: AsmitaPalette.deepNavy,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.close,
-                          color: AsmitaPalette.deepNavy,
+                          color: Theme.of(context).colorScheme.onSurface,
                           size: 20,
                         ),
                         onPressed: () => Navigator.pop(ctx),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   // Quick Presets Row
                   Row(
                     children: [
                       ActionChip(
-                        label: const Text(
+                        label: Text(
                           'All',
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: AsmitaPalette.deepNavy,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
-                        backgroundColor: AsmitaPalette.systemBG,
+                        backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                           side: BorderSide.none,
@@ -3107,18 +3234,18 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                           });
                         },
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       ActionChip(
-                        label: const Text(
+                        label: Text(
                           'Weekdays',
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: AsmitaPalette.deepNavy,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
-                        backgroundColor: AsmitaPalette.systemBG,
+                        backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                           side: BorderSide.none,
@@ -3137,18 +3264,18 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                           });
                         },
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       ActionChip(
-                        label: const Text(
+                        label: Text(
                           'Weekends',
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: AsmitaPalette.deepNavy,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
-                        backgroundColor: AsmitaPalette.systemBG,
+                        backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                           side: BorderSide.none,
@@ -3193,7 +3320,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                             border: Border.all(
                               color: isSelected
                                   ? Colors.transparent
-                                  : AsmitaPalette.borderGrey,
+                                  : Theme.of(context).dividerColor,
                               width: 1,
                             ),
                           ),
@@ -3206,7 +3333,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                               fontSize: 14,
                               color: isSelected
                                   ? Colors.white
-                                  : AsmitaPalette.deepNavy,
+                                  : Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                         ),
@@ -3277,18 +3404,18 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       builder: (ctx) => SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              Text(
                 'Select Validity',
                 style: TextStyle(
                   fontFamily: 'Montserrat',
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
-                  color: AsmitaPalette.deepNavy,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 20),
@@ -3311,14 +3438,14 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                       fontFamily: 'Poppins',
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                      color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                       side: BorderSide(
                         color: isSelected
                             ? Colors.transparent
-                            : AsmitaPalette.borderGrey,
+                            : Theme.of(context).dividerColor,
                       ),
                     ),
                   );
@@ -3346,18 +3473,18 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       builder: (ctx) => SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              Text(
                 'Select Validity Duration',
                 style: TextStyle(
                   fontFamily: 'Montserrat',
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
-                  color: AsmitaPalette.deepNavy,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 20),
@@ -3380,14 +3507,14 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                       fontFamily: 'Poppins',
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                      color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                       side: BorderSide(
                         color: isSelected
                             ? Colors.transparent
-                            : AsmitaPalette.borderGrey,
+                            : Theme.of(context).dividerColor,
                       ),
                     ),
                   );
@@ -3474,18 +3601,18 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       builder: (ctx) => SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 isEndTime ? 'Select End Time' : 'Select Arrival Time',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Montserrat',
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
-                  color: AsmitaPalette.deepNavy,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 16),
@@ -3643,13 +3770,13 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Company Network',
                       style: TextStyle(
                         fontFamily: 'Montserrat',
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: AsmitaPalette.deepNavy,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     IconButton(
@@ -3688,14 +3815,14 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
                                   color: isSel
-                                      ? AsmitaPalette.deepNavy.withValues(
+                                      ? Theme.of(context).colorScheme.onSurface.withValues(
                                           alpha: 0.05,
                                         )
                                       : Colors.white,
                                   border: Border.all(
                                     color: isSel
-                                        ? AsmitaPalette.deepNavy
-                                        : AsmitaPalette.borderGrey,
+                                        ? Theme.of(context).colorScheme.onSurface
+                                        : Theme.of(context).dividerColor,
                                     width: isSel ? 1.5 : 1.0,
                                   ),
                                   borderRadius: BorderRadius.circular(12),
@@ -3707,7 +3834,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                                       width: 60,
                                       height: 60,
                                       decoration: BoxDecoration(
-                                        color: AsmitaPalette.systemBG,
+                                        color: Theme.of(context).colorScheme.surfaceContainer,
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       clipBehavior: Clip.hardEdge,
@@ -3723,14 +3850,13 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                                                   ) => Center(
                                                     child: Text(
                                                       c[0],
-                                                      style: const TextStyle(
+                                                      style: TextStyle(
                                                         fontFamily:
                                                             'Montserrat',
                                                         fontWeight:
                                                             FontWeight.w800,
                                                         fontSize: 18,
-                                                        color: AsmitaPalette
-                                                            .deepNavy,
+                                                        color: Theme.of(context).colorScheme.onSurface,
                                                       ),
                                                     ),
                                                   ),
@@ -3738,11 +3864,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                                           : Center(
                                               child: Text(
                                                 c[0],
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontFamily: 'Montserrat',
                                                   fontWeight: FontWeight.w800,
                                                   fontSize: 18,
-                                                  color: AsmitaPalette.deepNavy,
+                                                  color: Theme.of(context).colorScheme.onSurface,
                                                 ),
                                               ),
                                             ),
@@ -3759,8 +3885,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                                             ? FontWeight.w700
                                             : FontWeight.w500,
                                         color: isSel
-                                            ? AsmitaPalette.deepNavy
-                                            : AsmitaPalette.textDark,
+                                            ? Theme.of(context).colorScheme.onSurface
+                                            : Theme.of(context).colorScheme.onSurface,
                                       ),
                                     ),
                                   ],
@@ -3774,14 +3900,14 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                             padding: const EdgeInsets.only(top: 16),
                             child: TextField(
                               controller: tempController,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 13,
                               ),
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 hintText: 'Enter company name',
                                 filled: true,
-                                fillColor: AsmitaPalette.systemBG,
+                                fillColor: Theme.of(context).colorScheme.surfaceContainer,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.all(
                                     Radius.circular(12),
@@ -3826,13 +3952,13 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       children: [
         if (label != null)
           Padding(
-            padding: const EdgeInsets.only(bottom: 6.0),
+            padding: EdgeInsets.only(bottom: 6.0),
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Poppins',
                 fontSize: 12,
-                color: AsmitaPalette.textDark,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
@@ -3840,10 +3966,10 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: Colors.white,
-              border: Border.all(color: AsmitaPalette.borderGrey, width: 1.2),
+              border: Border.all(color: Theme.of(context).dividerColor, width: 1.2),
               borderRadius: BorderRadius.circular(isPill ? 24 : 12),
             ),
             child: Row(
@@ -3854,17 +3980,17 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                     value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AsmitaPalette.deepNavy,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.arrow_drop_down_rounded,
-                  color: AsmitaPalette.deepNavy,
+                  color: Theme.of(context).colorScheme.onSurface,
                   size: 24,
                 ),
               ],
@@ -4781,3 +4907,4 @@ class _VisitorOtpSheetWidgetState extends State<_VisitorOtpSheetWidget> {
   );
 }
 }
+

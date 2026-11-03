@@ -31,7 +31,7 @@ class VisitorHistoryCard extends StatelessWidget {
               ),
               child: Icon(
                 item['icon'] as IconData, 
-                color: item['brandColor'] as Color, 
+                color: item['brandColor'] as Color? ?? Theme.of(context).colorScheme.primary, 
                 size: 22
               ),
             ),

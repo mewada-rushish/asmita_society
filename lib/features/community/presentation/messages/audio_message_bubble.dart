@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import '../../../../core/di/injection_container.dart' as di;
+import '../../../../core/security/secure_storage_service.dart';
 class AudioMessageBubble extends StatefulWidget {
   final String content; // URL or local path
   final bool isMe;
@@ -66,7 +68,12 @@ class _AudioMessageBubbleState extends State<AudioMessageBubble> {
     try {
       final path = widget.content.split('|').first; // Handle our "path|duration" format if present
       if (path.startsWith('http')) {
-        await _audioPlayer.setUrl(path);
+        final token = await di.sl<SecureStorageService>().getToken();
+        if (token != null) {
+          await _audioPlayer.setUrl(path, headers: {'Authorization': 'Bearer $token'});
+        } else {
+          await _audioPlayer.setUrl(path);
+        }
       } else {
         await _audioPlayer.setFilePath(path);
       }

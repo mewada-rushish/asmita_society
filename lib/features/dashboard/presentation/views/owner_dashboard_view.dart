@@ -6,6 +6,7 @@ import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
+import 'package:asmita_society/core/widgets/permission_gate.dart';
 import 'package:asmita_society/core/utils/property_role_resolver.dart';
 import 'package:asmita_society/core/utils/dashboard_scroll_physics.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
@@ -227,7 +228,10 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        _buildGateSyncModule(context),
+                        PermissionGate(
+                          permissionKey: 'visitor_management',
+                          child: _buildGateSyncModule(context),
+                        ),
                         const SizedBox(height: 24),
                         _buildAdPlaceholder(
                           context,
@@ -236,13 +240,29 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                           margin: const EdgeInsets.symmetric(horizontal: 16),
                         ),
                         const SizedBox(height: 24),
-                        _buildCommunityPostsHeader(context),
-                        const SizedBox(height: 12),
-                        _buildCommunityPostsModule(context),
+                        PermissionGate(
+                          permissionKey: 'community',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildCommunityPostsHeader(context),
+                              const SizedBox(height: 12),
+                              _buildCommunityPostsModule(context),
+                            ],
+                          ),
+                        ),
                         const SizedBox(height: 24),
-                        _buildServicesFooter(context),
-                        const SizedBox(height: 12),
-                        _buildFrequentServices(context),
+                        PermissionGate(
+                          permissionKey: 'services',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildServicesFooter(context),
+                              const SizedBox(height: 12),
+                              _buildFrequentServices(context),
+                            ],
+                          ),
+                        ),
                         const SizedBox(height: 160),
                       ],
                     ),
@@ -503,12 +523,8 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                 if (state is VisitorHistoryLoaded) {
                   final today = DateTime.now();
                   final todayEntries = state.history
-                      .where((rawItem) {
-                        final item = rawItem is Map
-                            ? Map<String, dynamic>.from(rawItem)
-                            : <String, dynamic>{};
-                        final dateStr =
-                            item['created_at'] ?? item['valid_from'];
+                      .where((item) {
+                        final dateStr = item.dateStr;
                         if (dateStr == null) return false;
                         try {
                           final dt = DateTime.parse(dateStr).toLocal();
@@ -543,34 +559,18 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                     child: Padding(
                       padding: const EdgeInsets.only(top: 4.0),
                       child: Row(
-                        children: todayEntries.map((rawItem) {
-                          final item = rawItem is Map
-                              ? Map<String, dynamic>.from(rawItem)
-                              : <String, dynamic>{};
-                          final name =
-                              item['visitor_name'] ??
-                              item['title'] ??
-                              'Unknown';
-                          final company =
-                              item['company_name'] ??
-                              item['purpose'] ??
-                              'Visitor';
-                          final isPreApproved =
-                              item['record_type'] == 'PRE_APPROVED';
-                          final category =
-                              (isPreApproved
-                                      ? (item['invite_type'] ?? 'Invite')
-                                      : 'Walk-in')
-                                  .toString()
-                                  .toLowerCase();
+                        children: todayEntries.map((item) {
+                          final name = item.name;
+                          final company = item.company;
+                          final category = item.category.toLowerCase();
 
                           final authState = context.read<AuthBloc>().state;
                           final currentUserId = authState is AuthAuthenticated
                               ? authState.user.userId
                               : null;
-                          final isUnviewed = item['is_viewed'] == false;
+                          final isUnviewed = item.rawData['is_viewed'] == false;
                           final isForCurrentUser =
-                              item['resident_id'] == currentUserId;
+                              item.rawData['resident_id'] == currentUserId;
                           final showBadge = isUnviewed && isForCurrentUser;
 
                           String titleText = name;

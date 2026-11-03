@@ -547,6 +547,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         disabledBackgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                        disabledForegroundColor: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
                       ),
                       child: _isSubmitting
                           ? const SizedBox(

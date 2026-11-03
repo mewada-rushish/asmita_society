@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:asmita_society/features/community/presentation/screens/community_screen.dart';
-import 'package:asmita_society/features/community/presentation/providers/community_provider.dart';
+import 'package:asmita_society/features/community/bloc/community_bloc.dart';
+import 'package:asmita_society/features/community/bloc/community_event.dart';
 import 'package:asmita_society/features/community/bloc/community_state.dart';
 import 'package:asmita_society/features/community/data/models/chat_message_model.dart';
 import 'package:asmita_society/features/community/presentation/composer/chat_composer.dart';
@@ -15,30 +15,19 @@ import 'package:asmita_society/features/auth/data/models/user_model.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 
 class MockAuthBloc extends Mock implements AuthBloc {}
+class MockCommunityBloc extends Mock implements CommunityBloc {}
 
-class TestCommunityNotifier extends CommunityNotifier {
-  final CommunityState initialState;
-
-  TestCommunityNotifier({this.initialState = const CommunityLoaded([])});
-
-  @override
-  CommunityState build() {
-    return initialState;
-  }
-
-  @override
-  Future<void> loadMessages({int? currentUserId, String? currentUserName, bool isRefresh = false}) async {}
-
-  @override
-  void startPolling({bool Function()? isAtBottom}) {}
-
-  @override
-  void stopPolling() {}
-}
+class FakeCommunityEvent extends Fake implements CommunityEvent {}
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(FakeCommunityEvent());
+  });
+
   late MockAuthBloc mockAuthBloc;
+  late MockCommunityBloc mockCommunityBloc;
   late StreamController<AuthState> authStateController;
+  late StreamController<CommunityState> communityStateController;
 
   final testUser = UserModel(
     userId: 301,
@@ -69,17 +58,25 @@ void main() {
 
   setUp(() {
     mockAuthBloc = MockAuthBloc();
+    mockCommunityBloc = MockCommunityBloc();
     authStateController = StreamController<AuthState>.broadcast();
+    communityStateController = StreamController<CommunityState>.broadcast();
 
     when(() => mockAuthBloc.stream).thenAnswer((_) => authStateController.stream);
     when(() => mockAuthBloc.state).thenReturn(
       AuthAuthenticated(user: testUser, sessionRole: 'owner'),
     );
     when(() => mockAuthBloc.close()).thenAnswer((_) async {});
+
+    when(() => mockCommunityBloc.stream).thenAnswer((_) => communityStateController.stream);
+    when(() => mockCommunityBloc.state).thenReturn(const CommunityLoaded([]));
+    when(() => mockCommunityBloc.close()).thenAnswer((_) async {});
+    when(() => mockCommunityBloc.add(any())).thenReturn(null);
   });
 
   tearDown(() async {
     await authStateController.close();
+    await communityStateController.close();
   });
 
   Widget buildTestableWidget({
@@ -87,19 +84,16 @@ void main() {
     VoidCallback? onNavigateToSearch,
     VoidCallback? onNavigateToCommunity,
   }) {
-    return ProviderScope(
-      overrides: [
-        communityProvider.overrideWith(() => TestCommunityNotifier(initialState: initialState)),
+    when(() => mockCommunityBloc.state).thenReturn(initialState);
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>.value(value: mockAuthBloc),
+        BlocProvider<CommunityBloc>.value(value: mockCommunityBloc),
       ],
-      child: MultiBlocProvider(
-        providers: [
-          BlocProvider<AuthBloc>.value(value: mockAuthBloc),
-        ],
-        child: MaterialApp(
-          home: CommunityScreen(
-            onNavigateToSearch: onNavigateToSearch,
-            onNavigateToCommunity: onNavigateToCommunity,
-          ),
+      child: MaterialApp(
+        home: CommunityScreen(
+          onNavigateToSearch: onNavigateToSearch,
+          onNavigateToCommunity: onNavigateToCommunity,
         ),
       ),
     );

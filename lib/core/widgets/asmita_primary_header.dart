@@ -32,6 +32,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
   final String? subtitleOverride;
   final Widget? trailingActions;
   final Widget? extraAction;
+  final Widget? trailingExtraAction;
   final bool allowPropertySwitching;
   final VoidCallback? onProfilePressed;
   final VoidCallback? onBackPressed;
@@ -52,6 +53,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
     this.subtitleOverride,
     this.trailingActions,
     this.extraAction,
+    this.trailingExtraAction,
     this.allowPropertySwitching = true,
     this.onProfilePressed,
     this.propertyType,
@@ -701,6 +703,10 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                 ],
 
                 const SizedBox(width: 10),
+                if (trailingExtraAction != null) ...[
+                  trailingExtraAction!,
+                  const SizedBox(width: 8),
+                ],
                 GestureDetector(
                   onTap: onProfilePressed,
                   child: CircleAvatar(
