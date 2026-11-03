@@ -1314,26 +1314,6 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
             ),
-            const SizedBox(height: 18),
-            ElevatedButton.icon(
-              onPressed: () => _showPreApproveModal(context),
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text(
-                'Schedule Visitor',
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AsmitaPalette.deepNavy,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 1,
-              ),
-            ),
           ],
         ),
       ),
