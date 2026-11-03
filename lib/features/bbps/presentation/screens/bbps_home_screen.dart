@@ -12,7 +12,6 @@ import 'package:shimmer/shimmer.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_bottom_nav_bar.dart';
 import '../../../../core/widgets/asmita_toast.dart';
-import '../widgets/bbps_support_modals.dart';
 
 /// Bharat BillPay (BBPS) / Bharat Connect Dedicated Hub Screen
 ///
@@ -852,78 +851,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 10),
 
-                    // Quick Action Shortcuts: History & Complaint
-                    Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: () => BbpsSupportModals.showTransactionHistoryModal(context),
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10),
-                              decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                                ),
-                              ),
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.history_rounded, size: 15, color: Color(0xFF4F46E5)),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    'History & Receipts',
-                                    style: TextStyle(
-                                      fontFamily: 'Montserrat',
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF4F46E5),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () => BbpsSupportModals.showComplaintModal(context),
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10),
-                              decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                                ),
-                              ),
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.support_agent_rounded, size: 15, color: Color(0xFF0284C7)),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    'Raise Complaint',
-                                    style: TextStyle(
-                                      fontFamily: 'Montserrat',
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF0284C7),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                     const SizedBox(height: 12),
 
                     // Interactive Search Bar
