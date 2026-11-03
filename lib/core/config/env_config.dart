@@ -3,8 +3,10 @@ enum AppEnvironment { development, production }
 
 /// Central configuration for API environment endpoints and base URLs.
 class EnvConfig {
-  static AppEnvironment get currentEnvironment => AppEnvironment.production;
-
+  static AppEnvironment get currentEnvironment {
+    const String env = String.fromEnvironment('APP_ENV', defaultValue: 'production');
+    return env == 'development' ? AppEnvironment.development : AppEnvironment.production;
+  }
 
   /// Resolves the base URL based on the current environment and platform.
   /// Resolves the base URL using dart-define with a fallback to production.
@@ -52,6 +54,18 @@ class EnvConfig {
   static String guardVisitorCheckOut(String id) => '$baseUrl/app-api/visitor-entries/$id/check-out';
   static String guardVisitorCheckIn(String id) => '$baseUrl/app-api/visitor-entries/$id/check-in';
   static String get createVisitorEntry => '$baseUrl/app-api/visitor-entries';
+
+  /// AsmitA House Visitor Flow Endpoints
+  static String get publicVisitorSubmit => '$baseUrl/api/public/visitor/submit';
+  static String publicVisitorStatus(String code) => '$baseUrl/api/public/visitor/status/$code';
+  static String get guardCreateVehicleDraft => '$baseUrl/api/public/visitor/guard/draft';
+  static String get guardListActiveDrafts => '$baseUrl/api/public/visitor/guard/drafts';
+  static String visitorAction(String id) => '$baseUrl/api/public/visitor/entries/$id/action';
+  static String visitorAssign(String id) => '$baseUrl/api/public/visitor/entries/$id/assign';
+  static String get visitorCheckInPass => '$baseUrl/api/public/visitor/entries/0/check-in';
+  static String get visitorAutoCheckoutEod => '$baseUrl/api/public/visitor/entries/auto-checkout-eod';
+  static String propertyVisitorConfig(int societyId) =>
+      '$baseUrl/api/public/visitor/config?society_id=$societyId';
 
   /// Global Search
   static String get globalSearch => '$baseUrl/app-api/search';
@@ -106,4 +120,8 @@ class EnvConfig {
   /// Public Visitor OTP Authentication
   static String get publicVisitorOtpSend => '$baseUrl/app-api/public/visitor/otp/send';
   static String get publicVisitorOtpVerify => '$baseUrl/app-api/public/visitor/otp/verify';
+
+  /// Bharat BillPay (BBPS) Endpoints
+  static String get bbpsCategories => '$baseUrl/app-api/bbps/categories';
+  static String get bbpsSessionLink => '$baseUrl/app-api/bbps/session-link';
 }

@@ -33,6 +33,7 @@ import 'package:asmita_society/features/services/data/repositories/daily_help_re
 import '../../../core/di/injection_container.dart' as di;
 import '../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../visitor_management/data/repositories/industrial_visit_repository.dart';
+import '../../../core/services/property_config_service.dart';
 import 'package:asmita_society/core/services/permission_manager_service.dart';
 
 class MainDashboardScreen extends StatefulWidget {
@@ -46,15 +47,28 @@ class MainDashboardScreen extends StatefulWidget {
 
 class _MainDashboardScreenState extends State<MainDashboardScreen> {
   int _currentIndex = 0;
+  String _visitsInitialFilter = 'ALL';
 
   @override
   void initState() {
     super.initState();
+    _loadPropertyConfig();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         PermissionManagerService.showPermissionSetupDialog(context);
       }
     });
+  }
+
+  Future<void> _loadPropertyConfig() async {
+    final authState = context.read<AuthBloc>().state;
+    int societyId = 1;
+    if (authState is AuthAuthenticated) {
+      societyId = authState.user.societyId ?? 1;
+    }
+    try {
+      await di.sl<PropertyConfigService>().loadConfigForSociety(societyId);
+    } catch (_) {}
   }
 
   void _navigateToSearch() {
@@ -125,11 +139,12 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   }
 
   // Dynamically builds the view list cleanly to keep callback bindings alive on state mutations
-  List<Widget> _buildScreens() {
-    final normalized = PropertyRoleResolver.normalizeRole(widget.userRole);
+  List<Widget> _buildScreens([String? activeRole]) {
+    final role = activeRole ?? widget.userRole;
+    final normalized = PropertyRoleResolver.normalizeRole(role);
     final isResidential = normalized == 'owner' || normalized == 'tenant';
     return [
-      _resolveRoleBasedHomeView(widget.userRole), // Index 0: Home view
+      _resolveRoleBasedHomeView(role), // Index 0: Home view
       isResidential
           ? ServicesScreen( // Index 1: Services Grid
               onNavigateToSearch: _navigateToSearch,
@@ -137,7 +152,11 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
             )
           : _wrapWithIndustrialBloc(
               context,
-              IndustrialVisitsScreen(onBack: () => setState(() => _currentIndex = 0)),
+              IndustrialVisitsScreen(
+                key: ValueKey('visits_$_visitsInitialFilter'),
+                initialFilter: _visitsInitialFilter,
+                onBack: () => setState(() => _currentIndex = 0),
+              ),
             ),
       isResidential
           ? CommunityScreen( // Index 2: Society Chat
@@ -145,15 +164,15 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
               onNavigateToCommunity: () => setState(() => _currentIndex = 2),
             )
           : IndustrialDirectoryScreen(onBack: () => setState(() => _currentIndex = 0)),
-      _resolveRoleBasedHistoryView(widget.userRole),               // Index 3: Gate Records (History)
+      _resolveRoleBasedHistoryView(role),               // Index 3: Gate Records (History)
       MenuScreen(
-        userRole: widget.userRole,
+        userRole: role,
         onNavigateToTab: (index) {
           setState(() => _currentIndex = index);
         },
       ),      // Index 4: Profile Settings
-      _resolveRoleBasedQrScanner(widget.userRole), // Index 5: QR Scanner
-      _resolveRoleBasedCheckedInView(widget.userRole), // Index 6: Checked In (Guard only)
+      _resolveRoleBasedQrScanner(role), // Index 5: QR Scanner
+      _resolveRoleBasedCheckedInView(role), // Index 6: Checked In (Guard/Receptionist only)
     ];
   }
 
@@ -163,7 +182,6 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
     }
     return const SizedBox.shrink();
   }
-
 
   Widget _resolveRoleBasedHomeView(String role) {
     final normalized = PropertyRoleResolver.normalizeRole(role);
@@ -228,7 +246,14 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       case 'director':
         return _wrapWithIndustrialBloc(
           context,
-          const DirectorDashboardView(),
+          DirectorDashboardView(
+            onNavigateToVisitsWithFilter: (filter) {
+              setState(() {
+                _visitsInitialFilter = filter;
+                _currentIndex = 1; // Switches to Visits & Passes tab
+              });
+            },
+          ),
         );
       case 'employee':
         final authState = context.watch<AuthBloc>().state;
@@ -306,20 +331,29 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBody: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: AsmitaAnimatedIndexedStack(
-        index: _currentIndex,
-        children: _buildScreens(),
-      ),
-      bottomNavigationBar: AsmitaBottomNavBar(
-        currentIndex: _currentIndex,
-        userRole: widget.userRole,
-        onTap: (index) {
-          setState(() => _currentIndex = index);
-        },
-      ),
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        String activeRole = widget.userRole;
+        if (state is AuthAuthenticated) {
+          activeRole = state.sessionRole;
+        }
+
+        return Scaffold(
+          extendBody: true,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          body: AsmitaAnimatedIndexedStack(
+            index: _currentIndex,
+            children: _buildScreens(activeRole),
+          ),
+          bottomNavigationBar: AsmitaBottomNavBar(
+            currentIndex: _currentIndex,
+            userRole: activeRole,
+            onTap: (index) {
+              setState(() => _currentIndex = index);
+            },
+          ),
+        );
+      }
     );
   }
 }

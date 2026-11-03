@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/community_provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../bloc/community_bloc.dart';
+import '../../bloc/community_event.dart';
 
-class CreatePollDialog extends ConsumerStatefulWidget {
+class CreatePollDialog extends StatefulWidget {
   const CreatePollDialog({super.key});
 
   @override
-  ConsumerState<CreatePollDialog> createState() => _CreatePollDialogState();
+  State<CreatePollDialog> createState() => _CreatePollDialogState();
 }
 
-class _CreatePollDialogState extends ConsumerState<CreatePollDialog> {
+class _CreatePollDialogState extends State<CreatePollDialog> {
   final TextEditingController _questionController = TextEditingController();
   final List<TextEditingController> _optionControllers = [
     TextEditingController(),
@@ -48,11 +49,11 @@ class _CreatePollDialogState extends ConsumerState<CreatePollDialog> {
     }
 
     if (options.length >= 2) {
-      ref.read(communityProvider.notifier).sendPollMessage(
-            question,
-            options,
-            _allowMultipleAnswers,
-          );
+      context.read<CommunityBloc>().add(SendPollMessage(
+            question: question,
+            options: options,
+            allowMultipleAnswers: _allowMultipleAnswers,
+          ));
       Navigator.of(context).pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -1,5 +1,6 @@
 import 'dart:io';
-import 'package:dio/dio.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/network/dio_client.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
@@ -80,7 +81,7 @@ class _DocumentMessageBubbleState extends State<DocumentMessageBubble> {
             }
             
             // Download the file
-            await Dio().download(url, filePath);
+            await sl<AsmitaDioClient>().dio.download(url, filePath);
             final result = await OpenFilex.open(filePath);
             if (result.type != ResultType.done && context.mounted) {
               AsmitaToast.show(context, message: 'No compatible app found to open this file', type: AsmitaToastType.error);

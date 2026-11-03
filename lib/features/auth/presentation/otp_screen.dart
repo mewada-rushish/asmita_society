@@ -82,6 +82,7 @@ class _OtpScreenState extends State<OtpScreen> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
+            if (!context.mounted) return;
             AsmitaToast.show(
               context,
               message: 'Identity verified successfully.',

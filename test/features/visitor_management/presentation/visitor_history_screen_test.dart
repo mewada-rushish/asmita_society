@@ -7,6 +7,7 @@ import 'package:asmita_society/features/visitor_management/presentation/screens/
 import 'package:asmita_society/features/visitor_management/bloc/visitor_bloc.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_event.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_state.dart';
+import 'package:asmita_society/features/visitor_management/data/models/visitor_history_item.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/auth/data/models/user_model.dart';
@@ -72,7 +73,7 @@ void main() {
 
     when(() => mockVisitorBloc.stream).thenAnswer((_) => visitorStateController.stream);
     when(() => mockVisitorBloc.state).thenReturn(
-      VisitorHistoryLoaded(history: sampleHistoryItems),
+      VisitorHistoryLoaded(history: sampleHistoryItems.map((e) => VisitorHistoryItem.fromJson(e)).toList()),
     );
     when(() => mockVisitorBloc.close()).thenAnswer((_) async {});
     when(() => mockVisitorBloc.add(any())).thenReturn(null);

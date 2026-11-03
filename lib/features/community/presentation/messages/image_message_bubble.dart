@@ -1,13 +1,16 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/security/secure_storage_service.dart';
 
+import '../../bloc/community_bloc.dart';
 import '../../bloc/community_state.dart';
-import '../providers/community_provider.dart';
+import '../../bloc/community_event.dart';
 import '../screens/full_screen_image_viewer.dart';
 
-class ImageMessageBubble extends ConsumerWidget {
+class ImageMessageBubble extends StatelessWidget {
   final String imagePath;
   final String messageId;
 
@@ -18,7 +21,7 @@ class ImageMessageBubble extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     Widget imageWidget;
     Widget placeholder = Container(
       color: Colors.grey.shade100,
@@ -42,12 +45,18 @@ class ImageMessageBubble extends ConsumerWidget {
     );
 
     if (imagePath.startsWith('http')) {
-      imageWidget = CachedNetworkImage(
-        imageUrl: imagePath,
-        fit: BoxFit.cover,
-        placeholder: (context, url) =>
-            Container(color: Colors.grey.shade100, height: 120),
-        errorWidget: (context, url, error) => placeholder,
+      imageWidget = FutureBuilder<String?>(
+        future: sl<SecureStorageService>().getToken(),
+        builder: (context, snapshot) {
+          return CachedNetworkImage(
+            imageUrl: imagePath,
+            httpHeaders: snapshot.hasData ? {'Authorization': 'Bearer ${snapshot.data}'} : null,
+            fit: BoxFit.cover,
+            placeholder: (context, url) =>
+                Container(color: Colors.grey.shade100, height: 120),
+            errorWidget: (context, url, error) => placeholder,
+          );
+        }
       );
     } else {
       final file = File(imagePath);
@@ -64,7 +73,7 @@ class ImageMessageBubble extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () {
-        final state = ref.read(communityProvider);
+        final state = context.read<CommunityBloc>().state;
         if (state is CommunityLoaded) {
           final imageMessages = state.messages
               .where((m) => m.type == 'image')
@@ -80,7 +89,7 @@ class ImageMessageBubble extends ConsumerWidget {
                   imageMessages: imageMessages,
                   initialIndex: index,
                   onReply: (message) {
-                    ref.read(communityProvider.notifier).setReplyTo(message);
+                    context.read<CommunityBloc>().add(SetReplyToMessage(message));
                   },
                 ),
               ),

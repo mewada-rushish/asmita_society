@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/community_provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../bloc/community_bloc.dart';
+import '../../bloc/community_event.dart';
 
-class ContactPickerBottomSheet extends ConsumerStatefulWidget {
+class ContactPickerBottomSheet extends StatefulWidget {
   const ContactPickerBottomSheet({super.key});
 
   @override
-  ConsumerState<ContactPickerBottomSheet> createState() => _ContactPickerBottomSheetState();
+  State<ContactPickerBottomSheet> createState() => _ContactPickerBottomSheetState();
 }
 
-class _ContactPickerBottomSheetState extends ConsumerState<ContactPickerBottomSheet> {
+class _ContactPickerBottomSheetState extends State<ContactPickerBottomSheet> {
   List<Contact> _contacts = [];
   List<Contact> _filteredContacts = [];
   bool _isLoading = true;
@@ -84,7 +85,7 @@ class _ContactPickerBottomSheetState extends ConsumerState<ContactPickerBottomSh
     final name = contact.displayName ?? "";
     final phone = contact.phones.first.number;
 
-    ref.read(communityProvider.notifier).sendContactMessage(name, phone);
+    context.read<CommunityBloc>().add(SendContactMessage(name, phone));
     Navigator.pop(context);
   }
 

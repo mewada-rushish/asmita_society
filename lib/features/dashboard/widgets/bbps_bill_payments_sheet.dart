@@ -3,6 +3,11 @@ import 'package:flutter/services.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_toast.dart';
+import 'package:dio/dio.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/config/env_config.dart';
+import '../../../../core/security/secure_storage_service.dart';
+import '../../../../core/network/dio_client.dart';
 
 /// BBPS (Bharat BillPay / NPCI) Unified Utility Clearance Sheet
 ///
@@ -17,7 +22,7 @@ class BbpsBillPaymentsSheet extends StatefulWidget {
       context: context,
       title: 'Bill Payments (BBPS)',
       subtitle: 'Bharat BillPay • Unified Utility & Operational Clearance',
-      contentPadding: EdgeInsets.zero,
+      contentPadding: const EdgeInsets.only(top: 14),
       child: const BbpsBillPaymentsSheet(),
     );
   }
@@ -30,6 +35,90 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedFilterTag = 'All';
+  Set<String>? _activeCategoryIds;
+  bool _isLoadingActiveCategories = true;
+  bool get isLoadingCategories => _isLoadingActiveCategories;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadActiveCategories();
+  }
+
+  Future<void> _loadActiveCategories() async {
+    try {
+      final dio = AsmitaDioClient(SecureStorageService()).dio;
+      final response = await dio.get(
+        EnvConfig.bbpsCategories,
+        options: Options(receiveTimeout: const Duration(seconds: 8)),
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final List cats = response.data['categories'] ?? [];
+        final ids = cats.map((c) => c['id'].toString()).toSet();
+        if (mounted) {
+          setState(() {
+            _activeCategoryIds = ids;
+            _isLoadingActiveCategories = false;
+          });
+        }
+        return;
+      }
+    } catch (e) {
+      debugPrint('[BBPS] Failed to fetch active categories: $e');
+    }
+    if (mounted) {
+      setState(() {
+        _isLoadingActiveCategories = false;
+      });
+    }
+  }
+
+  Future<void> _launchEtherealBillPay({
+    required String categoryName,
+    List<Map<String, String>>? billParams,
+    String? redirectTo,
+  }) async {
+    try {
+      if (mounted) {
+        AsmitaToast.show(
+          context,
+          message: 'Opening Bharat BillPay portal...',
+          type: AsmitaToastType.info,
+        );
+      }
+      final dio = AsmitaDioClient(SecureStorageService()).dio;
+      final response = await dio.post(
+        EnvConfig.bbpsSessionLink,
+        data: {
+          'categoryName': categoryName,
+          if (billParams != null && billParams.isNotEmpty)
+            'billParams': billParams,
+          if (redirectTo != null && redirectTo.isNotEmpty)
+            'redirectTo': redirectTo,
+        },
+        options: Options(
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final String url = response.data['link'];
+        final uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('[BBPS] Ethereal launch failed: $e');
+    }
+    if (mounted) {
+      AsmitaToast.show(
+        context,
+        message: 'Launching BBPS Portal...',
+        type: AsmitaToastType.success,
+      );
+    }
+  }
 
   static const List<Map<String, dynamic>> _allBillerCategories = [
     {
@@ -39,7 +128,8 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'icon': Icons.bolt_rounded,
       'color': Color(0xFFEAB308),
       'tag': 'Utilities',
-      'keywords': 'electricity power bescom adani tata mseb torrent bses discom energy bill',
+      'keywords':
+          'electricity power bescom adani tata mseb torrent bses discom energy bill',
       'providers': [
         'Adani Electricity Mumbai',
         'Tata Power - Mumbai',
@@ -94,7 +184,8 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'icon': Icons.wifi_rounded,
       'color': Color(0xFF7C3AED),
       'tag': 'Telecom',
-      'keywords': 'broadband internet wifi airtel jio fiber act hathway spectranet tata tele lease',
+      'keywords':
+          'broadband internet wifi airtel jio fiber act hathway spectranet tata tele lease',
       'providers': [
         'JioFiber Commercial / Postpaid',
         'Airtel Xstream Fiber',
@@ -113,7 +204,8 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'icon': Icons.phone_android_rounded,
       'color': Color(0xFF059669),
       'tag': 'Telecom',
-      'keywords': 'mobile postpaid cellular airtel jio vi vodafone bsnl telecom corporate connection',
+      'keywords':
+          'mobile postpaid cellular airtel jio vi vodafone bsnl telecom corporate connection',
       'providers': [
         'Airtel Corporate Postpaid',
         'Jio Postpaid Plus',
@@ -130,7 +222,8 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'icon': Icons.toll_rounded,
       'color': Color(0xFF2563EB),
       'tag': 'Financial',
-      'keywords': 'fastag toll parking netc highway nhai fleet pass vehicle tollgate barrier',
+      'keywords':
+          'fastag toll parking netc highway nhai fleet pass vehicle tollgate barrier',
       'providers': [
         'ICICI Bank FASTag',
         'State Bank of India (SBI) FASTag',
@@ -149,7 +242,8 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'icon': Icons.tv_rounded,
       'color': Color(0xFFEC4899),
       'tag': 'Telecom',
-      'keywords': 'dth cable tv tata play airtel dth dish tv sun direct videocon set top box',
+      'keywords':
+          'dth cable tv tata play airtel dth dish tv sun direct videocon set top box',
       'providers': [
         'Tata Play (formerly Tata Sky)',
         'Airtel Digital TV',
@@ -167,7 +261,8 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'icon': Icons.phone_in_talk_rounded,
       'color': Color(0xFF6366F1),
       'tag': 'Telecom',
-      'keywords': 'landline fixed line pri bsnl mtnl airtel telecom voice intercom',
+      'keywords':
+          'landline fixed line pri bsnl mtnl airtel telecom voice intercom',
       'providers': [
         'Airtel Landline',
         'MTNL Mumbai / Delhi',
@@ -184,7 +279,8 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'icon': Icons.account_balance_rounded,
       'color': Color(0xFF14B8A6),
       'tag': 'Govt & Taxes',
-      'keywords': 'property tax municipal corporation bmc mcgm mcd bbmp civic cess commercial property',
+      'keywords':
+          'property tax municipal corporation bmc mcgm mcd bbmp civic cess commercial property',
       'providers': [
         'MCGM (Brihanmumbai Municipal Corp)',
         'Municipal Corporation of Delhi (MCD)',
@@ -202,7 +298,8 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'icon': Icons.apartment_rounded,
       'color': Color(0xFF8B5CF6),
       'tag': 'Campus',
-      'keywords': 'housing society maintenance complex flat office commercial dues facility cam maintenance bill',
+      'keywords':
+          'housing society maintenance complex flat office commercial dues facility cam maintenance bill',
       'providers': [
         'AsmitA Society Maintenance Desk',
         'AsmitA Corporate Complex CAM',
@@ -219,7 +316,8 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'icon': Icons.health_and_safety_rounded,
       'color': Color(0xFF10B981),
       'tag': 'Financial',
-      'keywords': 'insurance lic hdfc ergo star health policy premium commercial fire marine asset liability',
+      'keywords':
+          'insurance lic hdfc ergo star health policy premium commercial fire marine asset liability',
       'providers': [
         'Life Insurance Corp (LIC)',
         'HDFC Life / HDFC ERGO',
@@ -238,7 +336,8 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'icon': Icons.payments_rounded,
       'color': Color(0xFF3B82F6),
       'tag': 'Financial',
-      'keywords': 'loan emi repayment bajaj finance hdfc sbi vehicle home loan asset finance',
+      'keywords':
+          'loan emi repayment bajaj finance hdfc sbi vehicle home loan asset finance',
       'providers': [
         'Bajaj Finance Limited',
         'HDFC Bank Loan Clearance',
@@ -256,7 +355,8 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'icon': Icons.credit_card_rounded,
       'color': Color(0xFFF43F5E),
       'tag': 'Financial',
-      'keywords': 'credit card visa mastercard rupay bill payment corporate card hdfc sbi icici axis',
+      'keywords':
+          'credit card visa mastercard rupay bill payment corporate card hdfc sbi icici axis',
       'providers': [
         'HDFC Bank Credit Cards',
         'SBI Card & Payment Services',
@@ -274,12 +374,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'icon': Icons.propane_tank_rounded,
       'color': Color(0xFFF97316),
       'tag': 'Utilities',
-      'keywords': 'lpg cylinder gas booking bharat gas indane hp commercial cylinder pantry',
-      'providers': [
-        'Bharat Gas (BPCL)',
-        'Indane Gas (IOCL)',
-        'HP Gas (HPCL)',
-      ],
+      'keywords':
+          'lpg cylinder gas booking bharat gas indane hp commercial cylinder pantry',
+      'providers': ['Bharat Gas (BPCL)', 'Indane Gas (IOCL)', 'HP Gas (HPCL)'],
       'accountLabel': 'Consumer Number / Registered Mobile',
       'accountHint': 'e.g. 9820110101',
     },
@@ -290,7 +387,8 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'icon': Icons.school_rounded,
       'color': Color(0xFFF59E0B),
       'tag': 'Campus',
-      'keywords': 'school college university education fees coaching training academy exam',
+      'keywords':
+          'school college university education fees coaching training academy exam',
       'providers': [
         'Mumbai University Fees',
         'AsmitA College of Engineering',
@@ -307,7 +405,8 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'icon': Icons.local_hospital_rounded,
       'color': Color(0xFFEF4444),
       'tag': 'Campus',
-      'keywords': 'hospital clinic pathology medical diagnostic pharmacy lab testing healthcare',
+      'keywords':
+          'hospital clinic pathology medical diagnostic pharmacy lab testing healthcare',
       'providers': [
         'Fortis Healthcare',
         'Apollo Hospitals',
@@ -337,7 +436,12 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
   List<Map<String, dynamic>> _getFilteredCategories() {
     final query = _searchQuery.trim().toLowerCase();
     return _allBillerCategories.where((cat) {
-      final matchesTag = _selectedFilterTag == 'All' || cat['tag'] == _selectedFilterTag;
+      if (_activeCategoryIds != null &&
+          !_activeCategoryIds!.contains(cat['id'])) {
+        return false;
+      }
+      final matchesTag =
+          _selectedFilterTag == 'All' || cat['tag'] == _selectedFilterTag;
       if (!matchesTag) return false;
 
       if (query.isEmpty) return true;
@@ -345,7 +449,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       final title = (cat['title'] as String).toLowerCase();
       final subtitle = (cat['subtitle'] as String).toLowerCase();
       final keywords = (cat['keywords'] as String).toLowerCase();
-      final providers = (cat['providers'] as List<String>).join(' ').toLowerCase();
+      final providers = (cat['providers'] as List<String>)
+          .join(' ')
+          .toLowerCase();
 
       return title.contains(query) ||
           subtitle.contains(query) ||
@@ -354,7 +460,10 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
     }).toList();
   }
 
-  void _showBillerLookupModal(BuildContext context, Map<String, dynamic> category) {
+  void _showBillerLookupModal(
+    BuildContext context,
+    Map<String, dynamic> category,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final List<String> providers = category['providers'] as List<String>;
     final catColor = category['color'] as Color;
@@ -392,7 +501,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                           width: 40,
                           height: 5,
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                            color: isDark
+                                ? const Color(0xFF475569)
+                                : const Color(0xFFCBD5E1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
@@ -405,7 +516,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: catColor.withValues(alpha: isDark ? 0.25 : 0.12),
+                              color: catColor.withValues(
+                                alpha: isDark ? 0.25 : 0.12,
+                              ),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
@@ -425,7 +538,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                                     fontFamily: 'Montserrat',
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF0F172A),
                                   ),
                                 ),
                                 Text(
@@ -433,7 +548,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 11,
-                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                    color: isDark
+                                        ? const Color(0xFF94A3B8)
+                                        : const Color(0xFF64748B),
                                   ),
                                 ),
                               ],
@@ -441,7 +558,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.close_rounded),
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            color: isDark
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xFF64748B),
                             onPressed: () => Navigator.pop(sheetContext),
                           ),
                         ],
@@ -455,7 +574,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                           fontFamily: 'Montserrat',
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white70 : const Color(0xFF334155),
+                          color: isDark
+                              ? Colors.white70
+                              : const Color(0xFF334155),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -463,20 +584,28 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                          color: isDark
+                              ? const Color(0xFF1E293B)
+                              : const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                            color: isDark
+                                ? const Color(0xFF334155)
+                                : const Color(0xFFCBD5E1),
                           ),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: selectedProvider,
                             isExpanded: true,
-                            dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                            dropdownColor: isDark
+                                ? const Color(0xFF1E293B)
+                                : Colors.white,
                             icon: Icon(
                               Icons.keyboard_arrow_down_rounded,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                             items: providers.map((p) {
                               return DropdownMenuItem<String>(
@@ -487,7 +616,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                                     fontFamily: 'Poppins',
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF0F172A),
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -511,7 +642,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                           fontFamily: 'Montserrat',
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white70 : const Color(0xFF334155),
+                          color: isDark
+                              ? Colors.white70
+                              : const Color(0xFF334155),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -519,10 +652,14 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                          color: isDark
+                              ? const Color(0xFF1E293B)
+                              : const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                            color: isDark
+                                ? const Color(0xFF334155)
+                                : const Color(0xFFCBD5E1),
                           ),
                         ),
                         child: TextField(
@@ -531,14 +668,18 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                             fontFamily: 'Poppins',
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                           decoration: InputDecoration(
                             hintText: accountHint,
                             hintStyle: TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 12,
-                              color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                              color: isDark
+                                  ? const Color(0xFF64748B)
+                                  : const Color(0xFF94A3B8),
                             ),
                             border: InputBorder.none,
                           ),
@@ -560,13 +701,13 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                           }
 
                           HapticFeedback.mediumImpact();
-                          Navigator.pop(sheetContext); // Close provider modal
-                          Navigator.pop(context); // Close BBPS sheet
-
-                          AsmitaToast.show(
-                            context,
-                            message: 'Fetching bill for $selectedProvider...',
-                            type: AsmitaToastType.success,
+                          Navigator.pop(sheetContext);
+                          Navigator.pop(context);
+                          _launchEtherealBillPay(
+                            categoryName: category['title'] as String,
+                            billParams: [
+                              {'name': accountLabel, 'value': acct},
+                            ],
                           );
                         },
                         style: ElevatedButton.styleFrom(
@@ -629,7 +770,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFBFDBFE),
+                color: isDark
+                    ? const Color(0xFF334155)
+                    : const Color(0xFFBFDBFE),
                 width: 1.2,
               ),
               boxShadow: [
@@ -647,7 +790,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E40AF) : AsmitaPalette.deepNavy,
+                    color: isDark
+                        ? const Color(0xFF1E40AF)
+                        : AsmitaPalette.deepNavy,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -672,13 +817,18 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                                 fontFamily: 'Montserrat',
                                 fontWeight: FontWeight.w800,
                                 fontSize: 14,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF0F172A),
                               ),
                             ),
                           ),
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFF059669),
                               borderRadius: BorderRadius.circular(6),
@@ -700,7 +850,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                         'Direct, secure clearance for recurring commercial & department utility bills.',
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontSize: 11,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          color: isDark
+                              ? const Color(0xFF94A3B8)
+                              : const Color(0xFF64748B),
                           height: 1.25,
                         ),
                       ),
@@ -718,7 +870,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
               color: isDark ? const Color(0xFF1E293B) : Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                color: isDark
+                    ? const Color(0xFF334155)
+                    : const Color(0xFFCBD5E1),
                 width: 1.2,
               ),
               boxShadow: [
@@ -745,19 +899,25 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                 hintStyle: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 12.5,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  color: isDark
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF64748B),
                 ),
                 prefixIcon: Icon(
                   Icons.search_rounded,
                   size: 20,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  color: isDark
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF64748B),
                 ),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
                         icon: Icon(
                           Icons.clear_rounded,
                           size: 18,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          color: isDark
+                              ? const Color(0xFF94A3B8)
+                              : const Color(0xFF64748B),
                         ),
                         onPressed: () {
                           _searchController.clear();
@@ -766,7 +926,10 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                       )
                     : null,
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
               ),
             ),
           ),
@@ -789,16 +952,27 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                     borderRadius: BorderRadius.circular(10),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
-                            : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                            ? (isDark
+                                  ? const Color(0xFF3B82F6)
+                                  : AsmitaPalette.deepNavy)
+                            : (isDark
+                                  ? const Color(0xFF1E293B)
+                                  : const Color(0xFFF1F5F9)),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isSelected
-                              ? (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
-                              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                              ? (isDark
+                                    ? const Color(0xFF3B82F6)
+                                    : AsmitaPalette.deepNavy)
+                              : (isDark
+                                    ? const Color(0xFF334155)
+                                    : const Color(0xFFE2E8F0)),
                           width: 1,
                         ),
                       ),
@@ -807,10 +981,14 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                         style: TextStyle(
                           fontFamily: 'Montserrat',
                           fontSize: 11,
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w600,
                           color: isSelected
                               ? Colors.white
-                              : (isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155)),
+                              : (isDark
+                                    ? const Color(0xFFE2E8F0)
+                                    : const Color(0xFF334155)),
                         ),
                       ),
                     ),
@@ -849,7 +1027,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                       fontFamily: 'Montserrat',
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.actionRed,
+                      color: isDark
+                          ? const Color(0xFF60A5FA)
+                          : AsmitaPalette.actionRed,
                     ),
                   ),
                 ),
@@ -863,10 +1043,14 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                color: isDark
+                    ? const Color(0xFF1E293B)
+                    : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                  color: isDark
+                      ? const Color(0xFF334155)
+                      : const Color(0xFFE2E8F0),
                 ),
               ),
               child: Column(
@@ -875,7 +1059,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                   Icon(
                     Icons.search_off_rounded,
                     size: 38,
-                    color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                    color: isDark
+                        ? const Color(0xFF64748B)
+                        : const Color(0xFF94A3B8),
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -895,7 +1081,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 11,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      color: isDark
+                          ? const Color(0xFF94A3B8)
+                          : const Color(0xFF64748B),
                     ),
                   ),
                 ],
@@ -908,9 +1096,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
               itemCount: filteredCategories.length,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: 2.15,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 2.7,
               ),
               itemBuilder: (context, index) {
                 final cat = filteredCategories[index];
@@ -925,12 +1113,17 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                     },
                     borderRadius: BorderRadius.circular(14),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF1E293B) : Colors.white,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF334155)
+                              : const Color(0xFFE2E8F0),
                           width: 1.1,
                         ),
                         boxShadow: [
@@ -948,7 +1141,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: catColor.withValues(alpha: isDark ? 0.22 : 0.12),
+                              color: catColor.withValues(
+                                alpha: isDark ? 0.22 : 0.12,
+                              ),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
@@ -969,7 +1164,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                                     fontFamily: 'Montserrat',
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF0F172A),
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
