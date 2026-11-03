@@ -1096,9 +1096,9 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
               itemCount: filteredCategories.length,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: 2.15,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 2.7,
               ),
               itemBuilder: (context, index) {
                 final cat = filteredCategories[index];
@@ -1115,7 +1115,7 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
-                        vertical: 9,
+                        vertical: 5,
                       ),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF1E293B) : Colors.white,
