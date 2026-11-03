@@ -27,15 +27,20 @@ import '../../../../core/config/env_config.dart';
 
 class IndustrialVisitsScreen extends StatefulWidget {
   final VoidCallback? onBack;
+  final String initialFilter;
 
-  const IndustrialVisitsScreen({super.key, this.onBack});
+  const IndustrialVisitsScreen({
+    super.key,
+    this.onBack,
+    this.initialFilter = 'ALL',
+  });
 
   @override
   State<IndustrialVisitsScreen> createState() => _IndustrialVisitsScreenState();
 }
 
 class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
-  String _selectedFilter = 'ALL';
+  late String _selectedFilter;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   final Set<int> _acknowledgedIds = {};
@@ -50,12 +55,23 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedFilter = widget.initialFilter;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       try {
         context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
       } catch (_) {}
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant IndustrialVisitsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialFilter != widget.initialFilter) {
+      setState(() {
+        _selectedFilter = widget.initialFilter;
+      });
+    }
   }
 
   @override

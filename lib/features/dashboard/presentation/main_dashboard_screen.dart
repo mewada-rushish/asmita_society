@@ -47,6 +47,7 @@ class MainDashboardScreen extends StatefulWidget {
 
 class _MainDashboardScreenState extends State<MainDashboardScreen> {
   int _currentIndex = 0;
+  String _visitsInitialFilter = 'ALL';
 
   @override
   void initState() {
@@ -151,7 +152,11 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
             )
           : _wrapWithIndustrialBloc(
               context,
-              IndustrialVisitsScreen(onBack: () => setState(() => _currentIndex = 0)),
+              IndustrialVisitsScreen(
+                key: ValueKey('visits_$_visitsInitialFilter'),
+                initialFilter: _visitsInitialFilter,
+                onBack: () => setState(() => _currentIndex = 0),
+              ),
             ),
       isResidential
           ? CommunityScreen( // Index 2: Society Chat
@@ -241,7 +246,14 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
       case 'director':
         return _wrapWithIndustrialBloc(
           context,
-          const DirectorDashboardView(),
+          DirectorDashboardView(
+            onNavigateToVisitsWithFilter: (filter) {
+              setState(() {
+                _visitsInitialFilter = filter;
+                _currentIndex = 1; // Switches to Visits & Passes tab
+              });
+            },
+          ),
         );
       case 'employee':
         final authState = context.watch<AuthBloc>().state;
