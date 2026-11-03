@@ -7,17 +7,20 @@ import '../../../../core/config/env_config.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/security/secure_storage_service.dart';
+import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/asmita_sub_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
+import '../widgets/bbps_support_modals.dart';
 
-/// Bharat BillPay (BBPS) / Bharat Connect Full-Fledged Hub Screen
+/// Bharat BillPay (BBPS) / Bharat Connect Dedicated Hub Screen
 ///
-/// Features:
-/// - 15 Official NPCI Biller Categories synchronized with backend master
-/// - Dedicated Full-Screen Module (Scaffold with standard back navigation & app bar)
-/// - Search, Category filter chips, 2-column responsive grid
-/// - Live biller lookup, parameter validation & Setu Ethereal gateway launch
-/// - Integrated History & Receipts and NPCI Grievance/Complaint dialogs
+/// Refinements:
+/// - AsmitaSubHeader matching the app's unified navigation design
+/// - AsmitaPullToRefresh with branded animated pull-to-refresh indicator
+/// - Compact, sleek category cards with horizontal row layout (35% smaller)
+/// - In-memory caching: categories persist across navigation without flashing loading state
+/// - Silent pull-to-refresh without wiping cards from view
 class BbpsHomeScreen extends StatefulWidget {
   const BbpsHomeScreen({super.key});
 
@@ -33,16 +36,25 @@ class BbpsHomeScreen extends StatefulWidget {
 }
 
 class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
+  static Set<String>? _cachedActiveCategoryIds;
+
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedFilterTag = 'All';
   Set<String>? _activeCategoryIds;
-  bool _isLoadingActiveCategories = true;
+  bool _isLoadingActiveCategories = false;
 
   @override
   void initState() {
     super.initState();
-    _loadActiveCategories();
+    if (_cachedActiveCategoryIds != null && _cachedActiveCategoryIds!.isNotEmpty) {
+      _activeCategoryIds = _cachedActiveCategoryIds;
+      _isLoadingActiveCategories = false;
+      _loadActiveCategories(isSilent: true);
+    } else {
+      _isLoadingActiveCategories = true;
+      _loadActiveCategories(isSilent: false);
+    }
   }
 
   @override
@@ -51,8 +63,10 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
     super.dispose();
   }
 
-  Future<void> _loadActiveCategories() async {
-    setState(() => _isLoadingActiveCategories = true);
+  Future<void> _loadActiveCategories({bool isSilent = false}) async {
+    if (!isSilent && _activeCategoryIds == null) {
+      setState(() => _isLoadingActiveCategories = true);
+    }
     try {
       final dio = AsmitaDioClient(SecureStorageService()).dio;
       final response = await dio.get(
@@ -62,6 +76,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       if (response.statusCode == 200 && response.data['success'] == true) {
         final List cats = response.data['categories'] ?? [];
         final ids = cats.map((c) => c['id'].toString()).toSet();
+        _cachedActiveCategoryIds = ids;
         if (mounted) {
           setState(() {
             _activeCategoryIds = ids;
@@ -73,10 +88,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
     } catch (e) {
       debugPrint('[BBPS] Failed to fetch active categories: $e');
     }
-    if (mounted) {
-      setState(() {
-        _isLoadingActiveCategories = false;
-      });
+    if (mounted && _isLoadingActiveCategories) {
+      setState(() => _isLoadingActiveCategories = false);
     }
   }
 
@@ -138,8 +151,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.bolt_rounded,
       'color': Color(0xFFEAB308),
       'tag': 'Utilities',
-      'keywords':
-          'electricity power bescom adani tata mseb torrent bses discom energy bill',
+      'keywords': 'electricity power bescom adani tata mseb torrent bses discom energy bill',
       'providers': [
         'Adani Electricity Mumbai',
         'Tata Power - Mumbai',
@@ -197,8 +209,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.propane_tank_rounded,
       'color': Color(0xFFDC2626),
       'tag': 'Utilities',
-      'keywords':
-          'lpg cylinder gas booking bharat gas indane hp commercial cylinder pantry',
+      'keywords': 'lpg cylinder gas booking bharat gas indane hp commercial cylinder pantry',
       'providers': ['Bharat Gas (BPCL)', 'Indane Gas (IOCL)', 'HP Gas (HPCL)'],
       'accountLabel': 'Consumer Number / Registered Mobile',
       'accountHint': 'e.g. 9820110101',
@@ -211,8 +222,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.wifi_rounded,
       'color': Color(0xFF7C3AED),
       'tag': 'Telecom',
-      'keywords':
-          'broadband internet wifi airtel jio fiber act hathway spectranet tata tele lease',
+      'keywords': 'broadband internet wifi airtel jio fiber act hathway spectranet tata tele lease',
       'providers': [
         'JioFiber Commercial / Postpaid',
         'Airtel Xstream Fiber',
@@ -232,8 +242,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.phone_android_rounded,
       'color': Color(0xFF16A34A),
       'tag': 'Telecom',
-      'keywords':
-          'mobile postpaid cellular airtel jio vi vodafone bsnl telecom corporate connection',
+      'keywords': 'mobile postpaid cellular airtel jio vi vodafone bsnl telecom corporate connection',
       'providers': [
         'Airtel Corporate Postpaid',
         'Jio Postpaid Plus',
@@ -251,8 +260,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.phonelink_ring_rounded,
       'color': Color(0xFF0D9488),
       'tag': 'Telecom',
-      'keywords':
-          'mobile prepaid recharge airtime talktime topup data pack 4g 5g jio airtel vi bsnl',
+      'keywords': 'mobile prepaid recharge airtime talktime topup data pack 4g 5g jio airtel vi bsnl',
       'providers': [
         'Jio Prepaid Recharge',
         'Airtel Prepaid Unlimited',
@@ -270,8 +278,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.toll_rounded,
       'color': Color(0xFF2563EB),
       'tag': 'Financial',
-      'keywords':
-          'fastag toll parking netc highway nhai fleet pass vehicle tollgate barrier',
+      'keywords': 'fastag toll parking netc highway nhai fleet pass vehicle tollgate barrier',
       'providers': [
         'ICICI Bank FASTag',
         'State Bank of India (SBI) FASTag',
@@ -291,8 +298,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.apartment_rounded,
       'color': Color(0xFF27306F),
       'tag': 'Premises',
-      'keywords':
-          'housing society maintenance complex flat office commercial dues facility cam maintenance bill',
+      'keywords': 'housing society maintenance complex flat office commercial dues facility cam maintenance bill',
       'providers': [
         'AsmitA Society Maintenance Desk',
         'AsmitA Corporate Complex CAM',
@@ -310,8 +316,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.tv_rounded,
       'color': Color(0xFF9333EA),
       'tag': 'Telecom',
-      'keywords':
-          'dth cable tv tata play airtel dth dish tv sun direct videocon set top box',
+      'keywords': 'dth cable tv tata play airtel dth dish tv sun direct videocon set top box',
       'providers': [
         'Tata Play (formerly Tata Sky)',
         'Airtel Digital TV',
@@ -330,8 +335,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.account_balance_rounded,
       'color': Color(0xFF78716C),
       'tag': 'Govt & Taxes',
-      'keywords':
-          'property tax municipal corporation bmc mcgm mcd bbmp civic cess commercial property',
+      'keywords': 'property tax municipal corporation bmc mcgm mcd bbmp civic cess commercial property',
       'providers': [
         'MCGM (Brihanmumbai Municipal Corp)',
         'Municipal Corporation of Delhi (MCD)',
@@ -350,8 +354,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.payments_rounded,
       'color': Color(0xFFD97706),
       'tag': 'Financial',
-      'keywords':
-          'loan emi repayment bajaj finance hdfc sbi vehicle home loan asset finance',
+      'keywords': 'loan emi repayment bajaj finance hdfc sbi vehicle home loan asset finance',
       'providers': [
         'Bajaj Finance Limited',
         'HDFC Bank Loan Clearance',
@@ -370,8 +373,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.credit_card_rounded,
       'color': Color(0xFF475569),
       'tag': 'Financial',
-      'keywords':
-          'credit card visa mastercard rupay bill payment corporate card hdfc sbi icici axis',
+      'keywords': 'credit card visa mastercard rupay bill payment corporate card hdfc sbi icici axis',
       'providers': [
         'HDFC Bank Credit Cards',
         'SBI Card & Payment Services',
@@ -390,8 +392,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.health_and_safety_rounded,
       'color': Color(0xFF059669),
       'tag': 'Financial',
-      'keywords':
-          'insurance lic hdfc ergo star health policy premium commercial fire marine asset liability',
+      'keywords': 'insurance lic hdfc ergo star health policy premium commercial fire marine asset liability',
       'providers': [
         'Life Insurance Corp (LIC)',
         'HDFC Life / HDFC ERGO',
@@ -411,8 +412,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       'icon': Icons.school_rounded,
       'color': Color(0xFF6366F1),
       'tag': 'Campus',
-      'keywords':
-          'school college university education fees coaching training academy exam',
+      'keywords': 'school college university education fees coaching training academy exam',
       'providers': [
         'Mumbai University Fees',
         'AsmitA College of Engineering',
@@ -437,33 +437,23 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
     final query = _searchQuery.trim().toLowerCase();
 
     // Map active IDs with alias support
-    final Set<String>? activeSet = _activeCategoryIds
-        ?.map((id) {
-          final lower = id.toLowerCase();
-          if (lower == 'lpg_gas') return ['lpg_cylinder', 'lpg_gas'];
-          if (lower == 'municipal_tax') {
-            return ['municipal_taxes', 'municipal_tax'];
-          }
-          if (lower == 'loan_repay') return ['loan_repayment', 'loan_repay'];
-          return [lower];
-        })
-        .expand((x) => x)
-        .toSet();
+    final Set<String>? activeSet = _activeCategoryIds?.map((id) {
+      final lower = id.toLowerCase();
+      if (lower == 'lpg_gas') return ['lpg_cylinder', 'lpg_gas'];
+      if (lower == 'municipal_tax') return ['municipal_taxes', 'municipal_tax'];
+      if (lower == 'loan_repay') return ['loan_repayment', 'loan_repay'];
+      return [lower];
+    }).expand((x) => x).toSet();
 
     return _allBillerCategories.where((cat) {
       if (activeSet != null) {
         final catId = (cat['id'] as String).toLowerCase();
-        final aliases =
-            (cat['aliases'] as List<String>?)?.map((a) => a.toLowerCase()) ??
-            [];
-        final hasMatch =
-            activeSet.contains(catId) ||
-            aliases.any((a) => activeSet.contains(a));
+        final aliases = (cat['aliases'] as List<String>?)?.map((a) => a.toLowerCase()) ?? [];
+        final hasMatch = activeSet.contains(catId) || aliases.any((a) => activeSet.contains(a));
         if (!hasMatch) return false;
       }
 
-      final matchesTag =
-          _selectedFilterTag == 'All' ||
+      final matchesTag = _selectedFilterTag == 'All' ||
           cat['tag'] == _selectedFilterTag ||
           (_selectedFilterTag == 'Utilities' && cat['tag'] == 'Premises');
       if (!matchesTag) return false;
@@ -473,9 +463,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       final title = (cat['title'] as String).toLowerCase();
       final subtitle = (cat['subtitle'] as String).toLowerCase();
       final keywords = (cat['keywords'] as String).toLowerCase();
-      final providers = (cat['providers'] as List<String>)
-          .join(' ')
-          .toLowerCase();
+      final providers = (cat['providers'] as List<String>).join(' ').toLowerCase();
 
       return title.contains(query) ||
           subtitle.contains(query) ||
@@ -524,9 +512,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                           width: 40,
                           height: 5,
                           decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF475569)
-                                : const Color(0xFFCBD5E1),
+                            color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
@@ -538,16 +524,10 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: catColor.withValues(
-                                alpha: isDark ? 0.25 : 0.12,
-                              ),
+                              color: catColor.withValues(alpha: isDark ? 0.25 : 0.12),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Icon(
-                              category['icon'] as IconData,
-                              color: catColor,
-                              size: 22,
-                            ),
+                            child: Icon(category['icon'] as IconData, color: catColor, size: 22),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -560,9 +540,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                                     fontFamily: 'Montserrat',
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
-                                    color: isDark
-                                        ? Colors.white
-                                        : const Color(0xFF0F172A),
+                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -571,9 +549,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 11.5,
-                                    color: isDark
-                                        ? const Color(0xFF94A3B8)
-                                        : const Color(0xFF64748B),
+                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                                   ),
                                 ),
                               ],
@@ -589,9 +565,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                           fontFamily: 'Montserrat',
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -599,28 +573,20 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF1E293B)
-                              : const Color(0xFFF8FAFC),
+                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isDark
-                                ? const Color(0xFF334155)
-                                : const Color(0xFFCBD5E1),
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
                           ),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: selectedProvider,
                             isExpanded: true,
-                            dropdownColor: isDark
-                                ? const Color(0xFF1E293B)
-                                : Colors.white,
+                            dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
                             icon: Icon(
                               Icons.keyboard_arrow_down_rounded,
-                              color: isDark
-                                  ? const Color(0xFF94A3B8)
-                                  : const Color(0xFF64748B),
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                             ),
                             items: providers.map((prov) {
                               return DropdownMenuItem<String>(
@@ -631,9 +597,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                                     fontFamily: 'Poppins',
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w500,
-                                    color: isDark
-                                        ? Colors.white
-                                        : const Color(0xFF0F172A),
+                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
                                   ),
                                 ),
                               );
@@ -654,23 +618,17 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                           fontFamily: 'Montserrat',
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
                         ),
                       ),
                       const SizedBox(height: 8),
 
                       Container(
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF1E293B)
-                              : const Color(0xFFF8FAFC),
+                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isDark
-                                ? const Color(0xFF334155)
-                                : const Color(0xFFCBD5E1),
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
                           ),
                         ),
                         child: TextField(
@@ -679,24 +637,17 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                             fontFamily: 'Poppins',
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF0F172A),
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
                           ),
                           decoration: InputDecoration(
                             hintText: accountHint,
                             hintStyle: TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 12,
-                              color: isDark
-                                  ? const Color(0xFF64748B)
-                                  : const Color(0xFF94A3B8),
+                              color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
                             ),
                             border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 12,
-                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           ),
                         ),
                       ),
@@ -718,14 +669,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                             _launchEtherealBillPay(
                               categoryName: category['title'] as String,
                               billParams: [
-                                {
-                                  'param_name': accountLabel,
-                                  'param_value': acc,
-                                },
-                                {
-                                  'param_name': 'Provider',
-                                  'param_value': selectedProvider,
-                                },
+                                {'param_name': accountLabel, 'param_value': acc},
+                                {'param_name': 'Provider', 'param_value': selectedProvider},
                               ],
                               dialogContext: sheetContext,
                             );
@@ -759,242 +704,6 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
     );
   }
 
-  void _showTransactionHistoryModal(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF475569)
-                          : const Color(0xFFCBD5E1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AsmitaPalette.deepNavy.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.receipt_long_rounded,
-                        color: AsmitaPalette.deepNavy,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      'BBPS Receipts & Clearance History',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 32,
-                    horizontal: 16,
-                  ),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF1E293B)
-                        : const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isDark
-                          ? const Color(0xFF334155)
-                          : const Color(0xFFE2E8F0),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.history_toggle_off_rounded,
-                        size: 36,
-                        color: isDark
-                            ? const Color(0xFF64748B)
-                            : const Color(0xFF94A3B8),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'No Recent Utility Clearances',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'All verified NPCI receipts and payment confirmations will be listed here automatically.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 11,
-                          color: isDark
-                              ? const Color(0xFF94A3B8)
-                              : const Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  height: 44,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text('Close'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showComplaintModal(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF475569)
-                          : const Color(0xFFCBD5E1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AsmitaPalette.actionRed.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.support_agent_rounded,
-                        color: AsmitaPalette.actionRed,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      'NPCI BBPS Dispute & Grievance',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  'Under NPCI guidelines, disputes on utility clearance are investigated within 24-48 business hours with direct biller reversal.',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 11.5,
-                    color: isDark
-                        ? const Color(0xFF94A3B8)
-                        : const Color(0xFF64748B),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  height: 46,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(ctx).pop();
-                      AsmitaToast.show(
-                        context,
-                        message:
-                            'Please select the transaction from History to register a dispute.',
-                        type: AsmitaToastType.info,
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AsmitaPalette.deepNavy,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Track or File Dispute',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -1003,619 +712,496 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-        elevation: 0,
-        centerTitle: false,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 18,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: Column(
           children: [
-            Text(
-              'Bill Payments (BBPS)',
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+            // 1. Standard Unified AsmitaSubHeader
+            AsmitaSubHeader(
+              title: 'Bill Payments (BBPS)',
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: 'Clearance History',
+                    icon: Icon(
+                      Icons.receipt_long_rounded,
+                      size: 20,
+                      color: theme.colorScheme.primary,
+                    ),
+                    onPressed: () => BbpsSupportModals.showTransactionHistoryModal(context),
+                  ),
+                  IconButton(
+                    tooltip: 'NPCI Grievance',
+                    icon: Icon(
+                      Icons.support_agent_rounded,
+                      size: 20,
+                      color: theme.colorScheme.primary,
+                    ),
+                    onPressed: () => BbpsSupportModals.showComplaintModal(context),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 2),
-            Row(
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF10B981),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  'Bharat Connect • Unified Clearance',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w500,
-                    color: isDark
-                        ? const Color(0xFF94A3B8)
-                        : const Color(0xFF64748B),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Clearance History',
-            icon: Icon(
-              Icons.receipt_long_rounded,
-              size: 20,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
-            ),
-            onPressed: () => _showTransactionHistoryModal(context),
-          ),
-          IconButton(
-            tooltip: 'NPCI Grievance',
-            icon: Icon(
-              Icons.support_agent_rounded,
-              size: 20,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
-            ),
-            onPressed: () => _showComplaintModal(context),
-          ),
-          const SizedBox(width: 4),
-        ],
-      ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _loadActiveCategories,
-          color: AsmitaPalette.deepNavy,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 1. BBPS Trust & Security Banner Card
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: isDark
-                          ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-                          : [const Color(0xFFEFF6FF), const Color(0xFFF8FAFC)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isDark
-                          ? const Color(0xFF334155)
-                          : const Color(0xFFBFDBFE),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1D4ED8),
-                          borderRadius: BorderRadius.circular(12),
+
+            // 2. Scrollable Body with Branded Pull to Refresh (AsmitaPullToRefresh)
+            Expanded(
+              child: AsmitaPullToRefresh(
+                onRefresh: () async {
+                  await _loadActiveCategories(isSilent: true);
+                },
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // BBPS Trust & Security Banner Card
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isDark
+                              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+                              : [const Color(0xFFEFF6FF), const Color(0xFFF8FAFC)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        child: const Icon(
-                          Icons.verified_user_rounded,
-                          color: Colors.white,
-                          size: 20,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFBFDBFE),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1D4ED8),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.verified_user_rounded,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'BBPS Assured Gateway',
-                                  style: TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
-                                    color: isDark
-                                        ? Colors.white
-                                        : const Color(0xFF0F172A),
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 5,
-                                    vertical: 1.5,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF059669),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Text(
-                                    'NPCI',
-                                    style: TextStyle(
-                                      fontFamily: 'Montserrat',
-                                      fontSize: 8.5,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white,
-                                      letterSpacing: 0.5,
+                                Row(
+                                  children: [
+                                    Text(
+                                      'BBPS Assured Gateway',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      ),
                                     ),
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF059669),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Text(
+                                        'NPCI',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 8,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.white,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Instant clearance for recurring bills with digital receipts',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 10,
+                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Instant clearance for recurring bills with digital receipts',
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 10.5,
-                                color: isDark
-                                    ? const Color(0xFF94A3B8)
-                                    : const Color(0xFF64748B),
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
+                    ),
+                    const SizedBox(height: 10),
 
-                // Quick Action Shortcuts: History & Complaint
-                Row(
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => _showTransactionHistoryModal(context),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                            horizontal: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF1E293B)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isDark
-                                  ? const Color(0xFF334155)
-                                  : const Color(0xFFE2E8F0),
-                            ),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.history_rounded,
-                                size: 16,
-                                color: Color(0xFF4F46E5),
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                'History & Receipts',
-                                style: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF4F46E5),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => _showComplaintModal(context),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                            horizontal: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF1E293B)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isDark
-                                  ? const Color(0xFF334155)
-                                  : const Color(0xFFE2E8F0),
-                            ),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.support_agent_rounded,
-                                size: 16,
-                                color: Color(0xFF0284C7),
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                'Raise Complaint',
-                                style: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0284C7),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-
-                // 2. Interactive Search Bar for NPCI Services
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isDark
-                          ? const Color(0xFF334155)
-                          : const Color(0xFFCBD5E1),
-                      width: 1.2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isDark
-                            ? Colors.black.withValues(alpha: 0.25)
-                            : Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (val) => setState(() => _searchQuery = val),
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Search biller, utility, or NPCI service...',
-                      hintStyle: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 12.5,
-                        color: isDark
-                            ? const Color(0xFF94A3B8)
-                            : const Color(0xFF64748B),
-                      ),
-                      prefixIcon: Icon(
-                        Icons.search_rounded,
-                        size: 20,
-                        color: isDark
-                            ? const Color(0xFF94A3B8)
-                            : const Color(0xFF64748B),
-                      ),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(
-                                Icons.clear_rounded,
-                                size: 18,
-                                color: isDark
-                                    ? const Color(0xFF94A3B8)
-                                    : const Color(0xFF64748B),
-                              ),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = '');
-                              },
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // 3. Category Filter Chips (Quick Filters)
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  child: Row(
-                    children: _filterTags.map((tag) {
-                      final isSelected = _selectedFilterTag == tag;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: InkWell(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(() => _selectedFilterTag = tag);
-                          },
-                          borderRadius: BorderRadius.circular(10),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 180),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? (isDark
-                                        ? const Color(0xFF3B82F6)
-                                        : AsmitaPalette.deepNavy)
-                                  : (isDark
-                                        ? const Color(0xFF1E293B)
-                                        : const Color(0xFFF1F5F9)),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: isSelected
-                                    ? (isDark
-                                          ? const Color(0xFF3B82F6)
-                                          : AsmitaPalette.deepNavy)
-                                    : (isDark
-                                          ? const Color(0xFF334155)
-                                          : const Color(0xFFE2E8F0)),
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              tag,
-                              style: TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontSize: 11,
-                                fontWeight: isSelected
-                                    ? FontWeight.w700
-                                    : FontWeight.w600,
-                                color: isSelected
-                                    ? Colors.white
-                                    : (isDark
-                                          ? const Color(0xFFE2E8F0)
-                                          : const Color(0xFF334155)),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // Section Title with Active Count
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Available Biller Categories (${filteredCategories.length})',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontFamily: 'Montserrat',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12.5,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                    if (_selectedFilterTag != 'All' || _searchQuery.isNotEmpty)
-                      GestureDetector(
-                        onTap: () {
-                          _searchController.clear();
-                          setState(() {
-                            _searchQuery = '';
-                            _selectedFilterTag = 'All';
-                          });
-                        },
-                        child: Text(
-                          'Reset',
-                          style: TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: isDark
-                                ? const Color(0xFF60A5FA)
-                                : AsmitaPalette.actionRed,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                // 4. Categories Grid (or Empty Search State)
-                if (_isLoadingActiveCategories)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Center(
-                      child: AsmitaLoadingIndicator(
-                        color: AsmitaPalette.deepNavy,
-                        size: 32,
-                      ),
-                    ),
-                  )
-                else if (filteredCategories.isEmpty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 36,
-                    ),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF1E293B)
-                          : const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark
-                            ? const Color(0xFF334155)
-                            : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                    // Quick Action Shortcuts: History & Complaint
+                    Row(
                       children: [
-                        Icon(
-                          Icons.search_off_rounded,
-                          size: 36,
-                          color: isDark
-                              ? const Color(0xFF64748B)
-                              : const Color(0xFF94A3B8),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'No billers found for "$_searchQuery"',
-                          style: TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF0F172A),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Try searching by utility name, board (e.g. Adani, MSEDCL, MCGM), or provider',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 11,
-                            color: isDark
-                                ? const Color(0xFF94A3B8)
-                                : const Color(0xFF64748B),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filteredCategories.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                          childAspectRatio: 1.55,
-                        ),
-                    itemBuilder: (context, index) {
-                      final cat = filteredCategories[index];
-                      final catColor = cat['color'] as Color;
-
-                      return InkWell(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          _showBillerLookupModal(context, cat);
-                        },
-                        borderRadius: BorderRadius.circular(14),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF1E293B)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: isDark
-                                  ? const Color(0xFF334155)
-                                  : const Color(0xFFE2E8F0),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: isDark
-                                    ? Colors.black.withValues(alpha: 0.25)
-                                    : Colors.black.withValues(alpha: 0.02),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: catColor.withValues(
-                                    alpha: isDark ? 0.25 : 0.12,
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Icon(
-                                  cat['icon'] as IconData,
-                                  color: catColor,
-                                  size: 20,
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => BbpsSupportModals.showTransactionHistoryModal(context),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
                                 ),
                               ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
+                                  Icon(Icons.history_rounded, size: 15, color: Color(0xFF4F46E5)),
+                                  SizedBox(width: 6),
                                   Text(
-                                    cat['title'] as String,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                    'History & Receipts',
                                     style: TextStyle(
                                       fontFamily: 'Montserrat',
-                                      fontSize: 12.5,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w700,
-                                      color: isDark
-                                          ? Colors.white
-                                          : const Color(0xFF0F172A),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    cat['subtitle'] as String,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 10,
-                                      color: isDark
-                                          ? const Color(0xFF94A3B8)
-                                          : const Color(0xFF64748B),
+                                      color: Color(0xFF4F46E5),
                                     ),
                                   ),
                                 ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
-                      );
-                    },
-                  ),
-                const SizedBox(height: 24),
-              ],
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => BbpsSupportModals.showComplaintModal(context),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                ),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.support_agent_rounded, size: 15, color: Color(0xFF0284C7)),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Raise Complaint',
+                                    style: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0284C7),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Interactive Search Bar
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isDark ? Colors.black.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.02),
+                            blurRadius: 6,
+                            offset: const Offset(0, 1.5),
+                          ),
+                        ],
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (val) => setState(() => _searchQuery = val),
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Search biller, utility, or NPCI service...',
+                          hintStyle: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 12,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search_rounded,
+                            size: 18,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(
+                                    Icons.clear_rounded,
+                                    size: 16,
+                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Category Filter Chips
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: Row(
+                        children: _filterTags.map((tag) {
+                          final isSelected = _selectedFilterTag == tag;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 6.0),
+                            child: InkWell(
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                setState(() => _selectedFilterTag = tag);
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 160),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
+                                      : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
+                                        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  tag,
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 10.5,
+                                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : (isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Section Title with Active Count
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Available Biller Categories (${filteredCategories.length})',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                        ),
+                        if (_selectedFilterTag != 'All' || _searchQuery.isNotEmpty)
+                          GestureDetector(
+                            onTap: () {
+                              _searchController.clear();
+                              setState(() {
+                                _searchQuery = '';
+                                _selectedFilterTag = 'All';
+                              });
+                            },
+                            child: Text(
+                              'Reset',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.actionRed,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Categories Grid (or Empty Search State)
+                    if (_isLoadingActiveCategories && _activeCategoryIds == null)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: Center(
+                          child: AsmitaLoadingIndicator(
+                            color: AsmitaPalette.deepNavy,
+                            size: 28,
+                          ),
+                        ),
+                      )
+                    else if (filteredCategories.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.search_off_rounded,
+                              size: 32,
+                              color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'No billers found for "$_searchQuery"',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Try searching by utility name or provider',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 10.5,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: filteredCategories.length,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                          childAspectRatio: 2.15, // Sleek, compact height
+                        ),
+                        itemBuilder: (context, index) {
+                          final cat = filteredCategories[index];
+                          final catColor = cat['color'] as Color;
+
+                          return InkWell(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              _showBillerLookupModal(context, cat);
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                  width: 1,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: isDark
+                                        ? Colors.black.withValues(alpha: 0.18)
+                                        : Colors.black.withValues(alpha: 0.02),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1.5),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 34,
+                                    height: 34,
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: catColor.withValues(alpha: isDark ? 0.22 : 0.12),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      cat['icon'] as IconData,
+                                      color: catColor,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          cat['title'] as String,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontFamily: 'Montserrat',
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          cat['subtitle'] as String,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 9.5,
+                                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
