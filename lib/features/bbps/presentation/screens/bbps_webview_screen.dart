@@ -4,12 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/asmita_primary_header.dart';
 
 /// Full-screen in-app WebView for Setu BillPay (Ethereal).
 ///
-/// Opens the Setu session link inside the app so the user stays within the
-/// AsmitA context instead of bouncing to an external browser.
-/// Shows a branded progress bar while the page loads.
+/// Features:
+/// - Branded AsmitaPrimaryHeader matching the app's unified navigation design
+/// - Integrated reload & close trailing actions
+/// - Automatic history back navigation with PopScope
+/// - Bottom SafeArea handling for both Android 3-button and gesture navigation
+/// - Seamless bottom bar blending with Setu's navigation tabs
 class BbpsWebViewScreen extends StatefulWidget {
   final String sessionUrl;
   final String? categoryTitle;
@@ -80,6 +84,14 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
       ..loadRequest(Uri.parse(widget.sessionUrl));
   }
 
+  Future<void> _handleBack() async {
+    if (await _controller.canGoBack()) {
+      await _controller.goBack();
+    } else {
+      if (mounted) Navigator.of(context).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -88,60 +100,73 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
         ? '${widget.categoryTitle} • BBPS'
         : 'Bill Payments (BBPS)';
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _handleBack();
+      },
+      child: Scaffold(
         backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-        foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        body: Column(
           children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
+            // 1. Signature AsmitA App Header
+            AsmitaPrimaryHeader(
+              subtitleOverride: title,
+              showBackButton: true,
+              allowPropertySwitching: false,
+              bottomPadding: 0.0,
+              backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+              onBackPressed: _handleBack,
+              trailingActions: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.refresh_rounded,
+                      color: isDark ? Colors.white : AsmitaPalette.deepNavy,
+                      size: 20,
+                    ),
+                    onPressed: () => _controller.reload(),
+                    tooltip: 'Reload',
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: isDark ? Colors.white : AsmitaPalette.deepNavy,
+                      size: 22,
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                    tooltip: 'Close',
+                  ),
+                ],
               ),
             ),
-            const Text(
-              'Secured by NPCI • Bharat BillPay',
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 10,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF64748B),
+
+            // 2. Linear loading indicator during web navigation
+            if (_isLoading)
+              LinearProgressIndicator(
+                value: _loadProgress < 100 ? _loadProgress / 100 : null,
+                backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
+                color: AsmitaPalette.deepNavy,
+                minHeight: 2.5,
+              ),
+
+            // 3. WebView with Bottom SafeArea for 3-button & gesture nav
+            Expanded(
+              child: SafeArea(
+                top: false,
+                left: false,
+                right: false,
+                bottom: true,
+                child: _hasError
+                    ? _buildErrorView()
+                    : WebViewWidget(controller: _controller),
               ),
             ),
           ],
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
-          onPressed: () => Navigator.of(context).pop(),
-          tooltip: 'Close',
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: () => _controller.reload(),
-            tooltip: 'Reload',
-          ),
-        ],
-        bottom: _isLoading
-            ? PreferredSize(
-                preferredSize: const Size.fromHeight(3),
-                child: LinearProgressIndicator(
-                  value: _loadProgress < 100 ? _loadProgress / 100 : null,
-                  backgroundColor: Colors.transparent,
-                  color: AsmitaPalette.deepNavy,
-                  minHeight: 3,
-                ),
-              )
-            : null,
       ),
-      body: _hasError ? _buildErrorView() : WebViewWidget(controller: _controller),
     );
   }
 
@@ -160,18 +185,17 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Could not connect to\nBharat BillPay Gateway',
-              textAlign: TextAlign.center,
+              'Unable to Load Bharat BillPay',
               style: TextStyle(
                 fontFamily: 'Montserrat',
-                fontSize: 15,
+                fontSize: 16,
                 fontWeight: FontWeight.w700,
                 color: isDark ? Colors.white : const Color(0xFF0F172A),
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Please check your network connection and try again.',
+              'Please check your internet connection and try again.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Poppins',
@@ -179,7 +203,7 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
                 color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () {
                 setState(() {
@@ -188,7 +212,7 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
                 });
                 _controller.reload();
               },
-              icon: const Icon(Icons.refresh_rounded, size: 18),
+              icon: const Icon(Icons.refresh_rounded, size: 16),
               label: const Text(
                 'Retry',
                 style: TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.w700),
@@ -198,7 +222,6 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
           ],
