@@ -15,13 +15,24 @@ class AsmitaPalette {
   static const Color textLight = Color(0xFF676E76); // Muted text on light bg
   static const Color borderGrey = Color(0xFFE5E8ED);
 
-  // Dark Mode Colors
-  static const Color systemBGDark = Color(0xFF121212);
-  static const Color surfaceDark = Color(0xFF282828); // Lighter grey for cards
-  static const Color deepNavyDark = Color(0xFF8A9CFF); // Much brighter blue for dark mode visibility (switches, text)
-  static const Color textDarkModeMain = Color(0xFFFFFFFF); // White text on dark bg
-  static const Color textDarkModeMuted = Color(0xFFA0A0A0); // Muted text on dark bg
-  static const Color borderGreyDark = Color(0xFF404040); // Slightly lighter border for contrast
+  // Dark Mode Colors (Apple HIG Aligned with Asmita Deep Navy undertones)
+  // Level 1: Deep Midnight Slate with subtle Navy undertone instead of harsh dead black
+  static const Color systemBGDark = Color(0xFF0D121F); 
+  // Level 2: Elevated card & container surface
+  static const Color surfaceDark = Color(0xFF172033); 
+  // Level 3: Modal dialogs, popup sheets & elevated tiles
+  static const Color surfaceElevatedDark = Color(0xFF1F2B45); 
+  
+  // Brand / Interactive: Luminous, high-contrast Navy-Blue tuned for dark mode
+  static const Color deepNavyDark = Color(0xFF7B96EC); 
+  
+  // Semantic Text tokens matching Apple HIG dark mode label hierarchy
+  static const Color textDarkModeMain = Color(0xFFF1F5F9); // Primary label (prevents glare/halation)
+  static const Color textDarkModeMuted = Color(0xFF94A3B8); // Secondary label (accessible slate)
+  static const Color textDarkModeTertiary = Color(0xFF64748B); // Tertiary subtle label
+  
+  // Borders & Dividers
+  static const Color borderGreyDark = Color(0xFF25334D); // Crisp subtle midnight-navy border
 }
 
 class AsmitaTheme {
