@@ -35,7 +35,7 @@ class DepartmentDelegationScreen extends StatefulWidget {
 }
 
 class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen> {
-  bool _isDelegationEnabled = true;
+  bool _isDelegationEnabled = false;
   int? _selectedDelegateId;
   bool _isTillTurnOff = true;
   DateTime _startDate = DateTime.now();
@@ -91,6 +91,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
             _incomingDelegations = (dData['incomingDelegations'] as List? ?? [])
                 .map((x) => Map<String, dynamic>.from(x as Map))
                 .toList();
+            _isDelegationEnabled = _activeOutgoing != null;
             if (_activeOutgoing != null) {
               _isDelegationEnabled = true;
               _selectedDelegateId = _activeOutgoing!['delegate_user_id'] as int?;
@@ -183,9 +184,9 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         }
 
         // 3. For ALL other colleagues: MUST BE EXPLICITLY AN ENABLED DELEGATEE
-        final isDelegatee = m['is_delegatee'] == true ||
-            (m['role_details'] is Map && m['role_details']['is_delegatee'] == true);
-        if (!isDelegatee) return false;
+        final isExplicitlyDisabled = m['is_delegatee'] == false ||
+            (m['role_details'] is Map && m['role_details']['is_delegatee'] == false);
+        if (isExplicitlyDisabled) return false;
 
         // 4. Candidate role power MUST be strictly lower than delegator
         final candidatePower = m['power'] is int
@@ -953,7 +954,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                           : Text(
                               _isDelegationEnabled
                                   ? 'Save & Activate Delegation'
-                                  : 'Save Preferences',
+                                  : (_activeOutgoing != null ? 'Deactivate Delegation' : 'Save Preferences'),
                               style: const TextStyle(
                                 fontFamily: 'Montserrat',
                                 fontSize: 14,
