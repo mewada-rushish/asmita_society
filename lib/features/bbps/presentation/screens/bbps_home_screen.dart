@@ -807,7 +807,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                         },
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 20),
 
                     // Section Title with Active Count Badge
                     Row(
@@ -889,8 +889,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-
+                    const SizedBox(height: 8),
                     // Categories Grid (or Empty Search State)
                     if (_isLoadingActiveCategories && (_activeCategoryIds == null || _activeCategoryIds!.isEmpty))
                       _buildSkeletalCategoryGrid(isDark)
