@@ -876,7 +876,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       floatingActionButton: Padding(
         padding: EdgeInsets.only(
-          bottom: 84.0 + MediaQuery.viewPaddingOf(context).bottom,
+          bottom: 112.0 + MediaQuery.viewPaddingOf(context).bottom,
         ),
         child: FloatingActionButton.extended(
           heroTag: null,
