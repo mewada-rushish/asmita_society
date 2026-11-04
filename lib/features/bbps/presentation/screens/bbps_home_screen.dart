@@ -12,6 +12,7 @@ import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_bottom_nav_bar.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import 'bbps_webview_screen.dart';
+import '../../data/services/bbps_payment_session_service.dart';
 
 /// Bharat BillPay (BBPS) / Bharat Connect Dedicated Hub Screen
 ///
@@ -125,46 +126,20 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
     HapticFeedback.mediumImpact();
 
     try {
-      final dio = AsmitaDioClient(SecureStorageService()).dio;
-      final payload = <String, dynamic>{};
-      if (categoryName != null && categoryName.isNotEmpty) {
-        payload['categoryName'] = categoryName;
-      }
-      if (billParams != null && billParams.isNotEmpty) {
-        payload['billParams'] = billParams;
-      }
-
-      final response = await dio.post(
-        EnvConfig.bbpsSessionLink,
-        data: payload,
-        options: Options(receiveTimeout: const Duration(seconds: 12)),
+      final sessionService = BbpsPaymentSessionService();
+      final link = await sessionService.obtainSessionUrl(
+        categoryName: categoryName,
+        billParams: billParams,
       );
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        final link = response.data['link'] as String?;
-        if (link != null && link.isNotEmpty) {
-          if (dialogContext != null && dialogContext.mounted) {
-            Navigator.of(dialogContext).pop();
-          }
-          if (mounted) {
-            await BbpsWebViewScreen.open(
-              context,
-              sessionUrl: link,
-              categoryTitle: categoryName,
-            );
-          }
-          return;
-        }
+      if (dialogContext != null && dialogContext.mounted) {
+        Navigator.of(dialogContext).pop();
       }
-
-      final errorMsg = response.data?['error']?.toString() ??
-          response.data?['message']?.toString() ??
-          'Failed to generate billpay session';
       if (mounted) {
-        AsmitaToast.show(
+        await BbpsWebViewScreen.open(
           context,
-          message: errorMsg,
-          type: AsmitaToastType.error,
+          sessionUrl: link,
+          categoryTitle: categoryName,
         );
       }
     } catch (e) {
@@ -175,6 +150,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
           if (data is Map) {
             msg = data['error']?.toString() ?? data['message']?.toString() ?? msg;
           }
+        } else {
+          msg = e.toString().replaceFirst('Exception: ', '');
         }
         AsmitaToast.show(
           context,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../bbps/presentation/screens/bbps_home_screen.dart';
 import '../../bbps/presentation/screens/bbps_webview_screen.dart';
+import '../../bbps/data/services/bbps_payment_session_service.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_toast.dart';
@@ -96,51 +97,19 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
           type: AsmitaToastType.info,
         );
       }
-      final dio = AsmitaDioClient(SecureStorageService()).dio;
-      final payload = <String, dynamic>{};
-      if (categoryName != null && categoryName.isNotEmpty) {
-        payload['categoryName'] = categoryName;
-      }
-      if (billParams != null && billParams.isNotEmpty) {
-        payload['billParams'] = billParams;
-      }
-      if (redirectTo != null && redirectTo.isNotEmpty) {
-        payload['redirectTo'] = redirectTo;
-      }
 
-      final response = await dio.post(
-        EnvConfig.bbpsSessionLink,
-        data: payload,
-        options: Options(
-          receiveTimeout: const Duration(seconds: 12),
-        ),
+      final sessionService = BbpsPaymentSessionService();
+      final url = await sessionService.obtainSessionUrl(
+        categoryName: categoryName,
+        billParams: billParams,
+        redirectTo: redirectTo,
       );
-      debugPrint('==================== [BBPS SHEET RESPONSE] ====================');
-      debugPrint('Status Code: ${response.statusCode}');
-      debugPrint('Response Data: ${response.data}');
-      debugPrint('==============================================================');
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        final String? url = response.data['link'];
-        if (url != null && mounted) {
-          await BbpsWebViewScreen.open(
-            context,
-            sessionUrl: url,
-            categoryTitle: categoryName,
-          );
-          return;
-        }
-      }
-      final errorMsg = response.data?['error']?.toString() ?? response.data?['message']?.toString() ?? 'Unable to start BBPS session';
-      debugPrint('==================== [BBPS SHEET ERROR] ====================');
-      debugPrint('Error: $errorMsg');
-      debugPrint('Full Data: ${response.data}');
-      debugPrint('============================================================');
       if (mounted) {
-        AsmitaToast.show(
+        await BbpsWebViewScreen.open(
           context,
-          message: errorMsg,
-          type: AsmitaToastType.error,
+          sessionUrl: url,
+          categoryTitle: categoryName,
         );
       }
     } catch (e) {
@@ -150,9 +119,6 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
         debugPrint('DioException Type: ${e.type}');
         debugPrint('HTTP Status: ${e.response?.statusCode}');
         debugPrint('API Error Data: ${e.response?.data}');
-        debugPrint('Request URL: ${e.requestOptions.uri}');
-        debugPrint('Request Headers: ${e.requestOptions.headers}');
-        debugPrint('Request Data: ${e.requestOptions.data}');
       }
       debugPrint('===============================================================');
       if (mounted) {
@@ -162,6 +128,8 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
           if (data is Map) {
             msg = data['error']?.toString() ?? data['message']?.toString() ?? msg;
           }
+        } else {
+          msg = e.toString().replaceFirst('Exception: ', '');
         }
         AsmitaToast.show(
           context,
