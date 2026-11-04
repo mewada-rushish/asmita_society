@@ -46,7 +46,7 @@ class _BiometricLockWrapperState extends State<BiometricLockWrapper> {
       }
 
       final bool didAuthenticate = await _auth.authenticate(
-        localizedReason: 'Please authenticate to access your society account',
+        localizedReason: 'Authenticate to access your account',
         options: const AuthenticationOptions(
           stickyAuth: true,
           biometricOnly: false,
