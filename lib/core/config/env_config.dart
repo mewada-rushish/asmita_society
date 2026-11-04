@@ -124,4 +124,5 @@ class EnvConfig {
   /// Bharat BillPay (BBPS) Endpoints
   static String get bbpsCategories => '$baseUrl/app-api/bbps/categories';
   static String get bbpsSessionLink => '$baseUrl/app-api/bbps/session-link';
+  static String get bbpsDelegatedToken => '$baseUrl/app-api/bbps/delegated-token';
 }
