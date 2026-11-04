@@ -60,7 +60,6 @@ class AsmitaBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
     final availableHeight = MediaQuery.of(context).size.height - keyboardInset;
 
     return Container(
@@ -148,7 +147,7 @@ class AsmitaBottomSheet extends StatelessWidget {
               top: false,
               maintainBottomViewPadding: true,
               child: Padding(
-                padding: contentPadding ?? EdgeInsets.fromLTRB(24, 16, 24, bottomPadding > 0 ? bottomPadding + 16 : 24),
+                padding: contentPadding ?? const EdgeInsets.fromLTRB(24, 16, 24, 16),
                 child: child,
               ),
             ),
