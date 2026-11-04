@@ -807,89 +807,51 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                         },
                       ),
                     ),
-                    const SizedBox(height: 20),
-
-                    // Section Title with Active Count Badge
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Categories',
-                              style: TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : AsmitaPalette.deepNavy,
-                                letterSpacing: -0.2,
-                              ),
+                    if (_selectedFilterTag != 'All' || _searchQuery.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            _searchController.clear();
+                            setState(() {
+                              _searchQuery = '';
+                              _selectedFilterTag = 'All';
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.actionRed).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
                             ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? const Color(0xFF3B82F6).withValues(alpha: 0.18)
-                                    : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                '${filteredCategories.length}',
-                                style: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.refresh_rounded,
+                                  size: 13,
+                                  color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.actionRed,
                                 ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (_selectedFilterTag != 'All' || _searchQuery.isNotEmpty)
-                          GestureDetector(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              _searchController.clear();
-                              setState(() {
-                                _searchQuery = '';
-                                _selectedFilterTag = 'All';
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.actionRed).withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.refresh_rounded,
-                                    size: 13,
+                                const SizedBox(width: 3),
+                                Text(
+                                  'Reset',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
                                     color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.actionRed,
                                   ),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    'Reset',
-                                    style: TextStyle(
-                                      fontFamily: 'Montserrat',
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.actionRed,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ] else
+                      const SizedBox(height: 14),
                     // Categories Grid (or Empty Search State)
                     if (_isLoadingActiveCategories && (_activeCategoryIds == null || _activeCategoryIds!.isEmpty))
                       _buildSkeletalCategoryGrid(isDark)
