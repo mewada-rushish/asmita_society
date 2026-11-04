@@ -197,7 +197,7 @@ class ViewMoreScreen extends StatelessWidget {
                       'color': Theme.of(context).colorScheme.primary,
                       'onTap': () {
                         Navigator.pop(context);
-                        BbpsBillPaymentsSheet.show(context);
+                        BbpsBillPaymentsSheet.show(context, onNavigateToTab: onNavigationItemSelected);
                       },
                     },
                     {

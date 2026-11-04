@@ -42,6 +42,7 @@ class OwnerDashboardView extends StatefulWidget {
   final VoidCallback? onNavigateToDailyHelp;
   final VoidCallback? onNavigateToAllNotices;
   final VoidCallback? onNavigateToSearch;
+  final ValueChanged<int>? onNavigateToTab;
 
   const OwnerDashboardView({
     super.key,
@@ -52,6 +53,7 @@ class OwnerDashboardView extends StatefulWidget {
     this.onNavigateToDailyHelp,
     this.onNavigateToAllNotices,
     this.onNavigateToSearch,
+    this.onNavigateToTab,
   });
 
   @override
@@ -864,7 +866,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
       case QuickActionType.complaints:
       case QuickActionType.management:
       case QuickActionType.utilityPay:
-        return () => BbpsBillPaymentsSheet.show(context);
+        return () => BbpsBillPaymentsSheet.show(context, onNavigateToTab: widget.onNavigateToTab);
       case QuickActionType.amenities:
       case QuickActionType.emergency:
         return widget.onNavigateToViewMore;
