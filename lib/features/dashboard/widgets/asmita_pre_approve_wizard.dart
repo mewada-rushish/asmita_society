@@ -820,7 +820,20 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       selectedFlats = [user.flatMappings.first];
     }
 
-    if (selectedFlats.isEmpty && _selectedEmployee == null) {
+    final isIndustrial = PropertyRoleResolver.isIndustrialContext(user);
+
+    // Fallback for industrial / corporate context where employees/directors have cabins/desks instead of flatMappings
+    if (selectedFlats.isEmpty && !widget.isGuardMode && (isIndustrial || user.flatMappings.isEmpty)) {
+      if (_societyFlats.isNotEmpty) {
+        selectedFlats = [_societyFlats.first];
+      } else if (user.societyId != null &&
+          AsmitaPreApproveWizard._cachedSocietyFlats.containsKey(user.societyId) &&
+          AsmitaPreApproveWizard._cachedSocietyFlats[user.societyId]!.isNotEmpty) {
+        selectedFlats = [AsmitaPreApproveWizard._cachedSocietyFlats[user.societyId]!.first];
+      }
+    }
+
+    if (selectedFlats.isEmpty && _selectedEmployee == null && !isIndustrial) {
       AsmitaToast.show(
         context,
         message: widget.isGuardMode
@@ -831,7 +844,6 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       return;
     }
 
-    final isIndustrial = PropertyRoleResolver.isIndustrialContext(user);
     final isDelivery = _selectedCategory == 'Delivery';
     final isCabOrVehicle = _selectedCategory == 'Cab';
     final isVendor = _selectedCategory == 'Visiting Help';
@@ -1042,7 +1054,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     final endTimeStr =
         '${_selectedEndTime.hour.toString().padLeft(2, '0')}:${_selectedEndTime.minute.toString().padLeft(2, '0')}:00';
 
-    final flat = selectedFlats.first;
+    final flat = selectedFlats.isNotEmpty ? selectedFlats.first : null;
+    final fallbackTowerId = flat?.towerId ?? _effectiveTowerId ?? 2;
+    final fallbackUnitId = flat?.flatId;
 
     final enteredName = _visitorNameController.text.trim();
     if (isIndustrial && enteredName.isEmpty) {
@@ -1093,8 +1107,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
     final payload = {
       'society_id': user.societyId,
-      'tower_id': flat.towerId,
-      'unit_id': flat.flatId,
+      'tower_id': flat?.towerId ?? fallbackTowerId,
+      'unit_id': flat?.flatId ?? fallbackUnitId,
       'resident_id': user.userId,
       'invite_type': inviteType,
       'invite_sub_type': isOnce ? 'ONCE' : 'FREQUENT',
