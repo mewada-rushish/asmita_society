@@ -512,28 +512,25 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
           }
         },
       ),
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            // Standard App Primary Header matching theme
-            AsmitaPrimaryHeader(
-              subtitleOverride: 'Bill Payments (BBPS)',
-              showBackButton: true,
-              allowPropertySwitching: false,
-              backgroundColor: theme.scaffoldBackgroundColor,
-              bottomPadding: 0.0,
-              onSearchPressed: widget.onNavigateToSearch,
-              onChatPressed: widget.onNavigateToCommunity,
-            ),
+      body: Column(
+        children: [
+          // Standard App Primary Header matching theme
+          AsmitaPrimaryHeader(
+            subtitleOverride: 'Bill Payments (BBPS)',
+            showBackButton: true,
+            allowPropertySwitching: false,
+            bottomPadding: 12.0,
+            onSearchPressed: widget.onNavigateToSearch,
+            onChatPressed: widget.onNavigateToCommunity,
+          ),
 
-            // 2. Scrollable Body with Branded Pull to Refresh (AsmitaPullToRefresh)
-            Expanded(
-              child: AsmitaPullToRefresh(
-                onRefresh: () async {
-                  await _loadActiveCategories(isSilent: true);
-                },
-                padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+          // 2. Scrollable Body with Branded Pull to Refresh (AsmitaPullToRefresh)
+          Expanded(
+            child: AsmitaPullToRefresh(
+              onRefresh: () async {
+                await _loadActiveCategories(isSilent: true);
+              },
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -923,7 +920,6 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
             ),
           ],
         ),
-      ),
     );
   }
 
