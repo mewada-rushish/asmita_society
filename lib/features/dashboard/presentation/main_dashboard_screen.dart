@@ -188,6 +188,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
     switch (normalized) {
       case 'owner':
         return OwnerDashboardView(
+          onNavigateToTab: (index) => setState(() => _currentIndex = index),
           onNavigateToCommunity: () {
             setState(() {
               _currentIndex = 2; // Society Chat
@@ -214,6 +215,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         );
       case 'tenant':
         return TenantDashboardView(
+          onNavigateToTab: (index) => setState(() => _currentIndex = index),
           onNavigateToCommunity: () {
             setState(() {
               _currentIndex = 2; // Society Chat
@@ -247,6 +249,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         return _wrapWithIndustrialBloc(
           context,
           DirectorDashboardView(
+            onNavigateToTab: (index) => setState(() => _currentIndex = index),
             onNavigateToVisitsWithFilter: (filter) {
               setState(() {
                 _visitsInitialFilter = filter;
@@ -272,6 +275,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
             designation: user?.designation ?? 'Head of Department (HOD)',
             isActive: user?.isActive ?? true,
             canDelegate: canDelegate,
+            onNavigateToTab: (index) => setState(() => _currentIndex = index),
             onOpenDelegation: () {
               Navigator.push(
                 context,
@@ -286,7 +290,7 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
           ),
         );
       case 'receptionist':
-        return _wrapWithIndustrialBloc(context, const ReceptionistDashboardView());
+        return _wrapWithIndustrialBloc(context, ReceptionistDashboardView(onNavigateToTab: (index) => setState(() => _currentIndex = index)));
       case 'facility':
         return _wrapWithIndustrialBloc(context, const FacilityStaffDashboardView());
       default:

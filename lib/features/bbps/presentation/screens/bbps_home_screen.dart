@@ -33,13 +33,13 @@ class BbpsHomeScreen extends StatefulWidget {
     this.onNavigateToSearch,
   });
 
-  static Future<void> open(
+  static Future<int?> open(
     BuildContext context, {
     ValueChanged<int>? onNavigateToTab,
     VoidCallback? onNavigateToCommunity,
     VoidCallback? onNavigateToSearch,
   }) {
-    return Navigator.push(
+    return Navigator.push<int>(
       context,
       MaterialPageRoute(
         builder: (_) => BbpsHomeScreen(
@@ -137,13 +137,8 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       final response = await dio.post(
         EnvConfig.bbpsSessionLink,
         data: payload,
-        options: Options(receiveTimeout: const Duration(seconds: 10)),
+        options: Options(receiveTimeout: const Duration(seconds: 12)),
       );
-
-      debugPrint('==================== [BBPS API RESPONSE] ====================');
-      debugPrint('Status Code: ${response.statusCode}');
-      debugPrint('Response Data: ${response.data}');
-      debugPrint('============================================================');
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         final link = response.data['link'] as String?;
@@ -160,33 +155,19 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
           }
           return;
         }
-      } else {
-        final errorMsg = response.data?['error']?.toString() ?? response.data?['message']?.toString() ?? 'Failed to generate session link';
-        debugPrint('==================== [BBPS API ERROR] ====================');
-        debugPrint('Error: $errorMsg');
-        debugPrint('Full Payload: ${response.data}');
-        debugPrint('==========================================================');
-        if (mounted) {
-          AsmitaToast.show(
-            context,
-            message: 'BBPS Error: $errorMsg',
-            type: AsmitaToastType.error,
-          );
-        }
-        return;
+      }
+
+      final errorMsg = response.data?['error']?.toString() ??
+          response.data?['message']?.toString() ??
+          'Failed to generate billpay session';
+      if (mounted) {
+        AsmitaToast.show(
+          context,
+          message: errorMsg,
+          type: AsmitaToastType.error,
+        );
       }
     } catch (e) {
-      debugPrint('==================== [BBPS EXCEPTION] ====================');
-      debugPrint('Error: $e');
-      if (e is DioException) {
-        debugPrint('DioException Type: ${e.type}');
-        debugPrint('HTTP Status: ${e.response?.statusCode}');
-        debugPrint('API Error Data: ${e.response?.data}');
-        debugPrint('Request URL: ${e.requestOptions.uri}');
-        debugPrint('Request Headers: ${e.requestOptions.headers}');
-        debugPrint('Request Data: ${e.requestOptions.data}');
-      }
-      debugPrint('==========================================================');
       if (mounted) {
         String msg = 'Unable to connect to BBPS Gateway.';
         if (e is DioException && e.response?.data != null) {
@@ -201,7 +182,6 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
           type: AsmitaToastType.error,
         );
       }
-      return;
     }
   }
 
@@ -542,7 +522,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       bottomNavigationBar: AsmitaBottomNavBar(
         currentIndex: -1,
         onTap: (index) {
-          Navigator.pop(context);
+          Navigator.pop(context, index);
           if (widget.onNavigateToTab != null) {
             widget.onNavigateToTab!(index);
           }
@@ -725,92 +705,189 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 14),
 
-                    // Category Filter Chips
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      child: Row(
-                        children: _filterTags.map((tag) {
+                    // Category Segmented Filter Chips
+                    SizedBox(
+                      height: 36,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: _filterTags.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final tag = _filterTags[index];
                           final isSelected = _selectedFilterTag == tag;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 6.0),
-                            child: InkWell(
-                              onTap: () {
-                                HapticFeedback.selectionClick();
-                                setState(() => _selectedFilterTag = tag);
-                              },
-                              borderRadius: BorderRadius.circular(8),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 160),
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                decoration: BoxDecoration(
+
+                          // Icon per tag
+                          IconData tagIcon;
+                          switch (tag) {
+                            case 'Utilities':
+                              tagIcon = Icons.bolt_rounded;
+                              break;
+                            case 'Recharges & Bills':
+                              tagIcon = Icons.phone_android_rounded;
+                              break;
+                            case 'Finance & Tax':
+                              tagIcon = Icons.account_balance_wallet_rounded;
+                              break;
+                            case 'Others':
+                              tagIcon = Icons.widgets_rounded;
+                              break;
+                            default:
+                              tagIcon = Icons.grid_view_rounded;
+                          }
+
+                          return InkWell(
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setState(() => _selectedFilterTag = tag);
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
+                                    : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
                                   color: isSelected
                                       ? (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
-                                      : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
-                                        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                                    width: 1,
-                                  ),
+                                      : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                                  width: 1.2,
                                 ),
-                                child: Text(
-                                  tag,
-                                  style: TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontSize: 10.5,
-                                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                boxShadow: isSelected
+                                    ? [
+                                        BoxShadow(
+                                          color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy).withValues(alpha: 0.25),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ]
+                                    : [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 1),
+                                        ),
+                                      ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    tagIcon,
+                                    size: 14,
                                     color: isSelected
                                         ? Colors.white
-                                        : (isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155)),
+                                        : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                                   ),
-                                ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    tag,
+                                    style: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: 11.5,
+                                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : (isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155)),
+                                      letterSpacing: -0.1,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           );
-                        }).toList(),
+                        },
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 18),
 
-                    // Section Title with Active Count
+                    // Section Title with Active Count Badge
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text(
-                          'Available Biller Categories (${filteredCategories.length})',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontFamily: 'Montserrat',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Categories',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: isDark ? Colors.white : AsmitaPalette.deepNavy,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? const Color(0xFF3B82F6).withValues(alpha: 0.18)
+                                    : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '${filteredCategories.length}',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         if (_selectedFilterTag != 'All' || _searchQuery.isNotEmpty)
                           GestureDetector(
                             onTap: () {
+                              HapticFeedback.lightImpact();
                               _searchController.clear();
                               setState(() {
                                 _searchQuery = '';
                                 _selectedFilterTag = 'All';
                               });
                             },
-                            child: Text(
-                              'Reset',
-                              style: TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.actionRed,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.actionRed).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.refresh_rounded,
+                                    size: 13,
+                                    color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.actionRed,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    'Reset',
+                                    style: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.actionRed,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
 
                     // Categories Grid (or Empty Search State)
                     if (_isLoadingActiveCategories && (_activeCategoryIds == null || _activeCategoryIds!.isEmpty))

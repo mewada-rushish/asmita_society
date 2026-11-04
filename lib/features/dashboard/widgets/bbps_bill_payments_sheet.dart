@@ -19,8 +19,22 @@ const bool kEnableBbps = true;
 class BbpsBillPaymentsSheet extends StatefulWidget {
   const BbpsBillPaymentsSheet({super.key});
 
-  static Future<void> show(BuildContext context) async {
-    return BbpsHomeScreen.open(context);
+  static Future<int?> show(
+    BuildContext context, {
+    ValueChanged<int>? onNavigateToTab,
+    VoidCallback? onNavigateToCommunity,
+    VoidCallback? onNavigateToSearch,
+  }) async {
+    final result = await BbpsHomeScreen.open(
+      context,
+      onNavigateToTab: onNavigateToTab,
+      onNavigateToCommunity: onNavigateToCommunity,
+      onNavigateToSearch: onNavigateToSearch,
+    );
+    if (result != null && onNavigateToTab != null) {
+      onNavigateToTab(result);
+    }
+    return result;
   }
 
   @override
