@@ -1,3 +1,5 @@
+import 'package:asmita_society/features/menu/bloc/preferences_bloc.dart';
+import 'package:asmita_society/features/menu/bloc/preferences_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
@@ -576,6 +578,7 @@ class SettingsScreen extends ConsumerWidget {
                 Navigator.pop(context);
                 if (lang != currentLanguage) {
                   ref.read(preferencesProvider.notifier).updatePreference(language: lang);
+                  try { context.read<PreferencesBloc>().add(UpdatePreferences(language: lang)); } catch (_) {}
                 }
               },
               child: Text(
@@ -610,6 +613,7 @@ class SettingsScreen extends ConsumerWidget {
                 Navigator.pop(context);
                 if (theme != currentTheme) {
                   ref.read(preferencesProvider.notifier).updatePreference(appTheme: theme);
+                  try { context.read<PreferencesBloc>().add(UpdatePreferences(appTheme: theme)); } catch (_) {}
                   AsmitaToast.show(context, message: 'Theme changed to $theme', type: AsmitaToastType.success);
                 }
               },
