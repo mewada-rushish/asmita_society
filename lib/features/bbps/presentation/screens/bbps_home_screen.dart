@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/env_config.dart';
 import '../../../../core/constants/design_system.dart';
@@ -13,6 +12,7 @@ import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_select_field.dart';
 import '../../../../core/widgets/asmita_bottom_nav_bar.dart';
 import '../../../../core/widgets/asmita_toast.dart';
+import 'bbps_webview_screen.dart';
 
 /// Bharat BillPay (BBPS) / Bharat Connect Dedicated Hub Screen
 ///
@@ -144,14 +144,17 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
       if (response.statusCode == 200 && response.data['success'] == true) {
         final link = response.data['link'] as String?;
         if (link != null && link.isNotEmpty) {
-          final uri = Uri.parse(link);
-          if (await canLaunchUrl(uri)) {
-            if (dialogContext != null && dialogContext.mounted) {
-              Navigator.of(dialogContext).pop();
-            }
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-            return;
+          if (dialogContext != null && dialogContext.mounted) {
+            Navigator.of(dialogContext).pop();
           }
+          if (mounted) {
+            await BbpsWebViewScreen.open(
+              context,
+              sessionUrl: link,
+              categoryTitle: categoryName,
+            );
+          }
+          return;
         }
       }
     } catch (e) {
