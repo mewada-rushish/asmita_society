@@ -164,30 +164,10 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
       },
       child: Scaffold(
         backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-        body: Column(
+        body: Stack(
           children: [
-            // Exact AsmitA Primary Header with signature rounded corners and zero gap
-            AsmitaPrimaryHeader(
-              showBackButton: true,
-              onBackPressed: _handleBack,
-              subtitleOverride: subtitle,
-              allowPropertySwitching: false,
-              bottomPadding: 0.0,
-              isCurved: true,
-              backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-            ),
-
-            // Linear loading indicator during web navigation
-            if (_isLoading)
-              LinearProgressIndicator(
-                value: _loadProgress < 100 ? _loadProgress / 100 : null,
-                backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
-                color: AsmitaPalette.deepNavy,
-                minHeight: 2.5,
-              ),
-
-            // WebView with Bottom SafeArea for 3-button & gesture nav
-            Expanded(
+            // 1. WebView taking full screen underneath the floating header
+            Positioned.fill(
               child: SafeArea(
                 top: false,
                 left: false,
@@ -196,6 +176,36 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
                 child: _hasError
                     ? _buildErrorView()
                     : WebViewWidget(controller: _controller),
+              ),
+            ),
+
+            // 2. Exact AsmitA Primary Header sitting directly on top of the webview
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AsmitaPrimaryHeader(
+                    showBackButton: true,
+                    onBackPressed: _handleBack,
+                    subtitleOverride: subtitle,
+                    allowPropertySwitching: false,
+                    bottomPadding: 0.0,
+                    isCurved: true,
+                    backgroundColor: Colors.transparent,
+                  ),
+
+                  // Linear loading indicator during web navigation
+                  if (_isLoading)
+                    LinearProgressIndicator(
+                      value: _loadProgress < 100 ? _loadProgress / 100 : null,
+                      backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
+                      color: AsmitaPalette.deepNavy,
+                      minHeight: 2.5,
+                    ),
+                ],
               ),
             ),
           ],
