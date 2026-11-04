@@ -101,6 +101,11 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
           receiveTimeout: const Duration(seconds: 12),
         ),
       );
+      debugPrint('==================== [BBPS SHEET RESPONSE] ====================');
+      debugPrint('Status Code: ${response.statusCode}');
+      debugPrint('Response Data: ${response.data}');
+      debugPrint('==============================================================');
+
       if (response.statusCode == 200 && response.data['success'] == true) {
         final String? url = response.data['link'];
         if (url != null && mounted) {
@@ -112,20 +117,41 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
           return;
         }
       }
+      final errorMsg = response.data?['error']?.toString() ?? response.data?['message']?.toString() ?? 'Unable to start BBPS session';
+      debugPrint('==================== [BBPS SHEET ERROR] ====================');
+      debugPrint('Error: $errorMsg');
+      debugPrint('Full Data: ${response.data}');
+      debugPrint('============================================================');
       if (mounted) {
         AsmitaToast.show(
           context,
-          message: response.data['error']?.toString() ??
-              'Unable to start BBPS session',
+          message: errorMsg,
           type: AsmitaToastType.error,
         );
       }
     } catch (e) {
-      debugPrint('[BBPS] Ethereal launch failed: $e');
+      debugPrint('==================== [BBPS SHEET EXCEPTION] ====================');
+      debugPrint('Error: $e');
+      if (e is DioException) {
+        debugPrint('DioException Type: ${e.type}');
+        debugPrint('HTTP Status: ${e.response?.statusCode}');
+        debugPrint('API Error Data: ${e.response?.data}');
+        debugPrint('Request URL: ${e.requestOptions.uri}');
+        debugPrint('Request Headers: ${e.requestOptions.headers}');
+        debugPrint('Request Data: ${e.requestOptions.data}');
+      }
+      debugPrint('===============================================================');
       if (mounted) {
+        String msg = 'Unable to connect to BBPS Gateway.';
+        if (e is DioException && e.response?.data != null) {
+          final data = e.response!.data;
+          if (data is Map) {
+            msg = data['error']?.toString() ?? data['message']?.toString() ?? msg;
+          }
+        }
         AsmitaToast.show(
           context,
-          message: 'Unable to connect to BBPS. Please check connection.',
+          message: msg,
           type: AsmitaToastType.error,
         );
       }
