@@ -4,16 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../../core/constants/design_system.dart';
-import '../../../../core/widgets/asmita_primary_header.dart';
 
 /// Full-screen in-app WebView for Setu BillPay (Ethereal).
 ///
 /// Features:
-/// - Branded AsmitaPrimaryHeader matching the app's unified navigation design
-/// - Integrated reload & close trailing actions
-/// - Automatic history back navigation with PopScope
-/// - Bottom SafeArea handling for both Android 3-button and gesture navigation
-/// - Seamless bottom bar blending with Setu's navigation tabs
+/// - Exact native AsmitA AppBar (edge-to-edge, no curved card corners)
+/// - Unified typography (Montserrat title, Poppins subtitle)
+/// - Integrated iOS-style chevron back, reload, and close actions
+/// - Native AppBar elevation & subtle baseline divider
+/// - Progress indicator during web navigation
+/// - Safe area management for Android 3-button and gesture navigation
 class BbpsWebViewScreen extends StatefulWidget {
   final String sessionUrl;
   final String? categoryTitle;
@@ -96,9 +96,8 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final title = widget.categoryTitle != null
-        ? '${widget.categoryTitle} • BBPS'
-        : 'Bill Payments (BBPS)';
+    final primaryColor = isDark ? Colors.white : theme.colorScheme.primary;
+    final title = widget.categoryTitle ?? 'Bill Payments';
 
     return PopScope(
       canPop: false,
@@ -108,105 +107,91 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
       },
       child: Scaffold(
         backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-        body: Column(
-          children: [
-            // 1. Signature AsmitA App Header with bottom border divider
-            Container(
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A) : Colors.white,
-                border: Border(
-                  bottom: BorderSide(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                    width: 1,
-                  ),
+        appBar: AppBar(
+          backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+          foregroundColor: primaryColor,
+          elevation: 2,
+          shadowColor: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
+          surfaceTintColor: Colors.transparent,
+          centerTitle: false,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: primaryColor,
+              size: 20,
+            ),
+            onPressed: _handleBack,
+            tooltip: 'Back',
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: primaryColor,
                 ),
               ),
-              child: AsmitaPrimaryHeader(
-                subtitleOverride: title,
-                showBackButton: true,
-                allowPropertySwitching: false,
-                bottomPadding: 0.0,
-                backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-                onBackPressed: _handleBack,
-                trailingActions: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        Icons.refresh_rounded,
-                        color: isDark ? Colors.white : AsmitaPalette.deepNavy,
-                        size: 20,
-                      ),
-                      onPressed: () => _controller.reload(),
-                      tooltip: 'Reload',
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.close_rounded,
-                        color: isDark ? Colors.white : AsmitaPalette.deepNavy,
-                        size: 22,
-                      ),
-                      onPressed: () => Navigator.of(context).pop(),
-                      tooltip: 'Close',
-                    ),
-                  ],
+              const SizedBox(height: 1),
+              Text(
+                'Secured by NPCI • Bharat BillPay',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w400,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                 ),
               ),
-            ),
-
-            // 2. Linear loading indicator during web navigation
-            if (_isLoading)
-              LinearProgressIndicator(
-                value: _loadProgress < 100 ? _loadProgress / 100 : null,
-                backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
-                color: AsmitaPalette.deepNavy,
-                minHeight: 2.5,
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: Icon(
+                Icons.refresh_rounded,
+                color: primaryColor,
+                size: 20,
               ),
-
-            // 3. WebView with Top Elevation Shadow overlay & Bottom SafeArea for 3-button & gesture nav
-            Expanded(
-              child: Stack(
-                children: [
-                  // 3a. Native WebView with Bottom SafeArea
-                  Positioned.fill(
-                    child: SafeArea(
-                      top: false,
-                      left: false,
-                      right: false,
-                      bottom: true,
-                      child: _hasError
-                          ? _buildErrorView()
-                          : WebViewWidget(controller: _controller),
-                    ),
-                  ),
-
-                  // 3b. Visible Top Drop-Shadow overlay (drawn on top of the native WebView)
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 8,
-                    child: IgnorePointer(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
-                              Colors.black.withValues(alpha: isDark ? 0.15 : 0.02),
-                              Colors.transparent,
-                            ],
-                            stops: const [0.0, 0.5, 1.0],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              onPressed: () => _controller.reload(),
+              tooltip: 'Reload',
             ),
+            IconButton(
+              icon: Icon(
+                Icons.close_rounded,
+                color: primaryColor,
+                size: 22,
+              ),
+              onPressed: () => Navigator.of(context).pop(),
+              tooltip: 'Close',
+            ),
+            const SizedBox(width: 4),
           ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(2.5),
+            child: _isLoading
+                ? LinearProgressIndicator(
+                    value: _loadProgress < 100 ? _loadProgress / 100 : null,
+                    backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
+                    color: AsmitaPalette.deepNavy,
+                    minHeight: 2.5,
+                  )
+                : Container(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                    height: 1,
+                  ),
+          ),
+        ),
+        body: SafeArea(
+          top: false,
+          left: false,
+          right: false,
+          bottom: true,
+          child: _hasError
+              ? _buildErrorView()
+              : WebViewWidget(controller: _controller),
         ),
       ),
     );
