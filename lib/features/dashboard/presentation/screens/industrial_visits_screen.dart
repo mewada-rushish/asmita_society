@@ -875,7 +875,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 96.0),
+        padding: EdgeInsets.only(
+          bottom: 84.0 + MediaQuery.viewPaddingOf(context).bottom,
+        ),
         child: FloatingActionButton.extended(
           heroTag: null,
           onPressed: () => _showPreApproveModal(context),
