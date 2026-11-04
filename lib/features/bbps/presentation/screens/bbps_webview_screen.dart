@@ -152,6 +152,8 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final topPadding = MediaQuery.viewPaddingOf(context).top;
+    final headerHeight = (topPadding > 0 ? topPadding + 10 : 22) + 48 + 16.0;
     final subtitle = widget.categoryTitle != null
         ? '${widget.categoryTitle} • BBPS'
         : 'Bill Payments (BBPS)';
@@ -166,8 +168,9 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
         backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
         body: Stack(
           children: [
-            // 1. WebView taking full screen underneath the floating header
+            // 1. WebView taking screen underneath floating header with BBPS & Bharat Connect logos fully visible
             Positioned.fill(
+              top: headerHeight - 8.0,
               child: SafeArea(
                 top: false,
                 left: false,
