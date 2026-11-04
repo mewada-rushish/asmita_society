@@ -480,7 +480,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                   ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.3 : (isCurved ? 0.03 : 0.06)),
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : (isCurved ? 0.06 : 0.06)),
                 blurRadius: isCurved ? 4 : 6,
                 offset: const Offset(0, 2),
               ),
