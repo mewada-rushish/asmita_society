@@ -166,14 +166,14 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
         backgroundColor: theme.scaffoldBackgroundColor,
         body: Column(
           children: [
-            // Exact AsmitA Primary Header component as-is (flat edge-to-edge, no curved corners)
+            // Exact AsmitA Primary Header component as-is (signature rounded corners)
             AsmitaPrimaryHeader(
               showBackButton: true,
               onBackPressed: _handleBack,
               subtitleOverride: subtitle,
               allowPropertySwitching: false,
-              bottomPadding: 0.0,
-              isCurved: false,
+              bottomPadding: 8.0,
+              isCurved: true,
             ),
 
             // Linear loading indicator during web navigation

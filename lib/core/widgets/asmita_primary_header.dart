@@ -457,7 +457,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
             16,
             topPadding > 0 ? topPadding + 10 : 22,
             16,
-            isCurved ? 14 : 14,
+            isCurved ? 16 : 14,
           ),
           decoration: BoxDecoration(
             color: isDark
