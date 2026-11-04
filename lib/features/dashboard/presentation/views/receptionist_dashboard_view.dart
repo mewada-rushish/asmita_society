@@ -28,6 +28,7 @@ class ReceptionistDashboardView extends StatefulWidget {
   final Function(int visitId, String action)? onDecideVisit;
   final Function(int visitId, int? assignedUserId, int? cabinId, int? deskId)?
   onReassignVisit;
+  final ValueChanged<int>? onNavigateToTab;
 
   const ReceptionistDashboardView({
     super.key,
@@ -36,6 +37,7 @@ class ReceptionistDashboardView extends StatefulWidget {
     this.onToggleDuty,
     this.onDecideVisit,
     this.onReassignVisit,
+    this.onNavigateToTab,
   });
 
   @override
@@ -484,7 +486,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
               context,
               icon: Icons.receipt_long_rounded,
               label: 'BillPay',
-              onTap: () => BbpsBillPaymentsSheet.show(context),
+              onTap: () => BbpsBillPaymentsSheet.show(context, onNavigateToTab: widget.onNavigateToTab),
             ),
           ),
         ],

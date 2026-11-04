@@ -43,6 +43,7 @@ class DirectorDashboardView extends StatefulWidget {
   final Function(int visitId, String action)? onDecideVisit;
   final Function(int visitId)? onAcknowledgeVisit;
   final Function(String filter)? onNavigateToVisitsWithFilter;
+  final ValueChanged<int>? onNavigateToTab;
 
   const DirectorDashboardView({
     super.key,
@@ -51,6 +52,7 @@ class DirectorDashboardView extends StatefulWidget {
     this.onDecideVisit,
     this.onAcknowledgeVisit,
     this.onNavigateToVisitsWithFilter,
+    this.onNavigateToTab,
   });
 
   @override
@@ -1095,7 +1097,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
             ? AsmitaPalette.surfaceDark
             : const Color(0xFFF59E0B).withValues(alpha: 0.12),
         iconColor: const Color(0xFFD97706),
-        onTap: () => BbpsBillPaymentsSheet.show(context),
+        onTap: () => BbpsBillPaymentsSheet.show(context, onNavigateToTab: widget.onNavigateToTab),
       ),
     ];
 

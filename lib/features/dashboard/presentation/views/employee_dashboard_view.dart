@@ -47,6 +47,7 @@ class EmployeeDashboardView extends StatefulWidget {
   final VoidCallback onOpenDelegation;
   final Function(int visitId, String action)? onDecideVisit;
   final Function(int visitId)? onAcknowledgeVisit;
+  final ValueChanged<int>? onNavigateToTab;
 
   const EmployeeDashboardView({
     super.key,
@@ -61,6 +62,7 @@ class EmployeeDashboardView extends StatefulWidget {
     required this.onOpenDelegation,
     this.onDecideVisit,
     this.onAcknowledgeVisit,
+    this.onNavigateToTab,
   });
 
   @override
@@ -514,7 +516,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
   }
 
   void _openBillPayments(BuildContext context) {
-    BbpsBillPaymentsSheet.show(context);
+    BbpsBillPaymentsSheet.show(context, onNavigateToTab: widget.onNavigateToTab);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
