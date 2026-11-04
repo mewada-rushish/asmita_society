@@ -110,36 +110,47 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
         backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
         body: Column(
           children: [
-            // 1. Signature AsmitA App Header
-            AsmitaPrimaryHeader(
-              subtitleOverride: title,
-              showBackButton: true,
-              allowPropertySwitching: false,
-              bottomPadding: 0.0,
-              backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-              onBackPressed: _handleBack,
-              trailingActions: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.refresh_rounded,
-                      color: isDark ? Colors.white : AsmitaPalette.deepNavy,
-                      size: 20,
-                    ),
-                    onPressed: () => _controller.reload(),
-                    tooltip: 'Reload',
+            // 1. Signature AsmitA App Header with bottom border divider
+            Container(
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                border: Border(
+                  bottom: BorderSide(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                    width: 1,
                   ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.close_rounded,
-                      color: isDark ? Colors.white : AsmitaPalette.deepNavy,
-                      size: 22,
+                ),
+              ),
+              child: AsmitaPrimaryHeader(
+                subtitleOverride: title,
+                showBackButton: true,
+                allowPropertySwitching: false,
+                bottomPadding: 0.0,
+                backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+                onBackPressed: _handleBack,
+                trailingActions: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.refresh_rounded,
+                        color: isDark ? Colors.white : AsmitaPalette.deepNavy,
+                        size: 20,
+                      ),
+                      onPressed: () => _controller.reload(),
+                      tooltip: 'Reload',
                     ),
-                    onPressed: () => Navigator.of(context).pop(),
-                    tooltip: 'Close',
-                  ),
-                ],
+                    IconButton(
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: isDark ? Colors.white : AsmitaPalette.deepNavy,
+                        size: 22,
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                      tooltip: 'Close',
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -152,16 +163,47 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
                 minHeight: 2.5,
               ),
 
-            // 3. WebView with Bottom SafeArea for 3-button & gesture nav
+            // 3. WebView with Top Elevation Shadow overlay & Bottom SafeArea for 3-button & gesture nav
             Expanded(
-              child: SafeArea(
-                top: false,
-                left: false,
-                right: false,
-                bottom: true,
-                child: _hasError
-                    ? _buildErrorView()
-                    : WebViewWidget(controller: _controller),
+              child: Stack(
+                children: [
+                  // 3a. Native WebView with Bottom SafeArea
+                  Positioned.fill(
+                    child: SafeArea(
+                      top: false,
+                      left: false,
+                      right: false,
+                      bottom: true,
+                      child: _hasError
+                          ? _buildErrorView()
+                          : WebViewWidget(controller: _controller),
+                    ),
+                  ),
+
+                  // 3b. Visible Top Drop-Shadow overlay (drawn on top of the native WebView)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 8,
+                    child: IgnorePointer(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+                              Colors.black.withValues(alpha: isDark ? 0.15 : 0.02),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.5, 1.0],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

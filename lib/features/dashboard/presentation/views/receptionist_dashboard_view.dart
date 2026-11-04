@@ -483,7 +483,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
             child: _buildSquareActionBox(
               context,
               icon: Icons.receipt_long_rounded,
-              label: 'BBPS Bills',
+              label: 'BillPay',
               onTap: () => BbpsBillPaymentsSheet.show(context),
             ),
           ),
