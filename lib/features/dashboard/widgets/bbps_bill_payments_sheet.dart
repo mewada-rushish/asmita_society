@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../bbps/presentation/screens/bbps_home_screen.dart';
+import '../../bbps/presentation/screens/bbps_webview_screen.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/constants/design_system.dart';
-import '../../../../core/widgets/asmita_select_field.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import 'package:dio/dio.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/security/secure_storage_service.dart';
 import '../../../../core/network/dio_client.dart';
@@ -102,30 +101,57 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
           receiveTimeout: const Duration(seconds: 12),
         ),
       );
+      debugPrint('==================== [BBPS SHEET RESPONSE] ====================');
+      debugPrint('Status Code: ${response.statusCode}');
+      debugPrint('Response Data: ${response.data}');
+      debugPrint('==============================================================');
+
       if (response.statusCode == 200 && response.data['success'] == true) {
         final String? url = response.data['link'];
-        if (url != null) {
-          final uri = Uri.parse(url);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
-            return;
-          }
+        if (url != null && mounted) {
+          await BbpsWebViewScreen.open(
+            context,
+            sessionUrl: url,
+            categoryTitle: categoryName,
+          );
+          return;
         }
       }
+      final errorMsg = response.data?['error']?.toString() ?? response.data?['message']?.toString() ?? 'Unable to start BBPS session';
+      debugPrint('==================== [BBPS SHEET ERROR] ====================');
+      debugPrint('Error: $errorMsg');
+      debugPrint('Full Data: ${response.data}');
+      debugPrint('============================================================');
       if (mounted) {
         AsmitaToast.show(
           context,
-          message: response.data['error']?.toString() ??
-              'Unable to start BBPS session',
+          message: errorMsg,
           type: AsmitaToastType.error,
         );
       }
     } catch (e) {
-      debugPrint('[BBPS] Ethereal launch failed: $e');
+      debugPrint('==================== [BBPS SHEET EXCEPTION] ====================');
+      debugPrint('Error: $e');
+      if (e is DioException) {
+        debugPrint('DioException Type: ${e.type}');
+        debugPrint('HTTP Status: ${e.response?.statusCode}');
+        debugPrint('API Error Data: ${e.response?.data}');
+        debugPrint('Request URL: ${e.requestOptions.uri}');
+        debugPrint('Request Headers: ${e.requestOptions.headers}');
+        debugPrint('Request Data: ${e.requestOptions.data}');
+      }
+      debugPrint('===============================================================');
       if (mounted) {
+        String msg = 'Unable to connect to BBPS Gateway.';
+        if (e is DioException && e.response?.data != null) {
+          final data = e.response!.data;
+          if (data is Map) {
+            msg = data['error']?.toString() ?? data['message']?.toString() ?? msg;
+          }
+        }
         AsmitaToast.show(
           context,
-          message: 'Unable to connect to BBPS. Please check connection.',
+          message: msg,
           type: AsmitaToastType.error,
         );
       }
@@ -133,159 +159,223 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
   }
 
   static const List<Map<String, dynamic>> _allBillerCategories = [
+    // --- Utilities ---
     {
       'id': 'electricity',
       'aliases': ['electricity', 'power'],
       'title': 'Electricity',
-      'subtitle': 'Power utility bills',
+      'subtitle': 'Power utility & electricity boards',
       'icon': Icons.bolt_rounded,
       'color': Color(0xFFEAB308),
       'tag': 'Utilities',
-      'keywords':
-          'electricity power bescom adani tata mseb torrent bses discom energy bill',
-      'providers': [
-        'Adani Electricity Mumbai',
-        'Tata Power - Mumbai',
-        'Maharashtra State Electricity (MSEDCL)',
-        'Torrent Power',
-        'BESCOM (Bangalore)',
-        'BSES Rajdhani Power (Delhi)',
-      ],
-      'accountLabel': 'Consumer / Account Number',
-      'accountHint': 'e.g. 100234567',
-    },
-    {
-      'id': 'water',
-      'aliases': ['water'],
-      'title': 'Water',
-      'subtitle': 'Municipal & corporate supply',
-      'icon': Icons.water_drop_rounded,
-      'color': Color(0xFF0284C7),
-      'tag': 'Utilities',
-      'keywords': 'water municipal jal board tanker supply mcgm bmc djb bwssb',
-      'providers': [
-        'Municipal Corp of Greater Mumbai (MCGM)',
-        'Delhi Jal Board (DJB)',
-        'Bangalore Water Supply (BWSSB)',
-        'Pune Municipal Corporation (PMC)',
-        'Hyderabad Metro Water (HMWSSB)',
-      ],
-      'accountLabel': 'Consumer Connection ID',
-      'accountHint': 'e.g. WTR-88201',
-    },
-    {
-      'id': 'piped_gas',
-      'aliases': ['piped_gas', 'gas'],
-      'title': 'Piped Gas',
-      'subtitle': 'City gas distribution',
-      'icon': Icons.local_fire_department_rounded,
-      'color': Color(0xFFEA580C),
-      'tag': 'Utilities',
-      'keywords': 'piped gas png mgl igl adani gujarat gas cooking gas cng',
-      'providers': [
-        'Mahanagar Gas Limited (MGL)',
-        'Indraprastha Gas Limited (IGL)',
-        'Adani Total Gas',
-        'Gujarat Gas Limited',
-        'GAIL Gas Limited',
-      ],
-      'accountLabel': 'Business Partner (BP) Number',
-      'accountHint': 'e.g. 4001928374',
-    },
-    {
-      'id': 'lpg_cylinder',
-      'aliases': ['lpg_cylinder', 'lpg_gas', 'cylinder'],
-      'title': 'LPG Gas Cylinder',
-      'subtitle': 'Commercial cylinder booking',
-      'icon': Icons.propane_tank_rounded,
-      'color': Color(0xFFDC2626),
-      'tag': 'Utilities',
-      'keywords':
-          'lpg cylinder gas booking bharat gas indane hp commercial cylinder pantry',
-      'providers': ['Bharat Gas (BPCL)', 'Indane Gas (IOCL)', 'HP Gas (HPCL)'],
-      'accountLabel': 'Consumer Number / Registered Mobile',
-      'accountHint': 'e.g. 9820110101',
+      'keywords': 'electricity power bescom adani tata mseb torrent bses discom energy bill',
     },
     {
       'id': 'broadband',
-      'aliases': ['broadband', 'internet', 'fiber'],
-      'title': 'Broadband & Fiber',
-      'subtitle': 'Office internet & Wi-Fi',
+      'aliases': ['broadband', 'internet', 'fiber', 'broadband_postpaid'],
+      'title': 'Broadband Postpaid',
+      'subtitle': 'High-speed fiber & broadband',
       'icon': Icons.wifi_rounded,
-      'color': Color(0xFF7C3AED),
-      'tag': 'Telecom',
-      'keywords':
-          'broadband internet wifi airtel jio fiber act hathway spectranet tata tele lease',
-      'providers': [
-        'JioFiber Commercial / Postpaid',
-        'Airtel Xstream Fiber',
-        'ACT Fibernet',
-        'Tata Tele Business Services',
-        'Hathway Broadband',
-        'BSNL Fiber / Broadband',
-      ],
-      'accountLabel': 'Telephone / Account Number',
-      'accountHint': 'e.g. 022-28192039',
+      'color': Color(0xFF4F46E5),
+      'tag': 'Utilities',
+      'keywords': 'broadband internet wifi airtel jio fiber act hathway spectranet tata tele lease',
     },
     {
       'id': 'mobile_postpaid',
       'aliases': ['mobile_postpaid', 'postpaid'],
       'title': 'Mobile Postpaid',
-      'subtitle': 'Telecom bills',
+      'subtitle': 'Airtel, Jio, Vi & BSNL postpaid',
       'icon': Icons.phone_android_rounded,
       'color': Color(0xFF16A34A),
-      'tag': 'Telecom',
-      'keywords':
-          'mobile postpaid cellular airtel jio vi vodafone bsnl telecom corporate connection',
-      'providers': [
-        'Airtel Corporate Postpaid',
-        'Jio Postpaid Plus',
-        'Vodafone Idea (Vi) Business',
-        'BSNL Postpaid',
-      ],
-      'accountLabel': '10-Digit Mobile Number',
-      'accountHint': 'e.g. 9820110101',
+      'tag': 'Utilities',
+      'keywords': 'mobile postpaid cellular airtel jio vi vodafone bsnl telecom corporate connection',
     },
     {
-      'id': 'mobile_prepaid',
-      'aliases': ['mobile_prepaid', 'prepaid', 'recharge'],
-      'title': 'Mobile Prepaid',
-      'subtitle': 'Recharge & instant airtime',
-      'icon': Icons.phonelink_ring_rounded,
+      'id': 'landline_postpaid',
+      'aliases': ['landline_postpaid', 'landline'],
+      'title': 'Landline Postpaid',
+      'subtitle': 'Fixed line & MTNL/BSNL bills',
+      'icon': Icons.phone_in_talk_rounded,
       'color': Color(0xFF0D9488),
-      'tag': 'Telecom',
-      'keywords':
-          'mobile prepaid recharge airtime talktime topup data pack 4g 5g jio airtel vi bsnl',
-      'providers': [
-        'Jio Prepaid Recharge',
-        'Airtel Prepaid Unlimited',
-        'Vodafone Idea (Vi) Prepaid',
-        'BSNL Prepaid',
-      ],
-      'accountLabel': '10-Digit Mobile Number',
-      'accountHint': 'e.g. 9820110101',
+      'tag': 'Utilities',
+      'keywords': 'landline fixed line phone telephone airtel bsnl mtnl tata tele broadband',
     },
+    {
+      'id': 'water',
+      'aliases': ['water'],
+      'title': 'Water',
+      'subtitle': 'Municipal & state water supply',
+      'icon': Icons.water_drop_rounded,
+      'color': Color(0xFF0284C7),
+      'tag': 'Utilities',
+      'keywords': 'water municipal jal board tanker supply mcgm bmc djb bwssb',
+    },
+    {
+      'id': 'lpg_cylinder',
+      'aliases': ['lpg_cylinder', 'lpg_gas', 'cylinder', 'book_a_cylinder'],
+      'title': 'Book a Cylinder',
+      'subtitle': 'Bharat Gas, Indane & HP refill',
+      'icon': Icons.propane_tank_rounded,
+      'color': Color(0xFFDC2626),
+      'tag': 'Utilities',
+      'keywords': 'lpg cylinder gas booking bharat gas indane hp commercial cylinder pantry',
+    },
+    {
+      'id': 'piped_gas',
+      'aliases': ['piped_gas', 'gas'],
+      'title': 'Piped Gas',
+      'subtitle': 'City gas distribution (MGL, IGL)',
+      'icon': Icons.local_fire_department_rounded,
+      'color': Color(0xFFEA580C),
+      'tag': 'Utilities',
+      'keywords': 'piped gas png mgl igl adani gujarat gas cooking gas cng',
+    },
+    {
+      'id': 'education',
+      'aliases': ['education'],
+      'title': 'Education Fees',
+      'subtitle': 'School, college & university fees',
+      'icon': Icons.school_rounded,
+      'color': Color(0xFF6366F1),
+      'tag': 'Utilities',
+      'keywords': 'school college university education fees coaching training academy exam',
+    },
+
+    // --- Recharges and Bills ---
     {
       'id': 'fastag',
       'aliases': ['fastag', 'toll'],
-      'title': 'FASTag / Parking',
-      'subtitle': 'Fleet toll & pass clearance',
+      'title': 'FASTag',
+      'subtitle': 'NETC automated toll clearance',
       'icon': Icons.toll_rounded,
       'color': Color(0xFF2563EB),
-      'tag': 'Financial',
-      'keywords':
-          'fastag toll parking netc highway nhai fleet pass vehicle tollgate barrier',
-      'providers': [
-        'ICICI Bank FASTag',
-        'State Bank of India (SBI) FASTag',
-        'Paytm Payments Bank FASTag',
-        'HDFC Bank FASTag',
-        'IDFC FIRST Bank FASTag',
-        'Axis Bank FASTag',
-      ],
-      'accountLabel': 'Vehicle Registration Number',
-      'accountHint': 'e.g. MH 01 DD 2878',
+      'tag': 'Recharges and Bills',
+      'keywords': 'fastag toll parking netc highway nhai fleet pass vehicle tollgate barrier',
     },
+    {
+      'id': 'ev_recharge',
+      'aliases': ['ev_recharge', 'ev'],
+      'title': 'EV Recharge',
+      'subtitle': 'Electric vehicle charging points',
+      'icon': Icons.ev_station_rounded,
+      'color': Color(0xFF10B981),
+      'tag': 'Recharges and Bills',
+      'keywords': 'ev recharge electric vehicle charging station battery power',
+    },
+    {
+      'id': 'cable_tv',
+      'aliases': ['cable_tv', 'cable'],
+      'title': 'Cable TV',
+      'subtitle': 'Regional & digital cable operators',
+      'icon': Icons.connected_tv_rounded,
+      'color': Color(0xFF8B5CF6),
+      'tag': 'Recharges and Bills',
+      'keywords': 'cable tv digital hathway den gtpl siticable broadcast set top box',
+    },
+    {
+      'id': 'dth',
+      'aliases': ['dth'],
+      'title': 'DTH',
+      'subtitle': 'Tata Play, Airtel DTH, Dish TV',
+      'icon': Icons.tv_rounded,
+      'color': Color(0xFF9333EA),
+      'tag': 'Recharges and Bills',
+      'keywords': 'dth satellite tv tata play airtel dth dish tv sun direct videocon set top box',
+    },
+    {
+      'id': 'ncmc_recharge',
+      'aliases': ['ncmc_recharge', 'ncmc', 'metro'],
+      'title': 'NCMC Recharge',
+      'subtitle': 'National Common Mobility Card',
+      'icon': Icons.credit_card_rounded,
+      'color': Color(0xFF06B6D4),
+      'tag': 'Recharges and Bills',
+      'keywords': 'ncmc metro card transit pass recharge bus train transport smart card',
+    },
+    {
+      'id': 'fleet_card',
+      'aliases': ['fleet_card', 'fleet'],
+      'title': 'Fleet Card Recharge',
+      'subtitle': 'Transport fleet fuel passes',
+      'icon': Icons.local_shipping_rounded,
+      'color': Color(0xFFF59E0B),
+      'tag': 'Recharges and Bills',
+      'keywords': 'fleet card fuel pass commercial vehicle transport diesel petrol',
+    },
+
+    // --- Finance and Tax ---
+    {
+      'id': 'insurance',
+      'aliases': ['insurance'],
+      'title': 'Insurance',
+      'subtitle': 'Life, health & vehicle policies',
+      'icon': Icons.health_and_safety_rounded,
+      'color': Color(0xFF059669),
+      'tag': 'Finance and Tax',
+      'keywords': 'insurance lic hdfc ergo star health policy premium commercial fire marine asset liability',
+    },
+    {
+      'id': 'loan_repayment',
+      'aliases': ['loan_repayment', 'loan_repay', 'loan', 'emi'],
+      'title': 'Loan Repayment',
+      'subtitle': 'Home, car, personal EMI clearance',
+      'icon': Icons.payments_rounded,
+      'color': Color(0xFFD97706),
+      'tag': 'Finance and Tax',
+      'keywords': 'loan emi repayment bajaj finance hdfc sbi vehicle home loan asset finance',
+    },
+    {
+      'id': 'credit_card',
+      'aliases': ['credit_card'],
+      'title': 'Credit Card',
+      'subtitle': 'Visa, Mastercard & RuPay cards',
+      'icon': Icons.credit_score_rounded,
+      'color': Color(0xFF475569),
+      'tag': 'Finance and Tax',
+      'keywords': 'credit card visa mastercard rupay bill payment corporate card hdfc sbi icici axis',
+    },
+    {
+      'id': 'municipal_taxes',
+      'aliases': ['municipal_taxes', 'municipal_tax', 'property_tax', 'municipal_services'],
+      'title': 'Municipal Services',
+      'subtitle': 'Property tax & civic civic dues',
+      'icon': Icons.account_balance_rounded,
+      'color': Color(0xFF78716C),
+      'tag': 'Finance and Tax',
+      'keywords': 'property tax municipal corporation bmc mcgm mcd bbmp civic cess commercial property',
+    },
+    {
+      'id': 'recurring_deposit',
+      'aliases': ['recurring_deposit', 'rd'],
+      'title': 'Recurring Deposit',
+      'subtitle': 'Bank & post RD installments',
+      'icon': Icons.savings_rounded,
+      'color': Color(0xFF14B8A6),
+      'tag': 'Finance and Tax',
+      'keywords': 'recurring deposit rd bank savings investment post office installment',
+    },
+    {
+      'id': 'credit_on_upi',
+      'aliases': ['credit_on_upi', 'upi_credit'],
+      'title': 'Credit on UPI Repayment',
+      'subtitle': 'Pre-sanctioned UPI credit line',
+      'icon': Icons.qr_code_scanner_rounded,
+      'color': Color(0xFFEC4899),
+      'tag': 'Finance and Tax',
+      'keywords': 'credit on upi line payment overdraft bank upi dues',
+    },
+    {
+      'id': 'nps',
+      'aliases': ['nps', 'pension'],
+      'title': 'NPS',
+      'subtitle': 'National Pension System voluntary deposit',
+      'icon': Icons.currency_rupee_rounded,
+      'color': Color(0xFF64748B),
+      'tag': 'Finance and Tax',
+      'keywords': 'national pension system nps pran retirement tier 1 tier 2 contribution',
+    },
+
+    // --- Others / Community ---
     {
       'id': 'housing_society',
       'aliases': ['housing_society', 'society', 'maintenance'],
@@ -293,182 +383,93 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       'subtitle': 'Maintenance & CAM dues',
       'icon': Icons.apartment_rounded,
       'color': Color(0xFF27306F),
-      'tag': 'Premises',
-      'keywords':
-          'housing society maintenance complex flat office commercial dues facility cam maintenance bill',
-      'providers': [
-        'AsmitA Society Maintenance Desk',
-        'AsmitA Corporate Complex CAM',
-        'MyGate Society Clearing',
-        'NoBrokerHood Bills',
-      ],
-      'accountLabel': 'Flat / Unit / Office Code',
-      'accountHint': 'e.g. A-101 or CAB-IT-01',
+      'tag': 'Others',
+      'keywords': 'housing society maintenance complex flat office commercial dues facility cam maintenance bill',
     },
     {
-      'id': 'dth',
-      'aliases': ['dth', 'cable_tv'],
-      'title': 'DTH & Cable TV',
-      'subtitle': 'Satellite broadcast bills',
-      'icon': Icons.tv_rounded,
-      'color': Color(0xFF9333EA),
-      'tag': 'Telecom',
-      'keywords':
-          'dth cable tv tata play airtel dth dish tv sun direct videocon set top box',
-      'providers': [
-        'Tata Play (formerly Tata Sky)',
-        'Airtel Digital TV',
-        'Dish TV Corporate',
-        'Sun Direct',
-        'D2H (Videocon)',
-      ],
-      'accountLabel': 'Subscriber ID / Smartcard No.',
-      'accountHint': 'e.g. 1092837461',
+      'id': 'subscription',
+      'aliases': ['subscription'],
+      'title': 'Subscription',
+      'subtitle': 'Recurring utility & portal subscriptions',
+      'icon': Icons.subscriptions_rounded,
+      'color': Color(0xFF3B82F6),
+      'tag': 'Others',
+      'keywords': 'subscription recurring platform membership ott digital services newspaper',
     },
     {
-      'id': 'municipal_taxes',
-      'aliases': ['municipal_taxes', 'municipal_tax', 'property_tax'],
-      'title': 'Municipal Taxes',
-      'subtitle': 'Property tax & civic dues',
-      'icon': Icons.account_balance_rounded,
-      'color': Color(0xFF78716C),
-      'tag': 'Govt & Taxes',
-      'keywords':
-          'property tax municipal corporation bmc mcgm mcd bbmp civic cess commercial property',
-      'providers': [
-        'MCGM (Brihanmumbai Municipal Corp)',
-        'Municipal Corporation of Delhi (MCD)',
-        'BBMP Property Tax (Bengaluru)',
-        'Pune Municipal Corporation (PMC)',
-        'Navi Mumbai Municipal Corp (NMMC)',
-      ],
-      'accountLabel': 'Property Assessment / SAC No.',
-      'accountHint': 'e.g. SAC-9820-2026',
+      'id': 'clubs_associations',
+      'aliases': ['clubs_associations', 'clubs'],
+      'title': 'Clubs and Associations',
+      'subtitle': 'Recreation club & resident association',
+      'icon': Icons.groups_rounded,
+      'color': Color(0xFF84CC16),
+      'tag': 'Others',
+      'keywords': 'clubs associations membership gym clubhouse sports community dues',
     },
     {
-      'id': 'loan_repayment',
-      'aliases': ['loan_repayment', 'loan_repay', 'loan'],
-      'title': 'Loan Repayment',
-      'subtitle': 'Commercial & EMI clearance',
-      'icon': Icons.payments_rounded,
-      'color': Color(0xFFD97706),
-      'tag': 'Financial',
-      'keywords':
-          'loan emi repayment bajaj finance hdfc sbi vehicle home loan asset finance',
-      'providers': [
-        'Bajaj Finance Limited',
-        'HDFC Bank Loan Clearance',
-        'State Bank of India (SBI)',
-        'Tata Capital Financial Services',
-        'Mahindra Finance',
-      ],
-      'accountLabel': 'Loan Account Number (LAN)',
-      'accountHint': 'e.g. LAN-8829102',
+      'id': 'hospital',
+      'aliases': ['hospital'],
+      'title': 'Hospital',
+      'subtitle': 'Medical center & hospital billing',
+      'icon': Icons.local_hospital_rounded,
+      'color': Color(0xFFEF4444),
+      'tag': 'Others',
+      'keywords': 'hospital clinic medical healthcare doctor consultation pathology lab bills',
     },
     {
-      'id': 'credit_card',
-      'aliases': ['credit_card'],
-      'title': 'Credit Card Bill',
-      'subtitle': 'Corporate & bank credit cards',
-      'icon': Icons.credit_card_rounded,
-      'color': Color(0xFF475569),
-      'tag': 'Financial',
-      'keywords':
-          'credit card visa mastercard rupay bill payment corporate card hdfc sbi icici axis',
-      'providers': [
-        'HDFC Bank Credit Cards',
-        'SBI Card & Payment Services',
-        'ICICI Bank Credit Cards',
-        'Axis Bank Credit Cards',
-        'American Express India',
-      ],
-      'accountLabel': 'Last 4 Digits of Card',
-      'accountHint': 'e.g. 4829',
+      'id': 'rental',
+      'aliases': ['rental', 'rent'],
+      'title': 'Rental',
+      'subtitle': 'Unit, amenity & commercial lease',
+      'icon': Icons.key_rounded,
+      'color': Color(0xFFA855F7),
+      'tag': 'Others',
+      'keywords': 'rental rent lease commercial unit shop flat office deposit landlord',
     },
     {
-      'id': 'insurance',
-      'aliases': ['insurance'],
-      'title': 'Insurance Premium',
-      'subtitle': 'Life & commercial policies',
-      'icon': Icons.health_and_safety_rounded,
-      'color': Color(0xFF059669),
-      'tag': 'Financial',
-      'keywords':
-          'insurance lic hdfc ergo star health policy premium commercial fire marine asset liability',
-      'providers': [
-        'Life Insurance Corp (LIC)',
-        'HDFC Life / HDFC ERGO',
-        'ICICI Prudential / Lombard',
-        'SBI Life Insurance',
-        'Star Health & Allied Insurance',
-        'New India Assurance',
-      ],
-      'accountLabel': 'Policy Number',
-      'accountHint': 'e.g. 981029384',
-    },
-    {
-      'id': 'education',
-      'aliases': ['education'],
-      'title': 'Education Fees',
-      'subtitle': 'Campus, training & academy',
-      'icon': Icons.school_rounded,
-      'color': Color(0xFF6366F1),
-      'tag': 'Campus',
-      'keywords':
-          'school college university education fees coaching training academy exam',
-      'providers': [
-        'Mumbai University Fees',
-        'AsmitA College of Engineering',
-        'Vidyalankar Training Institute',
-        'Delhi Public School (DPS)',
-      ],
-      'accountLabel': 'Student Registration / Roll No.',
-      'accountHint': 'e.g. STU-2026-88',
+      'id': 'donation',
+      'aliases': ['donation', 'charity'],
+      'title': 'Donation',
+      'subtitle': 'Registered trusts & charities',
+      'icon': Icons.volunteer_activism_rounded,
+      'color': Color(0xFFF97316),
+      'tag': 'Others',
+      'keywords': 'donation charity trust temple relief fund ngo 80g non profit contribution',
     },
   ];
 
   static const List<String> _filterTags = [
     'All',
     'Utilities',
-    'Telecom',
-    'Financial',
-    'Govt & Taxes',
-    'Campus',
+    'Recharges & Bills',
+    'Finance & Tax',
+    'Others',
   ];
 
   List<Map<String, dynamic>> _getFilteredCategories() {
     final query = _searchQuery.trim().toLowerCase();
 
     // Map active IDs with alias support
-    final Set<String>? activeSet = _activeCategoryIds
-        ?.map((id) {
-          final lower = id.toLowerCase();
-          if (lower == 'lpg_gas') return ['lpg_cylinder', 'lpg_gas'];
-          if (lower == 'municipal_tax') {
-            return ['municipal_taxes', 'municipal_tax'];
-          }
-          if (lower == 'loan_repay') return ['loan_repayment', 'loan_repay'];
-          return [lower];
-        })
-        .expand((x) => x)
-        .toSet();
+    final Set<String>? activeSet = _activeCategoryIds?.map((id) {
+      final lower = id.toLowerCase();
+      if (lower == 'lpg_gas') return ['lpg_cylinder', 'lpg_gas'];
+      if (lower == 'municipal_tax') return ['municipal_taxes', 'municipal_tax', 'municipal_services'];
+      if (lower == 'loan_repay') return ['loan_repayment', 'loan_repay'];
+      return [lower];
+    }).expand((x) => x).toSet();
 
     return _allBillerCategories.where((cat) {
       if (activeSet != null) {
         final catId = (cat['id'] as String).toLowerCase();
-        final aliases =
-            (cat['aliases'] as List<String>?)?.map((a) => a.toLowerCase()) ??
-            [];
-        final hasMatch =
-            activeSet.contains(catId) ||
-            aliases.any((a) => activeSet.contains(a));
+        final aliases = (cat['aliases'] as List<String>?)?.map((a) => a.toLowerCase()) ?? [];
+        final hasMatch = activeSet.contains(catId) || aliases.any((a) => activeSet.contains(a));
         if (!hasMatch) return false;
       }
 
-      final matchesTag =
-          _selectedFilterTag == 'All' ||
+      final matchesTag = _selectedFilterTag == 'All' ||
           cat['tag'] == _selectedFilterTag ||
-          (_selectedFilterTag == 'Utilities' && cat['tag'] == 'Premises');
+          (_selectedFilterTag == 'Recharges & Bills' && cat['tag'] == 'Recharges and Bills') ||
+          (_selectedFilterTag == 'Finance & Tax' && cat['tag'] == 'Finance and Tax');
       if (!matchesTag) return false;
 
       if (query.isEmpty) return true;
@@ -476,255 +477,11 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
       final title = (cat['title'] as String).toLowerCase();
       final subtitle = (cat['subtitle'] as String).toLowerCase();
       final keywords = (cat['keywords'] as String).toLowerCase();
-      final providers = (cat['providers'] as List<String>)
-          .join(' ')
-          .toLowerCase();
 
       return title.contains(query) ||
           subtitle.contains(query) ||
-          keywords.contains(query) ||
-          providers.contains(query);
+          keywords.contains(query);
     }).toList();
-  }
-
-  void _showBillerLookupModal(
-    BuildContext context,
-    Map<String, dynamic> category,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final List<String> providers = category['providers'] as List<String>;
-    final catColor = category['color'] as Color;
-    final String accountLabel = category['accountLabel'] as String;
-    final String accountHint = category['accountHint'] as String;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) {
-        String selectedProvider = providers.first;
-        final accountController = TextEditingController();
-
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            final viewInsets = MediaQuery.of(context).viewInsets;
-
-            return Padding(
-              padding: EdgeInsets.only(bottom: viewInsets.bottom),
-              child: SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Drag Pill
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF475569)
-                                : const Color(0xFFCBD5E1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Header with Category Icon
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: catColor.withValues(
-                                alpha: isDark ? 0.25 : 0.12,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              category['icon'] as IconData,
-                              color: catColor,
-                              size: 22,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  category['title'] as String,
-                                  style: TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    color: isDark
-                                        ? Colors.white
-                                        : const Color(0xFF0F172A),
-                                  ),
-                                ),
-                                Text(
-                                  'NPCI Bharat BillPay Clearance Gateway',
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: 11,
-                                    color: isDark
-                                        ? const Color(0xFF94A3B8)
-                                        : const Color(0xFF64748B),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close_rounded),
-                            color: isDark
-                                ? const Color(0xFF94A3B8)
-                                : const Color(0xFF64748B),
-                            onPressed: () => Navigator.pop(sheetContext),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      AsmitaSelectField<String>(
-                        label: 'Select Registered Biller',
-                        hint: 'Choose provider or authority',
-                        value: selectedProvider,
-                        prefixIcon: category['icon'] as IconData?,
-                        sheetTitle: 'Select Service Provider',
-                        sheetSubtitle: category['title'] as String?,
-                        showSearch: providers.length > 5,
-                        items: providers.map((p) {
-                          return AsmitaSelectItem<String>(
-                            value: p,
-                            label: p,
-                            icon: category['icon'] as IconData?,
-                            iconColor: catColor,
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            setModalState(() => selectedProvider = val);
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Account Number Field
-                      Text(
-                        accountLabel,
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? Colors.white70
-                              : const Color(0xFF334155),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF1E293B)
-                              : const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark
-                                ? const Color(0xFF334155)
-                                : const Color(0xFFCBD5E1),
-                          ),
-                        ),
-                        child: TextField(
-                          controller: accountController,
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF0F172A),
-                          ),
-                          decoration: InputDecoration(
-                            hintText: accountHint,
-                            hintStyle: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 12,
-                              color: isDark
-                                  ? const Color(0xFF64748B)
-                                  : const Color(0xFF94A3B8),
-                            ),
-                            border: InputBorder.none,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Submit Button
-                      ElevatedButton(
-                        onPressed: () {
-                          final acct = accountController.text.trim();
-                          if (acct.isEmpty) {
-                            AsmitaToast.show(
-                              context,
-                              message: 'Please enter a valid $accountLabel',
-                              type: AsmitaToastType.error,
-                            );
-                            return;
-                          }
-
-                          HapticFeedback.mediumImpact();
-                          Navigator.pop(sheetContext);
-                          Navigator.pop(context);
-                          _launchEtherealBillPay(
-                            categoryName: (category['id'] ?? category['title']) as String,
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AsmitaPalette.deepNavy,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.lock_rounded, size: 16),
-                            SizedBox(width: 8),
-                            Text(
-                              'Fetch Bill via NPCI BBPS',
-                              style: TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
   }
 
   @override
@@ -1187,7 +944,7 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                   child: InkWell(
                     onTap: () {
                       HapticFeedback.lightImpact();
-                      _showBillerLookupModal(context, cat);
+                      _launchEtherealBillPay(categoryName: cat['title'] as String?);
                     },
                     borderRadius: BorderRadius.circular(14),
                     child: Container(

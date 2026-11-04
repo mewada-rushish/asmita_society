@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../features/auth/bloc/auth_bloc.dart';
+import '../../features/auth/bloc/auth_state.dart';
 import '../utils/property_role_resolver.dart';
 
 class AsmitaBottomNavBar extends StatelessWidget {
@@ -17,6 +20,22 @@ class AsmitaBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Automatically resolve effective role from AuthBloc if not explicitly passed
+    String? effectiveRole = userRole;
+    if (effectiveRole == null || effectiveRole.trim().isEmpty) {
+      try {
+        final authState = context.watch<AuthBloc>().state;
+        if (authState is AuthAuthenticated) {
+          final user = authState.user;
+          effectiveRole = authState.sessionRole.isNotEmpty == true
+              ? authState.sessionRole
+              : (user.systemRole?.isNotEmpty == true
+                  ? user.systemRole
+                  : user.primaryRole);
+        }
+      } catch (_) {}
+    }
+
     final bottomPadding = MediaQuery.viewPaddingOf(context).bottom;
     const double barHeight = 64.0;
 
@@ -45,9 +64,9 @@ class AsmitaBottomNavBar extends StatelessWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: _getVisibleIndices().map((index) {
+        children: _getVisibleIndices(effectiveRole).map((index) {
           final isSelected = currentIndex == index;
-          return _buildNavigationItem(context, index, isSelected);
+          return _buildNavigationItem(context, index, isSelected, effectiveRole);
         }).toList(),
       ),
     );
@@ -68,14 +87,14 @@ class AsmitaBottomNavBar extends StatelessWidget {
     );
   }
 
-  List<int> _getVisibleIndices() {
-    if (PropertyRoleResolver.normalizeRole(userRole) == 'guard') {
+  List<int> _getVisibleIndices(String? role) {
+    if (PropertyRoleResolver.normalizeRole(role) == 'guard') {
       return [0, 6, 3, 5, 4]; // Home, Checked In, History, Scan, Menu
     }
     return [0, 1, 2, 3, 4]; // All tabs
   }
 
-  Widget _buildNavigationItem(BuildContext context, int index, bool isSelected) {
+  Widget _buildNavigationItem(BuildContext context, int index, bool isSelected, String? role) {
     return InkWell(
       onTap: () => onTap(index),
       splashColor: Colors.transparent,
@@ -91,7 +110,7 @@ class AsmitaBottomNavBar extends StatelessWidget {
             AnimatedOpacity(
               duration: const Duration(milliseconds: 200),
               opacity: isSelected ? 1.0 : 0.4,
-              child: _buildCustomScaledIcon(context, index),
+              child: _buildCustomScaledIcon(context, index, role),
             ),
             Positioned(
               bottom: 0,
@@ -114,11 +133,11 @@ class AsmitaBottomNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildCustomScaledIcon(BuildContext context, int index) {
+  Widget _buildCustomScaledIcon(BuildContext context, int index, String? role) {
     const iconColor = Colors.white;
     const colorFilter = ColorFilter.mode(iconColor, BlendMode.srcIn);
 
-    final normalized = PropertyRoleResolver.normalizeRole(userRole);
+    final normalized = PropertyRoleResolver.normalizeRole(role);
     final isIndustrial = normalized == 'director' ||
         normalized == 'employee' ||
         normalized == 'receptionist' ||

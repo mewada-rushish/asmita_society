@@ -37,6 +37,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
   final VoidCallback? onProfilePressed;
   final VoidCallback? onBackPressed;
   final AsmitaPropertyType? propertyType;
+  final bool isCurved;
 
   const AsmitaPrimaryHeader({
     super.key,
@@ -57,6 +58,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
     this.allowPropertySwitching = true,
     this.onProfilePressed,
     this.propertyType,
+    this.isCurved = true,
   });
 
   void _showCampusHotlinesSheet(BuildContext context) {
@@ -455,22 +457,31 @@ class AsmitaPrimaryHeader extends StatelessWidget {
             16,
             topPadding > 0 ? topPadding + 10 : 22,
             16,
-            12,
+            isCurved ? 16 : 14,
           ),
           decoration: BoxDecoration(
             color: isDark
                 ? Theme.of(context).colorScheme.surface.withValues(alpha: 0.75)
                 : Theme.of(context).colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(
-              bottom: Radius.circular(24),
-            ),
-            border: isDark
-                ? Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.0)
+            borderRadius: isCurved
+                ? const BorderRadius.vertical(
+                    bottom: Radius.circular(24),
+                  )
                 : null,
+            border: isCurved
+                ? (isDark
+                    ? Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.0)
+                    : null)
+                : Border(
+                    bottom: BorderSide(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      width: 1.0,
+                    ),
+                  ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 4,
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : (isCurved ? 0.06 : 0.06)),
+                blurRadius: isCurved ? 4 : 6,
                 offset: const Offset(0, 2),
               ),
             ],
@@ -728,15 +739,20 @@ class AsmitaPrimaryHeader extends StatelessWidget {
         );
 
         if (isDark) {
-          headerContent = ClipRRect(
-            borderRadius: const BorderRadius.vertical(
-              bottom: Radius.circular(24),
-            ),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: headerContent,
-            ),
-          );
+          headerContent = isCurved
+              ? ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(24),
+                  ),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: headerContent,
+                  ),
+                )
+              : BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: headerContent,
+                );
         }
 
         return Container(
