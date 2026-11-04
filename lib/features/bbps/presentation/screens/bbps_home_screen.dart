@@ -140,6 +140,11 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
         options: Options(receiveTimeout: const Duration(seconds: 10)),
       );
 
+      debugPrint('==================== [BBPS API RESPONSE] ====================');
+      debugPrint('Status Code: ${response.statusCode}');
+      debugPrint('Response Data: ${response.data}');
+      debugPrint('============================================================');
+
       if (response.statusCode == 200 && response.data['success'] == true) {
         final link = response.data['link'] as String?;
         if (link != null && link.isNotEmpty) {
@@ -155,17 +160,48 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
           }
           return;
         }
+      } else {
+        final errorMsg = response.data?['error']?.toString() ?? response.data?['message']?.toString() ?? 'Failed to generate session link';
+        debugPrint('==================== [BBPS API ERROR] ====================');
+        debugPrint('Error: $errorMsg');
+        debugPrint('Full Payload: ${response.data}');
+        debugPrint('==========================================================');
+        if (mounted) {
+          AsmitaToast.show(
+            context,
+            message: 'BBPS Error: $errorMsg',
+            type: AsmitaToastType.error,
+          );
+        }
+        return;
       }
     } catch (e) {
-      debugPrint('[BBPS] Session link generation failed: $e');
-    }
-
-    if (mounted) {
-      AsmitaToast.show(
-        context,
-        message: 'Connecting to Bharat BillPay Gateway...',
-        type: AsmitaToastType.info,
-      );
+      debugPrint('==================== [BBPS EXCEPTION] ====================');
+      debugPrint('Error: $e');
+      if (e is DioException) {
+        debugPrint('DioException Type: ${e.type}');
+        debugPrint('HTTP Status: ${e.response?.statusCode}');
+        debugPrint('API Error Data: ${e.response?.data}');
+        debugPrint('Request URL: ${e.requestOptions.uri}');
+        debugPrint('Request Headers: ${e.requestOptions.headers}');
+        debugPrint('Request Data: ${e.requestOptions.data}');
+      }
+      debugPrint('==========================================================');
+      if (mounted) {
+        String msg = 'Unable to connect to BBPS Gateway.';
+        if (e is DioException && e.response?.data != null) {
+          final data = e.response!.data;
+          if (data is Map) {
+            msg = data['error']?.toString() ?? data['message']?.toString() ?? msg;
+          }
+        }
+        AsmitaToast.show(
+          context,
+          message: msg,
+          type: AsmitaToastType.error,
+        );
+      }
+      return;
     }
   }
 
