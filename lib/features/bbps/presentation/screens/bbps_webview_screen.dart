@@ -4,14 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/asmita_primary_header.dart';
 
 /// Full-screen in-app WebView for Setu BillPay (Ethereal).
 ///
 /// Features:
-/// - Exact native AsmitA AppBar (edge-to-edge, no curved card corners)
-/// - Unified typography (Montserrat title, Poppins subtitle)
-/// - Integrated iOS-style chevron back, reload, and close actions
-/// - Native AppBar elevation & subtle baseline divider
+/// - Exact AsmitaPrimaryHeader component as-is (curved corners, branding, search, hotlines, avatar)
+/// - Integrated history back navigation with PopScope
 /// - Progress indicator during web navigation
 /// - Safe area management for Android 3-button and gesture navigation
 class BbpsWebViewScreen extends StatefulWidget {
@@ -96,8 +95,9 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final primaryColor = isDark ? Colors.white : theme.colorScheme.primary;
-    final title = widget.categoryTitle ?? 'Bill Payments';
+    final subtitle = widget.categoryTitle != null
+        ? '${widget.categoryTitle} • BBPS'
+        : 'Bill Payments (BBPS)';
 
     return PopScope(
       canPop: false,
@@ -106,92 +106,41 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
         await _handleBack();
       },
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-        appBar: AppBar(
-          backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-          foregroundColor: primaryColor,
-          elevation: 2,
-          shadowColor: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
-          surfaceTintColor: Colors.transparent,
-          centerTitle: false,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: primaryColor,
-              size: 20,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: Column(
+          children: [
+            // Exact AsmitA Primary Header component as-is (flat edge-to-edge, no curved corners)
+            AsmitaPrimaryHeader(
+              showBackButton: true,
+              onBackPressed: _handleBack,
+              subtitleOverride: subtitle,
+              allowPropertySwitching: false,
+              bottomPadding: 0.0,
+              isCurved: false,
             ),
-            onPressed: _handleBack,
-            tooltip: 'Back',
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: primaryColor,
-                ),
+
+            // Linear loading indicator during web navigation
+            if (_isLoading)
+              LinearProgressIndicator(
+                value: _loadProgress < 100 ? _loadProgress / 100 : null,
+                backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
+                color: AsmitaPalette.deepNavy,
+                minHeight: 2.5,
               ),
-              const SizedBox(height: 1),
-              Text(
-                'Secured by NPCI • Bharat BillPay',
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 10,
-                  fontWeight: FontWeight.w400,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                ),
+
+            // WebView with Bottom SafeArea for 3-button & gesture nav
+            Expanded(
+              child: SafeArea(
+                top: false,
+                left: false,
+                right: false,
+                bottom: true,
+                child: _hasError
+                    ? _buildErrorView()
+                    : WebViewWidget(controller: _controller),
               ),
-            ],
-          ),
-          actions: [
-            IconButton(
-              icon: Icon(
-                Icons.refresh_rounded,
-                color: primaryColor,
-                size: 20,
-              ),
-              onPressed: () => _controller.reload(),
-              tooltip: 'Reload',
             ),
-            IconButton(
-              icon: Icon(
-                Icons.close_rounded,
-                color: primaryColor,
-                size: 22,
-              ),
-              onPressed: () => Navigator.of(context).pop(),
-              tooltip: 'Close',
-            ),
-            const SizedBox(width: 4),
           ],
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(2.5),
-            child: _isLoading
-                ? LinearProgressIndicator(
-                    value: _loadProgress < 100 ? _loadProgress / 100 : null,
-                    backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
-                    color: AsmitaPalette.deepNavy,
-                    minHeight: 2.5,
-                  )
-                : Container(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                    height: 1,
-                  ),
-          ),
-        ),
-        body: SafeArea(
-          top: false,
-          left: false,
-          right: false,
-          bottom: true,
-          child: _hasError
-              ? _buildErrorView()
-              : WebViewWidget(controller: _controller),
         ),
       ),
     );
