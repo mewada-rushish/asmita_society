@@ -10,7 +10,8 @@ import '../../../../core/widgets/asmita_primary_header.dart';
 ///
 /// Features:
 /// - Exact AsmitaPrimaryHeader component as-is (curved corners, branding, search, hotlines, avatar)
-/// - Integrated history back navigation with PopScope
+/// - Intercepts Setu's root "Pay bills" category screen and returns to native BBPS screen
+/// - Smart back navigation: pops directly to native app from top-level biller list
 /// - Progress indicator during web navigation
 /// - Safe area management for Android 3-button and gesture navigation
 class BbpsWebViewScreen extends StatefulWidget {
@@ -48,6 +49,7 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
   int _loadProgress = 0;
   bool _isLoading = true;
   bool _hasError = false;
+  bool _isExiting = false;
 
   @override
   void initState() {
@@ -56,7 +58,23 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onPageStarted: (_) {
+          onNavigationRequest: (NavigationRequest request) {
+            if (_isRootCategoriesUrl(request.url)) {
+              _exitToNativeBbps();
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
+          onUrlChange: (UrlChange change) {
+            if (change.url != null && _isRootCategoriesUrl(change.url!)) {
+              _exitToNativeBbps();
+            }
+          },
+          onPageStarted: (url) {
+            if (_isRootCategoriesUrl(url)) {
+              _exitToNativeBbps();
+              return;
+            }
             if (mounted) {
               setState(() {
                 _isLoading = true;
@@ -83,11 +101,50 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
       ..loadRequest(Uri.parse(widget.sessionUrl));
   }
 
+  /// Detects whether the URL points to Setu's root "Pay bills" category picker
+  /// (e.g. `https://billpay.setu.co/{sessionId}` or `https://billpay.setu.co/{sessionId}/`).
+  /// When true, we return to the app's native BBPS screen instead of loading Setu's category list.
+  bool _isRootCategoriesUrl(String url) {
+    if (widget.categoryTitle == null) return false;
+    try {
+      final uri = Uri.parse(url);
+      final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+      // Setu category URLs have 3+ segments: /{sessionId}/billers/{category}
+      // Root category screen has <= 1 segment: /{sessionId}
+      if (segments.length <= 1) {
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  void _exitToNativeBbps() {
+    if (_isExiting) return;
+    _isExiting = true;
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
+  }
+
   Future<void> _handleBack() async {
+    try {
+      final currentUrl = await _controller.currentUrl();
+      if (currentUrl != null) {
+        final uri = Uri.parse(currentUrl);
+        final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+        // If user is on the top-level biller selection list (length <= 3, e.g. /{sessionId}/billers/{category}),
+        // going back should return directly to our app's native BBPS screen!
+        if (segments.length <= 3) {
+          _exitToNativeBbps();
+          return;
+        }
+      }
+    } catch (_) {}
+
     if (await _controller.canGoBack()) {
       await _controller.goBack();
     } else {
-      if (mounted) Navigator.of(context).pop();
+      _exitToNativeBbps();
     }
   }
 
