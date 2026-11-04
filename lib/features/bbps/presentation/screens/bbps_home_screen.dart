@@ -709,12 +709,14 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
 
                     // Category Segmented Filter Chips
                     SizedBox(
-                      height: 36,
+                      height: 44,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
+                        clipBehavior: Clip.none,
                         physics: const BouncingScrollPhysics(),
                         itemCount: _filterTags.length,
                         separatorBuilder: (_, _) => const SizedBox(width: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 4),
                         itemBuilder: (context, index) {
                           final tag = _filterTags[index];
                           final isSelected = _selectedFilterTag == tag;
