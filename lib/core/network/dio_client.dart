@@ -32,6 +32,8 @@ class AsmitaDioClient {
             '/app-api/auth/otp/initiate',
             '/app-api/auth/otp/verify',
             '/app-api/auth/otp/register',
+            '/api/invites/token-info',
+            '/app-api/invites/token-info',
           ];
           final isPublic = publicPaths.any(
             (path) => options.path.contains(path),

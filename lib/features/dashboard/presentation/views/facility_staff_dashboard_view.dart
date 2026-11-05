@@ -6,6 +6,7 @@ import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_select_field.dart';
 import '../../../../core/widgets/asmita_toast.dart';
+import '../../../../core/widgets/asmita_bottom_nav_bar.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
@@ -336,7 +337,7 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       floatingActionButton: Padding(
         padding: EdgeInsets.only(
-          bottom: 112.0 + MediaQuery.viewPaddingOf(context).bottom,
+          bottom: AsmitaBottomNavBar.fabBottomPadding(context),
         ),
         child: FloatingActionButton.extended(
           onPressed: () => _showAddTaskDialog(context),
@@ -427,7 +428,7 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(color: Theme.of(context).dividerColor),
                           ),

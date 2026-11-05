@@ -5,10 +5,16 @@ import 'package:flutter/material.dart';
 ///
 /// [context]: The build context.
 /// [title]: The title displayed at the top of the sheet.
+/// [subtitle]: Optional subtitle displayed below the title.
+/// [customHeader]: Optional custom header widget replacing standard title/subtitle.
 /// [child]: The content widget to display inside the sheet.
 /// [isScrollControlled]: Whether the sheet can be scrolled. Defaults to `true`.
 /// [useRootNavigator]: Whether to use the root navigator. Defaults to `false`.
-void showAsmitaBottomSheet({
+/// [isDismissible]: Whether tapping on the barrier dismisses the sheet. Defaults to `true`.
+/// [enableDrag]: Whether the sheet can be dismissed via downward drag. Defaults to `true`.
+/// [contentPadding]: Content padding. Defaults to `EdgeInsets.fromLTRB(24, 16, 24, 16)`.
+/// [maxHeightFactor]: Maximum ratio of screen height the sheet can occupy. Defaults to `0.80` (80%).
+Future<T?> showAsmitaBottomSheet<T>({
   required BuildContext context,
   String title = '',
   String? subtitle,
@@ -16,13 +22,21 @@ void showAsmitaBottomSheet({
   required Widget child,
   bool isScrollControlled = true,
   bool useRootNavigator = false,
+  bool isDismissible = true,
+  bool enableDrag = true,
   EdgeInsetsGeometry? contentPadding,
+  double maxHeightFactor = 0.80,
 }) {
-  showModalBottomSheet(
+  return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: isScrollControlled,
     backgroundColor: Theme.of(context).scaffoldBackgroundColor,
     useRootNavigator: useRootNavigator,
+    isDismissible: isDismissible,
+    enableDrag: enableDrag,
+    constraints: BoxConstraints(
+      maxHeight: MediaQuery.of(context).size.height * maxHeightFactor,
+    ),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
@@ -33,6 +47,7 @@ void showAsmitaBottomSheet({
         subtitle: subtitle,
         customHeader: customHeader,
         contentPadding: contentPadding,
+        maxHeightFactor: maxHeightFactor,
         child: child,
       ),
     ),
@@ -46,6 +61,7 @@ class AsmitaBottomSheet extends StatelessWidget {
   final Widget? customHeader;
   final Widget child;
   final EdgeInsetsGeometry? contentPadding;
+  final double maxHeightFactor;
 
   const AsmitaBottomSheet({
     super.key,
@@ -53,18 +69,22 @@ class AsmitaBottomSheet extends StatelessWidget {
     this.subtitle,
     this.customHeader,
     this.contentPadding,
+    this.maxHeightFactor = 0.80,
     required this.child,
   });
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final screenHeight = MediaQuery.of(context).size.height;
     final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
-    final availableHeight = MediaQuery.of(context).size.height - keyboardInset;
+    final availableHeight = (screenHeight - keyboardInset).clamp(0.0, screenHeight);
+    final maxLimit = availableHeight < 100.0 ? 100.0 : availableHeight;
+    final maxSheetHeight = (availableHeight * maxHeightFactor).clamp(100.0, maxLimit);
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: availableHeight * 0.90, // Enforce space above the sheet
+        maxHeight: maxSheetHeight,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

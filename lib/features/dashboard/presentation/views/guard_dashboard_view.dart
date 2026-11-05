@@ -11,7 +11,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
-import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
@@ -149,10 +148,14 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
   }
 
   void _showCheckInDialog(Map<String, dynamic> invite) {
-    showDialog(
+    showAsmitaBottomSheet(
       context: context,
-      barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.4),
-      builder: (ctx) => _PreApprovedCheckInDialog(
+      title: 'Verify Visitor',
+      subtitle: 'Verify visitor details and confirm gate entry',
+      isScrollControlled: true,
+      maxHeightFactor: 0.80,
+      contentPadding: EdgeInsets.zero,
+      child: _PreApprovedCheckInDialog(
         invite: invite,
         onConfirm: (photoBase64) {
           final isPreApproved =
@@ -334,13 +337,13 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                   avatar: Icon(
                     Icons.directions_walk,
                     size: 16,
-                    color: _selectedGateId == 1 ? Colors.white : AsmitaPalette.textDark,
+                    color: _selectedGateId == 1 ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   label: const Text('Gate 1 (Pedestrian)', overflow: TextOverflow.ellipsis),
                   selected: _selectedGateId == 1,
                   selectedColor: AsmitaPalette.deepNavy,
                   labelStyle: TextStyle(
-                    color: _selectedGateId == 1 ? Colors.white : AsmitaPalette.textDark,
+                    color: _selectedGateId == 1 ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
                   ),
@@ -355,13 +358,13 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                   avatar: Icon(
                     Icons.directions_car,
                     size: 16,
-                    color: _selectedGateId == 2 ? Colors.white : AsmitaPalette.textDark,
+                    color: _selectedGateId == 2 ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   label: const Text('Gate 2 (Parking)', overflow: TextOverflow.ellipsis),
                   selected: _selectedGateId == 2,
                   selectedColor: AsmitaPalette.deepNavy,
                   labelStyle: TextStyle(
-                    color: _selectedGateId == 2 ? Colors.white : AsmitaPalette.textDark,
+                    color: _selectedGateId == 2 ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
                   ),
@@ -556,17 +559,11 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
   }
 
   void _showNewVisitorModal(BuildContext context) {
-    showAsmitaBottomSheet(
-      context: context,
+    AsmitaPreApproveWizard.showAsModalSheet(
+      context,
+      isGuardMode: true,
       title: 'New Walk-in Visitor',
       subtitle: 'Record lobby guest entry details',
-      isScrollControlled: true,
-      contentPadding: EdgeInsets.zero,
-      child: const SingleChildScrollView(
-        physics: ClampingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
-        child: AsmitaPreApproveWizard(isGuardMode: true),
-      ),
     );
   }
 
@@ -1337,172 +1334,184 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
         : invite['visitor_name'];
     final phone = invite['visitor_phone'] ?? invite['mobile_number'];
 
-    return AsmitaDialog(
-      title: 'Verify Visitor & Entry',
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+    return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$visitorName',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                    if (phone != null && phone.toString().isNotEmpty) ...[
+                      const SizedBox(height: 2),
                       Text(
-                        '$visitorName',
+                        'Contact: $phone',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      if (phone != null && phone.toString().isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          'Contact: $phone',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
                     ],
-                  ),
+                  ],
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    (invite['invite_type']?.toString() ?? 'Guest').toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: AsmitaPalette.deepNavy,
-                    ),
-                  ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 3,
                 ),
-              ],
-            ),
-            const SizedBox(height: 14),
-
-            _buildPhotoSection(),
-
-            const SizedBox(height: 14),
-
-            Container(
-              clipBehavior: Clip.hardEdge,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildRow(
-                    'Person to Meet (PTM)',
-                    (invite['host_name'] ?? invite['resident_name'] ?? (invite['flat_number'] != null ? '${invite['tower_name'] ?? "Tower"} - ${invite['flat_number']}' : 'Assigned Unit')).toString(),
-                    highlight: true,
-                  ),
-                  if (invite['tower_name'] != null &&
-                      invite['flat_number'] != null &&
-                      invite['host_name'] != null)
-                    _buildRow(
-                      'Unit / Desk',
-                      '${invite['tower_name']} - ${invite['flat_number']}',
-                    ),
-                  if (invite['vehicle_number'] != null &&
-                      invite['vehicle_number'].toString().isNotEmpty)
-                    _buildRow('Vehicle', invite['vehicle_number'].toString()),
-                  _buildRow(
-                    'Valid From',
-                    invite['valid_from'] != null
-                        ? AppDateFormatter.formatDate(invite['valid_from'])
-                        : 'N/A',
-                  ),
-                  _buildRow(
-                    'Valid Till',
-                    invite['valid_to'] != null
-                        ? AppDateFormatter.formatDate(invite['valid_to'])
-                        : 'N/A',
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 6),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: _openReassignFromDialog,
-                icon: const Icon(Icons.swap_horiz_rounded, size: 15, color: AsmitaPalette.deepNavy),
-                label: const Text(
-                  'Change Person to Meet (PTM)',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
+                decoration: BoxDecoration(
+                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  (invite['invite_type']?.toString() ?? 'Guest').toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
                     color: AsmitaPalette.deepNavy,
                   ),
                 ),
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                ),
               ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          _buildPhotoSection(),
+
+          const SizedBox(height: 14),
+
+          Container(
+            clipBehavior: Clip.hardEdge,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(10),
             ),
-            const SizedBox(height: 8),
-            Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.info_outline, size: 13, color: Colors.grey.shade500),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    _hasPhotoOnRecord || _capturedImage != null
-                        ? 'Match visitor photo before confirming gate entry.'
-                        : 'Mandatory photo capture attaches to contact profile.',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade600,
-                      fontStyle: FontStyle.italic,
-                    ),
+                _buildRow(
+                  'Person to Meet (PTM)',
+                  (invite['host_name'] ?? invite['resident_name'] ?? (invite['flat_number'] != null ? '${invite['tower_name'] ?? "Tower"} - ${invite['flat_number']}' : 'Assigned Unit')).toString(),
+                  highlight: true,
+                ),
+                if (invite['tower_name'] != null &&
+                    invite['flat_number'] != null &&
+                    invite['host_name'] != null)
+                  _buildRow(
+                    'Unit / Desk',
+                    '${invite['tower_name']} - ${invite['flat_number']}',
                   ),
+                if (invite['vehicle_number'] != null &&
+                    invite['vehicle_number'].toString().isNotEmpty)
+                  _buildRow('Vehicle', invite['vehicle_number'].toString()),
+                _buildRow(
+                  'Valid From',
+                  invite['valid_from'] != null
+                      ? AppDateFormatter.formatDate(invite['valid_from'])
+                      : 'N/A',
+                ),
+                _buildRow(
+                  'Valid Till',
+                  invite['valid_to'] != null
+                      ? AppDateFormatter.formatDate(invite['valid_to'])
+                      : 'N/A',
                 ),
               ],
             ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: _handleConfirm,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AsmitaPalette.deepNavy,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+          ),
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: _openReassignFromDialog,
+              icon: const Icon(Icons.swap_horiz_rounded, size: 15, color: AsmitaPalette.deepNavy),
+              label: const Text(
+                'Change Person to Meet (PTM)',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: AsmitaPalette.deepNavy,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           ),
-          child: Text(
-            (!_hasPhotoOnRecord && _capturedImage == null && _photoMandatoryAlert)
-                ? 'Check In (Bypass Photo)'
-                : 'Confirm Check-in',
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(Icons.info_outline, size: 13, color: Colors.grey.shade500),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  _hasPhotoOnRecord || _capturedImage != null
+                      ? 'Match visitor photo before confirming gate entry.'
+                      : 'Mandatory photo capture attaches to contact profile.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade600,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.grey.shade700,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text('Cancel'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _handleConfirm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AsmitaPalette.deepNavy,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: Text(
+                    (!_hasPhotoOnRecord && _capturedImage == null && _photoMandatoryAlert)
+                        ? 'Check In (Bypass Photo)'
+                        : 'Confirm Check-in',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
