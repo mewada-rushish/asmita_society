@@ -479,8 +479,8 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
             color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
           ),
         ),
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        elevation: 6,
+        color: isDark ? AsmitaPalette.surfaceElevatedDark : Colors.white,
+        elevation: 4,
         onSelected: onSelected,
         itemBuilder: (BuildContext ctx) {
           return items.map((val) {
@@ -495,8 +495,8 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                     icon,
                     size: 15,
                     color: isSelected
-                        ? (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
-                        : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                        ? (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy)
+                        : (isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -507,8 +507,8 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                         fontSize: 12,
                         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                         color: isSelected
-                            ? (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
-                            : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                            ? (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy)
+                            : (isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -518,7 +518,7 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                     Icon(
                       Icons.check_rounded,
                       size: 16,
-                      color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                      color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
                     ),
                 ],
               ),
@@ -526,23 +526,14 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
           }).toList();
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+            color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-              width: 1,
+              color: isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey,
+              width: 1.2,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.15)
-                    : Colors.black.withValues(alpha: 0.02),
-                blurRadius: 4,
-                offset: const Offset(0, 1),
-              ),
-            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -550,7 +541,7 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
               Icon(
                 icon,
                 size: 13,
-                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
               ),
               const SizedBox(width: 5),
               ConstrainedBox(
@@ -563,7 +554,7 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                     fontFamily: 'Montserrat',
                     fontSize: 11.5,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF1E293B),
+                    color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
                   ),
                 ),
               ),
@@ -571,7 +562,7 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
               Icon(
                 Icons.arrow_drop_down_rounded,
                 size: 18,
-                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
               ),
             ],
           ),
@@ -632,21 +623,12 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                   Container(
                     height: 48,
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                        width: 1.1,
+                        color: isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey,
+                        width: 1.5,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDark
-                              ? Colors.black.withValues(alpha: 0.15)
-                              : Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
                     child: TextField(
                       controller: _searchController,
@@ -654,7 +636,7 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 13,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
                       ),
                       decoration: InputDecoration(
                         isDense: true,
@@ -664,13 +646,13 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                           fontSize: 12.5,
                           color: isDark
                               ? AsmitaPalette.textDarkModeMuted
-                              : const Color(0xFF94A3B8),
+                              : AsmitaPalette.textLight,
                         ),
                         prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 48),
                         prefixIcon: Icon(
                           Icons.search_rounded,
                           size: 20,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
                         ),
                         suffixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 48),
                         suffixIcon: _searchQuery.isNotEmpty
@@ -928,66 +910,44 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                           cleanFloor = floor.replaceAll(RegExp(r'^floor\s*', caseSensitive: false), '').trim();
                         }
 
-                        // Gradient colors for avatar based on name hash
-                        final avatarColorIndex = name.hashCode.abs() % 4;
-                        final avatarGradients = [
-                          [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)],
-                          [const Color(0xFF0F766E), const Color(0xFF14B8A6)],
-                          [const Color(0xFF4C1D95), const Color(0xFF8B5CF6)],
-                          [const Color(0xFFB45309), const Color(0xFFF59E0B)],
-                        ];
-                        final avatarColors = avatarGradients[avatarColorIndex];
-
                         return Container(
-                          padding: const EdgeInsets.all(14),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: theme.colorScheme.surface,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: isCheckedIn
-                                  ? AsmitaPalette.successGreen.withValues(alpha: 0.5)
-                                  : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                              width: isCheckedIn ? 1.4 : 1.1,
+                                  ? AsmitaPalette.successGreen
+                                  : (isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey),
+                              width: 1.5,
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: isDark
-                                    ? Colors.black.withValues(alpha: 0.25)
-                                    : const Color(0xFF0F172A).withValues(alpha: 0.04),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              // Styled Squircle Avatar with Soft Gradient & Initials
+                              // Squircle Avatar in Asmita Deep Navy
                               Container(
                                 width: 44,
                                 height: 44,
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: avatarColors,
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
+                                  color: isDark
+                                      ? AsmitaPalette.deepNavyDark.withValues(alpha: 0.15)
+                                      : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: avatarColors[0].withValues(alpha: 0.25),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
+                                  border: Border.all(
+                                    color: isDark
+                                        ? AsmitaPalette.deepNavyDark.withValues(alpha: 0.3)
+                                        : AsmitaPalette.deepNavy.withValues(alpha: 0.15),
+                                    width: 1,
+                                  ),
                                 ),
                                 alignment: Alignment.center,
                                 child: Text(
                                   name.isNotEmpty ? name[0].toUpperCase() : 'S',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Montserrat',
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
                                     fontSize: 16,
                                   ),
                                 ),
@@ -1011,7 +971,7 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                                               fontFamily: 'Montserrat',
                                               fontWeight: FontWeight.w700,
                                               fontSize: 13.5,
-                                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                              color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
                                               letterSpacing: -0.2,
                                             ),
                                           ),
@@ -1022,9 +982,15 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                             decoration: BoxDecoration(
                                               color: isCheckedIn
-                                                  ? AsmitaPalette.successGreen.withValues(alpha: 0.15)
-                                                  : const Color(0xFFDC2626).withValues(alpha: 0.15),
+                                                  ? AsmitaPalette.successGreen.withValues(alpha: 0.12)
+                                                  : AsmitaPalette.actionRed.withValues(alpha: 0.12),
                                               borderRadius: BorderRadius.circular(6),
+                                              border: Border.all(
+                                                color: isCheckedIn
+                                                    ? AsmitaPalette.successGreen.withValues(alpha: 0.4)
+                                                    : AsmitaPalette.actionRed.withValues(alpha: 0.4),
+                                                width: 0.8,
+                                              ),
                                             ),
                                             child: Text(
                                               isCheckedIn
@@ -1035,7 +1001,7 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                                                 fontWeight: FontWeight.bold,
                                                 color: isCheckedIn
                                                     ? AsmitaPalette.successGreen
-                                                    : const Color(0xFFDC2626),
+                                                    : AsmitaPalette.actionRed,
                                               ),
                                             ),
                                           ),
@@ -1055,7 +1021,7 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                                         fontWeight: FontWeight.w500,
                                         color: isDark
                                             ? AsmitaPalette.textDarkModeMuted
-                                            : const Color(0xFF64748B),
+                                            : AsmitaPalette.textLight,
                                       ),
                                     ),
                                     const SizedBox(height: 5),
@@ -1070,21 +1036,18 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                                             icon: Icons.layers_rounded,
                                             label: 'Floor $cleanFloor',
                                             isDark: isDark,
-                                            color: const Color(0xFF0284C7),
                                           ),
                                         if (desk.isNotEmpty)
                                           _buildBadge(
                                             icon: Icons.desk_rounded,
                                             label: desk,
                                             isDark: isDark,
-                                            color: const Color(0xFF6366F1),
                                           ),
                                         if (cabin.isNotEmpty)
                                           _buildBadge(
                                             icon: Icons.meeting_room_rounded,
                                             label: cabin,
                                             isDark: isDark,
-                                            color: const Color(0xFF8B5CF6),
                                           ),
                                       ],
                                     ),
@@ -1111,12 +1074,12 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                                               ? AsmitaPalette.successGreen
                                               : (isDark
                                                   ? AsmitaPalette.successGreen.withValues(alpha: 0.15)
-                                                  : const Color(0xFFDCFCE7)),
+                                                  : AsmitaPalette.successGreen.withValues(alpha: 0.1)),
                                           borderRadius: BorderRadius.circular(10),
                                           border: Border.all(
                                             color: isCheckedIn
                                                 ? AsmitaPalette.successGreen
-                                                : AsmitaPalette.successGreen.withValues(alpha: 0.35),
+                                                : AsmitaPalette.successGreen.withValues(alpha: 0.4),
                                             width: 1,
                                           ),
                                         ),
@@ -1155,15 +1118,15 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                                         decoration: BoxDecoration(
                                           color: !isCheckedIn && movement != null
-                                              ? const Color(0xFFDC2626)
+                                              ? AsmitaPalette.actionRed
                                               : (isDark
-                                                  ? const Color(0xFFDC2626).withValues(alpha: 0.15)
-                                                  : const Color(0xFFFEE2E2)),
+                                                  ? AsmitaPalette.actionRed.withValues(alpha: 0.15)
+                                                  : AsmitaPalette.actionRed.withValues(alpha: 0.08)),
                                           borderRadius: BorderRadius.circular(10),
                                           border: Border.all(
                                             color: !isCheckedIn && movement != null
-                                                ? const Color(0xFFDC2626)
-                                                : const Color(0xFFDC2626).withValues(alpha: 0.35),
+                                                ? AsmitaPalette.actionRed
+                                                : AsmitaPalette.actionRed.withValues(alpha: 0.4),
                                             width: 1,
                                           ),
                                         ),
@@ -1175,7 +1138,7 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                                               size: 13,
                                               color: !isCheckedIn && movement != null
                                                   ? Colors.white
-                                                  : const Color(0xFFDC2626),
+                                                  : AsmitaPalette.actionRed,
                                             ),
                                             const SizedBox(width: 4),
                                             Text(
@@ -1186,7 +1149,7 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                                                 fontWeight: FontWeight.w700,
                                                 color: !isCheckedIn && movement != null
                                                     ? Colors.white
-                                                    : const Color(0xFFDC2626),
+                                                    : AsmitaPalette.actionRed,
                                               ),
                                             ),
                                           ],
@@ -1214,30 +1177,34 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
     required IconData icon,
     required String label,
     required bool isDark,
-    required Color color,
   }) {
+    final badgeColor = isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.2 : 0.08),
+        color: isDark
+            ? AsmitaPalette.deepNavyDark.withValues(alpha: 0.12)
+            : AsmitaPalette.deepNavy.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: color.withValues(alpha: isDark ? 0.4 : 0.2),
+          color: isDark
+              ? AsmitaPalette.deepNavyDark.withValues(alpha: 0.25)
+              : AsmitaPalette.deepNavy.withValues(alpha: 0.15),
           width: 0.8,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 10, color: color),
-          const SizedBox(width: 3.5),
+          Icon(icon, size: 10.5, color: badgeColor),
+          const SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(
               fontFamily: 'Poppins',
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: color,
+              color: badgeColor,
             ),
           ),
         ],
