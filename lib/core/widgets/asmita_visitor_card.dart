@@ -33,8 +33,11 @@ class AsmitaVisitorCard extends StatelessWidget {
   /// Gradient colors for squircle avatar
   final List<Color>? avatarGradient;
 
-  /// Whether this is a VIP / Pre-Approved visitor
+  /// Whether this is a Pre-Approved visitor
   final bool isPreApproved;
+
+  /// Whether this is a VIP guest
+  final bool isVip;
 
   /// Whether the visit is outside authorized schedule
   final bool isOutsideSchedule;
@@ -98,6 +101,7 @@ class AsmitaVisitorCard extends StatelessWidget {
     this.icon,
     this.avatarGradient,
     this.isPreApproved = false,
+    this.isVip = false,
     this.isOutsideSchedule = false,
     this.timeAndDate,
     this.metaLabel,
@@ -139,15 +143,16 @@ class AsmitaVisitorCard extends StatelessWidget {
 
     final String title = visit.isDelivery
         ? '${visit.deliveryCompany ?? "Courier"} Delivery'
-        : (visit.visitorName.isNotEmpty ? visit.visitorName : 'Guest Visitor');
+        : (visit.cleanVisitorName.isNotEmpty ? visit.cleanVisitorName : 'Guest Visitor');
 
     final String subtitle = visit.deliveryCompany ??
-        visit.purpose ??
-        (visit.isDelivery
-            ? 'Package Delivery'
-            : (visit.departmentName != null
-                ? 'Visiting ${visit.departmentName}'
-                : 'Guest Visit'));
+        (visit.cleanPurpose.isNotEmpty
+            ? visit.cleanPurpose
+            : (visit.isDelivery
+                ? 'Package Delivery'
+                : (visit.departmentName != null
+                    ? 'Visiting ${visit.departmentName}'
+                    : 'Guest Visit')));
 
     // Time & Date format
     final DateTime? dt = visit.checkInAt ?? visit.createdAt;
@@ -182,6 +187,7 @@ class AsmitaVisitorCard extends StatelessWidget {
               ? Icons.how_to_reg_rounded
               : Icons.person_rounded),
       isPreApproved: visit.isPreApproved,
+      isVip: visit.isVip,
       timeAndDate: timeAndDate,
       metaLabel: metaLabel,
       metaValue: metaValue,
@@ -301,22 +307,66 @@ class AsmitaVisitorCard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                visit.isDelivery
-                                    ? '${visit.deliveryCompany ?? "Courier"} Delivery'
-                                    : (visit.visitorName.isNotEmpty ? visit.visitorName : 'Guest Visitor'),
-                                style: const TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      visit.isDelivery
+                                          ? '${visit.deliveryCompany ?? "Courier"} Delivery'
+                                          : (visit.cleanVisitorName.isNotEmpty ? visit.cleanVisitorName : 'Guest Visitor'),
+                                      style: const TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (visit.isVip) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        borderRadius: BorderRadius.circular(6),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.workspace_premium_rounded, size: 12, color: Colors.white),
+                                          SizedBox(width: 3),
+                                          Text(
+                                            'VIP',
+                                            style: TextStyle(
+                                              fontFamily: 'Montserrat',
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w800,
+                                              color: Colors.white,
+                                              letterSpacing: 0.6,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                visit.deliveryCompany ?? visit.purpose ?? 'Campus Guest',
+                                visit.deliveryCompany ?? (visit.cleanPurpose.isNotEmpty ? visit.cleanPurpose : 'Campus Guest'),
                                 style: const TextStyle(
                                   fontFamily: 'Poppins',
                                   fontSize: 12,
@@ -542,14 +592,24 @@ class AsmitaVisitorCard extends StatelessWidget {
             ? Icons.directions_car_filled_rounded
             : Icons.meeting_room_rounded);
 
+    final rawTitle = item['titleText'] as String? ?? item['name'] as String? ?? 'Visitor';
+    final rawSubtitle = item['subtitleText'] as String?;
+    final bool isVip = item['is_vip'] == true ||
+        item['isVip'] == true ||
+        rawTitle.contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false)) ||
+        (rawSubtitle?.contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false)) ?? false);
+    final cleanTitle = rawTitle.replaceAll(RegExp(r'\s*[\(\[]VIP[\)\]]', caseSensitive: false), '').trim();
+    final cleanSubtitle = rawSubtitle?.replaceAll(RegExp(r'\s*[\(\[]VIP[\)\]]', caseSensitive: false), '').trim();
+
     return AsmitaVisitorCard(
       key: key,
-      title: item['titleText'] as String? ?? item['name'] as String? ?? 'Visitor',
-      subtitle: item['subtitleText'] as String?,
+      title: cleanTitle.isNotEmpty ? cleanTitle : 'Visitor',
+      subtitle: cleanSubtitle,
       category: item['category']?.toString(),
       company: item['company']?.toString(),
       icon: item['icon'] as IconData?,
       isPreApproved: item['isPreApproved'] == true,
+      isVip: isVip,
       isOutsideSchedule: item['isOutsideSchedule'] == true,
       timeAndDate: timeAndDate,
       metaLabel: metaLabel,
@@ -665,7 +725,7 @@ class AsmitaVisitorCard extends StatelessWidget {
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              if (isPreApproved) ...[
+                              if (isVip) ...[
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
@@ -683,7 +743,7 @@ class AsmitaVisitorCard extends StatelessWidget {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.star_rounded, size: 10, color: Color(0xFFD97706)),
+                                      const Icon(Icons.workspace_premium_rounded, size: 10, color: Color(0xFFD97706)),
                                       const SizedBox(width: 3),
                                       Text(
                                         'VIP PASS',
@@ -694,6 +754,42 @@ class AsmitaVisitorCard extends StatelessWidget {
                                           color: isDark
                                               ? const Color(0xFFFDE68A)
                                               : const Color(0xFFB45309),
+                                          letterSpacing: 0.4,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                              ] else if (isPreApproved) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? const Color(0xFF064E3B).withValues(alpha: 0.35)
+                                        : const Color(0xFFECFDF5),
+                                    borderRadius: BorderRadius.circular(5),
+                                    border: Border.all(
+                                      color: isDark
+                                          ? const Color(0xFF059669).withValues(alpha: 0.6)
+                                          : const Color(0xFFA7F3D0),
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.verified_outlined, size: 10, color: Color(0xFF059669)),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        'PRE-APPROVED',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w800,
+                                          color: isDark
+                                              ? const Color(0xFFA7F3D0)
+                                              : const Color(0xFF047857),
                                           letterSpacing: 0.4,
                                         ),
                                       ),

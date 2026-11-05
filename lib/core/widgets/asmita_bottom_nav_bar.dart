@@ -7,6 +7,20 @@ import '../../features/auth/bloc/auth_state.dart';
 import '../utils/property_role_resolver.dart';
 
 class AsmitaBottomNavBar extends StatelessWidget {
+  /// Standard bar height without bottom device padding
+  static const double barHeight = 64.0;
+
+  /// Dynamic bottom padding to apply to FloatingActionButton widgets inside
+  /// screens rendered above the [AsmitaBottomNavBar] in [MainDashboardScreen].
+  ///
+  /// Since Flutter's [Scaffold] automatically offsets FABs by [kFloatingActionButtonMargin] (16px)
+  /// and [MediaQuery.viewPaddingOf(context).bottom], adding exactly [barHeight] (+ optional [extraMargin])
+  /// places the bottom edge of the FAB perfectly [kFloatingActionButtonMargin + extraMargin] (16px)
+  /// above the top curved edge of the bottom navigation bar.
+  static double fabBottomPadding({double extraMargin = 0.0}) {
+    return barHeight + extraMargin;
+  }
+
   final int currentIndex;
   final ValueChanged<int> onTap;
   final String? userRole;
@@ -37,7 +51,6 @@ class AsmitaBottomNavBar extends StatelessWidget {
     }
 
     final bottomPadding = MediaQuery.viewPaddingOf(context).bottom;
-    const double barHeight = 64.0;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 

@@ -83,6 +83,19 @@ class PreApprovedInvite {
     );
   }
 
+  bool get isVip =>
+      (visitorName?.contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false)) ?? false) ||
+      (purpose?.contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false)) ?? false) ||
+      (title?.contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false)) ?? false);
+
+  String get cleanVisitorName => (visitorName ?? title ?? 'Guest')
+      .replaceAll(RegExp(r'\s*[\(\[]VIP[\)\]]', caseSensitive: false), '')
+      .trim();
+
+  String get cleanPurpose => (purpose ?? '')
+      .replaceAll(RegExp(r'\s*[\(\[]VIP[\)\]]', caseSensitive: false), '')
+      .trim();
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

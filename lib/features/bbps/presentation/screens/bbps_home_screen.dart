@@ -450,6 +450,21 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
     'Others',
   ];
 
+  static IconData _getTagIcon(String tag) {
+    switch (tag) {
+      case 'Utilities':
+        return Icons.bolt_rounded;
+      case 'Recharges & Bills':
+        return Icons.phone_android_rounded;
+      case 'Finance & Tax':
+        return Icons.account_balance_wallet_rounded;
+      case 'Others':
+        return Icons.widgets_rounded;
+      default:
+        return Icons.grid_view_rounded;
+    }
+  }
+
   List<Map<String, dynamic>> _getFilteredCategories() {
     final query = _searchQuery.trim().toLowerCase();
 
@@ -682,153 +697,219 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 10),
 
-                    // Category Segmented Filter Chips
-                    SizedBox(
-                      height: 44,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        clipBehavior: Clip.none,
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: _filterTags.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 8),
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        itemBuilder: (context, index) {
-                          final tag = _filterTags[index];
-                          final isSelected = _selectedFilterTag == tag;
-
-                          // Icon per tag
-                          IconData tagIcon;
-                          switch (tag) {
-                            case 'Utilities':
-                              tagIcon = Icons.bolt_rounded;
-                              break;
-                            case 'Recharges & Bills':
-                              tagIcon = Icons.phone_android_rounded;
-                              break;
-                            case 'Finance & Tax':
-                              tagIcon = Icons.account_balance_wallet_rounded;
-                              break;
-                            case 'Others':
-                              tagIcon = Icons.widgets_rounded;
-                              break;
-                            default:
-                              tagIcon = Icons.grid_view_rounded;
-                          }
-
-                          return InkWell(
-                            onTap: () {
-                              HapticFeedback.selectionClick();
-                              setState(() => _selectedFilterTag = tag);
-                            },
-                            borderRadius: BorderRadius.circular(20),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
-                                    : (isDark ? const Color(0xFF1E293B) : Colors.white),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
-                                      : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                                  width: 1.2,
+                    // Modern Section Header: Label perfectly aligned with cards on left, Dropdown Selection on right
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Left: Category Label aligned to card start edge
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                _selectedFilterTag == 'All' ? 'All Categories' : _selectedFilterTag,
+                                style: TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  letterSpacing: -0.2,
                                 ),
-                                boxShadow: isSelected
-                                    ? [
-                                        BoxShadow(
-                                          color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy).withValues(alpha: 0.25),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 2),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
+                                      .withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '${filteredCategories.length}',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          // Right: Category Dropdown Type Selection + Quick Reset
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              if (_selectedFilterTag != 'All' || _searchQuery.isNotEmpty) ...[
+                                GestureDetector(
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    _searchController.clear();
+                                    setState(() {
+                                      _searchQuery = '';
+                                      _selectedFilterTag = 'All';
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4.5),
+                                    margin: const EdgeInsets.only(right: 6),
+                                    decoration: BoxDecoration(
+                                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.refresh_rounded,
+                                          size: 11,
+                                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                                         ),
-                                      ]
-                                    : [
+                                        const SizedBox(width: 3),
+                                        Text(
+                                          'Reset',
+                                          style: TextStyle(
+                                            fontFamily: 'Montserrat',
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              Theme(
+                                data: theme.copyWith(
+                                  hoverColor: Colors.transparent,
+                                  splashColor: Colors.transparent,
+                                  highlightColor: Colors.transparent,
+                                ),
+                                child: PopupMenuButton<String>(
+                                  initialValue: _selectedFilterTag,
+                                  tooltip: 'Select Category',
+                                  offset: const Offset(0, 34),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: BorderSide(
+                                      color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                                    ),
+                                  ),
+                                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                  elevation: 6,
+                                  onSelected: (String tag) {
+                                    HapticFeedback.selectionClick();
+                                    setState(() {
+                                      _selectedFilterTag = tag;
+                                    });
+                                  },
+                                  itemBuilder: (BuildContext context) {
+                                    return _filterTags.map((tag) {
+                                      final isSelected = tag == _selectedFilterTag;
+                                      final tagIcon = _getTagIcon(tag);
+                                      return PopupMenuItem<String>(
+                                        value: tag,
+                                        height: 38,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              tagIcon,
+                                              size: 15,
+                                              color: isSelected
+                                                  ? (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
+                                                  : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                tag,
+                                                style: TextStyle(
+                                                  fontFamily: 'Montserrat',
+                                                  fontSize: 12,
+                                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                                  color: isSelected
+                                                      ? (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
+                                                      : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                                                ),
+                                              ),
+                                            ),
+                                            if (isSelected)
+                                              Icon(
+                                                Icons.check_rounded,
+                                                size: 16,
+                                                color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                                              ),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList();
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                                        width: 1,
+                                      ),
+                                      boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                                          color: isDark
+                                              ? Colors.black.withValues(alpha: 0.15)
+                                              : Colors.black.withValues(alpha: 0.02),
                                           blurRadius: 4,
                                           offset: const Offset(0, 1),
                                         ),
                                       ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    tagIcon,
-                                    size: 14,
-                                    color: isSelected
-                                        ? Colors.white
-                                        : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    tag,
-                                    style: TextStyle(
-                                      fontFamily: 'Montserrat',
-                                      fontSize: 11.5,
-                                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : (isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155)),
-                                      letterSpacing: -0.1,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          _getTagIcon(_selectedFilterTag),
+                                          size: 13,
+                                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          _selectedFilterTag,
+                                          style: TextStyle(
+                                            fontFamily: 'Montserrat',
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 3),
+                                        Icon(
+                                          Icons.arrow_drop_down_rounded,
+                                          size: 18,
+                                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
-                          );
-                        },
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    if (_selectedFilterTag != 'All' || _searchQuery.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            _searchController.clear();
-                            setState(() {
-                              _searchQuery = '';
-                              _selectedFilterTag = 'All';
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.actionRed).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.refresh_rounded,
-                                  size: 13,
-                                  color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.actionRed,
-                                ),
-                                const SizedBox(width: 3),
-                                Text(
-                                  'Reset',
-                                  style: TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.actionRed,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                    ] else
-                      const SizedBox(height: 14),
                     // Categories Grid (or Empty Search State)
                     if (_isLoadingActiveCategories && (_activeCategoryIds == null || _activeCategoryIds!.isEmpty))
                       _buildSkeletalCategoryGrid(isDark)
@@ -876,6 +957,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                       )
                     else
                       GridView.builder(
+                        padding: EdgeInsets.zero,
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: filteredCategories.length,
@@ -883,7 +965,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                           crossAxisCount: 2,
                           crossAxisSpacing: 8,
                           mainAxisSpacing: 8,
-                          mainAxisExtent: 60,
+                          mainAxisExtent: 68,
                         ),
                         itemBuilder: (context, index) {
                           final cat = filteredCategories[index];
@@ -938,12 +1020,13 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
                                       children: [
                                         Text(
                                           cat['title'] as String,
-                                          maxLines: 1,
+                                          maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
                                             fontFamily: 'Montserrat',
                                             fontSize: 11.5,
                                             fontWeight: FontWeight.w700,
+                                            height: 1.15,
                                             color: isDark ? Colors.white : const Color(0xFF0F172A),
                                           ),
                                         ),
@@ -981,6 +1064,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
     final highlightColor = isDark ? Colors.grey[700]! : const Color(0xFFF8FAFC);
 
     return GridView.builder(
+      padding: EdgeInsets.zero,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: 8,
@@ -988,7 +1072,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
-        mainAxisExtent: 60,
+        mainAxisExtent: 68,
       ),
       itemBuilder: (context, index) {
         return Container(

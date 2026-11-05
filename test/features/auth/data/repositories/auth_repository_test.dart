@@ -371,5 +371,51 @@ void main() {
       
       expect(() => repository.uploadProfilePicture(tempFile), throwsException);
     });
+
+    test('getInviteTokenInfo returns InviteTokenInfo on 200 success', () async {
+      when(() => mockDio.get(EnvConfig.inviteTokenInfo('valid_token'))).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: EnvConfig.inviteTokenInfo('valid_token')),
+          statusCode: 200,
+          data: {
+            'success': true,
+            'society_id': 114,
+            'society_name': 'AsmitA House',
+            'target_role': 'Corporate Employee',
+            'department_id': 3,
+            'department_name': 'Accounts',
+            'recipient_phone': '9876543210',
+            'recipient_name': 'John Doe',
+          },
+        ),
+      );
+
+      final result = await repository.getInviteTokenInfo('valid_token');
+      expect(result.success, isTrue);
+      expect(result.societyId, 114);
+      expect(result.societyName, 'AsmitA House');
+      expect(result.targetRole, 'Corporate Employee');
+      expect(result.departmentId, 3);
+      expect(result.recipientPhone, '9876543210');
+      expect(result.recipientName, 'John Doe');
+    });
+
+    test('getInviteTokenInfo throws when backend returns success false or error', () async {
+      when(() => mockDio.get(EnvConfig.inviteTokenInfo('expired_token'))).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: EnvConfig.inviteTokenInfo('expired_token')),
+          response: Response(
+            requestOptions: RequestOptions(path: EnvConfig.inviteTokenInfo('expired_token')),
+            statusCode: 410,
+            data: {'message': 'This invite token has expired.'},
+          ),
+        ),
+      );
+
+      expect(
+        () => repository.getInviteTokenInfo('expired_token'),
+        throwsA(isA<Exception>().having((e) => e.toString(), 'message', contains('This invite token has expired.'))),
+      );
+    });
   });
 }

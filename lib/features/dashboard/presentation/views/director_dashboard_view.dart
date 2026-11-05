@@ -11,7 +11,6 @@ import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
-import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_text_field.dart';
 import '../../../../core/widgets/asmita_select_field.dart';
@@ -26,6 +25,7 @@ import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
+import '../../../visitor_management/presentation/widgets/invite_team_member_sheet.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
 import 'dart:math';
@@ -92,12 +92,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
       );
       return;
     }
-    await showDialog(
-      context: context,
-      builder: (context) => const AsmitaDialog(
-        title: 'Issue VIP Pass',
-        content: AsmitaPreApproveWizard(),
-      ),
+    await AsmitaPreApproveWizard.showAsModalSheet(
+      context,
+      title: 'Issue VIP Pass',
     );
 
     if (!context.mounted) return;
@@ -133,7 +130,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     showAsmitaBottomSheet(
       context: context,
       title: 'Campus Support Hotlines',
-      child: Column(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -184,6 +183,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           const SizedBox(height: 12),
         ],
       ),
+      ),
     );
   }
 
@@ -193,47 +193,128 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     required String title,
     required String subtitle,
     required VoidCallback onCall,
+    bool isEmergency = false,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Theme.of(context).dividerColor),
+        border: Border.all(
+          color: isEmergency
+              ? (isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFECACA))
+              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 1.5),
+          ),
+        ],
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: AsmitaPalette.deepNavy, size: 22),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: const TextStyle(fontSize: 11, color: AsmitaPalette.textLight),
-        ),
-        trailing: ElevatedButton.icon(
-          onPressed: onCall,
-          icon: const Icon(Icons.phone, size: 14),
-          label: const Text(
-            'Call',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AsmitaPalette.deepNavy,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            shape: RoundedRectangleBorder(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: isEmergency
+                  ? (isDark
+                      ? const Color(0xFF7F1D1D).withValues(alpha: 0.35)
+                      : const Color(0xFFFEE2E2))
+                  : (isDark
+                      ? const Color(0xFF1E3A8A).withValues(alpha: 0.3)
+                      : const Color(0xFFEFF6FF)),
               borderRadius: BorderRadius.circular(10),
             ),
+            child: Icon(
+              icon,
+              color: isEmergency
+                  ? const Color(0xFFEF4444)
+                  : (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy),
+              size: 20,
+            ),
           ),
-        ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    letterSpacing: -0.1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 10.5,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                onCall();
+              },
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  color: isEmergency
+                      ? const Color(0xFFDC2626)
+                      : (isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (isEmergency
+                              ? const Color(0xFFDC2626)
+                              : (isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy))
+                          .withValues(alpha: 0.28),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.phone_in_talk_rounded, size: 13, color: Colors.white),
+                    SizedBox(width: 5),
+                    Text(
+                      'Call',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -248,7 +329,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     showAsmitaBottomSheet(
       context: context,
       title: 'Executive VIP Guest Pass',
-      child: Column(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -606,6 +689,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           ],
           const SizedBox(height: 8),
         ],
+      ),
       ),
     );
   }
@@ -1073,6 +1157,15 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         onTap: () => _showPreApproveModal(context),
       ),
       _ExecutiveActionItem(
+        title: 'Invite Team',
+        icon: Icons.group_add_rounded,
+        containerColor: isDark
+            ? AsmitaPalette.surfaceDark
+            : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+        iconColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
+        onTap: () => showInviteTeamMemberSheet(context),
+      ),
+      _ExecutiveActionItem(
         title: 'Car Valet',
         icon: Icons.directions_car_filled_rounded,
         containerColor: isDark
@@ -1130,68 +1223,78 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: actions.map((action) {
-              return Expanded(
-                child: InkWell(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    action.onTap();
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 54,
-                        height: 54,
-                        decoration: BoxDecoration(
-                          color: action.containerColor,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Theme.of(context).dividerColor,
-                            width: 1,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Theme.of(
-                                context,
-                              ).shadowColor.withValues(alpha: 0.02),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final count = actions.length;
+              final itemWidth = constraints.maxWidth / count;
+              final iconBoxSize = itemWidth < 60 ? (itemWidth < 52 ? 42.0 : 46.0) : 52.0;
+              final iconSize = iconBoxSize < 48 ? 20.0 : 22.0;
+              final fontSize = itemWidth < 60 ? 9.5 : 10.5;
+
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: actions.map((action) {
+                  return Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        action.onTap();
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      splashColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: iconBoxSize,
+                            height: iconBoxSize,
+                            decoration: BoxDecoration(
+                              color: action.containerColor,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: Theme.of(context).dividerColor,
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Theme.of(
+                                    context,
+                                  ).shadowColor.withValues(alpha: 0.02),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: Icon(
-                          action.icon,
-                          color: action.iconColor,
-                          size: 24,
-                        ),
+                            child: Icon(
+                              action.icon,
+                              color: action.iconColor,
+                              size: iconSize,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            action.title,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.bodyMedium?.copyWith(
+                              fontFamily: 'Montserrat',
+                              fontSize: fontSize,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? AsmitaPalette.textDarkModeMain
+                                  : AsmitaPalette.textDark,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        action.title,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.bodyMedium?.copyWith(
-                          fontFamily: 'Montserrat',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? AsmitaPalette.textDarkModeMain
-                              : AsmitaPalette.textDark,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                }).toList(),
               );
-            }).toList(),
+            },
           ),
         ],
       ),
@@ -2231,6 +2334,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   // FUNCTIONAL MODAL: SECURITY COMMAND
   // =========================================================================
   void _showSecurityModal(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final authState = context.read<AuthBloc>().state;
     final user = authState is AuthAuthenticated ? authState.user : null;
     final societyId = user?.societyId ?? 114;
@@ -2248,7 +2352,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     showAsmitaBottomSheet(
       context: context,
       title: 'Campus Security Command',
-      child: Column(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -2295,115 +2401,243 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
             icon: Icons.emergency_rounded,
             title: 'Campus Emergency & Medical',
             subtitle: 'Ext: 999 • Rapid Response Team',
+            isEmergency: true,
             onCall: () {
               Navigator.pop(context);
               _callContact('Emergency Response', '+919820110911');
             },
           ),
-          const SizedBox(height: 16),
-          const Divider(),
-          const SizedBox(height: 8),
-          const Text(
-            'Quick Security Dispatches',
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Divider(
+              height: 1,
+              thickness: 1,
+              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
             ),
           ),
-          const SizedBox(height: 8),
           Row(
             children: [
+              Icon(
+                Icons.flash_on_rounded,
+                size: 15,
+                color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Quick Security Dispatches',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              // VIP Escort Dispatch Card
               Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    try {
-                      final dio = AsmitaDioClient(SecureStorageService()).dio;
-                      dio
-                          .post(
-                            '${EnvConfig.baseUrl}/app-api/security/dispatch',
-                            data: {
-                              'society_id': societyId,
-                              'type': 'VIP_ESCORT',
-                              'destination': 'Gate 1 Main Portico',
-                              'priority': 'HIGH',
-                            },
-                          )
-                          .ignore();
-                    } catch (_) {}
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.pop(context);
+                      try {
+                        final dio = AsmitaDioClient(SecureStorageService()).dio;
+                        dio.post(
+                          '${EnvConfig.baseUrl}/app-api/security/dispatch',
+                          data: {
+                            'society_id': societyId,
+                            'type': 'VIP_ESCORT',
+                            'destination': 'Gate 1 Main Portico',
+                            'priority': 'HIGH',
+                          },
+                        ).ignore();
+                      } catch (_) {}
 
-                    AsmitaToast.show(
-                      context,
-                      message:
-                          'VIP Escort Officer dispatched to Gate 1 Main Portico.',
-                      type: AsmitaToastType.success,
-                    );
-                  },
-                  icon: const Icon(Icons.person_pin_circle_rounded, size: 16),
-                  label: const Text(
-                    'Request Escort',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AsmitaPalette.deepNavy,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      AsmitaToast.show(
+                        context,
+                        message: 'VIP Escort Officer dispatched to Gate 1 Main Portico.',
+                        type: AsmitaToastType.success,
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1.5),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
+                                  .withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.person_pin_circle_rounded,
+                              size: 16,
+                              color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Request Escort',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  ),
+                                ),
+                                const SizedBox(height: 1),
+                                Text(
+                                  'Gate 1 Portico',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 9.5,
+                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    try {
-                      final dio = AsmitaDioClient(SecureStorageService()).dio;
-                      dio
-                          .post(
-                            '${EnvConfig.baseUrl}/app-api/security/dispatch',
-                            data: {
-                              'society_id': societyId,
-                              'type': 'EXPRESS_CLEARANCE',
-                              'destination': 'All Security Gates',
-                              'priority': 'HIGH',
-                            },
-                          )
-                          .ignore();
-                    } catch (_) {}
 
-                    AsmitaToast.show(
-                      context,
-                      message:
-                          'Priority Express clearance alert transmitted to all gates.',
-                      type: AsmitaToastType.info,
-                    );
-                  },
-                  icon: const Icon(
-                    Icons.notification_important_rounded,
-                    size: 16,
-                  ),
-                  label: const Text(
-                    'Express Lane Alert',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AsmitaPalette.actionRed,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+              // Express Lane Alert Card
+              Expanded(
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.pop(context);
+                      try {
+                        final dio = AsmitaDioClient(SecureStorageService()).dio;
+                        dio.post(
+                          '${EnvConfig.baseUrl}/app-api/security/dispatch',
+                          data: {
+                            'society_id': societyId,
+                            'type': 'EXPRESS_CLEARANCE',
+                            'destination': 'All Security Gates',
+                            'priority': 'HIGH',
+                          },
+                        ).ignore();
+                      } catch (_) {}
+
+                      AsmitaToast.show(
+                        context,
+                        message: 'Priority Express clearance alert transmitted to all gates.',
+                        type: AsmitaToastType.info,
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF450A0A).withValues(alpha: 0.3)
+                            : const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF7F1D1D)
+                              : const Color(0xFFFECACA),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1.5),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.notification_important_rounded,
+                              size: 16,
+                              color: Color(0xFFDC2626),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Express Lane',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark
+                                        ? const Color(0xFFFCA5A5)
+                                        : const Color(0xFF991B1B),
+                                  ),
+                                ),
+                                const SizedBox(height: 1),
+                                Text(
+                                  'Clear All Gates',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 9.5,
+                                    color: isDark
+                                        ? const Color(0xFFF87171)
+                                        : const Color(0xFFDC2626),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8)
         ],
+      ),
       ),
     );
   }

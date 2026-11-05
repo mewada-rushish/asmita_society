@@ -45,7 +45,7 @@ class ViewMoreScreen extends StatelessWidget {
     this.onNavigateToPosts,
   });
 
-  void _showPreApproveModal(BuildContext context) {
+  Future<void> _showPreApproveModal(BuildContext context) async {
     final authState = context.read<AuthBloc>().state;
     final user = authState is AuthAuthenticated ? authState.user : null;
     if (!PropertyRoleResolver.canIssuePasses(user)) {
@@ -56,12 +56,12 @@ class ViewMoreScreen extends StatelessWidget {
       );
       return;
     }
-    showDialog(
-      context: context,
-      builder: (context) => const AsmitaDialog(
-        title: 'Pre-Approve Visitor',
-        content: AsmitaPreApproveWizard(),
-      ),
+    // Dismiss ViewMoreSheet first so two sheets are not stacked
+    final nav = Navigator.of(context);
+    nav.pop();
+    await AsmitaPreApproveWizard.showAsModalSheet(
+      nav.context,
+      title: 'Pre-Approve Visitor',
     );
   }
 

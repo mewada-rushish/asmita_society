@@ -1,21 +1,37 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/di/injection_container.dart';
+import '../../../core/network/dio_client.dart';
+import '../../../core/security/secure_storage_service.dart';
 import '../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../core/widgets/asmita_toast.dart';
 import '../../../core/widgets/asmita_bottom_sheet.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../data/repositories/auth_repository.dart';
 import '../data/repositories/property_repository.dart';
+import '../data/models/invite_token_info.dart';
 import '../data/models/property_models.dart';
 import '../../dashboard/presentation/main_dashboard_screen.dart';
 import 'approval_pending_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
-  final String verifiedMobile;
-  const RegistrationScreen({super.key, required this.verifiedMobile});
+  final String? verifiedMobile;
+  final String? inviteToken;
+  final AuthRepository? authRepository;
+  final PropertyRepository? propertyRepository;
+
+  const RegistrationScreen({
+    super.key,
+    this.verifiedMobile,
+    this.inviteToken,
+    this.authRepository,
+    this.propertyRepository,
+  });
 
   @override
   State<RegistrationScreen> createState() => _RegistrationScreenState();
@@ -28,6 +44,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _mobileController = TextEditingController();
   
   PropertyItem? _selectedSociety;
   PropertyItem? _selectedTower;
@@ -39,18 +56,93 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   File? _profileImage;
   final ImagePicker _picker = ImagePicker();
 
-  final PropertyRepository _propertyRepo = PropertyRepository();
+  late final PropertyRepository _propertyRepo = widget.propertyRepository ??
+      (sl.isRegistered<PropertyRepository>()
+          ? sl<PropertyRepository>()
+          : PropertyRepository());
+  late final AuthRepository _authRepo;
   bool _isLoadingProperties = false;
+  bool _isLoadingInvite = false;
+  String? _inviteError;
+  bool _isInviteLocked = false;
+  bool _recipientPhoneProvided = false;
+  int? _departmentId;
+  String? _departmentName;
 
   List<PropertyItem> _societies = [];
   List<PropertyItem> _towers = [];
   List<PropertyItem> _floors = [];
   List<PropertyItem> _flats = [];
 
+  bool get _isCorporate =>
+      _departmentId != null ||
+      (_selectedRole != null &&
+          _selectedRole != 'Owner' &&
+          _selectedRole != 'Tenant');
+
+  bool get _isMobileLocked =>
+      (widget.verifiedMobile != null && widget.verifiedMobile!.isNotEmpty) ||
+      (_isInviteLocked && _recipientPhoneProvided);
+
   @override
   void initState() {
     super.initState();
-    _fetchSocieties();
+    if (widget.authRepository != null) {
+      _authRepo = widget.authRepository!;
+    } else if (sl.isRegistered<AuthRepository>()) {
+      _authRepo = sl<AuthRepository>();
+    } else {
+      _authRepo = AuthRepository(dio: AsmitaDioClient(SecureStorageService()).dio);
+    }
+
+    if (widget.verifiedMobile != null && widget.verifiedMobile!.isNotEmpty) {
+      _mobileController.text = widget.verifiedMobile!;
+    }
+
+    if (widget.inviteToken != null && widget.inviteToken!.isNotEmpty) {
+      _resolveInviteToken(widget.inviteToken!);
+    } else {
+      _fetchSocieties();
+    }
+  }
+
+  Future<void> _resolveInviteToken(String token) async {
+    setState(() {
+      _isLoadingInvite = true;
+      _inviteError = null;
+    });
+    try {
+      final InviteTokenInfo info = await _authRepo.getInviteTokenInfo(token);
+      if (!mounted) return;
+      setState(() {
+        _isLoadingInvite = false;
+        _isInviteLocked = true;
+        _selectedSociety = PropertyItem(id: info.societyId, name: info.societyName);
+        _departmentId = info.departmentId;
+        _departmentName = info.departmentName;
+        _selectedRole = info.targetRole;
+
+        if (info.recipientPhone != null && info.recipientPhone!.isNotEmpty) {
+          _mobileController.text = info.recipientPhone!;
+          _recipientPhoneProvided = true;
+        }
+        if (info.recipientName != null && info.recipientName!.isNotEmpty) {
+          _nameController.text = info.recipientName!;
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingInvite = false;
+        _inviteError = e.toString().replaceFirst('Exception: ', '');
+      });
+      _fetchSocieties();
+      AsmitaToast.show(
+        context,
+        message: _inviteError ?? 'Failed to resolve invite token',
+        type: AsmitaToastType.error,
+      );
+    }
   }
 
   Future<void> _fetchSocieties() async {
@@ -124,18 +216,34 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     _pageController.dispose();
     _nameController.dispose();
     _emailController.dispose();
+    _mobileController.dispose();
     super.dispose();
   }
 
   void _nextStep() {
     if (_currentStep == 0) {
-      if (_selectedSociety == null || _selectedTower == null || _selectedFloor == null || _selectedFlat == null || _selectedRole == null) {
-        AsmitaToast.show(
-          context,
-          message: 'Please fill all society details to proceed.',
-          type: AsmitaToastType.error,
-        );
-        return;
+      if (_isCorporate) {
+        if (_selectedSociety == null || _selectedRole == null) {
+          AsmitaToast.show(
+            context,
+            message: 'Please fill all society details to proceed.',
+            type: AsmitaToastType.error,
+          );
+          return;
+        }
+      } else {
+        if (_selectedSociety == null ||
+            _selectedTower == null ||
+            _selectedFloor == null ||
+            _selectedFlat == null ||
+            _selectedRole == null) {
+          AsmitaToast.show(
+            context,
+            message: 'Please fill all society details to proceed.',
+            type: AsmitaToastType.error,
+          );
+          return;
+        }
       }
     }
     
@@ -151,7 +259,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   }
 
   void _submitRegistration() {
-    if (_nameController.text.trim().isEmpty || _emailController.text.trim().isEmpty || _selectedGender == null) {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final mobile = _mobileController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || mobile.isEmpty || _selectedGender == null) {
       AsmitaToast.show(
         context,
         message: 'Please fill in all required fields to continue.',
@@ -160,7 +272,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       return;
     }
 
-    final email = _emailController.text.trim();
+    if (mobile.length != 10 || !RegExp(r'^[0-9]{10}$').hasMatch(mobile)) {
+      AsmitaToast.show(
+        context,
+        message: 'Please enter a valid 10-digit mobile number.',
+        type: AsmitaToastType.error,
+      );
+      return;
+    }
+
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
       AsmitaToast.show(
         context,
@@ -171,15 +291,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
 
     context.read<AuthBloc>().add(AuthRegisterRequested(
-      mobile: widget.verifiedMobile,
-      fullName: _nameController.text.trim(),
-      email: _emailController.text.trim(),
+      mobile: mobile,
+      fullName: name,
+      email: email,
       gender: _selectedGender!,
-      society: _selectedSociety!.id.toString(),
-      tower: _selectedTower!.id.toString(),
-      floor: _selectedFloor!.id.toString(),
-      flat: _selectedFlat!.id.toString(),
-      role: _selectedRole!.toLowerCase(),
+      society: _selectedSociety?.id.toString() ?? '',
+      tower: _selectedTower?.id.toString() ?? '',
+      floor: _selectedFloor?.id.toString() ?? '',
+      flat: _selectedFlat?.id.toString() ?? '',
+      role: _selectedRole?.toLowerCase() ?? 'resident',
       profilePicture: _profileImage,
     ));
   }
@@ -363,9 +483,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               type: AsmitaToastType.error,
             );
           } else if (state is AuthPendingApproval) {
+            final effectiveMobile = _mobileController.text.trim().isNotEmpty
+                ? _mobileController.text.trim()
+                : (widget.verifiedMobile ?? '');
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (_) => ApprovalPendingScreen(mobile: widget.verifiedMobile)),
+              MaterialPageRoute(builder: (_) => ApprovalPendingScreen(mobile: effectiveMobile)),
               (route) => false,
             );
           }
@@ -496,10 +619,89 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           const SizedBox(height: 6),
           Text('Link your multi-step infrastructure setup profiles.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600, fontFamily: 'Poppins')),
           const SizedBox(height: 28),
-          if (_isLoadingProperties)
+          if (_isLoadingProperties || _isLoadingInvite)
             const Padding(
               padding: EdgeInsets.only(bottom: 20),
               child: LinearProgressIndicator(color: Color(0xFFE21F26)),
+            ),
+          if (_isInviteLocked)
+            Container(
+              margin: const EdgeInsets.only(bottom: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E7D32).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.25)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF2E7D32),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.check, color: Colors.white, size: 14),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Verified Invitation',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF2E7D32),
+                          ),
+                        ),
+                        Text(
+                          'Organization & role details locked by invite',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 11,
+                            color: Color(0xFF2E7D32),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.lock_rounded, color: Color(0xFF2E7D32), size: 18),
+                ],
+              ),
+            ),
+          if (_inviteError != null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE21F26).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE21F26).withValues(alpha: 0.25)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline_rounded, color: Color(0xFFE21F26), size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _inviteError!,
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                        color: Color(0xFFE21F26),
+                      ),
+                    ),
+                  ),
+                  if (widget.inviteToken != null)
+                    TextButton(
+                      onPressed: () => _resolveInviteToken(widget.inviteToken!),
+                      child: const Text('Retry', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFE21F26))),
+                    ),
+                ],
+              ),
             ),
           Container(
             decoration: BoxDecoration(
@@ -525,6 +727,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     hint: 'Select Society',
                     icon: Icons.domain_rounded,
                     iconBackgroundColor: Colors.blue.shade500,
+                    isLocked: _isInviteLocked,
                     onTap: () {
                       _showSearchableBottomSheet(
                         title: 'Society Name',
@@ -536,66 +739,88 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       );
                     },
                   ),
-                  _buildIOSListTile(
-                    label: 'Tower',
-                    value: _selectedTower?.name,
-                    hint: 'Select Tower',
-                    icon: Icons.business_rounded,
-                    iconBackgroundColor: Colors.indigo.shade400,
-                    isDisabled: _selectedSociety == null,
-                    isLoading: _towers.isEmpty && _isLoadingProperties,
-                    onTap: () {
-                      _showSearchableBottomSheet(
-                        title: 'Tower',
-                        items: _towers,
-                        currentValue: _selectedTower,
-                        useGrid: true,
-                        onSelected: (val) {
-                          _onTowerSelected(val);
-                        },
-                      );
-                    },
-                  ),
-                  _buildIOSListTile(
-                    label: 'Floor',
-                    value: _selectedFloor?.name,
-                    hint: 'Select Floor',
-                    icon: Icons.stairs_rounded,
-                    iconBackgroundColor: Colors.purple.shade400,
-                    isDisabled: _selectedTower == null,
-                    isLoading: _floors.isEmpty && _isLoadingProperties,
-                    onTap: () {
-                      _showSearchableBottomSheet(
-                        title: 'Floor',
-                        items: _floors,
-                        currentValue: _selectedFloor,
-                        useGrid: true,
-                        onSelected: (val) {
-                          _onFloorSelected(val);
-                        },
-                      );
-                    },
-                  ),
-                  _buildIOSListTile(
-                    label: 'Flat No.',
-                    value: _selectedFlat?.name,
-                    hint: 'Select Flat',
-                    icon: Icons.door_front_door_rounded,
-                    iconBackgroundColor: Colors.teal.shade500,
-                    isDisabled: _selectedFloor == null,
-                    isLoading: _flats.isEmpty && _isLoadingProperties,
-                    onTap: () {
-                      _showSearchableBottomSheet(
-                        title: 'Flat',
-                        items: _flats,
-                        currentValue: _selectedFlat,
-                        useGrid: true,
-                        onSelected: (val) {
-                          setState(() => _selectedFlat = val);
-                        },
-                      );
-                    },
-                  ),
+                  if (_departmentName != null || _departmentId != null)
+                    _buildIOSListTile(
+                      label: 'Department',
+                      value: _departmentName ?? 'Department #$_departmentId',
+                      hint: 'Assigned Department',
+                      icon: Icons.corporate_fare_rounded,
+                      iconBackgroundColor: Colors.teal.shade600,
+                      isLocked: true,
+                      onTap: () {},
+                    ),
+                  if (_isCorporate)
+                    _buildIOSListTile(
+                      label: 'Workplace',
+                      value: 'Corporate Campus',
+                      hint: 'Corporate Campus',
+                      icon: Icons.business_center_rounded,
+                      iconBackgroundColor: Colors.indigo.shade500,
+                      isLocked: true,
+                      onTap: () {},
+                    )
+                  else ...[
+                    _buildIOSListTile(
+                      label: 'Tower',
+                      value: _selectedTower?.name,
+                      hint: 'Select Tower',
+                      icon: Icons.business_rounded,
+                      iconBackgroundColor: Colors.indigo.shade400,
+                      isDisabled: _selectedSociety == null,
+                      isLoading: _towers.isEmpty && _isLoadingProperties,
+                      onTap: () {
+                        _showSearchableBottomSheet(
+                          title: 'Tower',
+                          items: _towers,
+                          currentValue: _selectedTower,
+                          useGrid: true,
+                          onSelected: (val) {
+                            _onTowerSelected(val);
+                          },
+                        );
+                      },
+                    ),
+                    _buildIOSListTile(
+                      label: 'Floor',
+                      value: _selectedFloor?.name,
+                      hint: 'Select Floor',
+                      icon: Icons.stairs_rounded,
+                      iconBackgroundColor: Colors.purple.shade400,
+                      isDisabled: _selectedTower == null,
+                      isLoading: _floors.isEmpty && _isLoadingProperties,
+                      onTap: () {
+                        _showSearchableBottomSheet(
+                          title: 'Floor',
+                          items: _floors,
+                          currentValue: _selectedFloor,
+                          useGrid: true,
+                          onSelected: (val) {
+                            _onFloorSelected(val);
+                          },
+                        );
+                      },
+                    ),
+                    _buildIOSListTile(
+                      label: 'Flat No.',
+                      value: _selectedFlat?.name,
+                      hint: 'Select Flat',
+                      icon: Icons.door_front_door_rounded,
+                      iconBackgroundColor: Colors.teal.shade500,
+                      isDisabled: _selectedFloor == null,
+                      isLoading: _flats.isEmpty && _isLoadingProperties,
+                      onTap: () {
+                        _showSearchableBottomSheet(
+                          title: 'Flat',
+                          items: _flats,
+                          currentValue: _selectedFlat,
+                          useGrid: true,
+                          onSelected: (val) {
+                            setState(() => _selectedFlat = val);
+                          },
+                        );
+                      },
+                    ),
+                  ],
                   _buildIOSListTile(
                     label: 'I am a',
                     value: _selectedRole,
@@ -603,6 +828,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     icon: Icons.person_rounded,
                     iconBackgroundColor: Colors.orange.shade500,
                     showDivider: false,
+                    isLocked: _isInviteLocked,
                     onTap: () {
                       _showSearchableBottomSheet(
                         title: 'Role',
@@ -638,12 +864,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     required Color iconBackgroundColor,
     bool isLoading = false,
     bool isDisabled = false,
+    bool isLocked = false,
     bool showDivider = true,
   }) {
+    final effectivelyDisabled = isDisabled || isLocked;
     return InkWell(
-      onTap: isDisabled || isLoading ? null : onTap,
+      onTap: effectivelyDisabled || isLoading ? null : onTap,
       child: Opacity(
-        opacity: isDisabled ? 0.4 : 1.0,
+        opacity: isDisabled && !isLocked ? 0.4 : 1.0,
         child: Container(
           color: Colors.transparent,
           child: Column(
@@ -689,11 +917,22 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 fontFamily: 'Poppins',
                                 fontSize: 15,
                                 color: value != null ? Colors.black87 : Colors.black38,
+                                fontWeight: isLocked ? FontWeight.w600 : FontWeight.normal,
                               ),
                             ),
                     ),
                     const SizedBox(width: 8),
-                    const Icon(Icons.chevron_right_rounded, color: Colors.black26, size: 20),
+                    if (isLocked)
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Icon(Icons.lock_rounded, color: Colors.grey.shade600, size: 16),
+                      )
+                    else
+                      const Icon(Icons.chevron_right_rounded, color: Colors.black26, size: 20),
                   ],
                 ),
               ),
@@ -762,12 +1001,22 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         ),
         const SizedBox(height: 32),
           _buildTextField('Full Name', Icons.person_outline_rounded, 'Enter full name', _nameController),
+          _buildTextField(
+            'Mobile Number',
+            Icons.phone_outlined,
+            'Enter 10-digit mobile number',
+            _mobileController,
+            keyboardType: TextInputType.phone,
+            readOnly: _isMobileLocked,
+            maxLength: 10,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
           _buildTextField('Email Address', Icons.email_outlined, 'name@example.com', _emailController, keyboardType: TextInputType.emailAddress),
           _buildSearchableDropdownField<String>(
             label: 'Gender',
             icon: Icons.person_outline_rounded,
             hint: 'Select Gender',
-            items: ['Male', 'Female', 'Other'],
+            items: const ['Male', 'Female', 'Other'],
             value: _selectedGender,
             enableSearch: false,
             useGrid: true,
@@ -781,17 +1030,65 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
-  Widget _buildTextField(String label, IconData icon, String hint, TextEditingController controller, {TextInputType keyboardType = TextInputType.name}) {
+  Widget _buildTextField(
+    String label,
+    IconData icon,
+    String hint,
+    TextEditingController controller, {
+    TextInputType keyboardType = TextInputType.name,
+    bool readOnly = false,
+    Widget? suffix,
+    List<TextInputFormatter>? inputFormatters,
+    int? maxLength,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontFamily: 'Montserrat', color: Theme.of(context).textTheme.titleMedium?.color, fontWeight: FontWeight.w700, fontSize: 13)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  color: Theme.of(context).textTheme.titleMedium?.color,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+              if (readOnly)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.lock_rounded, size: 11, color: Colors.grey.shade600),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Verified',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: readOnly ? const Color(0xFFF5F6FA) : Colors.white,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
@@ -803,15 +1100,32 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             ),
             child: TextField(
               controller: controller,
+              readOnly: readOnly,
               keyboardType: keyboardType,
-              style: const TextStyle(fontFamily: 'Poppins', color: Colors.black87, fontSize: 15),
+              inputFormatters: inputFormatters,
+              maxLength: maxLength,
+              buildCounter: maxLength != null
+                  ? (_, {required currentLength, required isFocused, maxLength}) => null
+                  : null,
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                color: readOnly ? Colors.black54 : Colors.black87,
+                fontSize: 15,
+                fontWeight: readOnly ? FontWeight.w500 : FontWeight.normal,
+              ),
               decoration: InputDecoration(
                 hintText: hint,
                 hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),
                 prefixIcon: Icon(icon, color: const Color(0xFF27347B), size: 20),
+                suffixIcon: suffix,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
                 enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF27347B), width: 1.5)),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: readOnly
+                      ? BorderSide(color: Colors.grey.shade200)
+                      : const BorderSide(color: Color(0xFF27347B), width: 1.5),
+                ),
                 contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
               ),
             ),

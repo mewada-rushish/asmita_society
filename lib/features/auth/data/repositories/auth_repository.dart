@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import '../../../../core/config/env_config.dart';
 import '../models/auth_response.dart';
+import '../models/invite_token_info.dart';
 import '../models/user_model.dart';
 
 /// Repository responsible for authentication, OTP verification, and user onboarding.
@@ -11,6 +12,20 @@ class AuthRepository {
   final Dio dio;
 
   AuthRepository({required this.dio});
+
+  /// Resolves invite token details to pre-fill registration.
+  Future<InviteTokenInfo> getInviteTokenInfo(String token) async {
+    try {
+      final response = await dio.get(EnvConfig.inviteTokenInfo(token));
+      final data = _ensureMap(response.data);
+      if (data['success'] == true) {
+        return InviteTokenInfo.fromJson(data);
+      }
+      throw Exception(data['message'] ?? 'Invalid or expired invite token');
+    } on DioException catch (e) {
+      throw _parseError(e, 'Failed to resolve invite token');
+    }
+  }
 
   /// Initiates an OTP login request.
   Future<bool> initiateLogin(String mobile) async {
