@@ -43,6 +43,7 @@ class AsmitaPreApproveWizard extends StatefulWidget {
       subtitle: subtitle ?? (isGuardMode ? 'Record lobby guest entry details' : null),
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: 24.0),
         child: AsmitaPreApproveWizard(isGuardMode: isGuardMode),
       ),
     );
@@ -4103,25 +4104,28 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     required String label,
     required VoidCallback onPressed,
   }) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AsmitaPalette.deepNavy,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AsmitaPalette.deepNavy,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            elevation: 0,
           ),
-          elevation: 0,
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontFamily: 'Montserrat',
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-            fontSize: 15,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontFamily: 'Montserrat',
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+            ),
           ),
         ),
       ),
