@@ -8,9 +8,9 @@ import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
-import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_visitor_card.dart';
+import '../../../../core/widgets/asmita_bottom_nav_bar.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
@@ -81,12 +81,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
   }
 
   Future<void> _showPreApproveModal(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (context) => const AsmitaDialog(
-        title: 'Schedule Visitor',
-        content: AsmitaPreApproveWizard(),
-      ),
+    await AsmitaPreApproveWizard.showAsModalSheet(
+      context,
+      title: 'Schedule Visitor',
     );
 
     if (!context.mounted) return;
@@ -152,18 +149,62 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                visit.visitorName,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 17,
-                                  color: Colors.white,
-                                  letterSpacing: 0.2,
-                                  height: 1.2,
-                                ),
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      visit.cleanVisitorName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 17,
+                                        color: Colors.white,
+                                        letterSpacing: 0.2,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                  ),
+                                  if (visit.isVip) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        borderRadius: BorderRadius.circular(6),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.workspace_premium_rounded, size: 12, color: Colors.white),
+                                          SizedBox(width: 3),
+                                          Text(
+                                            'VIP',
+                                            style: TextStyle(
+                                              fontFamily: 'Montserrat',
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w800,
+                                              color: Colors.white,
+                                              letterSpacing: 0.6,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                               const SizedBox(height: 3),
                               Row(
@@ -180,8 +221,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                                   Flexible(
                                     child: Text(
                                       visit.deliveryCompany ??
-                                          visit.purpose ??
-                                          (visit.isDelivery ? 'Delivery Entry' : 'Guest Visitor'),
+                                          (visit.cleanPurpose.isNotEmpty
+                                              ? visit.cleanPurpose
+                                              : (visit.isDelivery ? 'Delivery Entry' : 'Guest Visitor')),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
@@ -876,7 +918,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       floatingActionButton: Padding(
         padding: EdgeInsets.only(
-          bottom: 112.0 + MediaQuery.viewPaddingOf(context).bottom,
+          bottom: AsmitaBottomNavBar.fabBottomPadding(),
         ),
         child: FloatingActionButton.extended(
           heroTag: null,

@@ -26,23 +26,32 @@ class DeepLinkHandler {
       final type = uri.pathSegments[1]; // 'join' or 'pass'
       final token = uri.pathSegments[2];
 
-      final context = navigatorKey.currentContext;
-      if (context == null) return;
+      void navigate() {
+        final context = navigatorKey.currentContext;
+        if (context == null) return;
 
-      if (type == 'join') {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => RegistrationScreen(
-              verifiedMobile: token,
+        if (type == 'join') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => RegistrationScreen(
+                inviteToken: token,
+                verifiedMobile: null,
+              ),
             ),
-          ),
-        );
-      } else if (type == 'pass') {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const GuardPassCheckInScreen(),
-          ),
-        );
+          );
+        } else if (type == 'pass') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const GuardPassCheckInScreen(),
+            ),
+          );
+        }
+      }
+
+      if (navigatorKey.currentContext == null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => navigate());
+      } else {
+        navigate();
       }
     }
   }
