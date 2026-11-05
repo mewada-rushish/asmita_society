@@ -1113,7 +1113,15 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       ),
                     ),
 
-                    // Active Filter Badge (When filtered from Dashboard)
+                    // Top KPI Stat Metrics Cards (Interactive Filter Cards)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 14),
+                        child: _buildKpiMetrics(context, todayVisits),
+                      ),
+                    ),
+
+                    // Active Filter Badge (When filtered)
                     if (_selectedFilter != 'ALL')
                       SliverToBoxAdapter(
                         child: _buildActiveFilterHeader(context),
@@ -1147,6 +1155,175 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildKpiMetrics(BuildContext context, List<IndustrialVisitModel> visits) {
+    final pendingCount = visits.where((v) => v.isPending).length;
+    final approvedCount = visits.where((v) => v.status == IndustrialVisitStatus.approved).length;
+    final insideCount = visits.where((v) => v.status == IndustrialVisitStatus.checkedIn).length;
+    final totalCount = visits.length;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Row(
+      children: [
+        Expanded(
+          child: _buildKpiCard(
+            context,
+            label: 'Total',
+            count: totalCount,
+            icon: Icons.groups_rounded,
+            accentColor: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+            filterKey: 'ALL',
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildKpiCard(
+            context,
+            label: 'Pending',
+            count: pendingCount,
+            icon: Icons.pending_actions_rounded,
+            accentColor: isDark ? const Color(0xFFF87171) : AsmitaPalette.actionRed,
+            filterKey: 'PENDING',
+            showPulse: pendingCount > 0,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildKpiCard(
+            context,
+            label: 'Approved',
+            count: approvedCount,
+            icon: Icons.verified_rounded,
+            accentColor: isDark ? const Color(0xFF38BDF8) : const Color(0xFF1E88E5),
+            filterKey: 'APPROVED',
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildKpiCard(
+            context,
+            label: 'Inside',
+            count: insideCount,
+            icon: Icons.meeting_room_rounded,
+            accentColor: isDark ? const Color(0xFF34D399) : AsmitaPalette.successGreen,
+            filterKey: 'INSIDE',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildKpiCard(
+    BuildContext context, {
+    required String label,
+    required int count,
+    required IconData icon,
+    required Color accentColor,
+    required String filterKey,
+    bool showPulse = false,
+  }) {
+    final isSelected = _selectedFilter == filterKey;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() {
+          _selectedFilter = filterKey;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDark ? accentColor.withValues(alpha: 0.18) : accentColor.withValues(alpha: 0.08))
+              : Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? accentColor
+                : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? accentColor.withValues(alpha: 0.12)
+                  : Colors.black.withValues(alpha: 0.02),
+              blurRadius: isSelected ? 8 : 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Premium Squircle Icon Container
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: isDark ? 0.22 : 0.10),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: accentColor.withValues(alpha: isSelected ? 0.45 : 0.18),
+                  width: 1.0,
+                ),
+              ),
+              child: Center(
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(icon, color: accentColor, size: 18),
+                    if (showPulse)
+                      Positioned(
+                        right: -3,
+                        top: -3,
+                        child: Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: accentColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.surface,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '$count',
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: isSelected ? accentColor : Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? accentColor : AsmitaPalette.textLight,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
