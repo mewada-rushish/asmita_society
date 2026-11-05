@@ -240,9 +240,8 @@ void main() {
 
       // Verify Delivery fields visible
       expect(find.text('Delivery Partner / App*'), findsOneWidget);
-      expect(find.text('Leave at Gate'), findsOneWidget);
       expect(find.text('Surprise Delivery'), findsOneWidget);
-      expect(find.text('Authorize Delivery'), findsOneWidget);
+      expect(find.text('Authorize Entry'), findsOneWidget);
 
       // Verify foreign fields hidden
       expect(find.text('Number of Guests:'), findsNothing);
@@ -269,10 +268,10 @@ void main() {
 
       // Verify Cab fields visible
       expect(find.text('Cab / Vehicle Provider'), findsOneWidget);
-      expect(find.text('Vehicle Registration Number *'), findsOneWidget);
-      expect(find.text('Trip Direction *'), findsOneWidget);
+      expect(find.text('Cab / Vehicle Registration Number *'), findsOneWidget);
+      expect(find.text('2 : 2 : 4'), findsOneWidget);
       expect(find.text('Safe Pickup Mode'), findsOneWidget);
-      expect(find.text('Authorize Cab'), findsOneWidget);
+      expect(find.text('Authorize Entry'), findsOneWidget);
 
       // Verify foreign fields hidden
       expect(find.text('Delivery Partner / App*'), findsNothing);
@@ -298,12 +297,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify Visiting Help fields visible
-      expect(find.text('Service Category / Trade *'), findsOneWidget);
-      expect(find.text('Technician / Partner Name *'), findsOneWidget);
-      expect(find.text('Plumber'), findsOneWidget);
-      expect(find.text('Electrician'), findsOneWidget);
-      expect(find.text('Maid'), findsOneWidget);
-      expect(find.text('Authorize Service Partner'), findsOneWidget);
+      expect(find.text('Technician / Contractor Name (Optional)'), findsOneWidget);
+      expect(find.text('Authorize Entry'), findsOneWidget);
 
       // Verify foreign fields hidden
       expect(find.text('Leave at Gate'), findsNothing);
