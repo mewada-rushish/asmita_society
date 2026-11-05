@@ -10,6 +10,7 @@ import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_bloc.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_event.dart';
 import 'package:asmita_society/features/visitor_management/presentation/screens/department_delegation_screen.dart';
+import 'package:asmita_society/features/visitor_management/presentation/widgets/invite_team_member_sheet.dart';
 import 'package:asmita_society/features/dashboard/presentation/screens/industrial_directory_screen.dart';
 
 import 'committee_members_screen.dart';
@@ -18,7 +19,6 @@ import 'family_members_screen.dart';
 import 'tenants_screen.dart';
 import 'history_requests_screen.dart';
 import 'help_support_screen.dart';
-import '../../../bbps/presentation/screens/bbps_home_screen.dart';
 import 'pets_screen.dart';
 import 'profile_screen.dart';
 import 'rules_screen.dart';
@@ -46,16 +46,32 @@ class MenuScreen extends StatelessWidget {
         String resolvedRole = userRole;
         final currentUser = authState is AuthAuthenticated ? authState.user : null;
         if (currentUser != null) {
-          if (currentUser.systemRole?.isNotEmpty == true) {
-            resolvedRole = currentUser.systemRole!;
-          } else if (currentUser.primaryRole.isNotEmpty) {
-            resolvedRole = currentUser.primaryRole;
+          if (userRole.isEmpty ||
+              userRole == 'resident' ||
+              userRole.toLowerCase() == currentUser.primaryRole.toLowerCase() ||
+              userRole.toLowerCase() == currentUser.systemRole?.toLowerCase()) {
+            final pRole = currentUser.primaryRole.trim();
+            if (pRole.isNotEmpty && pRole.toLowerCase() != 'resident') {
+              resolvedRole = pRole;
+            } else if (currentUser.systemRole?.isNotEmpty == true) {
+              resolvedRole = currentUser.systemRole!;
+            } else if (pRole.isNotEmpty) {
+              resolvedRole = pRole;
+            }
           }
         }
 
-        final normalized = PropertyRoleResolver.normalizeRole(resolvedRole);
-        final isIndustrial = propertyType == AsmitaPropertyType.industrial ||
+        final isIndustrialProperty = propertyType == AsmitaPropertyType.industrial ||
             propertyType == AsmitaPropertyType.commercial ||
+            PropertyRoleResolver.isIndustrialContext(currentUser, propertyType: currentUser?.propertyType);
+
+        final normalized = PropertyRoleResolver.normalizeRole(
+          resolvedRole,
+          scope: currentUser?.roleScope,
+          power: currentUser?.rolePower,
+          isIndustrial: isIndustrialProperty,
+        );
+        final isIndustrial = isIndustrialProperty ||
             (propertyType == null &&
                 (normalized == 'director' ||
                     normalized == 'employee' ||
@@ -105,6 +121,8 @@ class MenuScreen extends StatelessWidget {
                           items: [
                             if (PropertyRoleResolver.canDelegate(currentUser, role: resolvedRole))
                               _buildMenuItem(context, Icons.swap_horiz_rounded, 'Department Delegation'),
+                            if (PropertyRoleResolver.canInviteTeamMembers(currentUser, role: resolvedRole))
+                              _buildMenuItem(context, Icons.group_add_rounded, 'Invite Team'),
                             if (PropertyRoleResolver.canManageVehicles(currentUser, role: resolvedRole))
                               _buildMenuItem(context, Icons.directions_car_filled_outlined, 'Workplace Vehicles'),
                             _buildMenuItem(context, Icons.contact_phone_outlined, 'Campus Directory & Hotlines'),
@@ -168,7 +186,6 @@ class MenuScreen extends StatelessWidget {
                         title: 'Application',
                         items: [
                           _buildMenuItem(context, Icons.settings_outlined, 'Settings'),
-                          _buildMenuItem(context, Icons.receipt_long_outlined, 'Utility Bill Clearances (BBPS)'),
                           _buildMenuItem(context, Icons.help_outline_rounded, 'Help & Support'),
                           _buildMenuItem(
                             context,
@@ -485,6 +502,9 @@ class MenuScreen extends StatelessWidget {
               departmentName: user?.departmentName ?? 'General HQ',
             );
             break;
+          case 'Invite Team':
+            showInviteTeamMemberSheet(context);
+            return;
           case 'Campus Emergency Hotline':
           case 'Campus Directory & Hotlines':
           case 'Campus Emergency Protocols':
@@ -496,9 +516,6 @@ class MenuScreen extends StatelessWidget {
           case 'Security & Biometric Access':
           case 'Settings':
             screen = const SettingsScreen();
-            break;
-          case 'Utility Bill Clearances (BBPS)':
-            screen = BbpsHomeScreen(onNavigateToTab: onNavigateToTab);
             break;
           case 'Help & Support':
             screen = const HelpSupportScreen();

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,7 +12,6 @@ import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
-import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_text_field.dart';
 import '../../../../core/widgets/asmita_select_field.dart';
@@ -19,13 +19,15 @@ import '../../../../core/utils/property_role_resolver.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
-import '../../widgets/bbps_bill_payments_sheet.dart';
 import '../../../visitor_management/bloc/visitor_bloc.dart';
 import '../../../visitor_management/bloc/visitor_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
+import '../../../../core/widgets/asmita_employee_card.dart';
+import '../../widgets/bbps_bill_payments_sheet.dart';
+import '../../../auth/data/models/user_model.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
 import 'dart:math';
@@ -38,8 +40,16 @@ import 'package:url_launcher/url_launcher.dart' as url_launcher;
 /// - Quick direct contact hotlines to floor receptionist & security gate
 /// - VIP Pre-approval & pass scheduling wizard integration
 class DirectorDashboardView extends StatefulWidget {
+  final String? directorName;
+  final String? departmentName;
+  final String? cabinNumber;
+  final String? deskNumber;
+  final String? designation;
+  final bool isActive;
+  final bool? canDelegate;
   final List<IndustrialVisitModel>? visits;
   final VoidCallback? onContactReceptionist;
+  final VoidCallback? onOpenDelegation;
   final Function(int visitId, String action)? onDecideVisit;
   final Function(int visitId)? onAcknowledgeVisit;
   final Function(String filter)? onNavigateToVisitsWithFilter;
@@ -47,8 +57,16 @@ class DirectorDashboardView extends StatefulWidget {
 
   const DirectorDashboardView({
     super.key,
+    this.directorName,
+    this.departmentName,
+    this.cabinNumber,
+    this.deskNumber,
+    this.designation,
+    this.isActive = true,
+    this.canDelegate,
     this.visits,
     this.onContactReceptionist,
+    this.onOpenDelegation,
     this.onDecideVisit,
     this.onAcknowledgeVisit,
     this.onNavigateToVisitsWithFilter,
@@ -60,10 +78,13 @@ class DirectorDashboardView extends StatefulWidget {
 }
 
 class _DirectorDashboardViewState extends State<DirectorDashboardView> {
+  String? _activeDelegateName;
+
   @override
   void initState() {
     super.initState();
     if (widget.visits == null) {
+      _fetchDelegationStatus();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         try {
@@ -71,6 +92,29 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         } catch (_) {}
       });
     }
+  }
+
+  Future<void> _fetchDelegationStatus() async {
+    try {
+      if (Platform.environment.containsKey('FLUTTER_TEST')) return;
+      final dio = AsmitaDioClient(SecureStorageService()).dio;
+      final res = await dio.get(EnvConfig.employeeDelegationStatus);
+      if (res.statusCode == 200 && res.data['success'] == true) {
+        final dData = res.data['data'] as Map<String, dynamic>?;
+        final outgoing = dData?['outgoingDelegation'] as Map<String, dynamic>?;
+
+        if (mounted) {
+          setState(() {
+            if (outgoing != null) {
+              final delegate = outgoing['delegate'] as Map<String, dynamic>?;
+              _activeDelegateName = delegate?['full_name'] as String? ?? 'Colleague';
+            } else if (_activeDelegateName != null) {
+              _activeDelegateName = null;
+            }
+          });
+        }
+      }
+    } catch (_) {}
   }
 
   void _handleContactReceptionist(BuildContext context) {
@@ -82,8 +126,12 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   }
 
   Future<void> _showPreApproveModal(BuildContext context) async {
-    final authState = context.read<AuthBloc>().state;
-    final user = authState is AuthAuthenticated ? authState.user : null;
+    UserModel? user;
+    try {
+      final authBloc = context.read<AuthBloc?>();
+      final authState = authBloc?.state;
+      if (authState is AuthAuthenticated) user = authState.user;
+    } catch (_) {}
     if (!PropertyRoleResolver.canIssuePasses(user)) {
       AsmitaToast.show(
         context,
@@ -92,12 +140,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
       );
       return;
     }
-    await showDialog(
-      context: context,
-      builder: (context) => const AsmitaDialog(
-        title: 'Issue VIP Pass',
-        content: AsmitaPreApproveWizard(),
-      ),
+    await AsmitaPreApproveWizard.showAsModalSheet(
+      context,
+      title: 'Issue VIP Pass',
     );
 
     if (!context.mounted) return;
@@ -110,8 +155,12 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   }
 
   void _handleDecide(BuildContext context, int visitId, String action) {
-    final authState = context.read<AuthBloc>().state;
-    final user = authState is AuthAuthenticated ? authState.user : null;
+    UserModel? user;
+    try {
+      final authBloc = context.read<AuthBloc?>();
+      final authState = authBloc?.state;
+      if (authState is AuthAuthenticated) user = authState.user;
+    } catch (_) {}
     if (!PropertyRoleResolver.canApproveVisits(user)) {
       AsmitaToast.show(
         context,
@@ -132,21 +181,23 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   void _showContactReceptionistSheet(BuildContext context) {
     showAsmitaBottomSheet(
       context: context,
-      title: 'Campus Support Hotlines',
-      child: Column(
+      title: 'Floor Support Hotline',
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildHotlineTile(
             context,
             icon: Icons.support_agent_rounded,
-            title: 'Floor 8 Reception Desk',
+            title: 'Main Reception Desk',
             subtitle: 'Ext: 101 • Dedicated Executive Support',
             onCall: () {
               Navigator.pop(context);
               AsmitaToast.show(
                 context,
-                message: 'Connecting to Floor Reception (Ext 101)...',
+                message: 'Calling Main Reception (Ext 101)...',
                 type: AsmitaToastType.info,
               );
             },
@@ -184,6 +235,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           const SizedBox(height: 12),
         ],
       ),
+      ),
     );
   }
 
@@ -193,47 +245,128 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     required String title,
     required String subtitle,
     required VoidCallback onCall,
+    bool isEmergency = false,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Theme.of(context).dividerColor),
+        border: Border.all(
+          color: isEmergency
+              ? (isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFECACA))
+              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 1.5),
+          ),
+        ],
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: AsmitaPalette.deepNavy, size: 22),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: const TextStyle(fontSize: 11, color: AsmitaPalette.textLight),
-        ),
-        trailing: ElevatedButton.icon(
-          onPressed: onCall,
-          icon: const Icon(Icons.phone, size: 14),
-          label: const Text(
-            'Call',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AsmitaPalette.deepNavy,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            shape: RoundedRectangleBorder(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: isEmergency
+                  ? (isDark
+                      ? const Color(0xFF7F1D1D).withValues(alpha: 0.35)
+                      : const Color(0xFFFEE2E2))
+                  : (isDark
+                      ? const Color(0xFF1E3A8A).withValues(alpha: 0.3)
+                      : const Color(0xFFEFF6FF)),
               borderRadius: BorderRadius.circular(10),
             ),
+            child: Icon(
+              icon,
+              color: isEmergency
+                  ? const Color(0xFFEF4444)
+                  : (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy),
+              size: 20,
+            ),
           ),
-        ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    letterSpacing: -0.1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 10.5,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                onCall();
+              },
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  color: isEmergency
+                      ? const Color(0xFFDC2626)
+                      : (isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (isEmergency
+                              ? const Color(0xFFDC2626)
+                              : (isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy))
+                          .withValues(alpha: 0.28),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.phone_in_talk_rounded, size: 13, color: Colors.white),
+                    SizedBox(width: 5),
+                    Text(
+                      'Call',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -248,7 +381,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     showAsmitaBottomSheet(
       context: context,
       title: 'Executive VIP Guest Pass',
-      child: Column(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -607,6 +742,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           const SizedBox(height: 8),
         ],
       ),
+      ),
     );
   }
 
@@ -826,13 +962,14 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     List<IndustrialVisitModel> visits, {
     required bool isLoading,
   }) {
-    final pendingCount = visits.where((v) => v.isPending).length;
-    final approvedCount = visits
-        .where((v) => v.status == IndustrialVisitStatus.approved)
-        .length;
-    final checkedInCount = visits
-        .where((v) => v.status == IndustrialVisitStatus.checkedIn)
-        .length;
+    final todayVisits = widget.visits != null
+        ? widget.visits!
+        : visits.where((v) => _isToday(v.checkInAt) || _isToday(v.createdAt) || _isToday(v.passCodeExpiresAt)).toList();
+
+    final totalCount = todayVisits.length;
+    final pendingCount = todayVisits.where((v) => v.isPending).length;
+    final approvedCount = todayVisits.where((v) => v.status == IndustrialVisitStatus.approved).length;
+    final insideCount = todayVisits.where((v) => v.status == IndustrialVisitStatus.checkedIn).length;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -860,33 +997,42 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                         final future = bloc.stream
                             .firstWhere((s) => s.status != IndustrialVisitBlocStatus.loading)
                             .timeout(const Duration(seconds: 4), onTimeout: () => bloc.state);
+                        _fetchDelegationStatus();
                         bloc.add(const LoadIndustrialVisits());
                         await future;
                       }
                     },
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Executive KPI Stat Cards
-                        _buildKpiRow(
-                          context,
-                          pendingCount: pendingCount,
-                          approvedCount: approvedCount,
-                          checkedInCount: checkedInCount,
-                        ),
-                        const SizedBox(height: 20),
-
-                        // 4-Icon Executive Action Grid
-                        _buildFourIconGrid(context),
+                        // 1. Executive Hero Card (AsmitaEmployeeCard)
+                        _buildHeroCard(context),
                         const SizedBox(height: 18),
 
-                        // 2-Column Waiting Grid (Who is Waiting, Waiting Since)
+                        // Active Delegation Status Banner (if active)
+                        if (_activeDelegateName != null) ...[
+                          _buildDelegationBanner(context),
+                          const SizedBox(height: 12),
+                        ],
+
+                        // 2. Quick Actions Grid (Square boxes matching employee style)
+                        _buildQuickActionsGrid(context),
+                        const SizedBox(height: 10),
+
+                        // 3. Operational KPI Overview Metrics (4 interactive cards: Total, Pending, Approved, Inside)
+                        _buildMetricsOverview(
+                          context,
+                          totalCount: totalCount,
+                          pendingCount: pendingCount,
+                          approvedCount: approvedCount,
+                          insideCount: insideCount,
+                        ),
+                        const SizedBox(height: 18),
+
+                        // 4. Waiting Queue Section (Instead of visitor list)
                         _buildWaitingGrid(context, visits),
-                        const SizedBox(height: 120),
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
@@ -896,90 +1042,336 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     );
   }
 
-  Widget _buildKpiRow(
+  // ─────────────────────────────────────────────────────────────────────────
+  // 1. EXECUTIVE HERO CARD (Global AsmitaEmployeeCard)
+  // ─────────────────────────────────────────────────────────────────────────
+  Widget _buildHeroCard(BuildContext context) {
+    UserModel? user;
+    try {
+      final authBloc = context.read<AuthBloc?>();
+      final authState = authBloc?.state;
+      if (authState is AuthAuthenticated) {
+        user = authState.user;
+      }
+    } catch (_) {
+      user = null;
+    }
+
+    final name = widget.directorName ??
+        ((user != null && user.fullName.isNotEmpty) ? user.fullName : 'Executive Director');
+    final desig = widget.designation ??
+        ((user != null && user.designation.isNotEmpty) ? user.designation : 'Executive Director');
+    final dept = widget.departmentName ??
+        ((user != null && user.departmentName.isNotEmpty) ? user.departmentName : 'Executive Suite');
+    final cabin = widget.cabinNumber ??
+        ((user?.cabinCode != null && user!.cabinCode.isNotEmpty) ? user.cabinCode : 'CAB-DIR-01');
+    final desk = widget.deskNumber ??
+        ((user?.deskCode != null && user!.deskCode.isNotEmpty) ? user.deskCode : 'DIR-DSK-01');
+
+    return AsmitaEmployeeCard(
+      name: name,
+      designation: desig,
+      departmentName: dept,
+      cabinNumber: cabin,
+      deskNumber: desk,
+      isActive: widget.isActive,
+    );
+  }
+
+  Widget _buildDelegationBanner(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.sync_alt_rounded, color: Color(0xFF2563EB), size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Visitor approvals currently delegated to $_activeDelegateName. Deliveries & cabs alert you directly.',
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF1E3A8A),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 2. QUICK ACTIONS (Square Icon Boxes Matching Employee Dashboard)
+  // ─────────────────────────────────────────────────────────────────────────
+  Widget _buildQuickActionsGrid(BuildContext context) {
+    final actions = <_QuickActionItemData>[
+      _QuickActionItemData(
+        label: 'Pre-Approve',
+        icon: Icons.person_add_alt_1_rounded,
+        onTap: () => _showPreApproveModal(context),
+      ),
+      _QuickActionItemData(
+        label: 'Car Valet',
+        icon: Icons.directions_car_filled_rounded,
+        onTap: () => _showCarValetModal(context),
+      ),
+      _QuickActionItemData(
+        label: 'Security',
+        icon: Icons.shield_rounded,
+        onTap: () => _showSecurityModal(context),
+      ),
+      _QuickActionItemData(
+        label: 'BillPay',
+        icon: Icons.receipt_long_rounded,
+        onTap: () => BbpsBillPaymentsSheet.show(context, onNavigateToTab: widget.onNavigateToTab),
+      ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 0),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (actions.length > 5) {
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: actions.map((item) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: SizedBox(
+                      width: 64,
+                      child: _buildSquareActionBox(
+                        context,
+                        icon: item.icon,
+                        label: item.label,
+                        onTap: item.onTap,
+                        boxSize: 52,
+                        iconSize: 22,
+                        fontSize: 10.5,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            );
+          }
+
+          final count = actions.length;
+          final itemWidth = constraints.maxWidth / count;
+          final boxSize = itemWidth < 68 ? (itemWidth < 58 ? 44.0 : 48.0) : 56.0;
+          final iconSize = boxSize < 50 ? 20.0 : 24.0;
+          final fontSize = boxSize < 50 ? 9.5 : 11.0;
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: actions.map((item) {
+              return Expanded(
+                child: _buildSquareActionBox(
+                  context,
+                  icon: item.icon,
+                  label: item.label,
+                  onTap: item.onTap,
+                  boxSize: boxSize,
+                  iconSize: iconSize,
+                  fontSize: fontSize,
+                ),
+              );
+            }).toList(),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSquareActionBox(
     BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    double boxSize = 56,
+    double iconSize = 24,
+    double fontSize = 11,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final themeBlue = isDark ? const Color(0xFF7B96EC) : AsmitaPalette.deepNavy;
+
+    return Semantics(
+      label: label.replaceAll('\n', ' '),
+      button: true,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(16),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: boxSize,
+              height: boxSize,
+              decoration: BoxDecoration(
+                color: themeBlue,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.25)
+                        : themeBlue.withValues(alpha: 0.22),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Icon(
+                  icon,
+                  color: isDark ? Colors.black : Colors.white,
+                  size: iconSize,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 28,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w600,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 3. OPERATIONAL KPI OVERVIEW METRICS (4 Grid/Row Cards: Total, Pending, Approved, Inside)
+  // ─────────────────────────────────────────────────────────────────────────
+  Widget _buildMetricsOverview(
+    BuildContext context, {
+    required int totalCount,
     required int pendingCount,
     required int approvedCount,
-    required int checkedInCount,
+    required int insideCount,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Row(
       children: [
-        _kpiCard(
-          context,
-          label: 'Pending',
-          value: '$pendingCount',
-          color: AsmitaPalette.actionRed,
-          icon: Icons.pending_actions_rounded,
-          showPulse: pendingCount > 0,
-          onTap: () {
-            if (widget.onNavigateToVisitsWithFilter != null) {
-              widget.onNavigateToVisitsWithFilter!('PENDING');
-            }
-          },
+        Expanded(
+          child: _buildKpiCard(
+            context,
+            label: 'Total',
+            count: totalCount,
+            icon: Icons.groups_rounded,
+            accentColor: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+            filterKey: 'ALL',
+            onTap: () => _handleFilterTap('ALL'),
+          ),
         ),
         const SizedBox(width: 8),
-        _kpiCard(
-          context,
-          label: 'Approved',
-          value: '$approvedCount',
-          color: AsmitaPalette.deepNavy,
-          icon: Icons.verified_rounded,
-          onTap: () {
-            if (widget.onNavigateToVisitsWithFilter != null) {
-              widget.onNavigateToVisitsWithFilter!('APPROVED');
-            }
-          },
+        Expanded(
+          child: _buildKpiCard(
+            context,
+            label: 'Pending',
+            count: pendingCount,
+            icon: Icons.pending_actions_rounded,
+            accentColor: isDark ? const Color(0xFFF87171) : AsmitaPalette.actionRed,
+            filterKey: 'PENDING',
+            showPulse: pendingCount > 0,
+            onTap: () => _handleFilterTap('PENDING'),
+          ),
         ),
         const SizedBox(width: 8),
-        _kpiCard(
-          context,
-          label: 'Inside HQ',
-          value: '$checkedInCount',
-          color: AsmitaPalette.successGreen,
-          icon: Icons.meeting_room_rounded,
-          onTap: () {
-            if (widget.onNavigateToVisitsWithFilter != null) {
-              widget.onNavigateToVisitsWithFilter!('INSIDE');
-            }
-          },
+        Expanded(
+          child: _buildKpiCard(
+            context,
+            label: 'Approved',
+            count: approvedCount,
+            icon: Icons.verified_rounded,
+            accentColor: isDark ? const Color(0xFF38BDF8) : const Color(0xFF1E88E5),
+            filterKey: 'APPROVED',
+            onTap: () => _handleFilterTap('APPROVED'),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildKpiCard(
+            context,
+            label: 'Inside',
+            count: insideCount,
+            icon: Icons.meeting_room_rounded,
+            accentColor: isDark ? const Color(0xFF34D399) : AsmitaPalette.successGreen,
+            filterKey: 'INSIDE',
+            onTap: () => _handleFilterTap('INSIDE'),
+          ),
         ),
       ],
     );
   }
 
-  Widget _kpiCard(
+  void _handleFilterTap(String filterKey) {
+    HapticFeedback.selectionClick();
+    if (widget.onNavigateToVisitsWithFilter != null) {
+      widget.onNavigateToVisitsWithFilter!(filterKey);
+    } else {
+      widget.onNavigateToTab?.call(1);
+    }
+  }
+
+  Widget _buildKpiCard(
     BuildContext context, {
     required String label,
-    required String value,
-    required Color color,
+    required int count,
     required IconData icon,
+    required Color accentColor,
+    required String filterKey,
+    required VoidCallback onTap,
     bool showPulse = false,
-    VoidCallback? onTap,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Expanded(
-      child: InkWell(
-        onTap: onTap != null
-            ? () {
-                HapticFeedback.selectionClick();
-                onTap();
-              }
-            : null,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
+          color: isDark ? const Color(0xFF1E293B) : Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: Theme.of(context).dividerColor,
+            color: isDark ? const Color(0xFF334155) : Theme.of(context).dividerColor,
             width: 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
-              blurRadius: 8,
+              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.03),
+              blurRadius: 6,
               offset: const Offset(0, 2),
             ),
           ],
@@ -989,13 +1381,13 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           children: [
             // Premium Squircle Icon Container
             Container(
-              width: 40,
-              height: 40,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: isDark ? 0.25 : 0.10),
-                borderRadius: BorderRadius.circular(12),
+                color: accentColor.withValues(alpha: isDark ? 0.22 : 0.10),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: color.withValues(alpha: 0.2),
+                  color: accentColor.withValues(alpha: 0.18),
                   width: 1.0,
                 ),
               ),
@@ -1003,7 +1395,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    Icon(icon, color: color, size: 20),
+                    Icon(icon, color: accentColor, size: 18),
                     if (showPulse)
                       Positioned(
                         right: -3,
@@ -1012,7 +1404,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                           width: 7,
                           height: 7,
                           decoration: BoxDecoration(
-                            color: color,
+                            color: accentColor,
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: Theme.of(context).colorScheme.surface,
@@ -1025,185 +1417,40 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
-              value,
+              '$count',
               style: TextStyle(
                 fontFamily: 'Montserrat',
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.w800,
-                color: isDark
-                    ? AsmitaPalette.textDarkModeMain
-                    : AsmitaPalette.textDark,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontFamily: 'Montserrat',
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.w500,
-                color: isDark
-                    ? AsmitaPalette.textDarkModeMuted
-                    : AsmitaPalette.textLight,
+                color: AsmitaPalette.textLight,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
-        ),
       ),
     );
   }
 
-  Widget _buildFourIconGrid(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final actions = [
-      _ExecutiveActionItem(
-        title: 'Pre-Approve',
-        icon: Icons.event_available_rounded,
-        containerColor: isDark
-            ? AsmitaPalette.surfaceDark
-            : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-        iconColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
-        onTap: () => _showPreApproveModal(context),
-      ),
-      _ExecutiveActionItem(
-        title: 'Car Valet',
-        icon: Icons.directions_car_filled_rounded,
-        containerColor: isDark
-            ? AsmitaPalette.surfaceDark
-            : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-        iconColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
-        onTap: () => _showCarValetModal(context),
-      ),
-      _ExecutiveActionItem(
-        title: 'Security',
-        icon: Icons.shield_rounded,
-        containerColor: isDark
-            ? AsmitaPalette.surfaceDark
-            : AsmitaPalette.actionRed.withValues(alpha: 0.08),
-        iconColor: AsmitaPalette.actionRed,
-        onTap: () => _showSecurityModal(context),
-      ),
-      _ExecutiveActionItem(
-        title: 'BBPS',
-        icon: Icons.bolt_rounded,
-        containerColor: isDark
-            ? AsmitaPalette.surfaceDark
-            : const Color(0xFFF59E0B).withValues(alpha: 0.12),
-        iconColor: const Color(0xFFD97706),
-        onTap: () => BbpsBillPaymentsSheet.show(context, onNavigateToTab: widget.onNavigateToTab),
-      ),
-    ];
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Quick Actions',
-            style: textTheme.titleLarge?.copyWith(
-              fontFamily: 'Montserrat',
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: isDark
-                  ? AsmitaPalette.textDarkModeMain
-                  : AsmitaPalette.textDark,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: actions.map((action) {
-              return Expanded(
-                child: InkWell(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    action.onTap();
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 54,
-                        height: 54,
-                        decoration: BoxDecoration(
-                          color: action.containerColor,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Theme.of(context).dividerColor,
-                            width: 1,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Theme.of(
-                                context,
-                              ).shadowColor.withValues(alpha: 0.02),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          action.icon,
-                          color: action.iconColor,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        action.title,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.bodyMedium?.copyWith(
-                          fontFamily: 'Montserrat',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? AsmitaPalette.textDarkModeMain
-                              : AsmitaPalette.textDark,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
+  bool _isToday(DateTime? dt) {
+    if (dt == null) return false;
+    final now = DateTime.now();
+    return dt.year == now.year && dt.month == now.month && dt.day == now.day;
   }
 
-  // =========================================================================
-  // 2-COLUMN WAITING GRID (Who is Waiting & Waiting Since)
-  // =========================================================================
-  // =========================================================================
-  // WAITING QUEUE (When empty: indicates no one's waiting. When waiting: Name, Waiting Since, and Queue Waiting After Them)
-  // =========================================================================
   Widget _buildWaitingGrid(
     BuildContext context,
     List<IndustrialVisitModel> visits,
@@ -2231,8 +2478,13 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   // FUNCTIONAL MODAL: SECURITY COMMAND
   // =========================================================================
   void _showSecurityModal(BuildContext context) {
-    final authState = context.read<AuthBloc>().state;
-    final user = authState is AuthAuthenticated ? authState.user : null;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    UserModel? user;
+    try {
+      final authBloc = context.read<AuthBloc?>();
+      final authState = authBloc?.state;
+      if (authState is AuthAuthenticated) user = authState.user;
+    } catch (_) {}
     final societyId = user?.societyId ?? 114;
 
     // Auto-provision security departments and roles along the way on backend
@@ -2248,7 +2500,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     showAsmitaBottomSheet(
       context: context,
       title: 'Campus Security Command',
-      child: Column(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -2295,115 +2549,243 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
             icon: Icons.emergency_rounded,
             title: 'Campus Emergency & Medical',
             subtitle: 'Ext: 999 • Rapid Response Team',
+            isEmergency: true,
             onCall: () {
               Navigator.pop(context);
               _callContact('Emergency Response', '+919820110911');
             },
           ),
-          const SizedBox(height: 16),
-          const Divider(),
-          const SizedBox(height: 8),
-          const Text(
-            'Quick Security Dispatches',
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Divider(
+              height: 1,
+              thickness: 1,
+              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
             ),
           ),
-          const SizedBox(height: 8),
           Row(
             children: [
+              Icon(
+                Icons.flash_on_rounded,
+                size: 15,
+                color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Quick Security Dispatches',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              // VIP Escort Dispatch Card
               Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    try {
-                      final dio = AsmitaDioClient(SecureStorageService()).dio;
-                      dio
-                          .post(
-                            '${EnvConfig.baseUrl}/app-api/security/dispatch',
-                            data: {
-                              'society_id': societyId,
-                              'type': 'VIP_ESCORT',
-                              'destination': 'Gate 1 Main Portico',
-                              'priority': 'HIGH',
-                            },
-                          )
-                          .ignore();
-                    } catch (_) {}
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.pop(context);
+                      try {
+                        final dio = AsmitaDioClient(SecureStorageService()).dio;
+                        dio.post(
+                          '${EnvConfig.baseUrl}/app-api/security/dispatch',
+                          data: {
+                            'society_id': societyId,
+                            'type': 'VIP_ESCORT',
+                            'destination': 'Gate 1 Main Portico',
+                            'priority': 'HIGH',
+                          },
+                        ).ignore();
+                      } catch (_) {}
 
-                    AsmitaToast.show(
-                      context,
-                      message:
-                          'VIP Escort Officer dispatched to Gate 1 Main Portico.',
-                      type: AsmitaToastType.success,
-                    );
-                  },
-                  icon: const Icon(Icons.person_pin_circle_rounded, size: 16),
-                  label: const Text(
-                    'Request Escort',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AsmitaPalette.deepNavy,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      AsmitaToast.show(
+                        context,
+                        message: 'VIP Escort Officer dispatched to Gate 1 Main Portico.',
+                        type: AsmitaToastType.success,
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1.5),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
+                                  .withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.person_pin_circle_rounded,
+                              size: 16,
+                              color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Request Escort',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  ),
+                                ),
+                                const SizedBox(height: 1),
+                                Text(
+                                  'Gate 1 Portico',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 9.5,
+                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    try {
-                      final dio = AsmitaDioClient(SecureStorageService()).dio;
-                      dio
-                          .post(
-                            '${EnvConfig.baseUrl}/app-api/security/dispatch',
-                            data: {
-                              'society_id': societyId,
-                              'type': 'EXPRESS_CLEARANCE',
-                              'destination': 'All Security Gates',
-                              'priority': 'HIGH',
-                            },
-                          )
-                          .ignore();
-                    } catch (_) {}
 
-                    AsmitaToast.show(
-                      context,
-                      message:
-                          'Priority Express clearance alert transmitted to all gates.',
-                      type: AsmitaToastType.info,
-                    );
-                  },
-                  icon: const Icon(
-                    Icons.notification_important_rounded,
-                    size: 16,
-                  ),
-                  label: const Text(
-                    'Express Lane Alert',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AsmitaPalette.actionRed,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+              // Express Lane Alert Card
+              Expanded(
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.pop(context);
+                      try {
+                        final dio = AsmitaDioClient(SecureStorageService()).dio;
+                        dio.post(
+                          '${EnvConfig.baseUrl}/app-api/security/dispatch',
+                          data: {
+                            'society_id': societyId,
+                            'type': 'EXPRESS_CLEARANCE',
+                            'destination': 'All Security Gates',
+                            'priority': 'HIGH',
+                          },
+                        ).ignore();
+                      } catch (_) {}
+
+                      AsmitaToast.show(
+                        context,
+                        message: 'Priority Express clearance alert transmitted to all gates.',
+                        type: AsmitaToastType.info,
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF450A0A).withValues(alpha: 0.3)
+                            : const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF7F1D1D)
+                              : const Color(0xFFFECACA),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1.5),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.notification_important_rounded,
+                              size: 16,
+                              color: Color(0xFFDC2626),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Express Lane',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark
+                                        ? const Color(0xFFFCA5A5)
+                                        : const Color(0xFF991B1B),
+                                  ),
+                                ),
+                                const SizedBox(height: 1),
+                                Text(
+                                  'Clear All Gates',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 9.5,
+                                    color: isDark
+                                        ? const Color(0xFFF87171)
+                                        : const Color(0xFFDC2626),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8)
         ],
+      ),
       ),
     );
   }
@@ -2435,18 +2817,14 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
 
 }
 
-class _ExecutiveActionItem {
-  final String title;
+class _QuickActionItemData {
+  final String label;
   final IconData icon;
-  final Color containerColor;
-  final Color iconColor;
   final VoidCallback onTap;
 
-  const _ExecutiveActionItem({
-    required this.title,
+  const _QuickActionItemData({
+    required this.label,
     required this.icon,
-    required this.containerColor,
-    required this.iconColor,
     required this.onTap,
   });
 }

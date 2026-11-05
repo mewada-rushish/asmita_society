@@ -1,3 +1,4 @@
+import '../constants/design_system.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -7,6 +8,32 @@ import '../../features/auth/bloc/auth_state.dart';
 import '../utils/property_role_resolver.dart';
 
 class AsmitaBottomNavBar extends StatelessWidget {
+  /// Standard bar height without bottom device padding
+  static const double barHeight = 64.0;
+
+  /// Dynamic bottom padding to apply to FloatingActionButton widgets inside
+  /// screens rendered above the [AsmitaBottomNavBar] in [MainDashboardScreen].
+  ///
+  /// Since the outer [Scaffold] in [MainDashboardScreen] uses `extendBody: true`, the body
+  /// extends behind the [AsmitaBottomNavBar]. Flutter automatically positions a [FloatingActionButton]
+  /// at [kFloatingActionButtonMargin] (16px) from the screen bottom, ignoring the outer bottom navigation bar.
+  /// Adding exactly the effective height of the [AsmitaBottomNavBar] ensures the FAB hovers
+  /// perfectly 16px above the top curved edge of the bottom navigation bar across all screen sizes,
+  /// aspect ratios, and navigation modes (3-button navigation, gesture bar, or tablet 0-inset).
+  static double fabBottomPadding([BuildContext? context, double extraMargin = 0.0]) {
+    if (context != null) {
+      final paddingBottom = MediaQuery.paddingOf(context).bottom;
+      if (paddingBottom >= barHeight) {
+        // Inside outer Scaffold body: Flutter already added barHeight + device bottom inset to MediaQuery.padding.bottom
+        return paddingBottom + extraMargin;
+      }
+      final viewPaddingBottom = MediaQuery.viewPaddingOf(context).bottom;
+      final deviceInset = viewPaddingBottom > 0 ? viewPaddingBottom : paddingBottom;
+      return barHeight + deviceInset + extraMargin;
+    }
+    return barHeight + extraMargin;
+  }
+
   final int currentIndex;
   final ValueChanged<int> onTap;
   final String? userRole;
@@ -37,7 +64,6 @@ class AsmitaBottomNavBar extends StatelessWidget {
     }
 
     final bottomPadding = MediaQuery.viewPaddingOf(context).bottom;
-    const double barHeight = 64.0;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -121,7 +147,7 @@ class AsmitaBottomNavBar extends StatelessWidget {
                   width: 22,
                   height: 11,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondary,
+                    color: AsmitaPalette.actionRed,
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
                   ),
                 ),

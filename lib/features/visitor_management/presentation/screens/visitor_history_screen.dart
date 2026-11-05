@@ -3,12 +3,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/config/env_config.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_visitor_card.dart';
+import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/visitor_bloc.dart';
@@ -19,7 +21,6 @@ import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_state.dart';
 import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import '../../../dashboard/widgets/asmita_pre_approve_wizard.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import '../../data/models/invite_model.dart';
@@ -384,294 +385,594 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
     };
   }
 
-  Widget _buildDetailsModalAvatar(Map<String, dynamic> visitor, ThemeData theme) {
-    final photo = visitor['photoUrl']?.toString().trim();
-    final fallbackIcon = Icon(
-      visitor['icon'] as IconData? ?? Icons.person_rounded,
-      color: visitor['brandColor'] as Color? ?? theme.colorScheme.primary,
-      size: 32,
-    );
-
-    if (photo == null || photo.isEmpty) {
-      return CircleAvatar(
-        radius: 36,
-        backgroundColor: theme.scaffoldBackgroundColor,
-        child: fallbackIcon,
-      );
-    }
-
-    if (photo.startsWith('data:image')) {
-      try {
-        final commaIndex = photo.indexOf(',');
-        final base64Str = commaIndex != -1 ? photo.substring(commaIndex + 1) : photo;
-        final bytes = base64Decode(base64Str);
-        return CircleAvatar(
-          radius: 36,
-          backgroundColor: theme.scaffoldBackgroundColor,
-          backgroundImage: MemoryImage(bytes),
-        );
-      } catch (_) {
-        return CircleAvatar(
-          radius: 36,
-          backgroundColor: theme.scaffoldBackgroundColor,
-          child: fallbackIcon,
-        );
-      }
-    }
-
-    String fullUrl = photo;
-    if (photo.startsWith('/')) {
-      fullUrl = '${EnvConfig.baseUrl}$photo';
-    }
-
-    return ClipOval(
-      child: CachedNetworkImage(
-        imageUrl: fullUrl,
-        width: 72,
-        height: 72,
-        fit: BoxFit.cover,
-        placeholder: (_, _) => CircleAvatar(
-          radius: 36,
-          backgroundColor: theme.scaffoldBackgroundColor,
-          child: const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-        errorWidget: (_, _, _) => CircleAvatar(
-          radius: 36,
-          backgroundColor: theme.scaffoldBackgroundColor,
-          child: fallbackIcon,
-        ),
-      ),
-    );
-  }
-
   void _showVisitorDetailsModal(
     BuildContext context,
     Map<String, dynamic> visitor,
   ) {
-    final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final String rawTitle = visitor['titleText'] as String? ??
+        visitor['name'] as String? ??
+        'Guest Visitor';
+    final bool isVip = visitor['is_vip'] == true ||
+        visitor['isVip'] == true ||
+        rawTitle.contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false)) ||
+        (visitor['name']?.toString().contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false)) ?? false) ||
+        (visitor['company']?.toString().contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false)) ?? false);
+
+    final String cleanTitle = rawTitle
+        .replaceAll(RegExp(r'\s*[\(\[]VIP[\)\]]', caseSensitive: false), '')
+        .trim();
+    final String effectiveTitle = cleanTitle.isNotEmpty ? cleanTitle : 'Guest Visitor';
+
+    final passCode = visitor['passCode']?.toString();
+    final statusStr = visitor['status']?.toString() ?? 'Approved';
+
+    // Status visual mapping matching executive IndustrialVisitStatus aesthetics
+    Color statusFillColor;
+    Color statusTextColor;
+    IconData statusIcon;
+
+    final sLower = statusStr.toLowerCase();
+    if (sLower.contains('approv') || sLower.contains('active')) {
+      statusFillColor = const Color(0xFFDBEAFE);
+      statusTextColor = const Color(0xFF1D4ED8);
+      statusIcon = Icons.check_circle_outline;
+    } else if (sLower.contains('check') || sLower.contains('enter') || sLower.contains('inside')) {
+      statusFillColor = const Color(0xFFDCFCE7);
+      statusTextColor = const Color(0xFF15803D);
+      statusIcon = Icons.meeting_room_outlined;
+    } else if (sLower.contains('exit') || sLower.contains('out')) {
+      statusFillColor = const Color(0xFFF1F5F9);
+      statusTextColor = const Color(0xFF475569);
+      statusIcon = Icons.logout;
+    } else if (sLower.contains('expire') || sLower.contains('reject') || sLower.contains('cancel')) {
+      statusFillColor = const Color(0xFFFEE2E2);
+      statusTextColor = const Color(0xFF991B1B);
+      statusIcon = Icons.cancel_outlined;
+    } else {
+      statusFillColor = const Color(0xFFFEF3C7);
+      statusTextColor = const Color(0xFF92400E);
+      statusIcon = Icons.access_time;
+    }
+
+    final String department = visitor['department']?.toString() ??
+        (visitor['gate']?.toString() ?? 'General Campus');
+    final String? host = visitor['host']?.toString() ??
+        (visitor['rawItem'] is VisitorHistoryItem
+            ? null
+            : visitor['rawItem']?['host_name']?.toString());
+    final String? phone = visitor['mobile_number']?.toString() ??
+        visitor['phone']?.toString() ??
+        visitor['visitor_phone']?.toString();
+    final String? vehicle = visitor['vehicleNumber']?.toString();
+    final String scheduledTime = visitor['date']?.toString() ?? 'Today';
+    final String? checkInTime = (visitor['entryTime'] != null && visitor['entryTime'] != '--')
+        ? visitor['entryTime'].toString()
+        : null;
+    final String? checkOutTime = (visitor['exitTime'] != null && visitor['exitTime'] != '--')
+        ? visitor['exitTime'].toString()
+        : null;
+    final String? qrCode = visitor['qrCode']?.toString();
+    final String? allowedDays = visitor['allowedDays']?.toString();
+    final String? timeSlot = (visitor['startTime'] != null && visitor['endTime'] != null)
+        ? '${_formatRawTime(visitor['startTime'])} - ${_formatRawTime(visitor['endTime'])}'
+        : null;
 
     showAsmitaBottomSheet(
       context: context,
-      customHeader: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Visitor Avatar with High-Assurance Enclosed Border
-          Center(
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: visitor['brandColor'] as Color? ?? Theme.of(context).colorScheme.primary,
-                  width: 2,
-                ),
-              ),
-              child: _buildDetailsModalAvatar(visitor, Theme.of(context)),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Header Labels (Montserrat for structural emphasis)
-          Center(
-            child: Text(
-              visitor['titleText'] as String,
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: (visitor['brandColor'] as Color? ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                visitor['modalSubtitleText'] as String? ??
-                    visitor['subtitleText'] as String,
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: visitor['brandColor'] as Color? ?? Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ),
-          ),
-          if (visitor['passCode'] != null && visitor['passCode'].toString().isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
-                ),
-                child: Text(
-                  'PASS CODE: #${visitor['passCode']}',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
+      title: 'Visitor Pass Details',
       child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Data Parameters Section (Poppins for legible data layouts)
-            if (visitor['inviteSubType'] != null &&
-                visitor['inviteSubType'] != 'ONCE')
-              _buildDetailRow(
-                textTheme,
-                label: 'Frequency',
-                value: visitor['inviteSubType'] as String,
-              ),
-            if (visitor['validTo'] != null &&
-                visitor['inviteSubType'] == 'FREQUENT')
-              _buildDetailRow(
-                textTheme,
-                label: 'Allowed Until',
-                value: visitor['validTo'] as String,
-              ),
-            if (visitor['inviteSubType'] == 'FREQUENT' ||
-                (visitor['allowedDays'] != null &&
-                    visitor['allowedDays'].toString().isNotEmpty)) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
+            // 1. Executive Boarding Pass / Digital Pass Header Card
+            Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0F172A), AsmitaPalette.deepNavy],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Allowed Days',
-                      style: textTheme.bodySmall?.copyWith(
-                        fontFamily: 'Poppins',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AsmitaPalette.deepNavy.withValues(alpha: 0.35),
+                    blurRadius: 14,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Upper Row: Avatar, Visitor Name, Category & Status Pill
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _buildHistoryPhotoAvatar(visitor, size: 48),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      effectiveTitle,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 17,
+                                        color: Colors.white,
+                                        letterSpacing: 0.2,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (isVip) ...[
+                                const SizedBox(height: 5),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.workspace_premium_rounded, size: 12, color: Colors.white),
+                                      SizedBox(width: 3),
+                                      Text(
+                                        'VIP',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
+                                          letterSpacing: 0.6,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Status Badge in header (Solid white capsule pill)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5.5),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.18),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(statusIcon, size: 12, color: statusTextColor),
+                              const SizedBox(width: 5),
+                              Text(
+                                statusStr.toUpperCase(),
+                                style: TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: statusTextColor,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Perforated ticket dash divider
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Row(
+                      children: List.generate(
+                        24,
+                        (index) => Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: Container(
+                              height: 1.5,
+                              color: index.isEven
+                                  ? Colors.white.withValues(alpha: 0.22)
+                                  : Colors.transparent,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    _buildDaysIndicator(
-                      visitor['allowedDays']?.toString().isNotEmpty == true
-                          ? visitor['allowedDays'] as String
-                          : 'Mon,Tue,Wed,Thu,Fri,Sat,Sun',
+                  ),
+
+                  // Lower Section: Full-Width Digital Pass Code Strip
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.12),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.vpn_key_rounded,
+                                      size: 11,
+                                      color: Colors.white60,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'PASS CODE',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white.withValues(alpha: 0.7),
+                                        letterSpacing: 0.8,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  passCode != null && passCode.isNotEmpty ? passCode : 'VERIFIED PASS',
+                                  style: const TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    letterSpacing: 1.1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (passCode != null && passCode.isNotEmpty)
+                            Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  Clipboard.setData(ClipboardData(text: passCode));
+                                  HapticFeedback.lightImpact();
+                                  AsmitaToast.show(
+                                    context,
+                                    message: 'Pass code $passCode copied!',
+                                    type: AsmitaToastType.success,
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.25),
+                                    ),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.copy_rounded, size: 12, color: Colors.white),
+                                      SizedBox(width: 5),
+                                      Text(
+                                        'Copy',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // 2. Structured Information Card
+            Container(
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.35) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor.withValues(alpha: isDark ? 0.3 : 0.8),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildStructuredRow(
+                    context,
+                    icon: Icons.flag_rounded,
+                    label: 'Current Status',
+                    customValue: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: statusFillColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        statusStr,
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: statusTextColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                  _buildStructuredDivider(context),
+                  _buildStructuredRow(
+                    context,
+                    icon: Icons.business_rounded,
+                    label: 'Department',
+                    value: department,
+                  ),
+                  if (host != null && host.isNotEmpty) ...[
+                    _buildStructuredDivider(context),
+                    _buildStructuredRow(
+                      context,
+                      icon: Icons.person_outline_rounded,
+                      label: 'Host Person',
+                      value: host,
+                    ),
+                  ],
+                  if (phone != null && phone.isNotEmpty) ...[
+                    _buildStructuredDivider(context),
+                    _buildStructuredRow(
+                      context,
+                      icon: Icons.phone_outlined,
+                      label: 'Visitor Contact',
+                      value: phone,
+                      trailing: IconButton(
+                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.all(4),
+                        icon: const Icon(Icons.phone_in_talk_rounded, size: 16, color: AsmitaPalette.successGreen),
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: phone));
+                          HapticFeedback.lightImpact();
+                          AsmitaToast.show(
+                            context,
+                            message: 'Phone number $phone copied!',
+                            type: AsmitaToastType.info,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                  if (vehicle != null && vehicle.isNotEmpty) ...[
+                    _buildStructuredDivider(context),
+                    _buildStructuredRow(
+                      context,
+                      icon: Icons.directions_car_outlined,
+                      label: 'Vehicle Plate',
+                      customValue: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Theme.of(context).dividerColor),
+                        ),
+                        child: Text(
+                          vehicle,
+                          style: const TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  _buildStructuredDivider(context),
+                  _buildStructuredRow(
+                    context,
+                    icon: Icons.access_time_rounded,
+                    label: 'Scheduled Time',
+                    value: scheduledTime,
+                  ),
+                  if (checkInTime != null && checkInTime.isNotEmpty) ...[
+                    _buildStructuredDivider(context),
+                    _buildStructuredRow(
+                      context,
+                      icon: Icons.how_to_reg_rounded,
+                      label: 'Inbound Timestamp',
+                      value: checkInTime,
+                    ),
+                  ],
+                  if (checkOutTime != null && checkOutTime.isNotEmpty) ...[
+                    _buildStructuredDivider(context),
+                    _buildStructuredRow(
+                      context,
+                      icon: Icons.logout_rounded,
+                      label: 'Outbound Timestamp',
+                      value: checkOutTime,
+                    ),
+                  ],
+                  if (allowedDays != null && allowedDays.isNotEmpty && visitor['inviteSubType'] == 'FREQUENT') ...[
+                    _buildStructuredDivider(context),
+                    _buildStructuredRow(
+                      context,
+                      icon: Icons.calendar_month_outlined,
+                      label: 'Allowed Days',
+                      customValue: _buildDaysIndicator(allowedDays),
+                    ),
+                  ],
+                  if (timeSlot != null && timeSlot.isNotEmpty) ...[
+                    _buildStructuredDivider(context),
+                    _buildStructuredRow(
+                      context,
+                      icon: Icons.timelapse_rounded,
+                      label: 'Time Slot',
+                      value: timeSlot,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // 3. High-Assurance Gate Pass QR Section
+            if (qrCode != null && qrCode.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.35) : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor.withValues(alpha: isDark ? 0.3 : 0.8),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.qr_code_scanner_rounded,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'GATE PASS QR VERIFICATION',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.8,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Show this QR code at the security checkpoint to scan and verify',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AsmitaPalette.borderGrey),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: QrImageView(
+                        data: qrCode,
+                        version: QrVersions.auto,
+                        size: 140.0,
+                        eyeStyle: const QrEyeStyle(
+                          eyeShape: QrEyeShape.square,
+                          color: AsmitaPalette.deepNavy,
+                        ),
+                        dataModuleStyle: const QrDataModuleStyle(
+                          dataModuleShape: QrDataModuleShape.square,
+                          color: AsmitaPalette.deepNavy,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
-            if (visitor['startTime'] != null && visitor['endTime'] != null)
-              _buildDetailRow(
-                textTheme,
-                label: 'Time Slot',
-                value:
-                    '${_formatRawTime(visitor['startTime'])} - ${_formatRawTime(visitor['endTime'])}',
-              ),
-            if (visitor['vehicleNumber'] != null &&
-                visitor['vehicleNumber'].toString().isNotEmpty)
-              _buildDetailRow(
-                textTheme,
-                label: 'Vehicle Number',
-                value: visitor['vehicleNumber'] as String,
-              ),
-            if (visitor['maxGuestCount'] != null &&
-                visitor['maxGuestCount'] > 1)
-              _buildDetailRow(
-                textTheme,
-                label: 'Guest Count',
-                value: visitor['maxGuestCount'].toString(),
-              ),
-            if (visitor['isPrivate'] == true)
-              _buildDetailRow(
-                textTheme,
-                label: 'Entry Mode',
-                value: 'Surprise / Secret Delivery',
-                isHighlight: true,
-              ),
 
-            _buildDetailRow(
-              textTheme,
-              label: 'Gate Access Status',
-              value: visitor['status'] as String,
-              isStatus: true,
-            ),
-            _buildDetailRow(
-              textTheme,
-              label: 'Arrival Date',
-              value: visitor['date'] as String,
-            ),
-            _buildDetailRow(
-              textTheme,
-              label: 'Entry Boundary Check',
-              value: visitor['gate'] as String,
-            ),
-            _buildDetailRow(
-              textTheme,
-              label: 'Inbound Timestamp',
-              value: visitor['entryTime'] as String,
-            ),
-            if (visitor['exitTime'] != '--')
-              _buildDetailRow(
-                textTheme,
-                label: 'Outbound Timestamp',
-                value: visitor['exitTime'] as String,
-              ),
+            const SizedBox(height: 18),
 
-            if (visitor['qrCode'] != null && visitor['qrCode'].toString().isNotEmpty) ...[
-              const SizedBox(height: 18),
-              Center(
-                child: Container(
-                  width: 170,
-                  height: 170,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Theme.of(context).dividerColor),
-                  ),
-                  child: QrImageView(
-                    data: visitor['qrCode'].toString(),
-                    version: QrVersions.auto,
-                    size: 146.0,
-                    eyeStyle: QrEyeStyle(
-                      eyeShape: QrEyeShape.square,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    dataModuleStyle: QrDataModuleStyle(
-                      dataModuleShape: QrDataModuleShape.square,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
+            // 4. Action Button
+            if (visitor['rawItem'] != null) ...[
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.pop(context);
                   final raw = visitor['rawItem'];
-                  if (raw is Map) {
+                  if (raw is PreApprovedInvite) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => InvitePassScreen(invite: raw),
+                      ),
+                    );
+                  } else if (raw is Map) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -682,127 +983,198 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                         ),
                       ),
                     );
+                  } else if (passCode != null && passCode.isNotEmpty) {
+                    final summary = 'Visitor Pass for $effectiveTitle\n'
+                        'Pass Code: #$passCode\n'
+                        'Status: $statusStr\n'
+                        'Department: $department';
+                    Clipboard.setData(ClipboardData(text: summary));
+                    HapticFeedback.lightImpact();
+                    AsmitaToast.show(
+                      context,
+                      message: 'Pass details copied to clipboard!',
+                      type: AsmitaToastType.success,
+                    );
                   }
                 },
-                icon: const Icon(Icons.share_rounded, size: 16),
+                icon: const Icon(Icons.share_outlined, size: 16),
                 label: const Text(
                   'View & Share Pass',
-                  style: TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.surface,
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
-              const SizedBox(height: 10),
             ],
+            const SizedBox(height: 8),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDetailRow(
-    TextTheme textTheme, {
+  Widget _buildHistoryPhotoAvatar(Map<String, dynamic> visitor, {double size = 48}) {
+    final photo = visitor['photoUrl']?.toString().trim();
+    final name = visitor['name']?.toString() ?? visitor['titleText']?.toString() ?? '';
+    final initial = name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : 'V';
+
+    Widget initialsFallback() {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            colors: [
+              Colors.white.withValues(alpha: 0.25),
+              Colors.white.withValues(alpha: 0.08),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          initial,
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            fontWeight: FontWeight.bold,
+            fontSize: size * 0.45,
+            color: Colors.white,
+          ),
+        ),
+      );
+    }
+
+    Widget content;
+    if (photo == null || photo.isEmpty) {
+      content = initialsFallback();
+    } else if (photo.startsWith('data:image')) {
+      try {
+        final commaIndex = photo.indexOf(',');
+        final base64Str = commaIndex != -1 ? photo.substring(commaIndex + 1) : photo;
+        final bytes = base64Decode(base64Str);
+        content = Image.memory(
+          bytes,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => initialsFallback(),
+        );
+      } catch (_) {
+        content = initialsFallback();
+      }
+    } else {
+      String fullUrl = photo;
+      if (photo.startsWith('/')) {
+        fullUrl = '${EnvConfig.baseUrl}$photo';
+      }
+      content = CachedNetworkImage(
+        imageUrl: fullUrl,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          width: size,
+          height: size,
+          color: Colors.white.withValues(alpha: 0.1),
+          child: const Center(
+            child: SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => initialsFallback(),
+      );
+    }
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.4),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipOval(child: content),
+    );
+  }
+
+  Widget _buildStructuredDivider(BuildContext context) {
+    return Divider(
+      height: 1,
+      thickness: 0.6,
+      indent: 44,
+      endIndent: 12,
+      color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+    );
+  }
+
+  Widget _buildStructuredRow(
+    BuildContext context, {
+    required IconData icon,
     required String label,
-    required String value,
-    bool isStatus = false,
-    bool isHighlight = false,
+    String? value,
+    Widget? customValue,
+    Widget? trailing,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+          ),
+          const SizedBox(width: 12),
           Text(
             label,
-            style: textTheme.bodyMedium?.copyWith(
-              fontFamily: 'Poppins',
+            style: const TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.primary,
+              fontFamily: 'Poppins',
+              color: AsmitaPalette.textLight,
             ),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return Flex(
-                  direction: Axis.horizontal,
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(
-                    (constraints.constrainWidth() / 6).floor(),
-                    (index) => SizedBox(
-                      width: 3,
-                      height: 1,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).dividerColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(width: 8),
-          if (isStatus)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: value.toLowerCase() == 'expired'
-                    ? Colors.red.withValues(alpha: 0.1)
-                    : (value.toLowerCase().contains('entered') ||
-                              value.toLowerCase().contains('exited')
-                          ? Colors.green.withValues(alpha: 0.1)
-                          : Theme.of(context).scaffoldBackgroundColor),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (value.toLowerCase() != 'expired' &&
-                      value.toLowerCase() != 'pending') ...[
-                    Icon(
-                      Icons.check_circle_outline,
-                      size: 14,
-                      color: value.toLowerCase().contains('exited')
-                          ? Colors.green.shade700
-                          : Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(width: 4),
-                  ],
-                  Text(
-                    value,
-                    style: textTheme.bodySmall?.copyWith(
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
-                      color: value.toLowerCase() == 'expired'
-                          ? Colors.red
-                          : (value.toLowerCase().contains('exited')
-                                ? Colors.green.shade700
-                                : Theme.of(context).colorScheme.primary),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          else
+          const Spacer(),
+          if (customValue != null)
+            customValue
+          else if (value != null)
             Text(
               value,
-              style: textTheme.bodyMedium?.copyWith(
+              style: TextStyle(
                 fontFamily: 'Montserrat',
                 fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: isHighlight
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
+          if (trailing != null) ...[
+            const SizedBox(width: 4),
+            trailing,
+          ],
         ],
       ),
     );
@@ -2337,18 +2709,17 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
       ),
       floatingActionButton: Padding(
         padding: EdgeInsets.only(
-          bottom: 112.0 + MediaQuery.viewPaddingOf(context).bottom,
+          bottom: AsmitaBottomNavBar.fabBottomPadding(context),
         ),
         child: FloatingActionButton.extended(
           heroTag: null, // Fixes Hero overlay bug in IndexedStack
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (context) => const AsmitaDialog(
-                title: 'Pre-Approve Entry',
-                content: AsmitaPreApproveWizard(),
-              ),
+          onPressed: () async {
+            await AsmitaPreApproveWizard.showAsModalSheet(
+              context,
+              title: 'Pre-Approve Entry',
             );
+            if (!context.mounted) return;
+            _loadHistory(isRefresh: true);
           },
           backgroundColor: Theme.of(context).colorScheme.primary,
           icon: Icon(Icons.add, color: Theme.of(context).colorScheme.surface),

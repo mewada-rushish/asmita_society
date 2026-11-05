@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/design_system.dart';
 
 /// Reusable Global Employee Identity Card
 class AsmitaEmployeeCard extends StatelessWidget {
@@ -25,11 +26,26 @@ class AsmitaEmployeeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final cleanName = name.trim().isEmpty ? 'Employee' : name.trim();
     final cleanDesignation = designation?.trim();
     final cleanDept = _cleanValue(departmentName, fallback: 'Department');
     final cleanCabin = _cleanValue(cabinNumber, fallback: 'N/A');
     final cleanDesk = _cleanValue(deskNumber, fallback: 'N/A');
+
+    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+    final primaryTextColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final secondaryTextColor = isDark ? AsmitaPalette.textDarkModeMuted : const Color(0xFF64748B);
+    final insetBg = isDark
+        ? const Color(0xFF0F172A).withValues(alpha: 0.65)
+        : const Color(0xFFF8FAFC);
+    final insetBorder = isDark
+        ? const Color(0xFF334155).withValues(alpha: 0.6)
+        : const Color(0xFFE2E8F0);
+    final avatarBg = isDark
+        ? const Color(0xFF334155).withValues(alpha: 0.5)
+        : const Color(0xFFF1F5F9);
 
     return Material(
       color: Colors.transparent,
@@ -38,17 +54,25 @@ class AsmitaEmployeeCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF101B56),
+            color: cardBg,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.12),
-              width: 1.0,
+              color: borderColor,
+              width: 1.1,
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF0A1033).withValues(alpha: 0.35),
-                blurRadius: 16,
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.35)
+                    : const Color(0x0A0F172A),
+                blurRadius: 18,
                 offset: const Offset(0, 6),
+                spreadRadius: 0,
+              ),
+              BoxShadow(
+                color: isDark ? Colors.transparent : const Color(0x050F172A),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
               ),
             ],
           ),
@@ -61,22 +85,22 @@ class AsmitaEmployeeCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Icon Squircle Box
+                  // Subtle Squircle Avatar Container (Neutral)
                   Container(
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
+                      color: avatarBg,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.18),
+                        color: insetBorder,
                         width: 1.0,
                       ),
                     ),
                     alignment: Alignment.center,
                     child: Icon(
                       icon ?? Icons.badge_outlined,
-                      color: Colors.white,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
                       size: 24,
                     ),
                   ),
@@ -90,12 +114,12 @@ class AsmitaEmployeeCard extends StatelessWidget {
                       children: [
                         Text(
                           cleanName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Montserrat',
-                            fontSize: 18,
+                            fontSize: 17,
                             fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            letterSpacing: 0.2,
+                            color: primaryTextColor,
+                            letterSpacing: -0.2,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -109,9 +133,7 @@ class AsmitaEmployeeCard extends StatelessWidget {
                               fontFamily: 'Poppins',
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: const Color(
-                                0xFF94A3B8,
-                              ).withValues(alpha: 0.95),
+                              color: secondaryTextColor,
                               letterSpacing: 0.1,
                             ),
                             maxLines: 1,
@@ -131,7 +153,10 @@ class AsmitaEmployeeCard extends StatelessWidget {
               const SizedBox(height: 14),
 
               // Subtle horizontal divider
-              Container(height: 1, color: Colors.white.withValues(alpha: 0.08)),
+              Container(
+                height: 1,
+                color: borderColor,
+              ),
 
               const SizedBox(height: 14),
 
@@ -140,25 +165,40 @@ class AsmitaEmployeeCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _buildMetricBox(
+                      context,
                       icon: Icons.apartment_rounded,
                       headerLabel: 'DEPART...',
                       value: cleanDept,
+                      insetBg: insetBg,
+                      insetBorder: insetBorder,
+                      primaryTextColor: primaryTextColor,
+                      secondaryTextColor: secondaryTextColor,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: _buildMetricBox(
+                      context,
                       icon: Icons.meeting_room_outlined,
                       headerLabel: 'CABIN',
                       value: cleanCabin,
+                      insetBg: insetBg,
+                      insetBorder: insetBorder,
+                      primaryTextColor: primaryTextColor,
+                      secondaryTextColor: secondaryTextColor,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: _buildMetricBox(
+                      context,
                       icon: Icons.chair_outlined,
                       headerLabel: 'DESK',
                       value: cleanDesk,
+                      insetBg: insetBg,
+                      insetBorder: insetBorder,
+                      primaryTextColor: primaryTextColor,
+                      secondaryTextColor: secondaryTextColor,
                     ),
                   ),
                 ],
@@ -207,19 +247,24 @@ class AsmitaEmployeeCard extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricBox({
+  Widget _buildMetricBox(
+    BuildContext context, {
     required IconData icon,
     required String headerLabel,
     required String value,
+    required Color insetBg,
+    required Color insetBorder,
+    required Color primaryTextColor,
+    required Color secondaryTextColor,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
+        color: insetBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.08),
-          width: 0.9,
+          color: insetBorder,
+          width: 1,
         ),
       ),
       child: Column(
@@ -230,17 +275,21 @@ class AsmitaEmployeeCard extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 13, color: Colors.white.withValues(alpha: 0.65)),
+              Icon(
+                icon,
+                size: 13,
+                color: secondaryTextColor,
+              ),
               const SizedBox(width: 4),
               Flexible(
                 child: Text(
                   headerLabel,
                   style: TextStyle(
                     fontFamily: 'Montserrat',
-                    fontSize: 9.5,
+                    fontSize: 9.0,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
-                    color: Colors.white.withValues(alpha: 0.65),
+                    letterSpacing: 0.5,
+                    color: secondaryTextColor,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -252,12 +301,12 @@ class AsmitaEmployeeCard extends StatelessWidget {
           // Value text
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Montserrat',
-              fontSize: 12.5,
+              fontSize: 12.0,
               fontWeight: FontWeight.w700,
-              color: Colors.white,
-              letterSpacing: 0.2,
+              color: primaryTextColor,
+              letterSpacing: -0.1,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

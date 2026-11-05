@@ -4,6 +4,7 @@ import 'dart:io';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,6 +22,7 @@ import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/utils/property_role_resolver.dart';
 import 'package:asmita_society/core/widgets/asmita_text_field.dart';
+import 'package:asmita_society/core/widgets/asmita_vehicle_plate_field.dart';
 import 'package:asmita_society/core/widgets/asmita_camera_screen.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/security/secure_storage_service.dart';
@@ -28,6 +30,30 @@ class AsmitaPreApproveWizard extends StatefulWidget {
   final bool isGuardMode;
 
   const AsmitaPreApproveWizard({super.key, this.isGuardMode = false});
+
+  static const List<String> vehicleTypeOptions = [
+    'Bike',
+    'Car',
+  ];
+
+  /// Displays the pre-approve wizard in a standardized Asmita modal bottom sheet.
+  static Future<T?> showAsModalSheet<T>(
+    BuildContext context, {
+    bool isGuardMode = false,
+    String? title,
+    String? subtitle,
+  }) {
+    return showAsmitaBottomSheet<T>(
+      context: context,
+      title: title ?? (isGuardMode ? 'New Walk-in Visitor' : 'Pre-Approve Entry'),
+      subtitle: subtitle ?? (isGuardMode ? 'Record lobby guest entry details' : null),
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: 16.0),
+        child: AsmitaPreApproveWizard(isGuardMode: isGuardMode),
+      ),
+    );
+  }
 
   // Global static cache for society flats so opening the dialog is instant
   static final Map<int, List<FlatMapping>> _cachedSocietyFlats = {};
@@ -288,7 +314,51 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   bool _surpriseDelivery = false;
   bool _secureCabMode = false;
   bool _isVipGuestPass = false;
+  bool _isScheduleMeet = false;
   final TextEditingController _cabNoController = TextEditingController();
+
+  static const List<TimeOfDay> _meetingTimeSlots = [
+    TimeOfDay(hour: 9, minute: 0),
+    TimeOfDay(hour: 9, minute: 30),
+    TimeOfDay(hour: 10, minute: 0),
+    TimeOfDay(hour: 10, minute: 30),
+    TimeOfDay(hour: 11, minute: 0),
+    TimeOfDay(hour: 11, minute: 30),
+    TimeOfDay(hour: 12, minute: 0),
+    TimeOfDay(hour: 12, minute: 30),
+    TimeOfDay(hour: 13, minute: 0),
+    TimeOfDay(hour: 13, minute: 30),
+    TimeOfDay(hour: 14, minute: 0),
+    TimeOfDay(hour: 14, minute: 30),
+    TimeOfDay(hour: 15, minute: 0),
+    TimeOfDay(hour: 15, minute: 30),
+    TimeOfDay(hour: 16, minute: 0),
+    TimeOfDay(hour: 16, minute: 30),
+    TimeOfDay(hour: 17, minute: 0),
+    TimeOfDay(hour: 17, minute: 30),
+    TimeOfDay(hour: 18, minute: 0),
+    TimeOfDay(hour: 18, minute: 30),
+    TimeOfDay(hour: 19, minute: 0),
+  ];
+
+  static String _formatMeetingTime(TimeOfDay time) {
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$hour:$minute $period';
+  }
+
+  static TimeOfDay _ensureValidMeetingSlot(TimeOfDay current) {
+    final curMinutes = current.hour * 60 + current.minute;
+    const minMinutes = 9 * 60; // 9:00 AM
+    const maxMinutes = 19 * 60; // 7:00 PM
+    if (curMinutes < minMinutes || curMinutes > maxMinutes) {
+      return const TimeOfDay(hour: 10, minute: 0);
+    }
+    final rounded = ((curMinutes + 14) ~/ 30) * 30;
+    final clamped = rounded.clamp(minMinutes, maxMinutes);
+    return TimeOfDay(hour: clamped ~/ 60, minute: clamped % 60);
+  }
 
   bool _leaveAtGate = false;
   bool _showAdvancedOptions = false;
@@ -352,13 +422,208 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     'Rapido',
   ];
 
-  static const List<String> vehicleTypeOptions = [
-    'Personal Bike',
-    'Personal Car',
-    'Auto / Cab',
-    'Commercial',
-  ];
-  String _selectedVehicleType = 'Personal Car';
+  static const Map<String, String> companyLogos = {
+    'Airtel': 'assets/images/logos/airtel.png',
+    'Ajio': 'assets/images/logos/ajio.png',
+    'Akshayakalpa Organic':
+        'assets/images/logos/akshayakalpa organic.png',
+    'Amazon': 'assets/images/logos/amazon.png',
+    'Amazon Prime Now': 'assets/images/logos/Amazon Prime Now.png',
+    'Apollo 24-7': 'assets/images/logos/Apollo 24-7.png',
+    'Bharat Gas': 'assets/images/logos/Bharat Gas.png',
+    'Big Basket': 'assets/images/logos/Big Basket.png',
+    'Blinkit': 'assets/images/logos/Blinkit.png',
+    'Blue Dart': 'assets/images/logos/Blue Dart.png',
+    'Borzo': 'assets/images/logos/Borzo.png',
+    'Box8': 'assets/images/logos/Box8.png',
+    'Country Delight': 'assets/images/logos/Country Delight.png',
+    'Delhivery': 'assets/images/logos/Delhivery.png',
+    'DHL': 'assets/images/logos/DHL.png',
+    'Dmart': 'assets/images/logos/Dmart.png',
+    'Domino\'s': 'assets/images/logos/Domino\'s.png',
+    'DTDC': 'assets/images/logos/DTDC.png',
+    'Eat Club': 'assets/images/logos/eat club.png',
+    'Eatfit': 'assets/images/logos/eatfit.png',
+    'Ecom Express': 'assets/images/logos/ecom express.png',
+    'Ekart': 'assets/images/logos/ekart.png',
+    'Expressbees': 'assets/images/logos/expressbees.png',
+    'Faasos': 'assets/images/logos/faasos.png',
+    'Fedex': 'assets/images/logos/fedex.png',
+    'Firstcry': 'assets/images/logos/firstcry.png',
+    'Flipkart': 'assets/images/logos/flipkart.png',
+    'Fresh Menu': 'assets/images/logos/fresh menu.png',
+    'Fresh to Home': 'assets/images/logos/fresh to home.png',
+    'Gati': 'assets/images/logos/gati.png',
+    'HDFC Bank': 'assets/images/logos/hdfc bank.png',
+    'HP Gas': 'assets/images/logos/hp gas.png',
+    'Ikea': 'assets/images/logos/ikea.png',
+    'Indane': 'assets/images/logos/indane.png',
+    'India Post': 'assets/images/logos/India post.png',
+    'Jio': 'assets/images/logos/jio.png',
+    'JioMart': 'assets/images/logos/jiomart.png',
+    'Lenskart': 'assets/images/logos/lenskart.png',
+    'Licious': 'assets/images/logos/licious.png',
+    'Meesho': 'assets/images/logos/meesho.png',
+    'Milk Basket': 'assets/images/logos/milk basket.png',
+    'Myntra': 'assets/images/logos/myntra.png',
+    'Natures Basket': 'assets/images/logos/natures basket.png',
+    'Netmeds': 'assets/images/logos/netmeds.png',
+    'Nykaa': 'assets/images/logos/nykaa.png',
+    'Ola': 'assets/images/logos/Ola.png',
+    'Other': 'assets/images/logos/Other.png',
+    'Paytm': 'assets/images/logos/paytm.png',
+    'Pepperfry': 'assets/images/logos/pepperfry.png',
+    'Pharmeasy': 'assets/images/logos/pharmeasy.png',
+    'Pizza Hut': 'assets/images/logos/pizza hut.png',
+    'Porter': 'assets/images/logos/porter.png',
+    'Professional Courier':
+        'assets/images/logos/professional courier.png',
+    'Rapido': 'assets/images/logos/Rapido.png',
+    'Shadowfax': 'assets/images/logos/shadowfax.png',
+    'Shiprocket': 'assets/images/logos/shiprocket.png',
+    'Snabbit': 'assets/images/logos/snabbit.png',
+    'Snapdeal': 'assets/images/logos/snapdeal.png',
+    'Swiggy': 'assets/images/logos/swiggy.png',
+    'Swiggy Instamart': 'assets/images/logos/swiggy instamart.png',
+    'Tata 1mg': 'assets/images/logos/tata 1mg.png',
+    'Tata Play': 'assets/images/logos/tata play.png',
+    'Uber': 'assets/images/logos/uber.png',
+    'Urban Company': 'assets/images/logos/urban company.png',
+    'Zepto': 'assets/images/logos/zepto.png',
+    'Zomato': 'assets/images/logos/zomato.png',
+  };
+
+  Widget _buildCompanyCard({
+    required String name,
+    required bool isSelected,
+    required VoidCallback onTap,
+    String? logoAsset,
+    IconData? fallbackIcon,
+    double width = 84,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy;
+    final cardBg = isSelected
+        ? (isDark ? AsmitaPalette.surfaceElevatedDark : const Color(0xFFF0F4FC))
+        : (isDark ? AsmitaPalette.surfaceDark : Colors.white);
+    final borderColor = isSelected
+        ? primaryColor
+        : (isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 4.0),
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: width,
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: borderColor,
+              width: isSelected ? 2.0 : 1.0,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: primaryColor.withValues(alpha: 0.16),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isDark ? AsmitaPalette.borderGreyDark : const Color(0xFFECEFF5),
+                        width: 0.8,
+                      ),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Center(
+                      child: logoAsset != null
+                          ? Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Image.asset(
+                                logoAsset,
+                                fit: BoxFit.contain,
+                                errorBuilder: (ctx, err, stack) => Icon(
+                                  fallbackIcon ?? Icons.store_rounded,
+                                  size: 24,
+                                  color: primaryColor,
+                                ),
+                              ),
+                            )
+                          : Icon(
+                              fallbackIcon ?? Icons.store_rounded,
+                              size: 24,
+                              color: primaryColor,
+                            ),
+                    ),
+                  ),
+                  if (isSelected)
+                    Positioned(
+                      top: -4,
+                      right: -4,
+                      child: Container(
+                        padding: const EdgeInsets.all(2.5),
+                        decoration: BoxDecoration(
+                          color: primaryColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: cardBg, width: 1.5),
+                        ),
+                        child: const Icon(
+                          Icons.check_rounded,
+                          size: 10,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 7),
+              Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                  color: isSelected
+                      ? primaryColor
+                      : (isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+
+  static const List<String> vehicleTypeOptions = AsmitaPreApproveWizard.vehicleTypeOptions;
+  String _selectedVehicleType = 'Car';
 
   Widget _buildPurposeSection({bool isGuard = false}) {
     if (_selectedCategory == 'Delivery') {
@@ -383,6 +648,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         const SizedBox(height: 8),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Row(
             children: suggestions.map((p) {
               final isSelected = _purposeController.text.trim() == p;
@@ -458,74 +724,37 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Row(
             children: [
               ...deliveryCompanyOptions.map((comp) {
                 final isSelected = _selectedCompany == comp;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: ChoiceChip(
-                    label: Text(
-                      comp,
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
-                      ),
-                    ),
-                    selected: isSelected,
-                    selectedColor: AsmitaPalette.deepNavy,
-                    checkmarkColor: Colors.white,
-                    backgroundColor: AsmitaPalette.systemBG,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(
-                        color: isSelected ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey,
-                      ),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _selectedCompany = comp;
-                          _customCompanyName = '';
-                        });
-                      }
-                    },
-                  ),
+                final logo = companyLogos[comp] ?? companyLogos[comp.replaceAll(' ', '')];
+                return _buildCompanyCard(
+                  name: comp,
+                  isSelected: isSelected,
+                  logoAsset: logo,
+                  fallbackIcon: Icons.local_shipping_rounded,
+                  onTap: () {
+                    setState(() {
+                      _selectedCompany = comp;
+                      _customCompanyName = '';
+                    });
+                  },
                 );
               }),
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: ActionChip(
-                  avatar: const Icon(Icons.more_horiz_rounded, size: 16),
-                  label: Text(
-                    _selectedCompany == 'Other' && _customCompanyName.isNotEmpty
-                        ? _customCompanyName
-                        : 'Other',
-                    style: const TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AsmitaPalette.deepNavy,
-                    ),
-                  ),
-                  backgroundColor: _selectedCompany == 'Other'
-                      ? AsmitaPalette.deepNavy.withValues(alpha: 0.15)
-                      : AsmitaPalette.systemBG,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: _selectedCompany == 'Other'
-                          ? AsmitaPalette.deepNavy
-                          : AsmitaPalette.borderGrey,
-                    ),
-                  ),
-                  onPressed: _showCompanySelectionSheet,
-                ),
+              _buildCompanyCard(
+                name: _selectedCompany == 'Other' && _customCompanyName.isNotEmpty
+                    ? _customCompanyName
+                    : 'Other',
+                isSelected: _selectedCompany == 'Other',
+                logoAsset: companyLogos['Other'],
+                fallbackIcon: Icons.more_horiz_rounded,
+                onTap: _showCompanySelectionSheet,
               ),
             ],
           ),
@@ -547,74 +776,40 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             color: AsmitaPalette.textDark,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Row(
             children: [
               ...cabCompanyOptions.map((provider) {
                 final isSelected = _selectedCompany == provider;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: ChoiceChip(
-                    label: Text(
-                      provider,
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
-                      ),
-                    ),
-                    selected: isSelected,
-                    selectedColor: AsmitaPalette.deepNavy,
-                    checkmarkColor: Colors.white,
-                    backgroundColor: AsmitaPalette.systemBG,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(
-                        color: isSelected ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey,
-                      ),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _selectedCompany = provider;
-                          _customCompanyName = '';
-                        });
-                      }
-                    },
-                  ),
+                final logo = companyLogos[provider];
+                final icon = provider == 'Personal Vehicle'
+                    ? Icons.directions_car_rounded
+                    : Icons.local_taxi_rounded;
+                return _buildCompanyCard(
+                  name: provider,
+                  isSelected: isSelected,
+                  logoAsset: logo,
+                  fallbackIcon: icon,
+                  onTap: () {
+                    setState(() {
+                      _selectedCompany = provider;
+                      _customCompanyName = '';
+                    });
+                  },
                 );
               }),
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: ActionChip(
-                  avatar: const Icon(Icons.more_horiz_rounded, size: 16),
-                  label: Text(
-                    _selectedCompany == 'Other' && _customCompanyName.isNotEmpty
-                        ? _customCompanyName
-                        : 'Other',
-                    style: const TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AsmitaPalette.deepNavy,
-                    ),
-                  ),
-                  backgroundColor: _selectedCompany == 'Other'
-                      ? AsmitaPalette.deepNavy.withValues(alpha: 0.15)
-                      : AsmitaPalette.systemBG,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: _selectedCompany == 'Other'
-                          ? AsmitaPalette.deepNavy
-                          : AsmitaPalette.borderGrey,
-                    ),
-                  ),
-                  onPressed: _showCompanySelectionSheet,
-                ),
+              _buildCompanyCard(
+                name: _selectedCompany == 'Other' && _customCompanyName.isNotEmpty
+                    ? _customCompanyName
+                    : 'Other',
+                isSelected: _selectedCompany == 'Other',
+                logoAsset: companyLogos['Other'],
+                fallbackIcon: Icons.more_horiz_rounded,
+                onTap: _showCompanySelectionSheet,
               ),
             ],
           ),
@@ -632,6 +827,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         const SizedBox(height: 6),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Row(
             children: vehicleTypeOptions.map((vType) {
               final isSelected = _selectedVehicleType == vType;
@@ -1016,9 +1212,15 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     final bool isOnce = _tabController.index == 0;
 
     final combinedStartTime = DateTime(
-      isOnce ? DateTime.now().year : _selectedDate.year,
-      isOnce ? DateTime.now().month : _selectedDate.month,
-      isOnce ? DateTime.now().day : _selectedDate.day,
+      isOnce
+          ? (_isScheduleMeet ? _selectedDate.year : DateTime.now().year)
+          : _selectedDate.year,
+      isOnce
+          ? (_isScheduleMeet ? _selectedDate.month : DateTime.now().month)
+          : _selectedDate.month,
+      isOnce
+          ? (_isScheduleMeet ? _selectedDate.day : DateTime.now().day)
+          : _selectedDate.day,
       _selectedTime.hour,
       _selectedTime.minute,
     );
@@ -1059,7 +1261,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     final fallbackUnitId = flat?.flatId;
 
     final enteredName = _visitorNameController.text.trim();
-    if (isIndustrial && enteredName.isEmpty) {
+    if (isIndustrial && _selectedCategory == 'Guest' && enteredName.isEmpty) {
       AsmitaToast.show(
         context,
         message: 'Visitor Name is mandatory for industrial campus pre-approvals.',
@@ -1083,9 +1285,12 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         ? 'delivery'
         : (isCabOrVehicle ? 'cab' : 'guest');
 
+    final defaultGuestPurpose = _isScheduleMeet
+        ? 'Scheduled Meeting'
+        : (_isVipGuestPass ? 'VIP Visit' : 'Personal Visit');
     final basePurpose = _purposeController.text.trim().isNotEmpty
         ? _purposeController.text.trim()
-        : (isVendor ? 'Maintenance & Repair' : (_selectedCategory == 'Guest' ? (_isVipGuestPass ? 'VIP Visit' : 'Personal Visit') : _selectedCategory));
+        : (isVendor ? 'Maintenance & Repair' : (_selectedCategory == 'Guest' ? defaultGuestPurpose : _selectedCategory));
     final invitePurpose = isDelivery
         ? 'Delivery / Courier Drop'
         : (_isVipGuestPass ? '[VIP] $basePurpose' : basePurpose);
@@ -1099,10 +1304,10 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 : _selectedCompany));
 
     final baseTitle = enteredName.isNotEmpty
-        ? '$enteredName Pass'
+        ? (_isScheduleMeet ? '$enteredName Meeting' : '$enteredName Pass')
         : (isDelivery
             ? '$companyName Delivery Pass'
-            : '$_selectedCategory Invite');
+            : (_isScheduleMeet ? 'Scheduled Meeting Invite' : '$_selectedCategory Invite'));
     final inviteTitle = _isVipGuestPass ? '[VIP] $baseTitle' : baseTitle;
 
     final payload = {
@@ -1305,90 +1510,87 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
-        const SizedBox(height: 20),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            childAspectRatio: 0.7,
-          ),
-          itemCount: categories.length,
-          itemBuilder: (context, index) {
-            final cat = categories[index];
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedCategory = cat['label'] as String;
-                  _selectedDurationHours = 1;
-                  if (_selectedCategory == 'Cab') {
-                    _selectedCompany = 'Uber';
-                    _purposeController.text = 'Personal Visit';
-                  } else if (_selectedCategory == 'Delivery') {
-                    _selectedCompany = 'Zomato';
-                    _guestCount = 1;
-                    _purposeController.text = 'Delivery / Courier Drop';
-                    _capturedVisitorPhoto = null;
-                    _capturedVisitorPhotoBase64 = null;
-                  } else if (_selectedCategory == 'Visiting Help') {
-                    _selectedCompany = 'Service Partner';
-                    _purposeController.text = 'Maintenance & Repair';
-                  } else {
-                    _selectedCompany = 'Guest';
-                    _purposeController.text = 'Official Meeting';
-                  }
-                });
-                _nextStep();
-              },
-              behavior: HitTestBehavior.opaque,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainer,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Theme.of(context).dividerColor,
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(context).shadowColor.withValues(alpha: 0.03),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: categories.map((cat) {
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedCategory = cat['label'] as String;
+                    _selectedDurationHours = 1;
+                    if (_selectedCategory == 'Cab') {
+                      _selectedCompany = 'Uber';
+                      _purposeController.text = 'Personal Visit';
+                    } else if (_selectedCategory == 'Delivery') {
+                      _selectedCompany = 'Zomato';
+                      _guestCount = 1;
+                      _purposeController.text = 'Delivery / Courier Drop';
+                      _capturedVisitorPhoto = null;
+                      _capturedVisitorPhotoBase64 = null;
+                    } else if (_selectedCategory == 'Visiting Help') {
+                      _selectedCompany = 'Service Partner';
+                      _purposeController.text = 'Maintenance & Repair';
+                    } else {
+                      _selectedCompany = 'Guest';
+                      _purposeController.text = 'Official Meeting';
+                    }
+                  });
+                  _nextStep();
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceContainer,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor,
+                          width: 1.5,
                         ),
-                      ],
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(context).shadowColor.withValues(alpha: 0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Icon(
+                          cat['icon'] as IconData,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 26,
+                        ),
+                      ),
                     ),
-                    child: Icon(
-                      cat['icon'] as IconData,
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 28,
+                    const SizedBox(height: 8),
+                    Text(
+                      cat['label'] as String,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    cat['label'] as String,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
-          },
+          }).toList(),
         ),
         if (!widget.isGuardMode) ...[
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -1403,13 +1605,16 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                     children: [
                       Row(
                         children: [
-                          Text(
-                            'Safe Pickup Mode',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          Flexible(
+                            child: Text(
+                              'Safe Pickup Mode',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -1575,7 +1780,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurface),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   filled: true,
-                  fillColor: Colors.grey.shade100,
+                  fillColor: Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -1725,37 +1930,45 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         ),
         const SizedBox(height: 20),
 
-        // 2. Segmented Pill TabBar
+        // 2. Segmented Pill TabBar with clear active contrast
         Container(
           height: 48,
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainer,
-            borderRadius: BorderRadius.circular(12),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AsmitaPalette.surfaceDark
+                : const Color(0xFFF1F4F9),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AsmitaPalette.borderGreyDark
+                  : const Color(0xFFE2E8F0),
+              width: 1.0,
+            ),
           ),
           child: TabBar(
             controller: _tabController,
             dividerColor: Colors.transparent,
             indicatorSize: TabBarIndicatorSize.tab,
             indicator: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? AsmitaPalette.surfaceDark
-                  : Colors.white,
-              borderRadius: BorderRadius.circular(8),
+              color: AsmitaPalette.deepNavy,
+              borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
+                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.28),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
-            labelColor: AsmitaPalette.deepNavy,
-            unselectedLabelColor: AsmitaPalette.textLight,
+            labelColor: Colors.white,
+            unselectedLabelColor: Theme.of(context).brightness == Brightness.dark
+                ? AsmitaPalette.textDarkModeMuted
+                : const Color(0xFF64748B),
             labelStyle: const TextStyle(
               fontFamily: 'Montserrat',
               fontSize: 14,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
             ),
             unselectedLabelStyle: const TextStyle(
               fontFamily: 'Montserrat',
@@ -1983,21 +2196,16 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         if (isCabOrVehicle) ...[
           _buildCabProviderSelector(),
           const SizedBox(height: 16),
-          AsmitaTextField(
+          AsmitaIndianVehiclePlateField(
             controller: _cabNoController,
-            label: 'Vehicle Registration Number*',
-            hint: 'e.g., MH 04 AB 1234',
-            icon: Icons.directions_car_outlined,
-            textCapitalization: TextCapitalization.characters,
+            label: 'Vehicle Registration Number',
+            isRequired: true,
           ),
           const SizedBox(height: 16),
         ] else if (!isDelivery) ...[
-          AsmitaTextField(
+          AsmitaIndianVehiclePlateField(
             controller: _cabNoController,
             label: 'Vehicle Number (Optional)',
-            hint: 'e.g., MH 04 AB 1234 (If arrived by vehicle)',
-            icon: Icons.directions_car_outlined,
-            textCapitalization: TextCapitalization.characters,
           ),
           const SizedBox(height: 16),
         ],
@@ -2631,7 +2839,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   : const Color(0xFFFFFBEB))
               : (isDark
                   ? AsmitaPalette.surfaceDark
-                  : const Color(0xFFF9FAFB)),
+                  : Colors.white),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: _isVipGuestPass
@@ -2666,15 +2874,18 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 children: [
                   Row(
                     children: [
-                      Text(
-                        'Mark as VIP Pass',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: _isVipGuestPass
-                              ? const Color(0xFFB45309)
-                              : Theme.of(context).colorScheme.onSurface,
+                      Flexible(
+                        child: Text(
+                          'Mark as VIP Pass',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: _isVipGuestPass
+                                ? const Color(0xFFB45309)
+                                : Theme.of(context).colorScheme.onSurface,
+                          ),
                         ),
                       ),
                       if (_isVipGuestPass) ...[
@@ -2807,12 +3018,10 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         if (_selectedCategory == 'Cab') ...[
           _buildCabProviderSelector(),
           const SizedBox(height: 16),
-          AsmitaTextField(
+          AsmitaIndianVehiclePlateField(
             controller: _cabNoController,
             label: 'Cab / Vehicle Registration Number',
-            hint: 'Enter Cab No. (e.g., MH 02 AB 1234)',
-            icon: Icons.directions_car_outlined,
-            textCapitalization: TextCapitalization.characters,
+            isRequired: true,
           ),
           const SizedBox(height: 16),
           _buildPurposeSection(),
@@ -2898,7 +3107,13 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           const SizedBox(height: 16),
         ],
 
-        if (isIndustrial || _selectedCategory == 'Guest') ...[
+        if (_selectedCategory == 'Guest') ...[
+          _buildScheduleMeetToggle(),
+          const SizedBox(height: 14),
+          if (_isScheduleMeet) ...[
+            _buildScheduleMeetDateTimeInputs(),
+            const SizedBox(height: 14),
+          ],
           AsmitaTextField(
             controller: _visitorNameController,
             label: isIndustrial ? 'Visitor Name *' : 'Guest / Visitor Name (Optional)',
@@ -2916,24 +3131,15 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             maxLength: 10,
           ),
           const SizedBox(height: 16),
-          AsmitaTextField(
+          AsmitaIndianVehiclePlateField(
             controller: _cabNoController,
             label: 'Vehicle Number (Optional)',
-            hint: 'e.g., MH 04 AB 1234 (If arrived by vehicle)',
-            icon: Icons.directions_car_outlined,
-            textCapitalization: TextCapitalization.characters,
           ),
           const SizedBox(height: 16),
           _buildPurposeSection(),
           const SizedBox(height: 16),
           _buildVipPassToggle(),
-          const SizedBox(height: 8),
-          _buildBottomSheetTrigger(
-            label: 'Arrival Time',
-            value: _selectedTime.format(context),
-            onTap: () => _showTimePickerSheet(),
-          ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -3179,7 +3385,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -3411,7 +3617,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     final options = ['1 week', '1 month', '6 months'];
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -3480,7 +3686,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -3546,7 +3752,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -3576,7 +3782,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -3608,7 +3814,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     TimeOfDay initialTime = isEndTime ? _selectedEndTime : _selectedTime;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -3673,82 +3879,13 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
-          final companyLogos = {
-            'Airtel': 'assets/images/logos/airtel.png',
-            'Ajio': 'assets/images/logos/ajio.png',
-            'Akshayakalpa Organic':
-                'assets/images/logos/akshayakalpa organic.png',
-            'Amazon': 'assets/images/logos/amazon.png',
-            'Amazon Prime Now': 'assets/images/logos/Amazon Prime Now.png',
-            'Apollo 24-7': 'assets/images/logos/Apollo 24-7.png',
-            'Bharat Gas': 'assets/images/logos/Bharat Gas.png',
-            'Big Basket': 'assets/images/logos/Big Basket.png',
-            'Blinkit': 'assets/images/logos/Blinkit.png',
-            'Blue Dart': 'assets/images/logos/Blue Dart.png',
-            'Borzo': 'assets/images/logos/Borzo.png',
-            'Box8': 'assets/images/logos/Box8.png',
-            'Country Delight': 'assets/images/logos/Country Delight.png',
-            'Delhivery': 'assets/images/logos/Delhivery.png',
-            'DHL': 'assets/images/logos/DHL.png',
-            'Dmart': 'assets/images/logos/Dmart.png',
-            'Domino\'s': 'assets/images/logos/Domino\'s.png',
-            'DTDC': 'assets/images/logos/DTDC.png',
-            'Eat Club': 'assets/images/logos/eat club.png',
-            'Eatfit': 'assets/images/logos/eatfit.png',
-            'Ecom Express': 'assets/images/logos/ecom express.png',
-            'Ekart': 'assets/images/logos/ekart.png',
-            'Expressbees': 'assets/images/logos/expressbees.png',
-            'Faasos': 'assets/images/logos/faasos.png',
-            'Fedex': 'assets/images/logos/fedex.png',
-            'Firstcry': 'assets/images/logos/firstcry.png',
-            'Flipkart': 'assets/images/logos/flipkart.png',
-            'Fresh Menu': 'assets/images/logos/fresh menu.png',
-            'Fresh to Home': 'assets/images/logos/fresh to home.png',
-            'Gati': 'assets/images/logos/gati.png',
-            'HDFC Bank': 'assets/images/logos/hdfc bank.png',
-            'HP Gas': 'assets/images/logos/hp gas.png',
-            'Ikea': 'assets/images/logos/ikea.png',
-            'Indane': 'assets/images/logos/indane.png',
-            'India Post': 'assets/images/logos/India post.png',
-            'Jio': 'assets/images/logos/jio.png',
-            'JioMart': 'assets/images/logos/jiomart.png',
-            'Lenskart': 'assets/images/logos/lenskart.png',
-            'Licious': 'assets/images/logos/licious.png',
-            'Meesho': 'assets/images/logos/meesho.png',
-            'Milk Basket': 'assets/images/logos/milk basket.png',
-            'Myntra': 'assets/images/logos/myntra.png',
-            'Natures Basket': 'assets/images/logos/natures basket.png',
-            'Netmeds': 'assets/images/logos/netmeds.png',
-            'Nykaa': 'assets/images/logos/nykaa.png',
-            'Ola': 'assets/images/logos/Ola.png',
-            'Other': 'assets/images/logos/Other.png',
-            'Paytm': 'assets/images/logos/paytm.png',
-            'Pepperfry': 'assets/images/logos/pepperfry.png',
-            'Pharmeasy': 'assets/images/logos/pharmeasy.png',
-            'Pizza Hut': 'assets/images/logos/pizza hut.png',
-            'Porter': 'assets/images/logos/porter.png',
-            'Professional Courier':
-                'assets/images/logos/professional courier.png',
-            'Rapido': 'assets/images/logos/Rapido.png',
-            'Shadowfax': 'assets/images/logos/shadowfax.png',
-            'Shiprocket': 'assets/images/logos/shiprocket.png',
-            'Snabbit': 'assets/images/logos/snabbit.png',
-            'Snapdeal': 'assets/images/logos/snapdeal.png',
-            'Swiggy': 'assets/images/logos/swiggy.png',
-            'Swiggy Instamart': 'assets/images/logos/swiggy instamart.png',
-            'Tata 1mg': 'assets/images/logos/tata 1mg.png',
-            'Tata Play': 'assets/images/logos/tata play.png',
-            'Uber': 'assets/images/logos/uber.png',
-            'Urban Company': 'assets/images/logos/urban company.png',
-            'Zepto': 'assets/images/logos/zepto.png',
-            'Zomato': 'assets/images/logos/zomato.png',
-          };
+          // Using static class companyLogos
 
           final cabCompanies = [
             'Personal Vehicle',
@@ -3921,7 +4058,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                               decoration: InputDecoration(
                                 hintText: 'Enter company name',
                                 filled: true,
-                                fillColor: Theme.of(context).colorScheme.surfaceContainer,
+                                fillColor: Colors.white,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.all(
                                     Radius.circular(12),
@@ -3950,6 +4087,256 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildScheduleMeetToggle() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _isScheduleMeet
+              ? AsmitaPalette.deepNavy
+              : (isDark ? AsmitaPalette.borderGreyDark : const Color(0xFFE2E8F0)),
+          width: _isScheduleMeet ? 1.5 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: _isScheduleMeet
+                  ? AsmitaPalette.deepNavy.withValues(alpha: 0.1)
+                  : (isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.calendar_month_rounded,
+              color: _isScheduleMeet
+                  ? AsmitaPalette.deepNavy
+                  : (isDark ? Colors.white70 : const Color(0xFF64748B)),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Schedule a Meet',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: _isScheduleMeet
+                        ? AsmitaPalette.deepNavy
+                        : Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Set visit date & arrival slot in advance',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 11,
+                    color: isDark ? Colors.white60 : Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch.adaptive(
+            value: _isScheduleMeet,
+            activeTrackColor: AsmitaPalette.deepNavy,
+            activeThumbColor: Colors.white,
+            onChanged: (val) {
+              setState(() {
+                _isScheduleMeet = val;
+                if (val) {
+                  _selectedTime = _ensureValidMeetingSlot(_selectedTime);
+                }
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleMeetDateTimeInputs() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildBottomSheetTrigger(
+            label: 'Meeting Date *',
+            value: _formatDate(_selectedDate),
+            onTap: _showDatePickerSheet,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildBottomSheetTrigger(
+            label: 'Meeting Time *',
+            value: _formatMeetingTime(_selectedTime),
+            onTap: _showMeetingTimeSlotPickerSheet,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showMeetingTimeSlotPickerSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Select Meeting Time',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 20),
+                    onPressed: () => Navigator.pop(ctx),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Available slots from 9:00 AM to 7:00 PM (30 min intervals)',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 12,
+                  color: isDark
+                      ? AsmitaPalette.textDarkModeMuted
+                      : const Color(0xFF64748B),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.45,
+                ),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final itemWidth = (constraints.maxWidth - 20) / 3;
+                      return Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: _meetingTimeSlots.map((slot) {
+                          final isSelected = _selectedTime.hour == slot.hour &&
+                              _selectedTime.minute == slot.minute;
+                          return SizedBox(
+                            width: itemWidth,
+                            child: InkWell(
+                              onTap: () {
+                                setState(() => _selectedTime = slot);
+                                Navigator.pop(ctx);
+                              },
+                              borderRadius: BorderRadius.circular(10),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AsmitaPalette.deepNavy
+                                      : (isDark ? AsmitaPalette.surfaceDark : Colors.white),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AsmitaPalette.deepNavy
+                                        : (isDark
+                                            ? AsmitaPalette.borderGreyDark
+                                            : const Color(0xFFE2E8F0)),
+                                    width: isSelected ? 1.5 : 1.0,
+                                  ),
+                                  boxShadow: isSelected
+                                      ? [
+                                          BoxShadow(
+                                            color: AsmitaPalette.deepNavy.withValues(alpha: 0.25),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  _formatMeetingTime(slot),
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 13,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : (isDark
+                                            ? Colors.white
+                                            : AsmitaPalette.deepNavy),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -4019,25 +4406,28 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     required String label,
     required VoidCallback onPressed,
   }) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AsmitaPalette.deepNavy,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AsmitaPalette.deepNavy,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            elevation: 0,
           ),
-          elevation: 0,
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontFamily: 'Montserrat',
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-            fontSize: 15,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontFamily: 'Montserrat',
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+            ),
           ),
         ),
       ),
@@ -4112,7 +4502,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -4350,7 +4740,7 @@ class _EmployeePickerModalState extends State<_EmployeePickerModal> {
                   : null,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               filled: true,
-              fillColor: Colors.grey.shade100,
+              fillColor: Colors.white,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -4832,7 +5222,7 @@ class _VisitorOtpSheetWidgetState extends State<_VisitorOtpSheetWidget> {
                 color: Colors.grey.shade300,
               ),
               filled: true,
-              fillColor: AsmitaPalette.systemBG,
+              fillColor: Colors.white,
               contentPadding: const EdgeInsets.symmetric(vertical: 14),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
