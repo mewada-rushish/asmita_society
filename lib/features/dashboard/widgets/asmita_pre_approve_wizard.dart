@@ -4,6 +4,7 @@ import 'dart:io';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -28,6 +29,21 @@ class AsmitaPreApproveWizard extends StatefulWidget {
   final bool isGuardMode;
 
   const AsmitaPreApproveWizard({super.key, this.isGuardMode = false});
+
+  /// Displays the pre-approve wizard in a standardized Asmita modal bottom sheet.
+  static Future<T?> showAsModalSheet<T>(
+    BuildContext context, {
+    bool isGuardMode = false,
+    String? title,
+    String? subtitle,
+  }) {
+    return showAsmitaBottomSheet<T>(
+      context: context,
+      title: title ?? (isGuardMode ? 'New Walk-in Visitor' : 'Pre-Approve Entry'),
+      subtitle: subtitle ?? (isGuardMode ? 'Record lobby guest entry details' : null),
+      child: AsmitaPreApproveWizard(isGuardMode: isGuardMode),
+    );
+  }
 
   // Global static cache for society flats so opening the dialog is instant
   static final Map<int, List<FlatMapping>> _cachedSocietyFlats = {};
@@ -352,6 +368,212 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     'Rapido',
   ];
 
+  static const Map<String, String> companyLogos = {
+    'Airtel': 'assets/images/logos/airtel.png',
+    'Ajio': 'assets/images/logos/ajio.png',
+    'Akshayakalpa Organic':
+        'assets/images/logos/akshayakalpa organic.png',
+    'Amazon': 'assets/images/logos/amazon.png',
+    'Amazon Prime Now': 'assets/images/logos/Amazon Prime Now.png',
+    'Apollo 24-7': 'assets/images/logos/Apollo 24-7.png',
+    'Bharat Gas': 'assets/images/logos/Bharat Gas.png',
+    'Big Basket': 'assets/images/logos/Big Basket.png',
+    'Blinkit': 'assets/images/logos/Blinkit.png',
+    'Blue Dart': 'assets/images/logos/Blue Dart.png',
+    'Borzo': 'assets/images/logos/Borzo.png',
+    'Box8': 'assets/images/logos/Box8.png',
+    'Country Delight': 'assets/images/logos/Country Delight.png',
+    'Delhivery': 'assets/images/logos/Delhivery.png',
+    'DHL': 'assets/images/logos/DHL.png',
+    'Dmart': 'assets/images/logos/Dmart.png',
+    'Domino\'s': 'assets/images/logos/Domino\'s.png',
+    'DTDC': 'assets/images/logos/DTDC.png',
+    'Eat Club': 'assets/images/logos/eat club.png',
+    'Eatfit': 'assets/images/logos/eatfit.png',
+    'Ecom Express': 'assets/images/logos/ecom express.png',
+    'Ekart': 'assets/images/logos/ekart.png',
+    'Expressbees': 'assets/images/logos/expressbees.png',
+    'Faasos': 'assets/images/logos/faasos.png',
+    'Fedex': 'assets/images/logos/fedex.png',
+    'Firstcry': 'assets/images/logos/firstcry.png',
+    'Flipkart': 'assets/images/logos/flipkart.png',
+    'Fresh Menu': 'assets/images/logos/fresh menu.png',
+    'Fresh to Home': 'assets/images/logos/fresh to home.png',
+    'Gati': 'assets/images/logos/gati.png',
+    'HDFC Bank': 'assets/images/logos/hdfc bank.png',
+    'HP Gas': 'assets/images/logos/hp gas.png',
+    'Ikea': 'assets/images/logos/ikea.png',
+    'Indane': 'assets/images/logos/indane.png',
+    'India Post': 'assets/images/logos/India post.png',
+    'Jio': 'assets/images/logos/jio.png',
+    'JioMart': 'assets/images/logos/jiomart.png',
+    'Lenskart': 'assets/images/logos/lenskart.png',
+    'Licious': 'assets/images/logos/licious.png',
+    'Meesho': 'assets/images/logos/meesho.png',
+    'Milk Basket': 'assets/images/logos/milk basket.png',
+    'Myntra': 'assets/images/logos/myntra.png',
+    'Natures Basket': 'assets/images/logos/natures basket.png',
+    'Netmeds': 'assets/images/logos/netmeds.png',
+    'Nykaa': 'assets/images/logos/nykaa.png',
+    'Ola': 'assets/images/logos/Ola.png',
+    'Other': 'assets/images/logos/Other.png',
+    'Paytm': 'assets/images/logos/paytm.png',
+    'Pepperfry': 'assets/images/logos/pepperfry.png',
+    'Pharmeasy': 'assets/images/logos/pharmeasy.png',
+    'Pizza Hut': 'assets/images/logos/pizza hut.png',
+    'Porter': 'assets/images/logos/porter.png',
+    'Professional Courier':
+        'assets/images/logos/professional courier.png',
+    'Rapido': 'assets/images/logos/Rapido.png',
+    'Shadowfax': 'assets/images/logos/shadowfax.png',
+    'Shiprocket': 'assets/images/logos/shiprocket.png',
+    'Snabbit': 'assets/images/logos/snabbit.png',
+    'Snapdeal': 'assets/images/logos/snapdeal.png',
+    'Swiggy': 'assets/images/logos/swiggy.png',
+    'Swiggy Instamart': 'assets/images/logos/swiggy instamart.png',
+    'Tata 1mg': 'assets/images/logos/tata 1mg.png',
+    'Tata Play': 'assets/images/logos/tata play.png',
+    'Uber': 'assets/images/logos/uber.png',
+    'Urban Company': 'assets/images/logos/urban company.png',
+    'Zepto': 'assets/images/logos/zepto.png',
+    'Zomato': 'assets/images/logos/zomato.png',
+  };
+
+  Widget _buildCompanyCard({
+    required String name,
+    required bool isSelected,
+    required VoidCallback onTap,
+    String? logoAsset,
+    IconData? fallbackIcon,
+    double width = 84,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy;
+    final cardBg = isSelected
+        ? (isDark ? AsmitaPalette.surfaceElevatedDark : const Color(0xFFF0F4FC))
+        : (isDark ? AsmitaPalette.surfaceDark : Colors.white);
+    final borderColor = isSelected
+        ? primaryColor
+        : (isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey);
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 10.0),
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: width,
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: borderColor,
+              width: isSelected ? 2.0 : 1.0,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: primaryColor.withValues(alpha: 0.20),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isDark ? AsmitaPalette.borderGreyDark : const Color(0xFFECEFF5),
+                        width: 0.8,
+                      ),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Center(
+                      child: logoAsset != null
+                          ? Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Image.asset(
+                                logoAsset,
+                                fit: BoxFit.contain,
+                                errorBuilder: (ctx, err, stack) => Icon(
+                                  fallbackIcon ?? Icons.store_rounded,
+                                  size: 24,
+                                  color: primaryColor,
+                                ),
+                              ),
+                            )
+                          : Icon(
+                              fallbackIcon ?? Icons.store_rounded,
+                              size: 24,
+                              color: primaryColor,
+                            ),
+                    ),
+                  ),
+                  if (isSelected)
+                    Positioned(
+                      top: -4,
+                      right: -4,
+                      child: Container(
+                        padding: const EdgeInsets.all(2.5),
+                        decoration: BoxDecoration(
+                          color: primaryColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: cardBg, width: 1.5),
+                        ),
+                        child: const Icon(
+                          Icons.check_rounded,
+                          size: 10,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 7),
+              Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                  color: isSelected
+                      ? primaryColor
+                      : (isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+
   static const List<String> vehicleTypeOptions = [
     'Personal Bike',
     'Personal Car',
@@ -458,74 +680,36 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
           child: Row(
             children: [
               ...deliveryCompanyOptions.map((comp) {
                 final isSelected = _selectedCompany == comp;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: ChoiceChip(
-                    label: Text(
-                      comp,
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
-                      ),
-                    ),
-                    selected: isSelected,
-                    selectedColor: AsmitaPalette.deepNavy,
-                    checkmarkColor: Colors.white,
-                    backgroundColor: AsmitaPalette.systemBG,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(
-                        color: isSelected ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey,
-                      ),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _selectedCompany = comp;
-                          _customCompanyName = '';
-                        });
-                      }
-                    },
-                  ),
+                final logo = companyLogos[comp] ?? companyLogos[comp.replaceAll(' ', '')];
+                return _buildCompanyCard(
+                  name: comp,
+                  isSelected: isSelected,
+                  logoAsset: logo,
+                  fallbackIcon: Icons.local_shipping_rounded,
+                  onTap: () {
+                    setState(() {
+                      _selectedCompany = comp;
+                      _customCompanyName = '';
+                    });
+                  },
                 );
               }),
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: ActionChip(
-                  avatar: const Icon(Icons.more_horiz_rounded, size: 16),
-                  label: Text(
-                    _selectedCompany == 'Other' && _customCompanyName.isNotEmpty
-                        ? _customCompanyName
-                        : 'Other',
-                    style: const TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AsmitaPalette.deepNavy,
-                    ),
-                  ),
-                  backgroundColor: _selectedCompany == 'Other'
-                      ? AsmitaPalette.deepNavy.withValues(alpha: 0.15)
-                      : AsmitaPalette.systemBG,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: _selectedCompany == 'Other'
-                          ? AsmitaPalette.deepNavy
-                          : AsmitaPalette.borderGrey,
-                    ),
-                  ),
-                  onPressed: _showCompanySelectionSheet,
-                ),
+              _buildCompanyCard(
+                name: _selectedCompany == 'Other' && _customCompanyName.isNotEmpty
+                    ? _customCompanyName
+                    : 'Other',
+                isSelected: _selectedCompany == 'Other',
+                logoAsset: companyLogos['Other'],
+                fallbackIcon: Icons.more_horiz_rounded,
+                onTap: _showCompanySelectionSheet,
               ),
             ],
           ),
@@ -547,74 +731,39 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             color: AsmitaPalette.textDark,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
           child: Row(
             children: [
               ...cabCompanyOptions.map((provider) {
                 final isSelected = _selectedCompany == provider;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: ChoiceChip(
-                    label: Text(
-                      provider,
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
-                      ),
-                    ),
-                    selected: isSelected,
-                    selectedColor: AsmitaPalette.deepNavy,
-                    checkmarkColor: Colors.white,
-                    backgroundColor: AsmitaPalette.systemBG,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(
-                        color: isSelected ? AsmitaPalette.deepNavy : AsmitaPalette.borderGrey,
-                      ),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _selectedCompany = provider;
-                          _customCompanyName = '';
-                        });
-                      }
-                    },
-                  ),
+                final logo = companyLogos[provider];
+                final icon = provider == 'Personal Vehicle'
+                    ? Icons.directions_car_rounded
+                    : Icons.local_taxi_rounded;
+                return _buildCompanyCard(
+                  name: provider,
+                  isSelected: isSelected,
+                  logoAsset: logo,
+                  fallbackIcon: icon,
+                  onTap: () {
+                    setState(() {
+                      _selectedCompany = provider;
+                      _customCompanyName = '';
+                    });
+                  },
                 );
               }),
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: ActionChip(
-                  avatar: const Icon(Icons.more_horiz_rounded, size: 16),
-                  label: Text(
-                    _selectedCompany == 'Other' && _customCompanyName.isNotEmpty
-                        ? _customCompanyName
-                        : 'Other',
-                    style: const TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AsmitaPalette.deepNavy,
-                    ),
-                  ),
-                  backgroundColor: _selectedCompany == 'Other'
-                      ? AsmitaPalette.deepNavy.withValues(alpha: 0.15)
-                      : AsmitaPalette.systemBG,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: _selectedCompany == 'Other'
-                          ? AsmitaPalette.deepNavy
-                          : AsmitaPalette.borderGrey,
-                    ),
-                  ),
-                  onPressed: _showCompanySelectionSheet,
-                ),
+              _buildCompanyCard(
+                name: _selectedCompany == 'Other' && _customCompanyName.isNotEmpty
+                    ? _customCompanyName
+                    : 'Other',
+                isSelected: _selectedCompany == 'Other',
+                logoAsset: companyLogos['Other'],
+                fallbackIcon: Icons.more_horiz_rounded,
+                onTap: _showCompanySelectionSheet,
               ),
             ],
           ),
@@ -1403,13 +1552,16 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                     children: [
                       Row(
                         children: [
-                          Text(
-                            'Safe Pickup Mode',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          Flexible(
+                            child: Text(
+                              'Safe Pickup Mode',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -3679,76 +3831,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       ),
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
-          final companyLogos = {
-            'Airtel': 'assets/images/logos/airtel.png',
-            'Ajio': 'assets/images/logos/ajio.png',
-            'Akshayakalpa Organic':
-                'assets/images/logos/akshayakalpa organic.png',
-            'Amazon': 'assets/images/logos/amazon.png',
-            'Amazon Prime Now': 'assets/images/logos/Amazon Prime Now.png',
-            'Apollo 24-7': 'assets/images/logos/Apollo 24-7.png',
-            'Bharat Gas': 'assets/images/logos/Bharat Gas.png',
-            'Big Basket': 'assets/images/logos/Big Basket.png',
-            'Blinkit': 'assets/images/logos/Blinkit.png',
-            'Blue Dart': 'assets/images/logos/Blue Dart.png',
-            'Borzo': 'assets/images/logos/Borzo.png',
-            'Box8': 'assets/images/logos/Box8.png',
-            'Country Delight': 'assets/images/logos/Country Delight.png',
-            'Delhivery': 'assets/images/logos/Delhivery.png',
-            'DHL': 'assets/images/logos/DHL.png',
-            'Dmart': 'assets/images/logos/Dmart.png',
-            'Domino\'s': 'assets/images/logos/Domino\'s.png',
-            'DTDC': 'assets/images/logos/DTDC.png',
-            'Eat Club': 'assets/images/logos/eat club.png',
-            'Eatfit': 'assets/images/logos/eatfit.png',
-            'Ecom Express': 'assets/images/logos/ecom express.png',
-            'Ekart': 'assets/images/logos/ekart.png',
-            'Expressbees': 'assets/images/logos/expressbees.png',
-            'Faasos': 'assets/images/logos/faasos.png',
-            'Fedex': 'assets/images/logos/fedex.png',
-            'Firstcry': 'assets/images/logos/firstcry.png',
-            'Flipkart': 'assets/images/logos/flipkart.png',
-            'Fresh Menu': 'assets/images/logos/fresh menu.png',
-            'Fresh to Home': 'assets/images/logos/fresh to home.png',
-            'Gati': 'assets/images/logos/gati.png',
-            'HDFC Bank': 'assets/images/logos/hdfc bank.png',
-            'HP Gas': 'assets/images/logos/hp gas.png',
-            'Ikea': 'assets/images/logos/ikea.png',
-            'Indane': 'assets/images/logos/indane.png',
-            'India Post': 'assets/images/logos/India post.png',
-            'Jio': 'assets/images/logos/jio.png',
-            'JioMart': 'assets/images/logos/jiomart.png',
-            'Lenskart': 'assets/images/logos/lenskart.png',
-            'Licious': 'assets/images/logos/licious.png',
-            'Meesho': 'assets/images/logos/meesho.png',
-            'Milk Basket': 'assets/images/logos/milk basket.png',
-            'Myntra': 'assets/images/logos/myntra.png',
-            'Natures Basket': 'assets/images/logos/natures basket.png',
-            'Netmeds': 'assets/images/logos/netmeds.png',
-            'Nykaa': 'assets/images/logos/nykaa.png',
-            'Ola': 'assets/images/logos/Ola.png',
-            'Other': 'assets/images/logos/Other.png',
-            'Paytm': 'assets/images/logos/paytm.png',
-            'Pepperfry': 'assets/images/logos/pepperfry.png',
-            'Pharmeasy': 'assets/images/logos/pharmeasy.png',
-            'Pizza Hut': 'assets/images/logos/pizza hut.png',
-            'Porter': 'assets/images/logos/porter.png',
-            'Professional Courier':
-                'assets/images/logos/professional courier.png',
-            'Rapido': 'assets/images/logos/Rapido.png',
-            'Shadowfax': 'assets/images/logos/shadowfax.png',
-            'Shiprocket': 'assets/images/logos/shiprocket.png',
-            'Snabbit': 'assets/images/logos/snabbit.png',
-            'Snapdeal': 'assets/images/logos/snapdeal.png',
-            'Swiggy': 'assets/images/logos/swiggy.png',
-            'Swiggy Instamart': 'assets/images/logos/swiggy instamart.png',
-            'Tata 1mg': 'assets/images/logos/tata 1mg.png',
-            'Tata Play': 'assets/images/logos/tata play.png',
-            'Uber': 'assets/images/logos/uber.png',
-            'Urban Company': 'assets/images/logos/urban company.png',
-            'Zepto': 'assets/images/logos/zepto.png',
-            'Zomato': 'assets/images/logos/zomato.png',
-          };
+          // Using static class companyLogos
 
           final cabCompanies = [
             'Personal Vehicle',

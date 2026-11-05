@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import '../../../../core/constants/design_system.dart';
@@ -12,6 +13,7 @@ import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
 import '../../../dashboard/widgets/asmita_pre_approve_wizard.dart';
 import '../../../visitor_management/presentation/screens/department_delegation_screen.dart';
+import '../../../visitor_management/presentation/widgets/invite_team_member_sheet.dart';
 
 class IndustrialDirectoryScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -432,17 +434,147 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                     ),
                   ),
 
+                  const SizedBox(height: 10),
+
+                  // Invite Team Member Action Card
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: Theme.of(context).dividerColor,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(14),
+                      child: InkWell(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          showInviteTeamMemberSheet(context);
+                        },
+                        borderRadius: BorderRadius.circular(14),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: AsmitaPalette.deepNavy.withValues(alpha: isDark ? 0.25 : 0.10),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: AsmitaPalette.deepNavy.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.person_add_alt_1_rounded,
+                                  color: AsmitaPalette.deepNavy,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Invite Team Member',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDark ? Colors.white : AsmitaPalette.textDark,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Generate role-locked onboarding link with DLT SMS',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 11,
+                                        color: isDark
+                                            ? AsmitaPalette.textDarkModeMuted
+                                            : AsmitaPalette.textLight,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(
+                                Icons.chevron_right_rounded,
+                                color: AsmitaPalette.deepNavy,
+                                size: 20,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 18),
 
                   // Department Directory
-                  Text(
-                    'Campus Departments',
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : AsmitaPalette.textDark,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Campus Departments',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : AsmitaPalette.textDark,
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          showInviteTeamMemberSheet(context);
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: AsmitaPalette.deepNavy.withValues(alpha: isDark ? 0.25 : 0.08),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AsmitaPalette.deepNavy.withValues(alpha: 0.25),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.person_add_alt_1_rounded,
+                                size: 14,
+                                color: AsmitaPalette.deepNavy,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Invite Member',
+                                style: TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? const Color(0xFF818CF8) : AsmitaPalette.deepNavy,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 14),
 

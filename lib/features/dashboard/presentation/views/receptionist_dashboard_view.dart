@@ -6,7 +6,6 @@ import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_visitor_card.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
-import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
 import '../../../auth/bloc/auth_bloc.dart';
@@ -144,17 +143,11 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
   }
 
   void _showNewVisitorModal(BuildContext context) {
-    showAsmitaBottomSheet(
-      context: context,
+    AsmitaPreApproveWizard.showAsModalSheet(
+      context,
+      isGuardMode: true,
       title: 'New Walk-in Visitor',
       subtitle: 'Record lobby guest entry details',
-      isScrollControlled: true,
-      contentPadding: EdgeInsets.zero,
-      child: const SingleChildScrollView(
-        physics: ClampingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
-        child: AsmitaPreApproveWizard(isGuardMode: true),
-      ),
     );
   }
 

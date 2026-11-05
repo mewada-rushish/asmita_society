@@ -99,12 +99,9 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
       );
       return;
     }
-    await showDialog(
-      context: context,
-      builder: (context) => const AsmitaDialog(
-        title: 'Pre-Approve Entry',
-        content: AsmitaPreApproveWizard(),
-      ),
+    await AsmitaPreApproveWizard.showAsModalSheet(
+      context,
+      title: 'Pre-Approve Entry',
     );
 
     if (!context.mounted) return;
