@@ -814,6 +814,41 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
               ),
             ),
           ],
+          if (visit.status == IndustrialVisitStatus.approved ||
+              visit.status == IndustrialVisitStatus.checkedIn) ...[
+            const SizedBox(width: 8),
+            ElevatedButton.icon(
+              onPressed: () {
+                context.read<IndustrialVisitBloc>().add(
+                  SendToLobbyEvent(
+                    visitId: visit.id,
+                    floor: visit.floor,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.send_to_mobile_rounded, size: 16),
+              label: const Text(
+                'Send to Lobby',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0284C7),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ],
           if (visit.status == IndustrialVisitStatus.approved) ...[
             const SizedBox(width: 8),
             ElevatedButton.icon(

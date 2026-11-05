@@ -12,6 +12,7 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
     on<DecideVisitEvent>(_onDecideVisit);
     on<AcknowledgeVisitEvent>(_onAcknowledgeVisit);
     on<CheckInPassEvent>(_onCheckInPass);
+    on<SendToLobbyEvent>(_onSendToLobby);
     on<CheckOutPassEvent>(_onCheckOutPass);
     on<OverrideVisitEvent>(_onOverrideVisit);
     on<CreateVehicleDraftEvent>(_onCreateVehicleDraft);
@@ -111,6 +112,31 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
       emit(state.copyWith(
         status: IndustrialVisitBlocStatus.actionSuccess,
         successMessage: 'Pass checked in successfully.',
+        lastActionVisit: updated,
+        visits: updatedVisits,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        status: IndustrialVisitBlocStatus.error,
+        errorMessage: _parseError(e),
+      ));
+    }
+  }
+
+  Future<void> _onSendToLobby(
+    SendToLobbyEvent event,
+    Emitter<IndustrialVisitState> emit,
+  ) async {
+    emit(state.copyWith(status: IndustrialVisitBlocStatus.loading));
+    try {
+      final updated = await repository.sendToLobby(
+        visitId: event.visitId,
+        floor: event.floor,
+      );
+      final updatedVisits = await repository.getVisits();
+      emit(state.copyWith(
+        status: IndustrialVisitBlocStatus.actionSuccess,
+        successMessage: 'Visitor directed to lobby queue.',
         lastActionVisit: updated,
         visits: updatedVisits,
       ));
