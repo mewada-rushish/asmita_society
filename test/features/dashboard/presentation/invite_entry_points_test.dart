@@ -6,7 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/auth/data/models/user_model.dart';
-import 'package:asmita_society/features/dashboard/presentation/views/director_dashboard_view.dart';
+import 'package:asmita_society/features/menu/presentation/screens/menu_screen.dart';
 import 'package:asmita_society/features/dashboard/presentation/views/employee_dashboard_view.dart';
 import 'package:asmita_society/features/dashboard/presentation/screens/industrial_directory_screen.dart';
 import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_bloc.dart';
@@ -97,20 +97,20 @@ void main() {
   }
 
   group('Milestone 4: Dashboard Entry Points for Invite Team Member', () {
-    testWidgets('DirectorDashboardView renders Invite Team quick action', (tester) async {
+    testWidgets('MenuScreen renders Invite Team right below Department Delegation for Director', (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.0;
       addTearDown(tester.view.resetPhysicalSize);
 
       await tester.pumpWidget(
         wrapWithBlocs(
-          const DirectorDashboardView(visits: <IndustrialVisitModel>[]),
+          const MenuScreen(userRole: 'Director'),
           user: directorUser,
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Quick Actions'), findsOneWidget);
+      expect(find.text('Department Delegation'), findsOneWidget);
       expect(find.text('Invite Team'), findsOneWidget);
       expect(find.byIcon(Icons.group_add_rounded), findsOneWidget);
     });
