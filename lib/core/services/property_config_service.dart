@@ -23,8 +23,8 @@ class PropertyConfigService extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
 
-  Future<PropertyConfig> loadConfigForSociety(int societyId) async {
-    if (_currentConfig != null && _currentConfig!.societyId == societyId) {
+  Future<PropertyConfig> loadConfigForSociety(int societyId, {bool forceRefresh = false}) async {
+    if (!forceRefresh && _currentConfig != null && _currentConfig!.societyId == societyId) {
       return _currentConfig!;
     }
 
@@ -61,5 +61,17 @@ class PropertyConfigService extends ChangeNotifier {
   void updateConfig(PropertyConfig config) {
     _currentConfig = config;
     notifyListeners();
+  }
+
+  /// Real-time cache invalidation (R5).
+  /// Clears `_currentConfig` and forces a fresh network fetch from the backend.
+  Future<PropertyConfig?> invalidateCache([int? societyId]) async {
+    final targetId = societyId ?? _currentConfig?.societyId;
+    _currentConfig = null;
+    notifyListeners();
+    if (targetId != null) {
+      return loadConfigForSociety(targetId, forceRefresh: true);
+    }
+    return null;
   }
 }

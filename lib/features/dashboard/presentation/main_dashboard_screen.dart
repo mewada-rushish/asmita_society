@@ -141,10 +141,18 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   // Dynamically builds the view list cleanly to keep callback bindings alive on state mutations
   List<Widget> _buildScreens([String? activeRole]) {
     final role = activeRole ?? widget.userRole;
-    final normalized = PropertyRoleResolver.normalizeRole(role);
-    final isResidential = normalized == 'owner' || normalized == 'tenant';
+    final authState = context.read<AuthBloc>().state;
+    final currentUser = authState is AuthAuthenticated ? authState.user : null;
+    final isIndustrial = PropertyRoleResolver.isIndustrialContext(currentUser, propertyType: currentUser?.propertyType);
+    final normalized = PropertyRoleResolver.normalizeRole(
+      role,
+      scope: currentUser?.roleScope,
+      power: currentUser?.rolePower,
+      isIndustrial: isIndustrial,
+    );
+    final isResidential = !isIndustrial && (normalized == 'owner' || normalized == 'tenant');
     return [
-      _resolveRoleBasedHomeView(role), // Index 0: Home view
+      _resolveRoleBasedHomeView(role, isIndustrial: isIndustrial), // Index 0: Home view
       isResidential
           ? ServicesScreen( // Index 1: Services Grid
               onNavigateToSearch: _navigateToSearch,
@@ -164,27 +172,42 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
               onNavigateToCommunity: () => setState(() => _currentIndex = 2),
             )
           : IndustrialDirectoryScreen(onBack: () => setState(() => _currentIndex = 0)),
-      _resolveRoleBasedHistoryView(role),               // Index 3: Gate Records (History)
+      _resolveRoleBasedHistoryView(role, isIndustrial: isIndustrial), // Index 3: Gate Records (History)
       MenuScreen(
         userRole: role,
         onNavigateToTab: (index) {
           setState(() => _currentIndex = index);
         },
       ),      // Index 4: Profile Settings
-      _resolveRoleBasedQrScanner(role), // Index 5: QR Scanner
-      _resolveRoleBasedCheckedInView(role), // Index 6: Checked In (Guard/Receptionist only)
+      _resolveRoleBasedQrScanner(role, isIndustrial: isIndustrial), // Index 5: QR Scanner
+      _resolveRoleBasedCheckedInView(role, isIndustrial: isIndustrial), // Index 6: Checked In (Guard/Receptionist only)
     ];
   }
 
-  Widget _resolveRoleBasedCheckedInView(String role) {
-    if (PropertyRoleResolver.normalizeRole(role) == 'guard') {
+  Widget _resolveRoleBasedCheckedInView(String role, {bool isIndustrial = false}) {
+    final authState = context.read<AuthBloc>().state;
+    final currentUser = authState is AuthAuthenticated ? authState.user : null;
+    final normalized = PropertyRoleResolver.normalizeRole(
+      role,
+      scope: currentUser?.roleScope,
+      power: currentUser?.rolePower,
+      isIndustrial: isIndustrial,
+    );
+    if (normalized == 'guard') {
       return const GuardCheckedInScreen();
     }
     return const SizedBox.shrink();
   }
 
-  Widget _resolveRoleBasedHomeView(String role) {
-    final normalized = PropertyRoleResolver.normalizeRole(role);
+  Widget _resolveRoleBasedHomeView(String role, {bool isIndustrial = false}) {
+    final authState = context.read<AuthBloc>().state;
+    final currentUser = authState is AuthAuthenticated ? authState.user : null;
+    final normalized = PropertyRoleResolver.normalizeRole(
+      role,
+      scope: currentUser?.roleScope,
+      power: currentUser?.rolePower,
+      isIndustrial: isIndustrial,
+    );
     switch (normalized) {
       case 'owner':
         return OwnerDashboardView(
@@ -314,8 +337,16 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   }
 
 
-  Widget _resolveRoleBasedQrScanner(String role) {
-    if (PropertyRoleResolver.normalizeRole(role) == 'guard') {
+  Widget _resolveRoleBasedQrScanner(String role, {bool isIndustrial = false}) {
+    final authState = context.read<AuthBloc>().state;
+    final currentUser = authState is AuthAuthenticated ? authState.user : null;
+    final normalized = PropertyRoleResolver.normalizeRole(
+      role,
+      scope: currentUser?.roleScope,
+      power: currentUser?.rolePower,
+      isIndustrial: isIndustrial,
+    );
+    if (normalized == 'guard') {
       return GuardQrScannerScreen(
         isActive: _currentIndex == 5,
         onScanComplete: () => setState(() => _currentIndex = 0),
@@ -325,8 +356,15 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
     return const SizedBox.shrink();
   }
 
-  Widget _resolveRoleBasedHistoryView(String role) {
-    final normalized = PropertyRoleResolver.normalizeRole(role);
+  Widget _resolveRoleBasedHistoryView(String role, {bool isIndustrial = false}) {
+    final authState = context.read<AuthBloc>().state;
+    final currentUser = authState is AuthAuthenticated ? authState.user : null;
+    final normalized = PropertyRoleResolver.normalizeRole(
+      role,
+      scope: currentUser?.roleScope,
+      power: currentUser?.rolePower,
+      isIndustrial: isIndustrial,
+    );
     if (normalized == 'guard') {
       return const GuardHistoryScreen();
     }
@@ -337,10 +375,9 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
-        String activeRole = widget.userRole;
-        if (state is AuthAuthenticated) {
-          activeRole = state.sessionRole;
-        }
+        String activeRole = widget.userRole.isNotEmpty
+            ? widget.userRole
+            : (state is AuthAuthenticated ? state.sessionRole : 'resident');
 
         return Scaffold(
           extendBody: true,

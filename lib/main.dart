@@ -20,6 +20,8 @@ import 'features/community/bloc/community_post_bloc.dart';
 import 'features/visitor_management/bloc/guard_gate_bloc.dart';
 import 'core/di/injection_container.dart' as di;
 import 'core/services/firebase_messaging_service.dart';
+import 'core/services/property_config_service.dart';
+import 'features/auth/bloc/auth_state.dart';
 import 'core/services/deep_link_handler.dart';
 import 'features/visitor_management/bloc/visitor_bloc.dart';
 import 'features/visitor_management/bloc/industrial_visit_bloc.dart';
@@ -56,9 +58,9 @@ import 'core/observers/crashlytics_navigation_observer.dart';
 import 'package:asmita_society/l10n/app_localizations.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+GlobalKey<NavigatorState> get globalNavigatorKey => rootNavigatorKey;
 
 Future<void> main() async {
-  globalNavigatorKey = GlobalKey<NavigatorState>();
   runZonedGuarded(
     () async {
       WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -132,8 +134,6 @@ Future<void> main() async {
   );
 }
 
-GlobalKey<NavigatorState> globalNavigatorKey = GlobalKey<NavigatorState>();
-
 class AsmitaApp extends StatefulWidget {
   final bool isDeviceSafe;
 
@@ -160,9 +160,18 @@ class _AsmitaAppState extends State<AsmitaApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      final context = globalNavigatorKey.currentContext;
+      final context = rootNavigatorKey.currentContext;
       if (context != null) {
         context.read<AuthBloc>().add(AuthRefreshProfileRequested());
+        try {
+          final authState = context.read<AuthBloc>().state;
+          if (authState is AuthAuthenticated) {
+            final societyId = authState.user.societyId;
+            if (societyId != null) {
+              di.sl<PropertyConfigService>().loadConfigForSociety(societyId, forceRefresh: true);
+            }
+          }
+        } catch (_) {}
       }
     }
   }

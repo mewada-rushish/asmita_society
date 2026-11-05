@@ -6,14 +6,18 @@ class AuthResponse {
   final UserModel? data;
 
   String get role {
-    if (data?.systemRole != null && data!.systemRole!.isNotEmpty) {
-      return data!.systemRole!;
+    final pRole = data?.primaryRole.trim();
+    if (pRole != null && pRole.isNotEmpty && pRole.toLowerCase() != 'resident') {
+      return pRole;
     }
-    if (data?.secondaryRole != null && data!.secondaryRole!.isNotEmpty) {
-      return data!.secondaryRole!;
+    if (data?.systemRole != null && data!.systemRole!.trim().isNotEmpty) {
+      return data!.systemRole!.trim();
     }
-    if (data?.primaryRole.isNotEmpty == true) {
-      return data!.primaryRole;
+    if (data?.secondaryRole != null && data!.secondaryRole!.trim().isNotEmpty) {
+      return data!.secondaryRole!.trim();
+    }
+    if (pRole != null && pRole.isNotEmpty) {
+      return pRole;
     }
     return 'resident';
   }

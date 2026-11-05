@@ -337,13 +337,13 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                   avatar: Icon(
                     Icons.directions_walk,
                     size: 16,
-                    color: _selectedGateId == 1 ? Colors.white : AsmitaPalette.textDark,
+                    color: _selectedGateId == 1 ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   label: const Text('Gate 1 (Pedestrian)', overflow: TextOverflow.ellipsis),
                   selected: _selectedGateId == 1,
                   selectedColor: AsmitaPalette.deepNavy,
                   labelStyle: TextStyle(
-                    color: _selectedGateId == 1 ? Colors.white : AsmitaPalette.textDark,
+                    color: _selectedGateId == 1 ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
                   ),
@@ -358,13 +358,13 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                   avatar: Icon(
                     Icons.directions_car,
                     size: 16,
-                    color: _selectedGateId == 2 ? Colors.white : AsmitaPalette.textDark,
+                    color: _selectedGateId == 2 ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   label: const Text('Gate 2 (Parking)', overflow: TextOverflow.ellipsis),
                   selected: _selectedGateId == 2,
                   selectedColor: AsmitaPalette.deepNavy,
                   labelStyle: TextStyle(
-                    color: _selectedGateId == 2 ? Colors.white : AsmitaPalette.textDark,
+                    color: _selectedGateId == 2 ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
                   ),
