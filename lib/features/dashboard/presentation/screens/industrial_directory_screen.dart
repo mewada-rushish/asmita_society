@@ -192,110 +192,6 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Campus Hotline Section Header
-                  Text(
-                    'Campus Intercom & Hotlines',
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : AsmitaPalette.textDark,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Grid of quick calls linked directly to contact numbers (4 Mandatory Defaults or Custom)
-                  if (_dynamicHotlines.isNotEmpty) ...[
-                    for (int i = 0; i < _dynamicHotlines.length; i += 2) ...[
-                      Row(
-                        children: [
-                          _buildHotlineCard(
-                            title: (_dynamicHotlines[i]['title'] ?? 'Hotline').toString(),
-                            subtitle: (_dynamicHotlines[i]['subtitle'] ?? '').toString(),
-                            contactNumber: (_dynamicHotlines[i]['contact_number'] ?? '').toString(),
-                            extensionNumber: _dynamicHotlines[i]['extension']?.toString(),
-                            icon: _iconForHotline(
-                              (_dynamicHotlines[i]['title'] ?? '').toString(),
-                              (_dynamicHotlines[i]['category'] ?? '').toString(),
-                            ),
-                            color: _colorForHotline(
-                              (_dynamicHotlines[i]['title'] ?? '').toString(),
-                              (_dynamicHotlines[i]['category'] ?? '').toString(),
-                              isDark,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          if (i + 1 < _dynamicHotlines.length)
-                            _buildHotlineCard(
-                              title: (_dynamicHotlines[i + 1]['title'] ?? 'Hotline').toString(),
-                              subtitle: (_dynamicHotlines[i + 1]['subtitle'] ?? '').toString(),
-                              contactNumber: (_dynamicHotlines[i + 1]['contact_number'] ?? '').toString(),
-                              extensionNumber: _dynamicHotlines[i + 1]['extension']?.toString(),
-                              icon: _iconForHotline(
-                                (_dynamicHotlines[i + 1]['title'] ?? '').toString(),
-                                (_dynamicHotlines[i + 1]['category'] ?? '').toString(),
-                              ),
-                              color: _colorForHotline(
-                                (_dynamicHotlines[i + 1]['title'] ?? '').toString(),
-                                (_dynamicHotlines[i + 1]['category'] ?? '').toString(),
-                                isDark,
-                              ),
-                            )
-                          else
-                            const Expanded(child: SizedBox.shrink()),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                  ] else ...[
-                    // Fallback 4 Mandatory Campus Hotlines
-                    Row(
-                      children: [
-                        _buildHotlineCard(
-                          title: 'Front Desk',
-                          subtitle: 'Receptionist • Lobby',
-                          contactNumber: '+91 98201 10101',
-                          extensionNumber: '101',
-                          icon: Icons.support_agent_rounded,
-                          color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
-                        ),
-                        const SizedBox(width: 12),
-                        _buildHotlineCard(
-                          title: 'Main Gate 1',
-                          subtitle: 'Security Post • Gate 1',
-                          contactNumber: '+91 98201 10104',
-                          extensionNumber: '104',
-                          icon: Icons.shield_rounded,
-                          color: isDark ? const Color(0xFF818CF8) : const Color(0xFF1E40AF),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        _buildHotlineCard(
-                          title: 'Loading Bay',
-                          subtitle: 'Dock & Logistics • Bay 2',
-                          contactNumber: '+91 98201 10108',
-                          extensionNumber: '108',
-                          icon: Icons.local_shipping_rounded,
-                          color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
-                        ),
-                        const SizedBox(width: 12),
-                        _buildHotlineCard(
-                          title: 'Emergency',
-                          subtitle: 'Safety & Rapid Response',
-                          contactNumber: '+91 98201 10911',
-                          extensionNumber: '911',
-                          icon: Icons.emergency_rounded,
-                          color: isDark ? const Color(0xFFF87171) : AsmitaPalette.actionRed,
-                        ),
-                      ],
-                    ),
-                  ],
-
-                  const SizedBox(height: 14),
-
                   // Host Delegation Card (Compact Executive Bar)
                   Container(
                     decoration: BoxDecoration(
@@ -434,8 +330,111 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
 
+                  // Campus Hotline Section Header
+                  Text(
+                    'Campus Intercom & Hotlines',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : AsmitaPalette.textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Grid of quick calls linked directly to contact numbers (4 Mandatory Defaults or Custom)
+                  if (_dynamicHotlines.isNotEmpty) ...[
+                    for (int i = 0; i < _dynamicHotlines.length; i += 2) ...[
+                      Row(
+                        children: [
+                          _buildHotlineCard(
+                            title: (_dynamicHotlines[i]['title'] ?? 'Hotline').toString(),
+                            subtitle: (_dynamicHotlines[i]['subtitle'] ?? '').toString(),
+                            contactNumber: (_dynamicHotlines[i]['contact_number'] ?? '').toString(),
+                            extensionNumber: _dynamicHotlines[i]['extension']?.toString(),
+                            icon: _iconForHotline(
+                              (_dynamicHotlines[i]['title'] ?? '').toString(),
+                              (_dynamicHotlines[i]['category'] ?? '').toString(),
+                            ),
+                            color: _colorForHotline(
+                              (_dynamicHotlines[i]['title'] ?? '').toString(),
+                              (_dynamicHotlines[i]['category'] ?? '').toString(),
+                              isDark,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          if (i + 1 < _dynamicHotlines.length)
+                            _buildHotlineCard(
+                              title: (_dynamicHotlines[i + 1]['title'] ?? 'Hotline').toString(),
+                              subtitle: (_dynamicHotlines[i + 1]['subtitle'] ?? '').toString(),
+                              contactNumber: (_dynamicHotlines[i + 1]['contact_number'] ?? '').toString(),
+                              extensionNumber: _dynamicHotlines[i + 1]['extension']?.toString(),
+                              icon: _iconForHotline(
+                                (_dynamicHotlines[i + 1]['title'] ?? '').toString(),
+                                (_dynamicHotlines[i + 1]['category'] ?? '').toString(),
+                              ),
+                              color: _colorForHotline(
+                                (_dynamicHotlines[i + 1]['title'] ?? '').toString(),
+                                (_dynamicHotlines[i + 1]['category'] ?? '').toString(),
+                                isDark,
+                              ),
+                            )
+                          else
+                            const Expanded(child: SizedBox.shrink()),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                  ] else ...[
+                    // Fallback 4 Mandatory Campus Hotlines
+                    Row(
+                      children: [
+                        _buildHotlineCard(
+                          title: 'Front Desk',
+                          subtitle: 'Receptionist • Lobby',
+                          contactNumber: '+91 98201 10101',
+                          extensionNumber: '101',
+                          icon: Icons.support_agent_rounded,
+                          color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                        ),
+                        const SizedBox(width: 12),
+                        _buildHotlineCard(
+                          title: 'Main Gate 1',
+                          subtitle: 'Security Post • Gate 1',
+                          contactNumber: '+91 98201 10104',
+                          extensionNumber: '104',
+                          icon: Icons.shield_rounded,
+                          color: isDark ? const Color(0xFF818CF8) : const Color(0xFF1E40AF),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        _buildHotlineCard(
+                          title: 'Loading Bay',
+                          subtitle: 'Dock & Logistics • Bay 2',
+                          contactNumber: '+91 98201 10108',
+                          extensionNumber: '108',
+                          icon: Icons.local_shipping_rounded,
+                          color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
+                        ),
+                        const SizedBox(width: 12),
+                        _buildHotlineCard(
+                          title: 'Emergency',
+                          subtitle: 'Safety & Rapid Response',
+                          contactNumber: '+91 98201 10911',
+                          extensionNumber: '911',
+                          icon: Icons.emergency_rounded,
+                          color: isDark ? const Color(0xFFF87171) : AsmitaPalette.actionRed,
+                        ),
+                      ],
+                    ),
+                  ],
+
+                  const SizedBox(height: 14),
                   // Invite Team Member Action Card
                   Container(
                     decoration: BoxDecoration(
