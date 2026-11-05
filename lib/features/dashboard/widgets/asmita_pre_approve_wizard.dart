@@ -1260,7 +1260,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     final fallbackUnitId = flat?.flatId;
 
     final enteredName = _visitorNameController.text.trim();
-    if (isIndustrial && enteredName.isEmpty) {
+    if (isIndustrial && _selectedCategory == 'Guest' && enteredName.isEmpty) {
       AsmitaToast.show(
         context,
         message: 'Visitor Name is mandatory for industrial campus pre-approvals.',
@@ -3113,7 +3113,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           const SizedBox(height: 16),
         ],
 
-        if (isIndustrial || _selectedCategory == 'Guest') ...[
+        if (_selectedCategory == 'Guest') ...[
           _buildScheduleMeetToggle(),
           const SizedBox(height: 14),
           if (_isScheduleMeet) ...[
