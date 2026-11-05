@@ -69,6 +69,19 @@ class CheckInPassEvent extends IndustrialVisitEvent {
   List<Object?> get props => [visitId, gateId, passCode];
 }
 
+class SendToLobbyEvent extends IndustrialVisitEvent {
+  final int visitId;
+  final String? floor;
+
+  const SendToLobbyEvent({
+    required this.visitId,
+    this.floor,
+  });
+
+  @override
+  List<Object?> get props => [visitId, floor];
+}
+
 class CheckOutPassEvent extends IndustrialVisitEvent {
   final int visitId;
   final int gateId;
