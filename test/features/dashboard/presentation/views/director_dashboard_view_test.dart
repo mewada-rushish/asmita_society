@@ -136,11 +136,11 @@ void main() {
       expect(find.text('Executive Director'), findsWidgets);
       expect(find.text('Executive Office'), findsWidgets);
 
-      // 2. Quick Actions
+      // 2. Quick Actions (Pre-Approve, Car Valet, Security, BillPay)
       expect(find.text('Pre-Approve'), findsOneWidget);
       expect(find.text('Car Valet'), findsOneWidget);
       expect(find.text('Security'), findsOneWidget);
-      expect(find.text('Receptionist'), findsOneWidget);
+      expect(find.text('BillPay'), findsOneWidget);
 
       // 3. 4 Metric Cards (Total, Pending, Approved, Inside)
       expect(find.text('Total'), findsOneWidget);
@@ -192,42 +192,15 @@ void main() {
       expect(selectedFilter, equals('ALL'));
     });
 
-    testWidgets('calls onContactReceptionist when provided', (tester) async {
-      setMobileScreen(tester);
-      bool contacted = false;
-      await tester.pumpWidget(
-        buildTestableWidget(
-          visits: const [],
-          onContactReceptionist: () => contacted = true,
-        ),
-      );
-      await tester.pump();
-
-      await tester.tap(find.text('Receptionist'));
-      expect(contacted, isTrue);
-    });
-
-    testWidgets('opens Floor Support Hotline sheet when onContactReceptionist is omitted', (tester) async {
+    testWidgets('renders all 4 quick action buttons (Pre-Approve, Car Valet, Security, BillPay)', (tester) async {
       setMobileScreen(tester);
       await tester.pumpWidget(buildTestableWidget(visits: const []));
       await tester.pump();
 
-      // Tap Receptionist button
-      await tester.tap(find.text('Receptionist'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(find.text('Floor Support Hotline'), findsOneWidget);
-      expect(find.text('Main Reception Desk'), findsOneWidget);
-      expect(find.text('Gate 1 Security Control'), findsOneWidget);
-
-      // Tap Call
-      await tester.tap(find.text('Call').first);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(find.text('Floor Support Hotline'), findsNothing);
-      expect(find.text('Calling Main Reception (Ext 101)...'), findsOneWidget);
+      expect(find.text('Pre-Approve'), findsOneWidget);
+      expect(find.text('Car Valet'), findsOneWidget);
+      expect(find.text('Security'), findsOneWidget);
+      expect(find.text('BillPay'), findsOneWidget);
     });
 
     testWidgets('triggers callbacks for approve and reject from visit details modal', (tester) async {
