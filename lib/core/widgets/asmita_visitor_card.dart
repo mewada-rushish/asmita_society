@@ -39,6 +39,9 @@ class AsmitaVisitorCard extends StatelessWidget {
   /// Whether this is a VIP guest
   final bool isVip;
 
+  /// Whether to display the subtitle purpose/category text next to the badge on the card header
+  final bool showSubtitle;
+
   /// Whether the visit is outside authorized schedule
   final bool isOutsideSchedule;
 
@@ -102,6 +105,7 @@ class AsmitaVisitorCard extends StatelessWidget {
     this.avatarGradient,
     this.isPreApproved = false,
     this.isVip = false,
+    this.showSubtitle = true,
     this.isOutsideSchedule = false,
     this.timeAndDate,
     this.metaLabel,
@@ -129,6 +133,7 @@ class AsmitaVisitorCard extends StatelessWidget {
     Key? key,
     required IndustrialVisitModel visit,
     BuildContext? context,
+    bool showSubtitle = true,
     VoidCallback? onTap,
     VoidCallback? onApprove,
     String? approveLabel,
@@ -188,6 +193,7 @@ class AsmitaVisitorCard extends StatelessWidget {
               : Icons.person_rounded),
       isPreApproved: visit.isPreApproved,
       isVip: visit.isVip,
+      showSubtitle: showSubtitle,
       timeAndDate: timeAndDate,
       metaLabel: metaLabel,
       metaValue: metaValue,
@@ -463,6 +469,15 @@ class AsmitaVisitorCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   children: [
+                    if (visit.cleanPurpose.isNotEmpty) ...[
+                      _buildModalRow(
+                        ctx,
+                        icon: Icons.info_outline_rounded,
+                        label: 'Purpose of Visit',
+                        value: visit.cleanPurpose,
+                      ),
+                      const Divider(height: 1),
+                    ],
                     _buildModalRow(
                       ctx,
                       icon: Icons.business_rounded,
@@ -798,7 +813,7 @@ class AsmitaVisitorCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 6),
                               ],
-                              if (subtitle != null && subtitle!.isNotEmpty)
+                              if (showSubtitle && subtitle != null && subtitle!.isNotEmpty)
                                 Flexible(
                                   child: Text(
                                     subtitle!,
