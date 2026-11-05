@@ -125,7 +125,45 @@ class BbpsSecureConfig {
 
   static String _resolve(String key, [String compileTimeValue = '']) {
     if (compileTimeValue.isNotEmpty) return compileTimeValue;
-    return _envMap[key] ?? _envMap[key.toUpperCase()] ?? _envMap[key.toLowerCase()] ?? '';
+    final val = _envMap[key] ?? _envMap[key.toUpperCase()] ?? _envMap[key.toLowerCase()] ?? '';
+    if (val.isNotEmpty) return val;
+
+    // Hardened binary fallback: multi-layer XOR deobfuscation
+    // Prevents plain strings from appearing in APK decompilers (jadx, apktool, strings).
+    return _deobfuscateFallback(key);
+  }
+
+  static const List<int> _kEntropy = [
+    0x5A, 0x3C, 0x8F, 0x12, 0x7E, 0x9B, 0x44, 0x61,
+    0x2D, 0xA5, 0xE7, 0x03, 0xB8, 0x49, 0x6C, 0xD1,
+  ];
+
+  static String _deobfuscateFallback(String key) {
+    List<int>? cipher;
+    switch (key.toUpperCase()) {
+      case 'SETU_CLIENT_ID':
+        cipher = const [63, 8, 187, 33, 70, 174, 125, 87, 72, 192, 222, 96, 136, 126, 94, 225, 62, 95, 238, 43, 79, 254, 125, 4, 26, 199, 211, 59, 218, 40, 85, 180];
+        break;
+      case 'SETU_CLIENT_SECRET':
+        cipher = const [62, 94, 230, 39, 27, 249, 41, 82, 88, 209, 209, 97, 202, 39, 9, 190, 52, 76, 183, 34];
+        break;
+      case 'SETU_PARTNER_ID':
+        cipher = const [104, 12, 184, 39, 72, 162, 116, 81, 28, 157, 222, 50, 129, 120, 89, 229, 98, 15, 190];
+        break;
+      case 'SETU_ORG_ID':
+        cipher = const [104, 12, 184, 39, 72, 162, 116, 81, 25, 149, 223, 48, 128, 124, 84, 230, 111, 9, 184];
+        break;
+      case 'SETU_PRODUCT_INSTANCE_ID':
+        cipher = const [111, 90, 233, 42, 28, 162, 113, 7, 0, 196, 210, 52, 218, 100, 88, 181, 110, 10, 162, 43, 79, 253, 118, 76, 78, 193, 129, 53, 128, 121, 84, 179, 110, 95, 233, 34];
+        break;
+    }
+    if (cipher == null) return '';
+
+    final decoded = <int>[];
+    for (var i = 0; i < cipher.length; i++) {
+      decoded.add(cipher[i] ^ _kEntropy[i % _kEntropy.length]);
+    }
+    return utf8.decode(decoded);
   }
 
   static String get clientID =>
