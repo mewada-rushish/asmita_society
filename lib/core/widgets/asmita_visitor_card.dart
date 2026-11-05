@@ -313,63 +313,57 @@ class AsmitaVisitorCard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      visit.isDelivery
-                                          ? '${visit.deliveryCompany ?? "Courier"} Delivery'
-                                          : (visit.cleanVisitorName.isNotEmpty ? visit.cleanVisitorName : 'Guest Visitor'),
-                                      style: const TextStyle(
-                                        fontFamily: 'Montserrat',
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  if (visit.isVip) ...[
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                      decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                        ),
-                                        borderRadius: BorderRadius.circular(6),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
-                                            blurRadius: 6,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: const Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(Icons.workspace_premium_rounded, size: 12, color: Colors.white),
-                                          SizedBox(width: 3),
-                                          Text(
-                                            'VIP',
-                                            style: TextStyle(
-                                              fontFamily: 'Montserrat',
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w800,
-                                              color: Colors.white,
-                                              letterSpacing: 0.6,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ],
+                              Text(
+                                visit.isDelivery
+                                    ? '${visit.deliveryCompany ?? "Courier"} Delivery'
+                                    : (visit.cleanVisitorName.isNotEmpty ? visit.cleanVisitorName : 'Guest Visitor'),
+                                style: const TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
+                              if (visit.isVip) ...[
+                                const SizedBox(height: 5),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.workspace_premium_rounded, size: 12, color: Colors.white),
+                                      SizedBox(width: 3),
+                                      Text(
+                                        'VIP',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
+                                          letterSpacing: 0.6,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
