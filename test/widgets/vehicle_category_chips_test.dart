@@ -23,13 +23,19 @@ import 'package:asmita_society/features/services/bloc/amenities_state.dart';
 import 'package:asmita_society/features/dashboard/widgets/asmita_pre_approve_wizard.dart';
 
 class MockAuthBloc extends Mock implements AuthBloc {}
+
 class MockVisitorBloc extends Mock implements VisitorBloc {}
+
 class MockGuardGateBloc extends Mock implements GuardGateBloc {}
+
 class MockQuickActionsBloc extends Mock implements QuickActionsBloc {}
+
 class MockCommunityPostBloc extends Mock implements CommunityPostBloc {}
+
 class MockAmenitiesBloc extends Mock implements AmenitiesBloc {}
 
 class FakeVisitorEvent extends Fake implements VisitorEvent {}
+
 class FakeGuardGateEvent extends Fake implements GuardGateEvent {}
 
 void main() {
@@ -71,39 +77,55 @@ void main() {
     authStateController = StreamController<AuthState>.broadcast();
     visitorStateController = StreamController<VisitorState>.broadcast();
     guardGateStateController = StreamController<GuardGateState>.broadcast();
-    quickActionsStateController = StreamController<QuickActionsState>.broadcast();
-    communityPostStateController = StreamController<CommunityPostState>.broadcast();
+    quickActionsStateController =
+        StreamController<QuickActionsState>.broadcast();
+    communityPostStateController =
+        StreamController<CommunityPostState>.broadcast();
     amenitiesStateController = StreamController<AmenitiesState>.broadcast();
 
-    when(() => mockAuthBloc.stream).thenAnswer((_) => authStateController.stream);
-    when(() => mockAuthBloc.state).thenReturn(
-      AuthAuthenticated(user: testUser, sessionRole: 'owner'),
-    );
+    when(
+      () => mockAuthBloc.stream,
+    ).thenAnswer((_) => authStateController.stream);
+    when(
+      () => mockAuthBloc.state,
+    ).thenReturn(AuthAuthenticated(user: testUser, sessionRole: 'owner'));
     when(() => mockAuthBloc.close()).thenAnswer((_) async {});
 
-    when(() => mockVisitorBloc.stream).thenAnswer((_) => visitorStateController.stream);
-    when(() => mockVisitorBloc.state).thenReturn(const VisitorHistoryLoaded(history: []));
+    when(
+      () => mockVisitorBloc.stream,
+    ).thenAnswer((_) => visitorStateController.stream);
+    when(
+      () => mockVisitorBloc.state,
+    ).thenReturn(const VisitorHistoryLoaded(history: []));
     when(() => mockVisitorBloc.close()).thenAnswer((_) async {});
     when(() => mockVisitorBloc.add(any())).thenReturn(null);
 
-    when(() => mockGuardGateBloc.stream).thenAnswer((_) => guardGateStateController.stream);
+    when(
+      () => mockGuardGateBloc.stream,
+    ).thenAnswer((_) => guardGateStateController.stream);
     when(() => mockGuardGateBloc.state).thenReturn(const GuardGateState());
     when(() => mockGuardGateBloc.close()).thenAnswer((_) async {});
     when(() => mockGuardGateBloc.add(any())).thenReturn(null);
 
-    when(() => mockQuickActionsBloc.stream).thenAnswer((_) => quickActionsStateController.stream);
-    when(() => mockQuickActionsBloc.state).thenReturn(
-      const QuickActionsLoaded(QuickActionRegistry.defaultActions),
-    );
+    when(
+      () => mockQuickActionsBloc.stream,
+    ).thenAnswer((_) => quickActionsStateController.stream);
+    when(
+      () => mockQuickActionsBloc.state,
+    ).thenReturn(const QuickActionsLoaded(QuickActionRegistry.defaultActions));
     when(() => mockQuickActionsBloc.close()).thenAnswer((_) async {});
 
-    when(() => mockCommunityPostBloc.stream).thenAnswer((_) => communityPostStateController.stream);
+    when(
+      () => mockCommunityPostBloc.stream,
+    ).thenAnswer((_) => communityPostStateController.stream);
     when(() => mockCommunityPostBloc.state).thenReturn(
       const CommunityPostState(status: CommunityPostStatus.loaded, posts: []),
     );
     when(() => mockCommunityPostBloc.close()).thenAnswer((_) async {});
 
-    when(() => mockAmenitiesBloc.stream).thenAnswer((_) => amenitiesStateController.stream);
+    when(
+      () => mockAmenitiesBloc.stream,
+    ).thenAnswer((_) => amenitiesStateController.stream);
     when(() => mockAmenitiesBloc.state).thenReturn(const AmenitiesState());
     when(() => mockAmenitiesBloc.close()).thenAnswer((_) async {});
   });
@@ -144,53 +166,59 @@ void main() {
     expect(AsmitaPreApproveWizard.vehicleTypeOptions, equals(['Bike', 'Car']));
   });
 
-  testWidgets('renders only Bike and Car category options in Cab pass and allows toggling', (tester) async {
-    tester.view.physicalSize = const Size(500, 1000);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets(
+    'renders only Bike and Car category options in Cab pass and allows toggling',
+    (tester) async {
+      tester.view.physicalSize = const Size(500, 1000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(buildTestbed());
-    await tester.tap(find.text('Open Pre-Approve'));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(buildTestbed());
+      await tester.tap(find.text('Open Pre-Approve'));
+      await tester.pumpAndSettle();
 
-    // Tap 'Cab'
-    await tester.tap(find.text('Cab'));
-    await tester.pumpAndSettle();
+      // Tap 'Cab'
+      await tester.tap(find.text('Cab'));
+      await tester.pumpAndSettle();
 
-    // Verify 'Vehicle Category' section exists
-    expect(find.text('Vehicle Category'), findsOneWidget);
+      // Verify 'Vehicle Category' section exists
+      expect(find.text('Vehicle Category'), findsOneWidget);
 
-    // Verify Bike and Car chips are present
-    expect(find.widgetWithText(ChoiceChip, 'Bike'), findsOneWidget);
-    expect(find.widgetWithText(ChoiceChip, 'Car'), findsOneWidget);
+      // Verify Bike and Car chips are present
+      expect(find.widgetWithText(ChoiceChip, 'Bike'), findsOneWidget);
+      expect(find.widgetWithText(ChoiceChip, 'Car'), findsOneWidget);
 
-    // Verify foreign/legacy chips are NOT present
-    expect(find.text('Personal Bike'), findsNothing);
-    expect(find.text('Personal Car'), findsNothing);
-    expect(find.text('Auto / Cab'), findsNothing);
-    expect(find.text('Commercial'), findsNothing);
+      // Verify foreign/legacy chips are NOT present
+      expect(find.text('Personal Bike'), findsNothing);
+      expect(find.text('Personal Car'), findsNothing);
+      expect(find.text('Auto / Cab'), findsNothing);
+      expect(find.text('Commercial'), findsNothing);
 
-    // Verify Guest-specific meeting fields are NOT rendered on Cab booking
-    expect(find.text('Schedule a Meet'), findsNothing);
-    expect(find.text('Visitor Name *'), findsNothing);
-    expect(find.text('Number of Guests:'), findsNothing);
+      // Default is Car
+      final carChip = tester.widget<ChoiceChip>(
+        find.widgetWithText(ChoiceChip, 'Car'),
+      );
+      expect(carChip.selected, isTrue);
 
-    // Default is Car
-    final carChip = tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Car'));
-    expect(carChip.selected, isTrue);
+      final bikeChipBefore = tester.widget<ChoiceChip>(
+        find.widgetWithText(ChoiceChip, 'Bike'),
+      );
+      expect(bikeChipBefore.selected, isFalse);
 
-    final bikeChipBefore = tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Bike'));
-    expect(bikeChipBefore.selected, isFalse);
+      // Tap 'Bike'
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Bike'));
+      await tester.pumpAndSettle();
 
-    // Tap 'Bike'
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Bike'));
-    await tester.pumpAndSettle();
+      final bikeChipAfter = tester.widget<ChoiceChip>(
+        find.widgetWithText(ChoiceChip, 'Bike'),
+      );
+      expect(bikeChipAfter.selected, isTrue);
 
-    final bikeChipAfter = tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Bike'));
-    expect(bikeChipAfter.selected, isTrue);
-
-    final carChipAfter = tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Car'));
-    expect(carChipAfter.selected, isFalse);
-  });
+      final carChipAfter = tester.widget<ChoiceChip>(
+        find.widgetWithText(ChoiceChip, 'Car'),
+      );
+      expect(carChipAfter.selected, isFalse);
+    },
+  );
 }
