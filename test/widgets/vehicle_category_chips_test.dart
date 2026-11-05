@@ -171,6 +171,11 @@ void main() {
     expect(find.text('Auto / Cab'), findsNothing);
     expect(find.text('Commercial'), findsNothing);
 
+    // Verify Guest-specific meeting fields are NOT rendered on Cab booking
+    expect(find.text('Schedule a Meet'), findsNothing);
+    expect(find.text('Visitor Name *'), findsNothing);
+    expect(find.text('Number of Guests:'), findsNothing);
+
     // Default is Car
     final carChip = tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Car'));
     expect(carChip.selected, isTrue);
