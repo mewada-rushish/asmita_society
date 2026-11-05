@@ -428,7 +428,7 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(color: Theme.of(context).dividerColor),
                           ),

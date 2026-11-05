@@ -81,9 +81,14 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
           .replaceAll(RegExp(r'th|st|nd|rd'), '')
           .trim();
 
+      final propertyId = currentUser?.societyId ?? 115;
+
       // 1. Fetch current user delegation status
       try {
-        final statusRes = await dio.get(EnvConfig.employeeDelegationStatus);
+        final statusRes = await dio.get(
+          EnvConfig.employeeDelegationStatus,
+          queryParameters: {'property_id': propertyId},
+        );
         if (statusRes.statusCode == 200 && statusRes.data['success'] == true) {
           final dData = statusRes.data['data'] as Map<String, dynamic>?;
           if (dData != null) {
@@ -119,6 +124,9 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         if (widget.departmentId != null) {
           queryParams['department_id'] = widget.departmentId;
         }
+        queryParams['property_id'] = propertyId;
+        queryParams['societyId'] = propertyId;
+
         final response = await dio.get(
           EnvConfig.employeeDelegationColleagues,
           queryParameters: queryParams.isNotEmpty ? queryParams : null,
@@ -140,6 +148,9 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
           if (widget.departmentId != null) {
             queryParams['departmentId'] = widget.departmentId;
           }
+          queryParams['property_id'] = propertyId;
+          queryParams['propertyId'] = propertyId;
+
           final legacyRes = await dio.get(
             EnvConfig.candidateDelegates,
             queryParameters: queryParams.isNotEmpty ? queryParams : null,
@@ -188,12 +199,12 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
             (m['role_details'] is Map && m['role_details']['is_delegatee'] == false);
         if (isExplicitlyDisabled) return false;
 
-        // 4. Candidate role power MUST be strictly lower than delegator
+        // 4. Candidate role power MUST NOT be greater than delegator (peers with equal power are allowed)
         final candidatePower = m['power'] is int
             ? m['power'] as int
             : int.tryParse(m['power']?.toString() ?? '') ?? 100;
 
-        if (userPower < 500 && candidatePower >= userPower) {
+        if (userPower < 500 && candidatePower > userPower) {
           return false;
         }
 
@@ -331,10 +342,16 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
     try {
       final dio = AsmitaDioClient(SecureStorageService()).dio;
+      final authState = context.read<AuthBloc>().state;
+      final currentUser = authState is AuthAuthenticated ? authState.user : null;
+      final propertyId = currentUser?.societyId ?? 115;
 
       if (!_isDelegationEnabled) {
         // Revoke active delegation
-        await dio.delete(EnvConfig.employeeDelegation);
+        await dio.delete(
+          EnvConfig.employeeDelegation,
+          queryParameters: {'property_id': propertyId},
+        );
         if (mounted) {
           AsmitaToast.show(
             context,
@@ -350,6 +367,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         'delegate_user_id': _selectedDelegateId,
         'start_date': _startDate.toIso8601String(),
         'end_date': _isTillTurnOff ? null : _endDate?.toIso8601String(),
+        'property_id': propertyId,
       };
 
       final response = await dio.post(
