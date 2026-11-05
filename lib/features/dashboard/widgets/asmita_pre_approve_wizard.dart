@@ -1879,37 +1879,45 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         ),
         const SizedBox(height: 20),
 
-        // 2. Segmented Pill TabBar
+        // 2. Segmented Pill TabBar with clear active contrast
         Container(
           height: 48,
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainer,
-            borderRadius: BorderRadius.circular(12),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AsmitaPalette.surfaceDark
+                : const Color(0xFFF1F4F9),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AsmitaPalette.borderGreyDark
+                  : const Color(0xFFE2E8F0),
+              width: 1.0,
+            ),
           ),
           child: TabBar(
             controller: _tabController,
             dividerColor: Colors.transparent,
             indicatorSize: TabBarIndicatorSize.tab,
             indicator: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? AsmitaPalette.surfaceDark
-                  : Colors.white,
-              borderRadius: BorderRadius.circular(8),
+              color: AsmitaPalette.deepNavy,
+              borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
+                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.28),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
-            labelColor: AsmitaPalette.deepNavy,
-            unselectedLabelColor: AsmitaPalette.textLight,
+            labelColor: Colors.white,
+            unselectedLabelColor: Theme.of(context).brightness == Brightness.dark
+                ? AsmitaPalette.textDarkModeMuted
+                : const Color(0xFF64748B),
             labelStyle: const TextStyle(
               fontFamily: 'Montserrat',
               fontSize: 14,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
             ),
             unselectedLabelStyle: const TextStyle(
               fontFamily: 'Montserrat',
