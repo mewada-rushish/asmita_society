@@ -10,7 +10,7 @@ import '../../../../core/config/env_config.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/security/secure_storage_service.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_sub_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
@@ -36,6 +36,7 @@ class DepartmentDelegationScreen extends StatefulWidget {
 
 class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen> {
   bool _isDelegationEnabled = false;
+  bool _hasUserManuallyToggled = false;
   int? _selectedDelegateId;
   bool _isTillTurnOff = true;
   DateTime _startDate = DateTime.now();
@@ -96,7 +97,6 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
             _incomingDelegations = (dData['incomingDelegations'] as List? ?? [])
                 .map((x) => Map<String, dynamic>.from(x as Map))
                 .toList();
-            _isDelegationEnabled = _activeOutgoing != null;
             if (_activeOutgoing != null) {
               _isDelegationEnabled = true;
               _selectedDelegateId = _activeOutgoing!['delegate_user_id'] as int?;
@@ -107,6 +107,8 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
               if (_activeOutgoing!['end_date'] != null) {
                 _endDate = DateTime.tryParse(_activeOutgoing!['end_date'].toString());
               }
+            } else if (!_hasUserManuallyToggled) {
+              _isDelegationEnabled = false;
             }
           }
         }
@@ -583,7 +585,11 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                             activeTrackColor: AsmitaPalette.deepNavy,
                             onChanged: (val) {
                               HapticFeedback.selectionClick();
+                              _hasUserManuallyToggled = true;
                               setState(() => _isDelegationEnabled = val);
+                              if (val && _candidates.isEmpty && !_isLoadingStaff) {
+                                _fetchCandidateDelegates(isSilent: false);
+                              }
                             },
                           ),
                         ],
@@ -670,17 +676,9 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                       ),
                       const SizedBox(height: 14),
 
-                      if (_isLoadingStaff)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 24),
-                          child: Center(
-                            child: AsmitaLoadingIndicator(
-                              color: AsmitaPalette.deepNavy,
-                              size: 28,
-                            ),
-                          ),
-                        )
-                      else ...[
+                      if (_isLoadingStaff) ...[
+                        _buildSkeletalDelegateList(context),
+                      ] else ...[
                         Builder(
                           builder: (context) {
                             final filtered = _candidates.where((c) {
@@ -988,6 +986,134 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSkeletalDelegateList(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? Colors.grey[800]! : Colors.grey[200]!;
+    final highlightColor = isDark ? Colors.grey[700]! : Colors.grey[100]!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Skeletal Category Chips
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const NeverScrollableScrollPhysics(),
+          child: Shimmer.fromColors(
+            baseColor: baseColor,
+            highlightColor: highlightColor,
+            child: Row(
+              children: [
+                Container(
+                  width: 64,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  width: 110,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  width: 84,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // Skeletal Staff Cards
+        ...List.generate(3, (index) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Theme.of(context).dividerColor),
+            ),
+            child: Shimmer.fromColors(
+              baseColor: baseColor,
+              highlightColor: highlightColor,
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 120,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              width: 60,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          width: 100,
+                          height: 11,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
     );
   }
 
