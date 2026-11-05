@@ -308,7 +308,51 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   bool _surpriseDelivery = false;
   bool _secureCabMode = false;
   bool _isVipGuestPass = false;
+  bool _isScheduleMeet = false;
   final TextEditingController _cabNoController = TextEditingController();
+
+  static const List<TimeOfDay> _meetingTimeSlots = [
+    TimeOfDay(hour: 9, minute: 0),
+    TimeOfDay(hour: 9, minute: 30),
+    TimeOfDay(hour: 10, minute: 0),
+    TimeOfDay(hour: 10, minute: 30),
+    TimeOfDay(hour: 11, minute: 0),
+    TimeOfDay(hour: 11, minute: 30),
+    TimeOfDay(hour: 12, minute: 0),
+    TimeOfDay(hour: 12, minute: 30),
+    TimeOfDay(hour: 13, minute: 0),
+    TimeOfDay(hour: 13, minute: 30),
+    TimeOfDay(hour: 14, minute: 0),
+    TimeOfDay(hour: 14, minute: 30),
+    TimeOfDay(hour: 15, minute: 0),
+    TimeOfDay(hour: 15, minute: 30),
+    TimeOfDay(hour: 16, minute: 0),
+    TimeOfDay(hour: 16, minute: 30),
+    TimeOfDay(hour: 17, minute: 0),
+    TimeOfDay(hour: 17, minute: 30),
+    TimeOfDay(hour: 18, minute: 0),
+    TimeOfDay(hour: 18, minute: 30),
+    TimeOfDay(hour: 19, minute: 0),
+  ];
+
+  static String _formatMeetingTime(TimeOfDay time) {
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$hour:$minute $period';
+  }
+
+  static TimeOfDay _ensureValidMeetingSlot(TimeOfDay current) {
+    final curMinutes = current.hour * 60 + current.minute;
+    const minMinutes = 9 * 60; // 9:00 AM
+    const maxMinutes = 19 * 60; // 7:00 PM
+    if (curMinutes < minMinutes || curMinutes > maxMinutes) {
+      return const TimeOfDay(hour: 10, minute: 0);
+    }
+    final rounded = ((curMinutes + 14) ~/ 30) * 30;
+    final clamped = rounded.clamp(minMinutes, maxMinutes);
+    return TimeOfDay(hour: clamped ~/ 60, minute: clamped % 60);
+  }
 
   bool _leaveAtGate = false;
   bool _showAdvancedOptions = false;
@@ -1167,9 +1211,15 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     final bool isOnce = _tabController.index == 0;
 
     final combinedStartTime = DateTime(
-      isOnce ? DateTime.now().year : _selectedDate.year,
-      isOnce ? DateTime.now().month : _selectedDate.month,
-      isOnce ? DateTime.now().day : _selectedDate.day,
+      isOnce
+          ? (_isScheduleMeet ? _selectedDate.year : DateTime.now().year)
+          : _selectedDate.year,
+      isOnce
+          ? (_isScheduleMeet ? _selectedDate.month : DateTime.now().month)
+          : _selectedDate.month,
+      isOnce
+          ? (_isScheduleMeet ? _selectedDate.day : DateTime.now().day)
+          : _selectedDate.day,
       _selectedTime.hour,
       _selectedTime.minute,
     );
@@ -1234,9 +1284,12 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         ? 'delivery'
         : (isCabOrVehicle ? 'cab' : 'guest');
 
+    final defaultGuestPurpose = _isScheduleMeet
+        ? 'Scheduled Meeting'
+        : (_isVipGuestPass ? 'VIP Visit' : 'Personal Visit');
     final basePurpose = _purposeController.text.trim().isNotEmpty
         ? _purposeController.text.trim()
-        : (isVendor ? 'Maintenance & Repair' : (_selectedCategory == 'Guest' ? (_isVipGuestPass ? 'VIP Visit' : 'Personal Visit') : _selectedCategory));
+        : (isVendor ? 'Maintenance & Repair' : (_selectedCategory == 'Guest' ? defaultGuestPurpose : _selectedCategory));
     final invitePurpose = isDelivery
         ? 'Delivery / Courier Drop'
         : (_isVipGuestPass ? '[VIP] $basePurpose' : basePurpose);
@@ -1250,10 +1303,10 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 : _selectedCompany));
 
     final baseTitle = enteredName.isNotEmpty
-        ? '$enteredName Pass'
+        ? (_isScheduleMeet ? '$enteredName Meeting' : '$enteredName Pass')
         : (isDelivery
             ? '$companyName Delivery Pass'
-            : '$_selectedCategory Invite');
+            : (_isScheduleMeet ? 'Scheduled Meeting Invite' : '$_selectedCategory Invite'));
     final inviteTitle = _isVipGuestPass ? '[VIP] $baseTitle' : baseTitle;
 
     final payload = {
@@ -1729,7 +1782,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurface),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   filled: true,
-                  fillColor: Colors.grey.shade100,
+                  fillColor: Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -2793,7 +2846,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   : const Color(0xFFFFFBEB))
               : (isDark
                   ? AsmitaPalette.surfaceDark
-                  : const Color(0xFFF9FAFB)),
+                  : Colors.white),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: _isVipGuestPass
@@ -3061,6 +3114,12 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         ],
 
         if (isIndustrial || _selectedCategory == 'Guest') ...[
+          _buildScheduleMeetToggle(),
+          const SizedBox(height: 14),
+          if (_isScheduleMeet) ...[
+            _buildScheduleMeetDateTimeInputs(),
+            const SizedBox(height: 14),
+          ],
           AsmitaTextField(
             controller: _visitorNameController,
             label: isIndustrial ? 'Visitor Name *' : 'Guest / Visitor Name (Optional)',
@@ -3089,13 +3148,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           _buildPurposeSection(),
           const SizedBox(height: 16),
           _buildVipPassToggle(),
-          const SizedBox(height: 8),
-          _buildBottomSheetTrigger(
-            label: 'Arrival Time',
-            value: _selectedTime.format(context),
-            onTap: () => _showTimePickerSheet(),
-          ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -4014,7 +4067,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                               decoration: InputDecoration(
                                 hintText: 'Enter company name',
                                 filled: true,
-                                fillColor: Theme.of(context).colorScheme.surfaceContainer,
+                                fillColor: Colors.white,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.all(
                                     Radius.circular(12),
@@ -4043,6 +4096,256 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildScheduleMeetToggle() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _isScheduleMeet
+              ? AsmitaPalette.deepNavy
+              : (isDark ? AsmitaPalette.borderGreyDark : const Color(0xFFE2E8F0)),
+          width: _isScheduleMeet ? 1.5 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: _isScheduleMeet
+                  ? AsmitaPalette.deepNavy.withValues(alpha: 0.1)
+                  : (isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.calendar_month_rounded,
+              color: _isScheduleMeet
+                  ? AsmitaPalette.deepNavy
+                  : (isDark ? Colors.white70 : const Color(0xFF64748B)),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Schedule a Meet',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: _isScheduleMeet
+                        ? AsmitaPalette.deepNavy
+                        : Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Set visit date & arrival slot in advance',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 11,
+                    color: isDark ? Colors.white60 : Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch.adaptive(
+            value: _isScheduleMeet,
+            activeTrackColor: AsmitaPalette.deepNavy,
+            activeThumbColor: Colors.white,
+            onChanged: (val) {
+              setState(() {
+                _isScheduleMeet = val;
+                if (val) {
+                  _selectedTime = _ensureValidMeetingSlot(_selectedTime);
+                }
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleMeetDateTimeInputs() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildBottomSheetTrigger(
+            label: 'Meeting Date *',
+            value: _formatDate(_selectedDate),
+            onTap: _showDatePickerSheet,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildBottomSheetTrigger(
+            label: 'Meeting Time *',
+            value: _formatMeetingTime(_selectedTime),
+            onTap: _showMeetingTimeSlotPickerSheet,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showMeetingTimeSlotPickerSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Select Meeting Time',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 20),
+                    onPressed: () => Navigator.pop(ctx),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Available slots from 9:00 AM to 7:00 PM (30 min intervals)',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 12,
+                  color: isDark
+                      ? AsmitaPalette.textDarkModeMuted
+                      : const Color(0xFF64748B),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.45,
+                ),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final itemWidth = (constraints.maxWidth - 20) / 3;
+                      return Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: _meetingTimeSlots.map((slot) {
+                          final isSelected = _selectedTime.hour == slot.hour &&
+                              _selectedTime.minute == slot.minute;
+                          return SizedBox(
+                            width: itemWidth,
+                            child: InkWell(
+                              onTap: () {
+                                setState(() => _selectedTime = slot);
+                                Navigator.pop(ctx);
+                              },
+                              borderRadius: BorderRadius.circular(10),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AsmitaPalette.deepNavy
+                                      : (isDark ? AsmitaPalette.surfaceDark : Colors.white),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AsmitaPalette.deepNavy
+                                        : (isDark
+                                            ? AsmitaPalette.borderGreyDark
+                                            : const Color(0xFFE2E8F0)),
+                                    width: isSelected ? 1.5 : 1.0,
+                                  ),
+                                  boxShadow: isSelected
+                                      ? [
+                                          BoxShadow(
+                                            color: AsmitaPalette.deepNavy.withValues(alpha: 0.25),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  _formatMeetingTime(slot),
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 13,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : (isDark
+                                            ? Colors.white
+                                            : AsmitaPalette.deepNavy),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -4446,7 +4749,7 @@ class _EmployeePickerModalState extends State<_EmployeePickerModal> {
                   : null,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               filled: true,
-              fillColor: Colors.grey.shade100,
+              fillColor: Colors.white,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -4928,7 +5231,7 @@ class _VisitorOtpSheetWidgetState extends State<_VisitorOtpSheetWidget> {
                 color: Colors.grey.shade300,
               ),
               filled: true,
-              fillColor: AsmitaPalette.systemBG,
+              fillColor: Colors.white,
               contentPadding: const EdgeInsets.symmetric(vertical: 14),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
