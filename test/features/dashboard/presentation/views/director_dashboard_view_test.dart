@@ -71,6 +71,7 @@ void main() {
     VoidCallback? onContactReceptionist,
     Function(int, String)? onDecideVisit,
     Function(int)? onAcknowledgeVisit,
+    Function(String)? onNavigateToVisitsWithFilter,
   }) {
     return MultiBlocProvider(
       providers: [
@@ -83,6 +84,7 @@ void main() {
           onContactReceptionist: onContactReceptionist,
           onDecideVisit: onDecideVisit,
           onAcknowledgeVisit: onAcknowledgeVisit,
+          onNavigateToVisitsWithFilter: onNavigateToVisitsWithFilter,
         ),
       ),
     );
@@ -140,17 +142,54 @@ void main() {
       expect(find.text('Security'), findsOneWidget);
       expect(find.text('Receptionist'), findsOneWidget);
 
-      // 3. 2x2 Metric Overview
+      // 3. 4 Metric Cards (Total, Pending, Approved, Inside)
+      expect(find.text('Total'), findsOneWidget);
       expect(find.text('Pending'), findsOneWidget);
-      expect(find.text('On-Site'), findsOneWidget);
-      expect(find.text('Expected'), findsOneWidget);
-      expect(find.text('Total Visits'), findsOneWidget);
-      expect(find.text('3 Total Visits'), findsOneWidget);
+      expect(find.text('Approved'), findsOneWidget);
+      expect(find.text('Inside'), findsOneWidget);
 
       // 4. Waiting Queue Section
       expect(find.text('Who is Waiting'), findsOneWidget);
       expect(find.text('Waiting Since'), findsOneWidget);
       expect(find.text('Rajesh Mehra'), findsOneWidget);
+    });
+
+    testWidgets('tapping KPI card navigates to visits with correct filter', (tester) async {
+      setMobileScreen(tester);
+      String? selectedFilter;
+      final testVisits = [
+        const IndustrialVisitModel(
+          id: 1,
+          requestNumber: 'AH-DIR-101',
+          propertyId: 114,
+          visitorName: 'Rajesh Mehra',
+          status: IndustrialVisitStatus.awaitingHost,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          visits: testVisits,
+          onNavigateToVisitsWithFilter: (f) => selectedFilter = f,
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text('Pending'));
+      await tester.pump();
+      expect(selectedFilter, equals('PENDING'));
+
+      await tester.tap(find.text('Approved'));
+      await tester.pump();
+      expect(selectedFilter, equals('APPROVED'));
+
+      await tester.tap(find.text('Inside'));
+      await tester.pump();
+      expect(selectedFilter, equals('INSIDE'));
+
+      await tester.tap(find.text('Total'));
+      await tester.pump();
+      expect(selectedFilter, equals('ALL'));
     });
 
     testWidgets('calls onContactReceptionist when provided', (tester) async {
