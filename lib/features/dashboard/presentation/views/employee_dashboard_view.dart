@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
@@ -595,7 +596,6 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
   }
 
   void _showSecurityModal(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     UserModel? user;
     try {
       final authBloc = context.read<AuthBloc?>();
