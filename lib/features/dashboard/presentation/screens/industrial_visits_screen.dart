@@ -879,29 +879,43 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             child: Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
           ),
           const SizedBox(width: 12),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              fontFamily: 'Poppins',
-              color: AsmitaPalette.textLight,
+          Flexible(
+            flex: 2,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontFamily: 'Poppins',
+                color: AsmitaPalette.textLight,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const Spacer(),
-          if (customValue != null)
-            customValue
-          else if (value != null)
-            Text(
-              value,
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 3,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: customValue ??
+                  (value != null
+                      ? Text(
+                          value,
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        )
+                      : const SizedBox.shrink()),
             ),
+          ),
           if (trailing != null) ...[
-            const SizedBox(width: 4),
+            const SizedBox(width: 6),
             trailing,
           ],
         ],
