@@ -814,73 +814,114 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
               ),
             ),
           ],
-          if (visit.status == IndustrialVisitStatus.approved ||
-              visit.status == IndustrialVisitStatus.checkedIn) ...[
-            const SizedBox(width: 8),
-            ElevatedButton.icon(
-              onPressed: () {
-                context.read<IndustrialVisitBloc>().add(
-                  SendToLobbyEvent(
-                    visitId: visit.id,
-                    floor: visit.floor,
-                  ),
-                );
-              },
-              icon: const Icon(Icons.send_to_mobile_rounded, size: 16),
-              label: const Text(
-                'Send to Lobby',
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0284C7),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                elevation: 0,
-              ),
-            ),
-          ],
+          // 1. If Floor Receptionist is present on the destination floor, show "Send to Lobby".
+          // 2. If Floor Receptionist is NOT there for the floor, show "Check In" directly!
           if (visit.status == IndustrialVisitStatus.approved) ...[
             const SizedBox(width: 8),
-            ElevatedButton.icon(
+            if (visit.hasFloorReceptionist) ...[
+              ElevatedButton.icon(
+                onPressed: () {
+                  context.read<IndustrialVisitBloc>().add(
+                    SendToLobbyEvent(
+                      visitId: visit.id,
+                      floor: visit.floor,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.send_to_mobile_rounded, size: 16),
+                label: const Text(
+                  'Send to Lobby',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0284C7),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ] else ...[
+              ElevatedButton.icon(
+                onPressed: () {
+                  context.read<IndustrialVisitBloc>().add(
+                    CheckInPassEvent(
+                      visitId: visit.id,
+                      gateId: 1,
+                      passCode: visit.passCode,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.how_to_reg_rounded, size: 16),
+                label: const Text(
+                  'Check In',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AsmitaPalette.successGreen,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ],
+          ],
+          // Button to make the person wait
+          if (visit.status == IndustrialVisitStatus.approved ||
+              visit.status == IndustrialVisitStatus.checkedIn ||
+              visit.status == IndustrialVisitStatus.onTheWay) ...[
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
               onPressed: () {
                 context.read<IndustrialVisitBloc>().add(
-                  CheckInPassEvent(
+                  DecideVisitEvent(
                     visitId: visit.id,
-                    gateId: 1,
-                    passCode: visit.passCode,
+                    action: 'WAITING_TO_MEET',
                   ),
                 );
               },
-              icon: const Icon(Icons.how_to_reg_rounded, size: 16),
+              icon: const Icon(Icons.hourglass_top_rounded, size: 15, color: Color(0xFFD97706)),
               label: const Text(
-                'Check In',
+                'Wait',
                 style: TextStyle(
                   fontFamily: 'Montserrat',
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
+                  color: Color(0xFFD97706),
                 ),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AsmitaPalette.successGreen,
-                foregroundColor: Colors.white,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFD97706),
+                side: BorderSide(
+                  color: const Color(0xFFD97706).withValues(alpha: 0.8),
+                  width: 1.2,
+                ),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
+                  horizontal: 12,
                   vertical: 10,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                elevation: 0,
               ),
             ),
           ],
