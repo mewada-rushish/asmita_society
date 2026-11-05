@@ -929,11 +929,11 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
   Widget _buildEmptyState(BuildContext context, {required bool isAlertTab}) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
         ),
@@ -942,66 +942,67 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color:
-                  (isAlertTab
-                          ? AsmitaPalette.amberWarning
-                          : AsmitaPalette.deepNavy)
-                      .withValues(alpha: 0.1),
+              color: (isAlertTab
+                      ? AsmitaPalette.amberWarning
+                      : AsmitaPalette.deepNavy)
+                  .withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               isAlertTab
                   ? Icons.notifications_off_outlined
                   : Icons.how_to_reg_rounded,
-              size: 36,
+              size: 24,
               color: isAlertTab
                   ? AsmitaPalette.amberWarning
                   : AsmitaPalette.deepNavy,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           Text(
             isAlertTab ? 'No Active Floor Alerts' : 'Lobby is All Clear',
             style: const TextStyle(
               fontFamily: 'Montserrat',
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             isAlertTab
-                ? 'No executive floor escalations or urgent visitor reassignments require attention right now.'
-                : 'No visitors are currently waiting in the entrance lobby. New arrivals will appear here in real time.',
+                ? 'No executive escalations or urgent visitor reassignments.'
+                : 'No visitors waiting in lobby. New arrivals show here in real time.',
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               color: Theme.of(
                 context,
               ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-              height: 1.4,
+              height: 1.3,
             ),
           ),
           if (!isAlertTab) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             ElevatedButton.icon(
               onPressed: () => _showNewVisitorModal(context),
-              icon: const Icon(Icons.add_rounded, size: 16),
+              icon: const Icon(Icons.add_rounded, size: 14),
               label: const Text(
                 'Register Walk-in Guest',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AsmitaPalette.deepNavy,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 12,
+                  horizontal: 14,
+                  vertical: 8,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 elevation: 0,
               ),
