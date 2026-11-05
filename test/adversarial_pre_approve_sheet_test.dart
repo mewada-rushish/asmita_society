@@ -269,7 +269,8 @@ void main() {
       // Verify Cab fields visible
       expect(find.text('Cab / Vehicle Provider'), findsOneWidget);
       expect(find.text('Cab / Vehicle Registration Number *'), findsOneWidget);
-      expect(find.text('2 : 2 : 4'), findsOneWidget);
+      expect(find.text('IND'), findsOneWidget);
+      expect(find.text('2 : 2 : 4'), findsNothing);
       expect(find.text('Safe Pickup Mode'), findsOneWidget);
       expect(find.text('Authorize Entry'), findsOneWidget);
 
