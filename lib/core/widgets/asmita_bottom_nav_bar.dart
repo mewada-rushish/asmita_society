@@ -14,18 +14,23 @@ class AsmitaBottomNavBar extends StatelessWidget {
   /// Dynamic bottom padding to apply to FloatingActionButton widgets inside
   /// screens rendered above the [AsmitaBottomNavBar] in [MainDashboardScreen].
   ///
-  /// Since Flutter's [Scaffold] automatically offsets FABs by [kFloatingActionButtonMargin] (16px)
-  /// and [MediaQuery.viewPaddingOf(context).bottom], adding exactly [barHeight] (+ optional [extraMargin])
-  /// places the bottom edge of the FAB perfectly [kFloatingActionButtonMargin + extraMargin] (16px)
-  /// Dynamic bottom padding to apply to FloatingActionButton widgets inside
-  /// screens rendered above the [AsmitaBottomNavBar] in [MainDashboardScreen].
-  ///
   /// Since the outer [Scaffold] in [MainDashboardScreen] uses `extendBody: true`, the body
-  /// extends behind the [AsmitaBottomNavBar]. Flutter's inner [Scaffold] automatically offsets
-  /// the FAB by [kFloatingActionButtonMargin] (16px) and device insets. Adding [barHeight] (64px)
-  /// (+ optional [extraMargin]) ensures the FAB hovers cleanly 16-20px above the curved navigation bar
-  /// on all screen sizes and device types without floating awkwardly high or being submerged.
+  /// extends behind the [AsmitaBottomNavBar]. Flutter automatically positions a [FloatingActionButton]
+  /// at [kFloatingActionButtonMargin] (16px) from the screen bottom, ignoring the outer bottom navigation bar.
+  /// Adding exactly the effective height of the [AsmitaBottomNavBar] ensures the FAB hovers
+  /// perfectly 16px above the top curved edge of the bottom navigation bar across all screen sizes,
+  /// aspect ratios, and navigation modes (3-button navigation, gesture bar, or tablet 0-inset).
   static double fabBottomPadding([BuildContext? context, double extraMargin = 0.0]) {
+    if (context != null) {
+      final paddingBottom = MediaQuery.paddingOf(context).bottom;
+      if (paddingBottom >= barHeight) {
+        // Inside outer Scaffold body: Flutter already added barHeight + device bottom inset to MediaQuery.padding.bottom
+        return paddingBottom + extraMargin;
+      }
+      final viewPaddingBottom = MediaQuery.viewPaddingOf(context).bottom;
+      final deviceInset = viewPaddingBottom > 0 ? viewPaddingBottom : paddingBottom;
+      return barHeight + deviceInset + extraMargin;
+    }
     return barHeight + extraMargin;
   }
 
