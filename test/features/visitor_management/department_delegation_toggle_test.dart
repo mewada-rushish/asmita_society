@@ -87,4 +87,45 @@ void main() {
     // Allow timers to complete gracefully
     await tester.pump(const Duration(seconds: 1));
   });
+
+  testWidgets('DepartmentDelegationScreen renders BBPS-style category and window dropdowns', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthBloc>.value(value: mockAuthBloc),
+        ],
+        child: const MaterialApp(
+          home: DepartmentDelegationScreen(
+            departmentId: 5,
+            departmentName: 'Engineering',
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Toggle switch ON
+    final switchFinder = find.byType(Switch);
+    await tester.tap(switchFinder);
+    await tester.pump();
+
+    // Verify headers with dropdowns are present
+    expect(find.text('SELECT DELEGATE STAFF MEMBER'), findsOneWidget);
+    expect(find.text('ACTIVE DELEGATION WINDOW'), findsOneWidget);
+
+    // Verify BBPS-style PopupMenuButtons exist for both section headers
+    final popupButtons = find.byType(PopupMenuButton<String>);
+    expect(popupButtons, findsNWidgets(2));
+
+    // Verify initial values
+    expect(find.text('All (0)'), findsOneWidget);
+    expect(find.text('Till I turn off'), findsWidgets);
+
+    // Allow timers to complete gracefully
+    await tester.pump(const Duration(seconds: 1));
+  });
 }
