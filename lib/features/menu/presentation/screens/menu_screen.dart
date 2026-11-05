@@ -10,6 +10,7 @@ import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_bloc.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_event.dart';
 import 'package:asmita_society/features/visitor_management/presentation/screens/department_delegation_screen.dart';
+import 'package:asmita_society/features/visitor_management/presentation/widgets/invite_team_member_sheet.dart';
 import 'package:asmita_society/features/dashboard/presentation/screens/industrial_directory_screen.dart';
 
 import 'committee_members_screen.dart';
@@ -121,6 +122,8 @@ class MenuScreen extends StatelessWidget {
                           items: [
                             if (PropertyRoleResolver.canDelegate(currentUser, role: resolvedRole))
                               _buildMenuItem(context, Icons.swap_horiz_rounded, 'Department Delegation'),
+                            if (PropertyRoleResolver.canInviteTeamMembers(currentUser, role: resolvedRole))
+                              _buildMenuItem(context, Icons.group_add_rounded, 'Invite Team'),
                             if (PropertyRoleResolver.canManageVehicles(currentUser, role: resolvedRole))
                               _buildMenuItem(context, Icons.directions_car_filled_outlined, 'Workplace Vehicles'),
                             _buildMenuItem(context, Icons.contact_phone_outlined, 'Campus Directory & Hotlines'),
@@ -501,6 +504,9 @@ class MenuScreen extends StatelessWidget {
               departmentName: user?.departmentName ?? 'General HQ',
             );
             break;
+          case 'Invite Team':
+            showInviteTeamMemberSheet(context);
+            return;
           case 'Campus Emergency Hotline':
           case 'Campus Directory & Hotlines':
           case 'Campus Emergency Protocols':
