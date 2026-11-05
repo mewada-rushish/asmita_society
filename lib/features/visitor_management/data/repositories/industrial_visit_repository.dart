@@ -311,6 +311,28 @@ class IndustrialVisitRepository {
     }
   }
 
+  /// Send visitor to lobby directing them to destination floor
+  Future<IndustrialVisitModel> sendToLobby({
+    required int visitId,
+    String? floor,
+  }) async {
+    try {
+      final payload = <String, dynamic>{};
+      if (floor != null && floor.isNotEmpty) payload['floor'] = floor;
+
+      final response = await dio.post(
+        EnvConfig.industrialSendToLobby(visitId),
+        data: payload,
+      );
+      final data = response.data;
+      final visitJson = (data['visit'] ?? data['data'] ?? data) as Map<String, dynamic>;
+      return IndustrialVisitModel.fromJson(visitJson);
+    } catch (e) {
+      debugPrint('[IndustrialVisitRepository] sendToLobby error: $e');
+      rethrow;
+    }
+  }
+
   /// Gate pass check-out
   Future<IndustrialVisitModel> checkOutPass({
     required int visitId,
