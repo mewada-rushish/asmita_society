@@ -83,19 +83,33 @@ class PropertyRoleResolver {
       return 'facility';
     }
 
-    // 5. Tenant Archetype
-    if (r.contains('tenant') || r.contains('lessee')) {
+    // 5. Tenant Archetype (Only in residential settings)
+    if (!industrial && (r.contains('tenant') || r.contains('lessee'))) {
       return 'tenant';
     }
 
-    // 6. Owner Archetype
-    if (r.contains('owner') || r.contains('chairman') || r.contains('secretary') || r.contains('treasurer') || r.contains('committee') || s == 'resident') {
-      return 'owner';
+    // 6. Corporate Host / Employee Archetype (HOD, Team Lead, Employee, Staff, Executive, Associate, Analyst)
+    if (r.contains('employee') ||
+        r.contains('staff') ||
+        r.contains('executive') ||
+        r.contains('host') ||
+        r.contains('hod') ||
+        r.contains('head') ||
+        r.contains('lead') ||
+        r.contains('engineer') ||
+        r.contains('developer') ||
+        r.contains('officer') ||
+        r.contains('associate') ||
+        r.contains('analyst') ||
+        r.contains('manager') ||
+        s == 'corporate' ||
+        (industrial && !r.contains('director') && !r.contains('security') && !r.contains('guard') && !r.contains('reception'))) {
+      return 'employee';
     }
 
-    // 7. Corporate Host / Employee Archetype (HOD, Team Lead, Employee, Staff)
-    if (r.contains('employee') || r.contains('staff') || r.contains('host') || r.contains('hod') || r.contains('head') || r.contains('lead') || r.contains('engineer') || r.contains('manager') || s == 'corporate') {
-      return 'employee';
+    // 7. Owner Archetype (Residential)
+    if (r.contains('owner') || r.contains('chairman') || r.contains('secretary') || r.contains('treasurer') || r.contains('committee') || s == 'resident') {
+      return 'owner';
     }
 
     // Safe fallback based on scope and property context
