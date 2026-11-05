@@ -31,6 +31,8 @@ class PropertyRoleResolver {
     String? rawRole, {
     String? scope,
     int? power,
+    bool? isIndustrial,
+    String? propertyType,
   }) {
     if (rawRole == null || rawRole.trim().isEmpty) {
       return 'owner'; // Default fallback
@@ -39,6 +41,14 @@ class PropertyRoleResolver {
     final r = rawRole.toLowerCase().trim();
     final s = (scope ?? '').toLowerCase().trim();
     final p = power ?? 50;
+
+    final bool industrial = isIndustrial == true ||
+        (propertyType != null &&
+            parsePropertyType(propertyType) == AsmitaPropertyType.industrial) ||
+        s == 'industrial' ||
+        s == 'corporate' ||
+        r.contains('industrial') ||
+        r.contains('corporate');
 
     // 1. Receptionist / Front Desk Archetype (Check before guard so 'Gate Receptionist' resolves to receptionist)
     if (r.contains('reception') || r.contains('concierge') || r.contains('front desk') || r.contains('lobby')) {
@@ -51,8 +61,21 @@ class PropertyRoleResolver {
     }
 
     // 3. Executive / Director Archetype
-    if (r.contains('director') || r == 'md' || r.contains('managing director') || (s == 'management' && p >= 75)) {
+    // Map Admin and Property Manager in industrial properties so they do not fall through to 'owner'
+    if (r.contains('director') ||
+        r == 'md' ||
+        r.contains('managing director') ||
+        (industrial && (r.contains('admin') || r.contains('property manager') || r.contains('campus manager'))) ||
+        (s == 'management' && p >= 75)) {
       return 'director';
+    }
+
+    // Plant Manager: check as manager / employee before generic 'plant' check
+    if (r.contains('plant manager')) {
+      if (industrial || (s == 'management' && p >= 75)) {
+        return 'director';
+      }
+      return 'employee';
     }
 
     // 4. Logistics / Facility / Plant Support Archetype
@@ -75,8 +98,9 @@ class PropertyRoleResolver {
       return 'employee';
     }
 
-    // Safe fallback based on scope
+    // Safe fallback based on scope and property context
     if (s == 'operations') return 'facility';
+    if (industrial) return 'director';
     if (s == 'corporate' || s == 'management') return 'employee';
     return 'owner';
   }
@@ -115,16 +139,21 @@ class PropertyRoleResolver {
     if (user.propertyType != null && user.propertyType!.isNotEmpty) {
       if (parsePropertyType(user.propertyType) == AsmitaPropertyType.industrial) return true;
     }
-    final r = normalizeRole(user.primaryRole, scope: user.roleScope, power: user.rolePower);
-    if (r == 'director' || r == 'employee' || r == 'receptionist' || r == 'facility') {
-      return true;
-    }
     final s = (user.roleScope ?? '').toLowerCase();
     if (s == 'corporate' || s == 'industrial' || s == 'operations' || s == 'management') {
       return true;
     }
     final society = (user.societyName ?? '').toLowerCase();
     if (society.contains('corporate') || society.contains('industrial') || society.contains('campus') || society.contains('tech park')) {
+      return true;
+    }
+    final r = normalizeRole(
+      user.primaryRole,
+      scope: user.roleScope,
+      power: user.rolePower,
+      isIndustrial: s == 'industrial' || s == 'corporate',
+    );
+    if (r == 'director' || r == 'employee' || r == 'receptionist' || r == 'facility') {
       return true;
     }
     return false;
