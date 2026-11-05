@@ -477,6 +477,7 @@ class IndustrialVisitModel {
   final String? purpose;
   final String? notes;
   final String? floor;
+  final bool hasFloorReceptionist;
   final bool isDelivery;
   final String? deliveryCompany;
   final bool heldAtGate;
@@ -512,6 +513,7 @@ class IndustrialVisitModel {
     this.purpose,
     this.notes,
     this.floor,
+    this.hasFloorReceptionist = false,
     this.isDelivery = false,
     this.deliveryCompany,
     this.heldAtGate = false,
@@ -622,6 +624,8 @@ class IndustrialVisitModel {
       notes: json['notes']?.toString(),
       floor:
           json['floor']?.toString() ?? json['department']?['floor']?.toString(),
+      hasFloorReceptionist: json['has_floor_receptionist'] == true ||
+          json['hasFloorReceptionist'] == true,
       isDelivery:
           json['visit_type']?.toString().toUpperCase() == 'DELIVERY' ||
           json['is_delivery'] == true,
