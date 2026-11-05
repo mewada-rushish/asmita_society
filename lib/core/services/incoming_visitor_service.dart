@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:asmita_society/main.dart' show rootNavigatorKey;
 import 'package:asmita_society/features/visitor_management/data/repositories/industrial_visit_repository.dart';
 import 'package:asmita_society/core/di/injection_container.dart' as di;
@@ -109,6 +110,14 @@ class IncomingVisitorData {
 
 class IncomingVisitorService {
   static const MethodChannel _lockScreenChannel = MethodChannel('com.asmita.app/lock_screen');
+  static final FlutterLocalNotificationsPlugin _localNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  /// Set of visit IDs that have been handled in this session
+  static final Set<int> _handledVisitIds = <int>{};
+
+  /// Map of visit ID to notification IDs for cancellation
+  static final Map<int, List<int>> _visitNotificationIds = <int, List<int>>{};
 
   /// Currently active or pending visitor call data
   static IncomingVisitorData? pendingCallData;
@@ -120,11 +129,38 @@ class IncomingVisitorService {
   static final ValueNotifier<IncomingVisitorData?> pendingCallNotifier =
       ValueNotifier<IncomingVisitorData?>(null);
 
+  /// Track a notification ID mapped to a visit ID
+  static void registerNotificationId(int visitId, int notifId) {
+    if (visitId <= 0) return;
+    final list = _visitNotificationIds.putIfAbsent(visitId, () => <int>[]);
+    list.add(notifId);
+  }
+
+  /// Cancels any active notification for this visit from Android status bar
+  static Future<void> cancelNotificationForVisit(int visitId) async {
+    if (visitId <= 0) return;
+    _handledVisitIds.add(visitId);
+    final ids = _visitNotificationIds.remove(visitId);
+    if (ids != null) {
+      for (final id in ids) {
+        try {
+          await _localNotificationsPlugin.cancel(id: id);
+        } catch (_) {}
+      }
+    }
+  }
+
   /// Called whenever a doorbell / visitor arrival notification arrives
   /// (foreground, background launch, or lock screen wake-up).
   static void onIncomingCallReceived(Map<String, dynamic> rawData, {String? soundAsset}) {
     final data = IncomingVisitorData.fromMap(rawData, soundAsset: soundAsset);
     debugPrint('[IncomingVisitorService] onIncomingCallReceived for visitId: ${data.visitId}, visitor: ${data.visitorName}');
+
+    // Guard: If this visit was already handled in this session, do not ring or show modal
+    if (_handledVisitIds.contains(data.visitId)) {
+      debugPrint('[IncomingVisitorService] Visit ${data.visitId} was already handled. Ignoring incoming call.');
+      return;
+    }
 
     // Keep screen awake while incoming call is ringing
     keepScreenOn(true);
@@ -203,6 +239,10 @@ class IncomingVisitorService {
 
     debugPrint('[IncomingVisitorService] handleBackgroundDecision for visitId: $visitId, action: $action');
     if (visitId <= 0) return;
+
+    // Mark handled and cancel local notification
+    _handledVisitIds.add(visitId);
+    cancelNotificationForVisit(visitId);
 
     try {
       di.registerIndustrialDependencies();

@@ -234,6 +234,20 @@ class IndustrialVisitRepository {
         data: payload,
       );
       return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 409) {
+        final data = e.response?.data;
+        if (data is Map<String, dynamic>) {
+          return {
+            'success': true,
+            'already_handled': true,
+            ...data,
+          };
+        }
+        return {'success': true, 'already_handled': true};
+      }
+      debugPrint('[IndustrialVisitRepository] handleVisitAction Dio error: ${e.message}');
+      rethrow;
     } catch (e) {
       debugPrint('[IndustrialVisitRepository] handleVisitAction error: $e');
       rethrow;
