@@ -405,16 +405,6 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
         .trim();
     final String effectiveTitle = cleanTitle.isNotEmpty ? cleanTitle : 'Guest Visitor';
 
-    final String rawSubtitle = visitor['modalSubtitleText'] as String? ??
-        visitor['subtitleText'] as String? ??
-        visitor['company'] as String? ??
-        'Personal Visit';
-    final String cleanSubtitle = rawSubtitle
-        .replaceAll(RegExp(r'\[VIP\]\s*', caseSensitive: false), '')
-        .replaceAll(RegExp(r'\(VIP\)\s*', caseSensitive: false), '')
-        .trim();
-
-    final isDelivery = visitor['category']?.toString().toLowerCase() == 'delivery';
     final passCode = visitor['passCode']?.toString();
     final statusStr = visitor['status']?.toString() ?? 'Approved';
 
@@ -532,71 +522,46 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                                       ),
                                     ),
                                   ),
-                                  if (isVip) ...[
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                      decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
+                                ],
+                              ),
+                              if (isVip) ...[
+                                const SizedBox(height: 5),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.workspace_premium_rounded, size: 12, color: Colors.white),
+                                      SizedBox(width: 3),
+                                      Text(
+                                        'VIP',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
+                                          letterSpacing: 0.6,
                                         ),
-                                        borderRadius: BorderRadius.circular(6),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
-                                            blurRadius: 6,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
                                       ),
-                                      child: const Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(Icons.workspace_premium_rounded, size: 12, color: Colors.white),
-                                          SizedBox(width: 3),
-                                          Text(
-                                            'VIP',
-                                            style: TextStyle(
-                                              fontFamily: 'Montserrat',
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w800,
-                                              color: Colors.white,
-                                              letterSpacing: 0.6,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              const SizedBox(height: 3),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    isDelivery ? Icons.local_shipping_outlined : Icons.badge_outlined,
-                                    size: 13,
-                                    color: Colors.white70,
+                                    ],
                                   ),
-                                  const SizedBox(width: 4),
-                                  Flexible(
-                                    child: Text(
-                                      cleanSubtitle,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 12,
-                                        color: Colors.white70,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
