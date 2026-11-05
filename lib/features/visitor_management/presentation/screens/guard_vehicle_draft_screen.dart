@@ -27,12 +27,10 @@ class _GuardVehicleDraftScreenState extends State<GuardVehicleDraftScreen> {
   final TextEditingController _plateController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
 
-  String _selectedVehicleType = 'Personal Car';
+  String _selectedVehicleType = 'Car';
   final List<String> _vehicleTypes = [
-    'Personal Bike',
-    'Personal Car',
-    'Auto / Cab',
-    'Commercial',
+    'Bike',
+    'Car',
   ];
 
   Map<String, dynamic>? _activeDraft;
