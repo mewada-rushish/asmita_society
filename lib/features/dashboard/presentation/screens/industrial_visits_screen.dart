@@ -1113,13 +1113,11 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       ),
                     ),
 
-                    // Top KPI Stat Metrics Cards (Interactive Filter Cards)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 14),
-                        child: _buildKpiMetrics(context, todayVisits),
+                    // Active Filter Badge (When filtered from Dashboard)
+                    if (_selectedFilter != 'ALL')
+                      SliverToBoxAdapter(
+                        child: _buildActiveFilterHeader(context),
                       ),
-                    ),
 
                     // Visitor Items or Empty State
                     if (filteredVisits.isEmpty)
@@ -1153,172 +1151,105 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     );
   }
 
-  Widget _buildKpiMetrics(BuildContext context, List<IndustrialVisitModel> visits) {
-    final pendingCount = visits.where((v) => v.isPending).length;
-    final approvedCount = visits.where((v) => v.status == IndustrialVisitStatus.approved).length;
-    final insideCount = visits.where((v) => v.status == IndustrialVisitStatus.checkedIn).length;
-    final totalCount = visits.length;
+  Widget _buildActiveFilterHeader(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    String filterLabel;
+    Color filterColor;
+    IconData filterIcon;
 
-    return Row(
-      children: [
-        Expanded(
-          child: _buildKpiCard(
-            context,
-            label: 'Total',
-            count: totalCount,
-            icon: Icons.groups_rounded,
-            accentColor: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
-            filterKey: 'ALL',
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildKpiCard(
-            context,
-            label: 'Pending',
-            count: pendingCount,
-            icon: Icons.pending_actions_rounded,
-            accentColor: isDark ? const Color(0xFFF87171) : AsmitaPalette.actionRed,
-            filterKey: 'PENDING',
-            showPulse: pendingCount > 0,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildKpiCard(
-            context,
-            label: 'Approved',
-            count: approvedCount,
-            icon: Icons.verified_rounded,
-            accentColor: isDark ? const Color(0xFF38BDF8) : const Color(0xFF1E88E5),
-            filterKey: 'APPROVED',
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildKpiCard(
-            context,
-            label: 'Inside',
-            count: insideCount,
-            icon: Icons.meeting_room_rounded,
-            accentColor: isDark ? const Color(0xFF34D399) : AsmitaPalette.successGreen,
-            filterKey: 'INSIDE',
-          ),
-        ),
-      ],
-    );
-  }
+    switch (_selectedFilter) {
+      case 'PENDING':
+        filterLabel = 'Pending Approvals';
+        filterColor = isDark ? const Color(0xFFF87171) : AsmitaPalette.actionRed;
+        filterIcon = Icons.pending_actions_rounded;
+        break;
+      case 'APPROVED':
+        filterLabel = 'Approved Passes';
+        filterColor = isDark ? const Color(0xFF38BDF8) : const Color(0xFF1E88E5);
+        filterIcon = Icons.verified_rounded;
+        break;
+      case 'INSIDE':
+        filterLabel = 'Checked Inside HQ';
+        filterColor = isDark ? const Color(0xFF34D399) : AsmitaPalette.successGreen;
+        filterIcon = Icons.meeting_room_rounded;
+        break;
+      default:
+        filterLabel = _selectedFilter;
+        filterColor = AsmitaPalette.deepNavy;
+        filterIcon = Icons.filter_alt_rounded;
+    }
 
-  Widget _buildKpiCard(
-    BuildContext context, {
-    required String label,
-    required int count,
-    required IconData icon,
-    required Color accentColor,
-    required String filterKey,
-    bool showPulse = false,
-  }) {
-    final isSelected = _selectedFilter == filterKey;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return InkWell(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        setState(() => _selectedFilter = filterKey);
-      },
-      borderRadius: BorderRadius.circular(14),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? accentColor.withValues(alpha: isDark ? 0.22 : 0.12)
-              : (isDark ? const Color(0xFF1E293B) : Theme.of(context).colorScheme.surface),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected
-                ? accentColor
-                : (isDark ? const Color(0xFF334155) : Theme.of(context).dividerColor),
-            width: isSelected ? 1.5 : 1.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Premium Squircle Icon Container
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: isDark ? 0.22 : 0.10),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: accentColor.withValues(alpha: isSelected ? 0.45 : 0.18),
-                  width: 1.0,
-                ),
-              ),
-              child: Center(
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Icon(icon, color: accentColor, size: 18),
-                    if (showPulse)
-                      Positioned(
-                        right: -3,
-                        top: -3,
-                        child: Container(
-                          width: 7,
-                          height: 7,
-                          decoration: BoxDecoration(
-                            color: accentColor,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Theme.of(context).colorScheme.surface,
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 2, 16, 10),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: filterColor.withValues(alpha: isDark ? 0.2 : 0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: filterColor.withValues(alpha: 0.35),
+                width: 1,
               ),
             ),
-            const SizedBox(height: 6),
-            Text(
-              '$count',
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(filterIcon, size: 14, color: filterColor),
+                const SizedBox(width: 6),
+                Text(
+                  filterLabel,
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: filterColor,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() => _selectedFilter = 'ALL');
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: filterColor.withValues(alpha: 0.2),
+                    ),
+                    child: Icon(Icons.close_rounded, size: 12, color: filterColor),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          TextButton(
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              setState(() => _selectedFilter = 'ALL');
+            },
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text(
+              'Show All',
               style: TextStyle(
                 fontFamily: 'Montserrat',
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: isSelected ? accentColor : Theme.of(context).colorScheme.onSurface,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AsmitaPalette.deepNavy,
               ),
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? accentColor : AsmitaPalette.textLight,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
-
 
   Widget _buildEmptyState(BuildContext context) {
     String emptyTitle = 'No Visitors Found';
