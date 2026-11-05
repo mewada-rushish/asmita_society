@@ -505,9 +505,23 @@ class FirebaseMessagingService {
     }
 
     final bool isDoorbellAlert = isApproval || isEscalation;
+    final int notifId = message.messageId.hashCode;
+
+    if (isDoorbellAlert) {
+      final visitId = int.tryParse(
+        message.data['visit_id']?.toString() ??
+        message.data['visitId']?.toString() ??
+        message.data['entry_id']?.toString() ??
+        message.data['id']?.toString() ??
+        '0',
+      ) ?? 0;
+      if (visitId > 0) {
+        IncomingVisitorService.registerNotificationId(visitId, notifId);
+      }
+    }
 
     _localNotifications.show(
-      id: message.messageId.hashCode,
+      id: notifId,
       title: title,
       body: body,
       payload: jsonEncode(message.data),
