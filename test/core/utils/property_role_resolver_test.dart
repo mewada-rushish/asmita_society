@@ -19,6 +19,11 @@ void main() {
       expect(PropertyRoleResolver.normalizeRole('Managing Director'), 'director');
       expect(PropertyRoleResolver.normalizeRole('MD'), 'director');
       expect(PropertyRoleResolver.normalizeRole('Plant Manager', scope: 'management', power: 85), 'director');
+      // Admin and Property Manager in industrial properties normalize to director
+      expect(PropertyRoleResolver.normalizeRole('Admin', isIndustrial: true), 'director');
+      expect(PropertyRoleResolver.normalizeRole('Property Manager', isIndustrial: true), 'director');
+      expect(PropertyRoleResolver.normalizeRole('Campus Manager', isIndustrial: true), 'director');
+      expect(PropertyRoleResolver.normalizeRole('Society Admin', scope: 'industrial'), 'director');
     });
 
     test('normalizes receptionist and front desk variants to "receptionist"', () {
@@ -36,6 +41,9 @@ void main() {
       expect(PropertyRoleResolver.normalizeRole('Team Lead (TL)'), 'employee');
       expect(PropertyRoleResolver.normalizeRole('Host'), 'employee');
       expect(PropertyRoleResolver.normalizeRole('Senior Engineer'), 'employee');
+      // Plant Manager resolves to manager/employee rather than facility
+      expect(PropertyRoleResolver.normalizeRole('Plant Manager'), 'employee');
+      expect(PropertyRoleResolver.normalizeRole('plant manager'), 'employee');
     });
 
     test('normalizes facility and support staff variants to "facility"', () {

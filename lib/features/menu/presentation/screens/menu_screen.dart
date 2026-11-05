@@ -46,16 +46,32 @@ class MenuScreen extends StatelessWidget {
         String resolvedRole = userRole;
         final currentUser = authState is AuthAuthenticated ? authState.user : null;
         if (currentUser != null) {
-          if (currentUser.systemRole?.isNotEmpty == true) {
-            resolvedRole = currentUser.systemRole!;
-          } else if (currentUser.primaryRole.isNotEmpty) {
-            resolvedRole = currentUser.primaryRole;
+          if (userRole.isEmpty ||
+              userRole == 'resident' ||
+              userRole.toLowerCase() == currentUser.primaryRole.toLowerCase() ||
+              userRole.toLowerCase() == currentUser.systemRole?.toLowerCase()) {
+            final pRole = currentUser.primaryRole.trim();
+            if (pRole.isNotEmpty && pRole.toLowerCase() != 'resident') {
+              resolvedRole = pRole;
+            } else if (currentUser.systemRole?.isNotEmpty == true) {
+              resolvedRole = currentUser.systemRole!;
+            } else if (pRole.isNotEmpty) {
+              resolvedRole = pRole;
+            }
           }
         }
 
-        final normalized = PropertyRoleResolver.normalizeRole(resolvedRole);
-        final isIndustrial = propertyType == AsmitaPropertyType.industrial ||
+        final isIndustrialProperty = propertyType == AsmitaPropertyType.industrial ||
             propertyType == AsmitaPropertyType.commercial ||
+            PropertyRoleResolver.isIndustrialContext(currentUser, propertyType: currentUser?.propertyType);
+
+        final normalized = PropertyRoleResolver.normalizeRole(
+          resolvedRole,
+          scope: currentUser?.roleScope,
+          power: currentUser?.rolePower,
+          isIndustrial: isIndustrialProperty,
+        );
+        final isIndustrial = isIndustrialProperty ||
             (propertyType == null &&
                 (normalized == 'director' ||
                     normalized == 'employee' ||

@@ -185,7 +185,7 @@ class _IncomingVisitorApprovalDialogState
         insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
@@ -316,11 +316,11 @@ class _IncomingVisitorApprovalDialogState
                     // Visitor Name
                     Text(
                       widget.visitorName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Montserrat',
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: AsmitaPalette.textDark,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -406,10 +406,10 @@ class _IncomingVisitorApprovalDialogState
                                     widget.purpose!.trim().isNotEmpty
                                 ? widget.purpose!
                                 : 'General Visit / Official Meeting',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 13,
-                              color: AsmitaPalette.textDark,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                             maxLines: 4,
                             overflow: TextOverflow.ellipsis,
