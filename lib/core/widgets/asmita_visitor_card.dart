@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import 'dart:convert';
@@ -8,6 +9,8 @@ import '../config/env_config.dart';
 import '../constants/design_system.dart';
 import 'asmita_toast.dart';
 import '../../features/visitor_management/data/models/industrial_visit_model.dart';
+import '../../features/visitor_management/bloc/industrial_visit_bloc.dart';
+import '../../features/visitor_management/bloc/industrial_visit_event.dart';
 
 /// Global, reusable Executive Visitor Card component.
 /// Standardized across Resident, Employee, Receptionist, Guard, and Director dashboards.
@@ -461,6 +464,15 @@ class AsmitaVisitorCard extends StatelessWidget {
                       ),
                       const Divider(height: 1),
                     ],
+                    if (visit.floor != null && visit.floor!.isNotEmpty) ...[
+                      const Divider(height: 1),
+                      _buildModalRow(
+                        ctx,
+                        icon: Icons.layers_rounded,
+                        label: 'Floor',
+                        value: visit.floor!.startsWith('Floor') ? visit.floor! : 'Floor ${visit.floor}',
+                      ),
+                    ],
                     _buildModalRow(
                       ctx,
                       icon: Icons.business_rounded,
@@ -506,6 +518,133 @@ class AsmitaVisitorCard extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+              // Action Buttons for Receptionist / Host inside info slide up sheet
+              if (visit.status == IndustrialVisitStatus.approved ||
+                  visit.status == IndustrialVisitStatus.checkedIn ||
+                  visit.status == IndustrialVisitStatus.waitingToMeet ||
+                  visit.status == IndustrialVisitStatus.onTheWay) ...[
+                Row(
+                  children: [
+                    // Make Person Wait button
+                    if (visit.status != IndustrialVisitStatus.waitingToMeet)
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            try {
+                              context.read<IndustrialVisitBloc>().add(
+                                DecideVisitEvent(
+                                  visitId: visit.id,
+                                  action: 'WAITING_TO_MEET',
+                                ),
+                              );
+                              AsmitaToast.show(
+                                context,
+                                message: 'Visitor marked as Waiting.',
+                                type: AsmitaToastType.info,
+                              );
+                            } catch (_) {}
+                          },
+                          icon: const Icon(Icons.hourglass_top_rounded, size: 16, color: Color(0xFFD97706)),
+                          label: const Text(
+                            'Make Wait',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: Color(0xFFD97706),
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFD97706), width: 1.2),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                    if (visit.status != IndustrialVisitStatus.waitingToMeet &&
+                        visit.status == IndustrialVisitStatus.approved)
+                      const SizedBox(width: 10),
+                    // If floor has receptionist -> Send to Lobby. If not -> Check In
+                    if (visit.status == IndustrialVisitStatus.approved) ...[
+                      if (visit.hasFloorReceptionist)
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              try {
+                                context.read<IndustrialVisitBloc>().add(
+                                  SendToLobbyEvent(
+                                    visitId: visit.id,
+                                    floor: visit.floor,
+                                  ),
+                                );
+                                AsmitaToast.show(
+                                  context,
+                                  message: 'Visitor sent to Floor Lobby.',
+                                  type: AsmitaToastType.success,
+                                );
+                              } catch (_) {}
+                            },
+                            icon: const Icon(Icons.send_to_mobile_rounded, size: 16, color: Colors.white),
+                            label: const Text(
+                              'Send to Lobby',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF0284C7),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        )
+                      else
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              try {
+                                context.read<IndustrialVisitBloc>().add(
+                                  CheckInPassEvent(
+                                    visitId: visit.id,
+                                    gateId: 1,
+                                    passCode: visit.passCode,
+                                  ),
+                                );
+                                AsmitaToast.show(
+                                  context,
+                                  message: 'Visitor checked in directly.',
+                                  type: AsmitaToastType.success,
+                                );
+                              } catch (_) {}
+                            },
+                            icon: const Icon(Icons.how_to_reg_rounded, size: 16, color: Colors.white),
+                            label: const Text(
+                              'Check In',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AsmitaPalette.successGreen,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ],
+                ),
+              ],
             ],
           ),
         );
@@ -1304,37 +1443,81 @@ class AsmitaVisitorCard extends StatelessWidget {
     if (trailing != null) return trailing!;
 
     if (hasQrCode) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.qr_code_2_rounded,
-              size: 16,
-              color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              'QR',
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
-                letterSpacing: 0.5,
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (onAcknowledge != null) ...[
+            Semantics(
+              label: isAcknowledged ? 'Acknowledged' : 'Acknowledge visitor status',
+              button: true,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    onAcknowledge!();
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    margin: const EdgeInsets.only(right: 6),
+                    decoration: BoxDecoration(
+                      color: isAcknowledged
+                          ? (isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFECFDF5))
+                          : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isAcknowledged
+                            ? (isDark ? const Color(0xFF059669) : const Color(0xFFA7F3D0))
+                            : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      isAcknowledged ? Icons.thumb_up_rounded : Icons.thumb_up_alt_outlined,
+                      size: 15,
+                      color: isAcknowledged
+                          ? (isDark ? const Color(0xFF34D399) : const Color(0xFF059669))
+                          : (isDark ? const Color(0xFF93C5FD) : AsmitaPalette.deepNavy),
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
-        ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.qr_code_2_rounded,
+                  size: 16,
+                  color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'QR',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       );
     }
 
