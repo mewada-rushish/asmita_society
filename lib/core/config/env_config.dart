@@ -103,6 +103,7 @@ class EnvConfig {
   static String industrialAcknowledge(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/acknowledge';
   static String industrialOverride(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/override';
   static String industrialCheckIn(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/check-in';
+  static String industrialSendToLobby(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/send-to-lobby';
   static String industrialCheckOut(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/check-out';
   static String get industrialGuardClockIn => '$baseUrl/app-api/industrial/guard/duty/clock-in';
   static String get industrialGuardClockOut => '$baseUrl/app-api/industrial/guard/duty/clock-out';
