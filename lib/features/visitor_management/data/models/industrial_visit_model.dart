@@ -344,6 +344,7 @@ class IndustrialVisitModel {
   final bool heldAtGate;
   final bool isBatched;
   final bool isPreApproved;
+  final bool isVip;
   final DateTime? createdAt;
   final DateTime? checkInAt;
   final DateTime? checkOutAt;
@@ -378,10 +379,21 @@ class IndustrialVisitModel {
     this.heldAtGate = false,
     this.isBatched = false,
     this.isPreApproved = false,
+    this.isVip = false,
     this.createdAt,
     this.checkInAt,
     this.checkOutAt,
   });
+
+  /// Returns visitor name with any legacy embedded '(VIP)' or '[VIP]' tags cleanly removed
+  String get cleanVisitorName => visitorName
+      .replaceAll(RegExp(r'\s*[\(\[]VIP[\)\]]', caseSensitive: false), '')
+      .trim();
+
+  /// Returns purpose with any legacy embedded '[VIP]' or '(VIP)' tags cleanly removed
+  String get cleanPurpose => (purpose ?? '')
+      .replaceAll(RegExp(r'\s*[\(\[]VIP[\)\]]', caseSensitive: false), '')
+      .trim();
 
   bool get isVehicle =>
       arrivalMode == 'FOUR_WHEELER' ||
@@ -461,6 +473,10 @@ class IndustrialVisitModel {
       isBatched: json['is_batched'] == true,
       isPreApproved:
           json['is_pre_approved'] == true || json['isPreApproved'] == true,
+      isVip: json['is_vip'] == true ||
+          json['isVip'] == true ||
+          (json['visitor_name']?.toString().contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false)) ?? false) ||
+          (json['purpose']?.toString().contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false)) ?? false),
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
@@ -500,6 +516,7 @@ class IndustrialVisitModel {
       'is_delivery': isDelivery,
       'delivery_company': deliveryCompany,
       'held_at_gate': heldAtGate,
+      'is_vip': isVip,
       'created_at': createdAt?.toIso8601String(),
       'check_in_at': checkInAt?.toIso8601String(),
       'check_out_at': checkOutAt?.toIso8601String(),
