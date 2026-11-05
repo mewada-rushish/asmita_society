@@ -269,15 +269,32 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
           ),
         );
       case 'director':
+        final directorAuthState = context.watch<AuthBloc>().state;
+        final directorUser = directorAuthState is AuthAuthenticated ? directorAuthState.user : null;
         return _wrapWithIndustrialBloc(
           context,
           DirectorDashboardView(
+            directorName: (directorUser != null && directorUser.fullName.isNotEmpty) ? directorUser.fullName : 'Executive Director',
+            departmentName: directorUser?.departmentName ?? 'Executive Suite',
+            cabinNumber: (directorUser?.cabinCode != null && directorUser!.cabinCode.isNotEmpty) ? directorUser.cabinCode : 'CAB-DIR-01',
+            deskNumber: (directorUser?.deskCode != null && directorUser!.deskCode.isNotEmpty) ? directorUser.deskCode : 'DIR-DSK-01',
+            designation: directorUser?.designation ?? 'Executive Director',
             onNavigateToTab: (index) => setState(() => _currentIndex = index),
             onNavigateToVisitsWithFilter: (filter) {
               setState(() {
                 _visitsInitialFilter = filter;
                 _currentIndex = 1; // Switches to Visits & Passes tab
               });
+            },
+            onOpenDelegation: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => DepartmentDelegationScreen(
+                    departmentId: directorUser?.departmentId ?? 1,
+                    departmentName: directorUser?.departmentName ?? 'Executive Suite',
+                  ),
+                ),
+              );
             },
           ),
         );

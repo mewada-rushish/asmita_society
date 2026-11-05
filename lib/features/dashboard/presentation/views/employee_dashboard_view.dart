@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -94,6 +95,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
 
   Future<void> _fetchDelegationStatus() async {
     try {
+      if (Platform.environment.containsKey('FLUTTER_TEST')) return;
       final dio = AsmitaDioClient(SecureStorageService()).dio;
       final res = await dio.get(EnvConfig.employeeDelegationStatus);
       if (res.statusCode == 200 && res.data['success'] == true) {
