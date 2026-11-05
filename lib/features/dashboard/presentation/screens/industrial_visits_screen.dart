@@ -445,6 +445,15 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       ),
                     ),
                   ),
+                  if (visit.cleanPurpose.isNotEmpty) ...[
+                    _buildRowDivider(context),
+                    _buildDetailRow(
+                      context,
+                      icon: Icons.info_outline_rounded,
+                      label: 'Purpose of Visit',
+                      value: visit.cleanPurpose,
+                    ),
+                  ],
                   _buildRowDivider(context),
                   _buildDetailRow(
                     context,
@@ -1491,6 +1500,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     return AsmitaVisitorCard.fromIndustrialVisit(
       visit: visit,
       context: context,
+      showSubtitle: false,
       isAcknowledged: isAck,
       onTap: () => _showVisitDetailsModal(context, visit),
       onApprove: isPending
