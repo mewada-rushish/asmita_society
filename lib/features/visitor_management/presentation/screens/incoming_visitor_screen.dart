@@ -109,21 +109,39 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
     try {
       di.registerIndustrialDependencies();
       final repo = di.sl<IndustrialVisitRepository>();
-      await repo.handleVisitAction(widget.data.visitId, action: action);
+      final result = await repo.handleVisitAction(widget.data.visitId, action: action);
+
+      final isAlreadyHandled = result['already_handled'] == true;
+      final currentStatus = result['status']?.toString();
 
       if (mounted) {
         setState(() {
-          _decisionStatus = action;
+          _decisionStatus = isAlreadyHandled ? (currentStatus ?? action) : action;
           _isSubmitting = false;
         });
 
+        // Cancel any pending notifications for this visit from the notification shade
+        try {
+          IncomingVisitorService.cancelNotificationForVisit(widget.data.visitId);
+        } catch (_) {}
+
         // If approved on lock screen, attempt to dismiss keyguard
-        if (action == 'APPROVE') {
+        if (action == 'APPROVE' || currentStatus == 'APPROVED') {
           IncomingVisitorService.dismissKeyguard();
         }
 
+        if (isAlreadyHandled) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message']?.toString() ?? 'Visit request has already been handled.'),
+              backgroundColor: AsmitaPalette.deepNavy,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+
         // Brief delay so user sees confirmation card
-        await Future.delayed(const Duration(milliseconds: 1100));
+        await Future.delayed(const Duration(milliseconds: 900));
         if (mounted) {
           Navigator.of(context).pop();
         }
