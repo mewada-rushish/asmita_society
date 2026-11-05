@@ -25,7 +25,6 @@ import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
-import '../../../visitor_management/presentation/widgets/invite_team_member_sheet.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
 import 'dart:math';
@@ -1155,15 +1154,6 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
             : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
         iconColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
         onTap: () => _showPreApproveModal(context),
-      ),
-      _ExecutiveActionItem(
-        title: 'Invite Team',
-        icon: Icons.group_add_rounded,
-        containerColor: isDark
-            ? AsmitaPalette.surfaceDark
-            : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-        iconColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
-        onTap: () => showInviteTeamMemberSheet(context),
       ),
       _ExecutiveActionItem(
         title: 'Car Valet',

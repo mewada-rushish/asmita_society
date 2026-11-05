@@ -301,4 +301,37 @@ class PropertyRoleResolver {
         normalized == 'owner' ||
         normalized == 'tenant';
   }
+  /// Checks whether an employee/corporate user has authority to invite team members.
+  static bool canInviteTeamMembers(UserModel? user, {String? designation, String? role}) {
+    if (user != null && user.permissions.isNotEmpty) {
+      if (user.permissions.containsKey('canManageUsers')) {
+        return user.canManageUsers;
+      }
+      if (user.permissions.containsKey('canManageMembers')) {
+        return user.canManageMembers;
+      }
+    }
+
+    final normalized = normalizeRole(role ?? user?.primaryRole);
+    if (normalized == 'director') return true;
+
+    if (user != null) {
+      final roleLower = user.primaryRole.toLowerCase();
+      final desigLower = (designation ?? user.designation).toLowerCase();
+      final isHod = user.roleDetails?['is_hod'] == true ||
+          roleLower.contains('hod') ||
+          desigLower.contains('hod') ||
+          desigLower.contains('head');
+      final isTL = roleLower.contains('team leader') ||
+          roleLower.contains('lead') ||
+          desigLower.contains('lead') ||
+          desigLower.contains('tl');
+      final isDirector = (user.rolePower ?? 0) >= 500 ||
+          roleLower.contains('director') ||
+          desigLower.contains('director');
+      if (isHod || isTL || isDirector) return true;
+    }
+
+    return normalized == 'director' || normalized == 'employee';
+  }
 }
