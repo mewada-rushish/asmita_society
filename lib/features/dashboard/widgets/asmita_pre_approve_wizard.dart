@@ -30,6 +30,11 @@ class AsmitaPreApproveWizard extends StatefulWidget {
 
   const AsmitaPreApproveWizard({super.key, this.isGuardMode = false});
 
+  static const List<String> vehicleTypeOptions = [
+    'Bike',
+    'Car',
+  ];
+
   /// Displays the pre-approve wizard in a standardized Asmita modal bottom sheet.
   static Future<T?> showAsModalSheet<T>(
     BuildContext context, {
@@ -616,13 +621,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   }
 
 
-  static const List<String> vehicleTypeOptions = [
-    'Personal Bike',
-    'Personal Car',
-    'Auto / Cab',
-    'Commercial',
-  ];
-  String _selectedVehicleType = 'Personal Car';
+  static const List<String> vehicleTypeOptions = AsmitaPreApproveWizard.vehicleTypeOptions;
+  String _selectedVehicleType = 'Car';
 
   Widget _buildPurposeSection({bool isGuard = false}) {
     if (_selectedCategory == 'Delivery') {
