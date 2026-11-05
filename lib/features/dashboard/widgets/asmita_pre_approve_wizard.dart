@@ -41,7 +41,10 @@ class AsmitaPreApproveWizard extends StatefulWidget {
       context: context,
       title: title ?? (isGuardMode ? 'New Walk-in Visitor' : 'Pre-Approve Entry'),
       subtitle: subtitle ?? (isGuardMode ? 'Record lobby guest entry details' : null),
-      child: AsmitaPreApproveWizard(isGuardMode: isGuardMode),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: AsmitaPreApproveWizard(isGuardMode: isGuardMode),
+      ),
     );
   }
 
@@ -457,7 +460,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         : (isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey);
 
     return Padding(
-      padding: const EdgeInsets.only(right: 10.0),
+      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 4.0),
       child: GestureDetector(
         onTap: () {
           HapticFeedback.selectionClick();
@@ -478,18 +481,12 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: primaryColor.withValues(alpha: 0.20),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ]
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                      color: primaryColor.withValues(alpha: 0.16),
                       blurRadius: 4,
                       offset: const Offset(0, 1),
                     ),
-                  ],
+                  ]
+                : null,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -605,6 +602,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         const SizedBox(height: 8),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Row(
             children: suggestions.map((p) {
               final isSelected = _purposeController.text.trim() == p;
@@ -684,6 +682,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Row(
             children: [
               ...deliveryCompanyOptions.map((comp) {
@@ -735,6 +734,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Row(
             children: [
               ...cabCompanyOptions.map((provider) {
@@ -781,6 +781,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         const SizedBox(height: 6),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Row(
             children: vehicleTypeOptions.map((vType) {
               final isSelected = _selectedVehicleType == vType;
