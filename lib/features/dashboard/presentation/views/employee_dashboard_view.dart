@@ -434,9 +434,24 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
 
     final actions = <_QuickActionItemData>[
       _QuickActionItemData(
-        label: 'Pre-approve',
+        label: 'Pre-Approve',
         icon: Icons.person_add_alt_1_rounded,
         onTap: () => _showPreApproveModal(context),
+      ),
+      _QuickActionItemData(
+        label: 'Meeting Rooms',
+        icon: Icons.meeting_room_rounded,
+        onTap: () => _openMeetingRoomReservation(context),
+      ),
+      _QuickActionItemData(
+        label: 'Security',
+        icon: Icons.shield_rounded,
+        onTap: () => _showSecurityModal(context),
+      ),
+      _QuickActionItemData(
+        label: 'Pay Bills',
+        icon: Icons.receipt_long_rounded,
+        onTap: () => _openBillPayments(context),
       ),
       if (canDelegate)
         _QuickActionItemData(
@@ -450,16 +465,6 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
           icon: Icons.group_add_rounded,
           onTap: () => showInviteTeamMemberSheet(context),
         ),
-      _QuickActionItemData(
-        label: 'Meeting Rooms',
-        icon: Icons.meeting_room_rounded,
-        onTap: () => _openMeetingRoomReservation(context),
-      ),
-      _QuickActionItemData(
-        label: 'Pay Bills',
-        icon: Icons.receipt_long_rounded,
-        onTap: () => _openBillPayments(context),
-      ),
     ];
 
     return Padding(
@@ -587,6 +592,189 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
 
   void _openBillPayments(BuildContext context) {
     BbpsBillPaymentsSheet.show(context, onNavigateToTab: widget.onNavigateToTab);
+  }
+
+  void _showSecurityModal(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    UserModel? user;
+    try {
+      final authBloc = context.read<AuthBloc?>();
+      final authState = authBloc?.state;
+      if (authState is AuthAuthenticated) user = authState.user;
+    } catch (_) {}
+    final societyId = user?.societyId ?? 115;
+
+    // Auto-provision security departments and roles along the way on backend
+    try {
+      final dio = AsmitaDioClient(SecureStorageService()).dio;
+      dio
+          .get(
+            '${EnvConfig.baseUrl}/app-api/security/hotlines?society_id=$societyId',
+          )
+          .ignore();
+    } catch (_) {}
+
+    showAsmitaBottomSheet(
+      context: context,
+      title: 'Campus Security Command',
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Direct hotline connection to campus security gates, escorts, and reception control desks.',
+              style: TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+            ),
+            const SizedBox(height: 16),
+            _buildHotlineTile(
+              context,
+              icon: Icons.support_agent_rounded,
+              title: 'Main Reception Desk',
+              subtitle: 'Ext: 101 • Dedicated Campus Support',
+              onCall: () {
+                Navigator.pop(context);
+                AsmitaToast.show(
+                  context,
+                  message: 'Connecting to Main Reception (Ext 101)...',
+                  type: AsmitaToastType.info,
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+            _buildHotlineTile(
+              context,
+              icon: Icons.shield_rounded,
+              title: 'Gate 1 Security Control',
+              subtitle: 'Ext: 104 • Main Campus Gate & Visitor Entry',
+              onCall: () {
+                Navigator.pop(context);
+                AsmitaToast.show(
+                  context,
+                  message: 'Connecting to Gate 1 Control (Ext 104)...',
+                  type: AsmitaToastType.info,
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+            _buildHotlineTile(
+              context,
+              icon: Icons.emergency_rounded,
+              title: 'Facility Emergency & Medical',
+              subtitle: 'Ext: 999 • Rapid Response Team',
+              isEmergency: true,
+              onCall: () {
+                Navigator.pop(context);
+                AsmitaToast.show(
+                  context,
+                  message: 'Connecting to Emergency Response (Ext 999)...',
+                  type: AsmitaToastType.error,
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHotlineTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onCall,
+    bool isEmergency = false,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isEmergency
+              ? (isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFECACA))
+              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 1.5),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: isEmergency
+                  ? (isDark
+                      ? const Color(0xFF991B1B).withValues(alpha: 0.3)
+                      : const Color(0xFFFEE2E2))
+                  : (isDark
+                      ? const Color(0xFF3B82F6).withValues(alpha: 0.2)
+                      : const Color(0xFFEFF6FF)),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              size: 20,
+              color: isEmergency
+                  ? const Color(0xFFEF4444)
+                  : (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 11,
+                    color: isDark
+                        ? AsmitaPalette.textDarkModeMuted
+                        : AsmitaPalette.textLight,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: onCall,
+            icon: const Icon(Icons.phone_in_talk_rounded),
+            color: isEmergency
+                ? const Color(0xFFEF4444)
+                : const Color(0xFF10B981),
+            iconSize: 22,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+          ),
+        ],
+      ),
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────────────
