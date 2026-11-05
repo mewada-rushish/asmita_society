@@ -118,6 +118,7 @@ void main() {
 
       expect(find.text('Application'), findsOneWidget);
       expect(find.text('Settings'), findsOneWidget);
+      expect(find.text('Utility Bill Clearances (BBPS)'), findsNothing);
       expect(find.text('Help & Support'), findsOneWidget);
       expect(find.text('Logout'), findsOneWidget);
     });

@@ -15,6 +15,7 @@ class AsmitaTextField extends StatelessWidget {
   final TextCapitalization textCapitalization;
   final ValueChanged<String>? onChanged;
   final FormFieldValidator<String>? validator;
+  final Color? fillColor;
 
   const AsmitaTextField({
     super.key,
@@ -30,6 +31,7 @@ class AsmitaTextField extends StatelessWidget {
     this.textCapitalization = TextCapitalization.none,
     this.onChanged,
     this.validator,
+    this.fillColor,
   });
 
   @override
@@ -38,8 +40,8 @@ class AsmitaTextField extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final labelColor =
         isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark;
-    final fillColor =
-        isDark ? AsmitaPalette.surfaceDark : AsmitaPalette.systemBG;
+    final effectiveFillColor =
+        fillColor ?? (isDark ? AsmitaPalette.surfaceDark : Colors.white);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,7 +93,7 @@ class AsmitaTextField extends StatelessWidget {
                   )
                 : null,
             filled: true,
-            fillColor: fillColor,
+            fillColor: effectiveFillColor,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(

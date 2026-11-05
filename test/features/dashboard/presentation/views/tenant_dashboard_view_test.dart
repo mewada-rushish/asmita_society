@@ -22,6 +22,7 @@ import 'package:asmita_society/features/services/bloc/amenities_state.dart';
 import 'package:asmita_society/features/visitor_management/bloc/guard_gate_bloc.dart';
 import 'package:asmita_society/features/visitor_management/bloc/guard_gate_state.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
+import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 
 class MockAuthBloc extends Mock implements AuthBloc {}
 class MockVisitorBloc extends Mock implements VisitorBloc {}
@@ -51,6 +52,7 @@ void main() {
     primaryRole: 'tenant',
     accountType: 'app',
     societyName: 'AsmitA Grandeur',
+    permissions: const {'canManageVisitors': true, 'visitor_management': true, 'community': true},
   );
 
   setUpAll(() {
@@ -192,7 +194,7 @@ void main() {
       expect(viewMoreClicked, isTrue);
     });
 
-    testWidgets('opens Pre-Approve wizard dialog when Pre-Approve action is tapped', (tester) async {
+    testWidgets('opens Pre-Approve wizard bottom sheet when Pre-Approve action is tapped', (tester) async {
       setMobileScreen(tester);
       await tester.pumpWidget(buildTestableWidget());
       await tester.pump();
@@ -201,7 +203,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.byType(AsmitaDialog), findsOneWidget);
+      expect(find.byType(AsmitaBottomSheet), findsOneWidget);
       expect(find.text('Pre-Approve Entry'), findsOneWidget);
     });
 

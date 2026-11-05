@@ -54,7 +54,10 @@ class AsmitaTheme {
       dividerColor: AsmitaPalette.borderGrey,
       colorScheme: const ColorScheme.light(
         primary: AsmitaPalette.deepNavy,
-        secondary: AsmitaPalette.actionRed,
+        secondary: Color(0xFF3B4D9B),
+        secondaryContainer: Color(0xFFE8ECF8),
+        onSecondaryContainer: AsmitaPalette.deepNavy,
+        error: AsmitaPalette.actionRed,
         surface: AsmitaPalette.surfaceLight,
         outline: AsmitaPalette.borderGrey,
       ),
@@ -62,11 +65,13 @@ class AsmitaTheme {
         checkmarkColor: Colors.white,
         selectedColor: AsmitaPalette.deepNavy,
         secondarySelectedColor: AsmitaPalette.deepNavy,
-        labelStyle: GoogleFonts.montserrat(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: AsmitaPalette.deepNavy,
-        ),
+        backgroundColor: AsmitaPalette.systemBG,
+        color: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AsmitaPalette.deepNavy;
+          }
+          return AsmitaPalette.systemBG;
+        }),
         secondaryLabelStyle: GoogleFonts.montserrat(
           fontSize: 12,
           fontWeight: FontWeight.w700,
@@ -94,7 +99,10 @@ class AsmitaTheme {
       dividerColor: AsmitaPalette.borderGreyDark,
       colorScheme: const ColorScheme.dark(
         primary: AsmitaPalette.deepNavyDark,
-        secondary: AsmitaPalette.actionRed,
+        secondary: Color(0xFF5A75CD),
+        secondaryContainer: Color(0xFF1E284A),
+        onSecondaryContainer: Colors.white,
+        error: AsmitaPalette.actionRed,
         surface: AsmitaPalette.surfaceDark,
         outline: AsmitaPalette.borderGreyDark,
       ),
@@ -102,11 +110,13 @@ class AsmitaTheme {
         checkmarkColor: Colors.white,
         selectedColor: AsmitaPalette.deepNavyDark,
         secondarySelectedColor: AsmitaPalette.deepNavyDark,
-        labelStyle: GoogleFonts.montserrat(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Colors.white70,
-        ),
+        backgroundColor: AsmitaPalette.surfaceDark,
+        color: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AsmitaPalette.deepNavyDark;
+          }
+          return AsmitaPalette.surfaceDark;
+        }),
         secondaryLabelStyle: GoogleFonts.montserrat(
           fontSize: 12,
           fontWeight: FontWeight.w700,

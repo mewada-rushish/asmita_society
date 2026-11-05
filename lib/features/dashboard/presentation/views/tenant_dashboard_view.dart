@@ -99,12 +99,9 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
       );
       return;
     }
-    await showDialog(
-      context: context,
-      builder: (context) => const AsmitaDialog(
-        title: 'Pre-Approve Entry',
-        content: AsmitaPreApproveWizard(), // Plugs in our dynamic wizard safely
-      ),
+    await AsmitaPreApproveWizard.showAsModalSheet(
+      context,
+      title: 'Pre-Approve Entry',
     );
 
     if (!context.mounted) return;

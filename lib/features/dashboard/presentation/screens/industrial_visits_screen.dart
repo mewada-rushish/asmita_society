@@ -8,9 +8,9 @@ import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
-import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_visitor_card.dart';
+import '../../../../core/widgets/asmita_bottom_nav_bar.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
@@ -81,12 +81,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
   }
 
   Future<void> _showPreApproveModal(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (context) => const AsmitaDialog(
-        title: 'Schedule Visitor',
-        content: AsmitaPreApproveWizard(),
-      ),
+    await AsmitaPreApproveWizard.showAsModalSheet(
+      context,
+      title: 'Schedule Visitor',
     );
 
     if (!context.mounted) return;
@@ -153,8 +150,8 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                visit.visitorName,
-                                maxLines: 2,
+                                visit.cleanVisitorName,
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontFamily: 'Montserrat',
@@ -165,35 +162,44 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                                   height: 1.2,
                                 ),
                               ),
-                              const SizedBox(height: 3),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    visit.isDelivery
-                                        ? Icons.local_shipping_outlined
-                                        : Icons.badge_outlined,
-                                    size: 13,
-                                    color: Colors.white70,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Flexible(
-                                    child: Text(
-                                      visit.deliveryCompany ??
-                                          visit.purpose ??
-                                          (visit.isDelivery ? 'Delivery Entry' : 'Guest Visitor'),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 12,
-                                        color: Colors.white70,
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                              if (visit.isVip) ...[
+                                const SizedBox(height: 5),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
                                     ),
+                                    borderRadius: BorderRadius.circular(6),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.workspace_premium_rounded, size: 12, color: Colors.white),
+                                      SizedBox(width: 3),
+                                      Text(
+                                        'VIP',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
+                                          letterSpacing: 0.6,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -403,6 +409,15 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       ),
                     ),
                   ),
+                  if (visit.cleanPurpose.isNotEmpty) ...[
+                    _buildRowDivider(context),
+                    _buildDetailRow(
+                      context,
+                      icon: Icons.info_outline_rounded,
+                      label: 'Purpose of Visit',
+                      value: visit.cleanPurpose,
+                    ),
+                  ],
                   _buildRowDivider(context),
                   _buildDetailRow(
                     context,
@@ -837,29 +852,43 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             child: Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
           ),
           const SizedBox(width: 12),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              fontFamily: 'Poppins',
-              color: AsmitaPalette.textLight,
+          Flexible(
+            flex: 2,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontFamily: 'Poppins',
+                color: AsmitaPalette.textLight,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const Spacer(),
-          if (customValue != null)
-            customValue
-          else if (value != null)
-            Text(
-              value,
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 3,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: customValue ??
+                  (value != null
+                      ? Text(
+                          value,
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        )
+                      : const SizedBox.shrink()),
             ),
+          ),
           if (trailing != null) ...[
-            const SizedBox(width: 4),
+            const SizedBox(width: 6),
             trailing,
           ],
         ],
@@ -876,7 +905,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       floatingActionButton: Padding(
         padding: EdgeInsets.only(
-          bottom: 112.0 + MediaQuery.viewPaddingOf(context).bottom,
+          bottom: AsmitaBottomNavBar.fabBottomPadding(context),
         ),
         child: FloatingActionButton.extended(
           heroTag: null,
@@ -1065,6 +1094,12 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       ),
                     ),
 
+                    // Active Filter Badge (When filtered)
+                    if (_selectedFilter != 'ALL')
+                      SliverToBoxAdapter(
+                        child: _buildActiveFilterHeader(context),
+                      ),
+
                     // Visitor Items or Empty State
                     if (filteredVisits.isEmpty)
                       SliverFillRemaining(
@@ -1166,30 +1201,33 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     final isSelected = _selectedFilter == filterKey;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return InkWell(
+    return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
-        setState(() => _selectedFilter = filterKey);
+        setState(() {
+          _selectedFilter = filterKey;
+        });
       },
-      borderRadius: BorderRadius.circular(14),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
         decoration: BoxDecoration(
           color: isSelected
-              ? accentColor.withValues(alpha: isDark ? 0.22 : 0.12)
-              : (isDark ? const Color(0xFF1E293B) : Theme.of(context).colorScheme.surface),
-          borderRadius: BorderRadius.circular(14),
+              ? (isDark ? accentColor.withValues(alpha: 0.18) : accentColor.withValues(alpha: 0.08))
+              : Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
                 ? accentColor
-                : (isDark ? const Color(0xFF334155) : Theme.of(context).dividerColor),
+                : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
             width: isSelected ? 1.5 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.03),
-              blurRadius: 6,
+              color: isSelected
+                  ? accentColor.withValues(alpha: 0.12)
+                  : Colors.black.withValues(alpha: 0.02),
+              blurRadius: isSelected ? 8 : 4,
               offset: const Offset(0, 2),
             ),
           ],
@@ -1263,6 +1301,105 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     );
   }
 
+  Widget _buildActiveFilterHeader(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    String filterLabel;
+    Color filterColor;
+    IconData filterIcon;
+
+    switch (_selectedFilter) {
+      case 'PENDING':
+        filterLabel = 'Pending Approvals';
+        filterColor = isDark ? const Color(0xFFF87171) : AsmitaPalette.actionRed;
+        filterIcon = Icons.pending_actions_rounded;
+        break;
+      case 'APPROVED':
+        filterLabel = 'Approved Passes';
+        filterColor = isDark ? const Color(0xFF38BDF8) : const Color(0xFF1E88E5);
+        filterIcon = Icons.verified_rounded;
+        break;
+      case 'INSIDE':
+        filterLabel = 'Checked Inside HQ';
+        filterColor = isDark ? const Color(0xFF34D399) : AsmitaPalette.successGreen;
+        filterIcon = Icons.meeting_room_rounded;
+        break;
+      default:
+        filterLabel = _selectedFilter;
+        filterColor = AsmitaPalette.deepNavy;
+        filterIcon = Icons.filter_alt_rounded;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 2, 16, 10),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: filterColor.withValues(alpha: isDark ? 0.2 : 0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: filterColor.withValues(alpha: 0.35),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(filterIcon, size: 14, color: filterColor),
+                const SizedBox(width: 6),
+                Text(
+                  filterLabel,
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: filterColor,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() => _selectedFilter = 'ALL');
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: filterColor.withValues(alpha: 0.2),
+                    ),
+                    child: Icon(Icons.close_rounded, size: 12, color: filterColor),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          TextButton(
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              setState(() => _selectedFilter = 'ALL');
+            },
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text(
+              'Show All',
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AsmitaPalette.deepNavy,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildEmptyState(BuildContext context) {
     String emptyTitle = 'No Visitors Found';
@@ -1327,6 +1464,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     return AsmitaVisitorCard.fromIndustrialVisit(
       visit: visit,
       context: context,
+      showSubtitle: false,
       isAcknowledged: isAck,
       onTap: () => _showVisitDetailsModal(context, visit),
       onApprove: isPending

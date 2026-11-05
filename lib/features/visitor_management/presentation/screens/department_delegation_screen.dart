@@ -9,8 +9,9 @@ import 'package:intl/intl.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../auth/data/models/user_model.dart';
 import '../../../../core/security/secure_storage_service.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_sub_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
@@ -36,6 +37,7 @@ class DepartmentDelegationScreen extends StatefulWidget {
 
 class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen> {
   bool _isDelegationEnabled = false;
+  bool _hasUserManuallyToggled = false;
   int? _selectedDelegateId;
   bool _isTillTurnOff = true;
   DateTime _startDate = DateTime.now();
@@ -71,8 +73,16 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
     try {
       final dio = AsmitaDioClient(SecureStorageService()).dio;
 
-      final authState = context.read<AuthBloc>().state;
-      final currentUser = authState is AuthAuthenticated ? authState.user : null;
+      UserModel? currentUser;
+      try {
+        final authBloc = context.read<AuthBloc?>();
+        final authState = authBloc?.state;
+        if (authState is AuthAuthenticated) {
+          currentUser = authState.user;
+        }
+      } catch (_) {
+        currentUser = null;
+      }
       final currentUserId = currentUser?.userId;
       final userPower = currentUser?.rolePower ?? 100;
       final userFloor = (currentUser?.roleDetails?['floor']?.toString() ?? '')
@@ -81,9 +91,14 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
           .replaceAll(RegExp(r'th|st|nd|rd'), '')
           .trim();
 
+      final propertyId = currentUser?.societyId ?? 115;
+
       // 1. Fetch current user delegation status
       try {
-        final statusRes = await dio.get(EnvConfig.employeeDelegationStatus);
+        final statusRes = await dio.get(
+          EnvConfig.employeeDelegationStatus,
+          queryParameters: {'property_id': propertyId},
+        );
         if (statusRes.statusCode == 200 && statusRes.data['success'] == true) {
           final dData = statusRes.data['data'] as Map<String, dynamic>?;
           if (dData != null) {
@@ -91,7 +106,6 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
             _incomingDelegations = (dData['incomingDelegations'] as List? ?? [])
                 .map((x) => Map<String, dynamic>.from(x as Map))
                 .toList();
-            _isDelegationEnabled = _activeOutgoing != null;
             if (_activeOutgoing != null) {
               _isDelegationEnabled = true;
               _selectedDelegateId = _activeOutgoing!['delegate_user_id'] as int?;
@@ -102,6 +116,8 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
               if (_activeOutgoing!['end_date'] != null) {
                 _endDate = DateTime.tryParse(_activeOutgoing!['end_date'].toString());
               }
+            } else if (!_hasUserManuallyToggled) {
+              _isDelegationEnabled = false;
             }
           }
         }
@@ -119,6 +135,9 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         if (widget.departmentId != null) {
           queryParams['department_id'] = widget.departmentId;
         }
+        queryParams['property_id'] = propertyId;
+        queryParams['societyId'] = propertyId;
+
         final response = await dio.get(
           EnvConfig.employeeDelegationColleagues,
           queryParameters: queryParams.isNotEmpty ? queryParams : null,
@@ -140,6 +159,9 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
           if (widget.departmentId != null) {
             queryParams['departmentId'] = widget.departmentId;
           }
+          queryParams['property_id'] = propertyId;
+          queryParams['propertyId'] = propertyId;
+
           final legacyRes = await dio.get(
             EnvConfig.candidateDelegates,
             queryParameters: queryParams.isNotEmpty ? queryParams : null,
@@ -188,12 +210,12 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
             (m['role_details'] is Map && m['role_details']['is_delegatee'] == false);
         if (isExplicitlyDisabled) return false;
 
-        // 4. Candidate role power MUST be strictly lower than delegator
+        // 4. Candidate role power MUST NOT be greater than delegator (peers with equal power are allowed)
         final candidatePower = m['power'] is int
             ? m['power'] as int
             : int.tryParse(m['power']?.toString() ?? '') ?? 100;
 
-        if (userPower < 500 && candidatePower >= userPower) {
+        if (userPower < 500 && candidatePower > userPower) {
           return false;
         }
 
@@ -331,10 +353,24 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
     try {
       final dio = AsmitaDioClient(SecureStorageService()).dio;
+      UserModel? currentUser;
+      try {
+        final authBloc = context.read<AuthBloc?>();
+        final authState = authBloc?.state;
+        if (authState is AuthAuthenticated) {
+          currentUser = authState.user;
+        }
+      } catch (_) {
+        currentUser = null;
+      }
+      final propertyId = currentUser?.societyId ?? 115;
 
       if (!_isDelegationEnabled) {
         // Revoke active delegation
-        await dio.delete(EnvConfig.employeeDelegation);
+        await dio.delete(
+          EnvConfig.employeeDelegation,
+          queryParameters: {'property_id': propertyId},
+        );
         if (mounted) {
           AsmitaToast.show(
             context,
@@ -350,6 +386,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         'delegate_user_id': _selectedDelegateId,
         'start_date': _startDate.toIso8601String(),
         'end_date': _isTillTurnOff ? null : _endDate?.toIso8601String(),
+        'property_id': propertyId,
       };
 
       final response = await dio.post(
@@ -565,7 +602,11 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                             activeTrackColor: AsmitaPalette.deepNavy,
                             onChanged: (val) {
                               HapticFeedback.selectionClick();
+                              _hasUserManuallyToggled = true;
                               setState(() => _isDelegationEnabled = val);
+                              if (val && _candidates.isEmpty && !_isLoadingStaff) {
+                                _fetchCandidateDelegates(isSilent: false);
+                              }
                             },
                           ),
                         ],
@@ -574,95 +615,31 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                     const SizedBox(height: 20),
 
                     if (_isDelegationEnabled) ...[
-                      // Section Title: Select Delegate
-                      const Padding(
-                        padding: EdgeInsets.only(left: 4, bottom: 8),
-                        child: Text(
-                          'SELECT DELEGATE STAFF MEMBER',
-                          style: TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.8,
-                            color: AsmitaPalette.textLight,
-                          ),
-                        ),
-                      ),
-
-                      // Category Filtering Chips
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
+                      // Section Header: Select Delegate & BBPS-style Category Dropdown
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 8),
                         child: Row(
                           children: [
-                            _buildCategoryChip('All', _candidates.length),
-                            if (_candidates.any((c) => c['category'] == 'HOD' || c['is_hod'] == true)) ...[
-                              const SizedBox(width: 8),
-                              _buildCategoryChip(
-                                'HOD',
-                                _candidates
-                                    .where((c) =>
-                                        c['category'] == 'HOD' ||
-                                        c['is_hod'] == true)
-                                    .length,
+                            const Expanded(
+                              child: Text(
+                                'SELECT DELEGATE STAFF MEMBER',
+                                style: TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.8,
+                                  color: AsmitaPalette.textLight,
+                                ),
                               ),
-                            ],
-                            if (_candidates.any((c) =>
-                                c['category'] == 'Receptionist' ||
-                                c['category'] == 'Floor Receptionist')) ...[
-                              const SizedBox(width: 8),
-                              _buildCategoryChip(
-                                'Receptionist',
-                                _candidates
-                                    .where((c) =>
-                                        c['category'] == 'Receptionist' ||
-                                        c['category'] == 'Floor Receptionist')
-                                    .length,
-                              ),
-                            ],
-                            if (_candidates.any((c) => c['category'] == 'Team Lead')) ...[
-                              const SizedBox(width: 8),
-                              _buildCategoryChip(
-                                'Team Lead',
-                                _candidates
-                                    .where((c) => c['category'] == 'Team Lead')
-                                    .length,
-                              ),
-                            ],
-                            if (_candidates.any((c) => c['category'] == 'Team Member')) ...[
-                              const SizedBox(width: 8),
-                              _buildCategoryChip(
-                                'Team Member',
-                                _candidates
-                                    .where((c) => c['category'] == 'Team Member')
-                                    .length,
-                              ),
-                            ],
-                            if (_candidates.any((c) => c['category'] == 'Intern')) ...[
-                              const SizedBox(width: 8),
-                              _buildCategoryChip(
-                                'Intern',
-                                _candidates
-                                    .where((c) => c['category'] == 'Intern')
-                                    .length,
-                              ),
-                            ],
+                            ),
+                            _buildStaffCategoryDropdown(context),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 14),
-
-                      if (_isLoadingStaff)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 24),
-                          child: Center(
-                            child: AsmitaLoadingIndicator(
-                              color: AsmitaPalette.deepNavy,
-                              size: 28,
-                            ),
-                          ),
-                        )
-                      else ...[
+                      const SizedBox(height: 6),
+                      if (_isLoadingStaff) ...[
+                        _buildSkeletalDelegateList(context),
+                      ] else ...[
                         Builder(
                           builder: (context) {
                             final filtered = _candidates.where((c) {
@@ -822,41 +799,28 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                       ],
                       const SizedBox(height: 16),
 
-                      // Section Title: Delegation Window
-                      const Padding(
-                        padding: EdgeInsets.only(left: 4, bottom: 8),
-                        child: Text(
-                          'ACTIVE DELEGATION WINDOW',
-                          style: TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.8,
-                            color: AsmitaPalette.textLight,
-                          ),
-                        ),
-                      ),
-
-                      // Quick Presets Row
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
+                      // Section Header: Delegation Window & BBPS-style Presets Dropdown
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 8),
                         child: Row(
                           children: [
-                            _buildTillTurnOffChip(),
-                            const SizedBox(width: 8),
-                            _buildPresetChip('Today (24h)', 1),
-                            const SizedBox(width: 8),
-                            _buildPresetChip('3 Days', 3),
-                            const SizedBox(width: 8),
-                            _buildPresetChip('1 Week', 7),
-                            const SizedBox(width: 8),
-                            _buildPresetChip('2 Weeks', 14),
+                            const Expanded(
+                              child: Text(
+                                'ACTIVE DELEGATION WINDOW',
+                                style: TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.8,
+                                  color: AsmitaPalette.textLight,
+                                ),
+                              ),
+                            ),
+                            _buildDelegationWindowDropdown(context),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 10),
-
+                      const SizedBox(height: 6),
                       // Calendar Date Range Picker Card
                       InkWell(
                         onTap: _selectDateRange,
@@ -973,106 +937,256 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
     );
   }
 
-  Widget _buildCategoryChip(String category, int count) {
-    final isSelected = _selectedCategory == category;
-    return InkWell(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        setState(() => _selectedCategory = category);
-      },
-      borderRadius: BorderRadius.circular(10),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AsmitaPalette.deepNavy
-              : Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected ? AsmitaPalette.deepNavy : Theme.of(context).dividerColor,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              category,
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+  Widget _buildSkeletalDelegateList(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? Colors.grey[800]! : Colors.grey[200]!;
+    final highlightColor = isDark ? Colors.grey[700]! : Colors.grey[100]!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Skeletal Staff Cards
+        ...List.generate(3, (index) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Theme.of(context).dividerColor),
+            ),
+            child: Shimmer.fromColors(
+              baseColor: baseColor,
+              highlightColor: highlightColor,
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 120,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              width: 60,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          width: 100,
+                          height: 11,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                count.toString(),
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+          );
+        }),
+      ],
     );
   }
 
-  Widget _buildTillTurnOffChip() {
-    final isSelected = _isTillTurnOff;
-    return InkWell(
-      onTap: () {
+  List<Map<String, dynamic>> _getAvailableStaffCategories() {
+    final List<Map<String, dynamic>> categories = [
+      {
+        'label': 'All',
+        'count': _candidates.length,
+        'icon': Icons.grid_view_rounded,
+      },
+    ];
+    if (_candidates.any((c) => c['category'] == 'HOD' || c['is_hod'] == true)) {
+      categories.add({
+        'label': 'HOD',
+        'count': _candidates.where((c) => c['category'] == 'HOD' || c['is_hod'] == true).length,
+        'icon': Icons.badge_outlined,
+      });
+    }
+    if (_candidates.any((c) =>
+        c['category'] == 'Receptionist' || c['category'] == 'Floor Receptionist')) {
+      categories.add({
+        'label': 'Receptionist',
+        'count': _candidates
+            .where((c) =>
+                c['category'] == 'Receptionist' ||
+                c['category'] == 'Floor Receptionist')
+            .length,
+        'icon': Icons.support_agent_rounded,
+      });
+    }
+    if (_candidates.any((c) => c['category'] == 'Team Lead')) {
+      categories.add({
+        'label': 'Team Lead',
+        'count': _candidates.where((c) => c['category'] == 'Team Lead').length,
+        'icon': Icons.supervisor_account_outlined,
+      });
+    }
+    if (_candidates.any((c) => c['category'] == 'Team Member')) {
+      categories.add({
+        'label': 'Team Member',
+        'count': _candidates.where((c) => c['category'] == 'Team Member').length,
+        'icon': Icons.person_outline_rounded,
+      });
+    }
+    if (_candidates.any((c) => c['category'] == 'Intern')) {
+      categories.add({
+        'label': 'Intern',
+        'count': _candidates.where((c) => c['category'] == 'Intern').length,
+        'icon': Icons.school_outlined,
+      });
+    }
+    return categories;
+  }
+
+  Widget _buildStaffCategoryDropdown(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final categories = _getAvailableStaffCategories();
+    final currentItem = categories.firstWhere(
+      (c) => c['label'] == _selectedCategory,
+      orElse: () => categories.first,
+    );
+
+    return PopupMenuButton<String>(
+      initialValue: _selectedCategory,
+      tooltip: 'Filter Staff Category',
+      offset: const Offset(0, 32),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+        ),
+      ),
+      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+      elevation: 6,
+      onSelected: (String cat) {
         HapticFeedback.selectionClick();
         setState(() {
-          _isTillTurnOff = true;
-          _startDate = DateTime.now();
-          _endDate = null;
+          _selectedCategory = cat;
         });
       },
-      borderRadius: BorderRadius.circular(10),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        alignment: Alignment.center,
+      itemBuilder: (BuildContext context) {
+        return categories.map((item) {
+          final label = item['label'] as String;
+          final count = item['count'] as int;
+          final icon = item['icon'] as IconData;
+          final isSelected = label == _selectedCategory;
+          return PopupMenuItem<String>(
+            value: label,
+            height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 15,
+                  color: isSelected
+                      ? (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
+                      : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    count > 0 ? '$label ($count)' : label,
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected
+                          ? (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
+                          : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                    ),
+                  ),
+                ),
+                if (isSelected)
+                  Icon(
+                    Icons.check_rounded,
+                    size: 16,
+                    color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                  ),
+              ],
+            ),
+          );
+        }).toList();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AsmitaPalette.deepNavy
-              : Theme.of(context).colorScheme.surface,
+          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? AsmitaPalette.deepNavy : Theme.of(context).dividerColor,
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+            width: 1,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.15)
+                  : Colors.black.withValues(alpha: 0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.all_inclusive_rounded,
+              currentItem['icon'] as IconData,
               size: 13,
-              color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
             ),
             const SizedBox(width: 5),
             Text(
-              'Till I turn off',
+              '${currentItem['label']} (${currentItem['count']})',
               style: TextStyle(
                 fontFamily: 'Montserrat',
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                color: isSelected
-                    ? Colors.white
-                    : Theme.of(context).colorScheme.onSurface,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF1E293B),
               ),
+            ),
+            const SizedBox(width: 3),
+            Icon(
+              Icons.arrow_drop_down_rounded,
+              size: 18,
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
             ),
           ],
         ),
@@ -1080,40 +1194,163 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
     );
   }
 
-  Widget _buildPresetChip(String label, int days) {
-    final now = DateTime.now();
-    final isCurrent = !_isTillTurnOff &&
-        _endDate != null &&
-        _endDate!.difference(_startDate).inDays == days &&
-        _startDate.day == now.day &&
-        _startDate.month == now.month;
+  String _getActiveWindowLabel() {
+    if (_isTillTurnOff || _endDate == null) return 'Till I turn off';
+    final diffDays = _endDate!.difference(_startDate).inDays;
+    final diffHours = _endDate!.difference(_startDate).inHours;
+    if (diffHours <= 26 && diffDays <= 1) return 'Today (24h)';
+    if (diffDays == 3) return '3 Days';
+    if (diffDays == 7) return '1 Week';
+    if (diffDays == 14) return '2 Weeks';
+    return 'Custom';
+  }
 
-    return InkWell(
-      onTap: () => _applyQuickPreset(days),
-      borderRadius: BorderRadius.circular(10),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        alignment: Alignment.center,
+  IconData _getActiveWindowIcon(String label) {
+    switch (label) {
+      case 'Till I turn off':
+        return Icons.all_inclusive_rounded;
+      case 'Today (24h)':
+        return Icons.today_rounded;
+      case '3 Days':
+        return Icons.date_range_rounded;
+      case '1 Week':
+        return Icons.calendar_view_week_rounded;
+      case '2 Weeks':
+        return Icons.calendar_month_rounded;
+      default:
+        return Icons.edit_calendar_rounded;
+    }
+  }
+
+  Widget _buildDelegationWindowDropdown(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentLabel = _getActiveWindowLabel();
+    final currentIcon = _getActiveWindowIcon(currentLabel);
+
+    final List<Map<String, dynamic>> presets = [
+      {'label': 'Till I turn off', 'icon': Icons.all_inclusive_rounded},
+      {'label': 'Today (24h)', 'icon': Icons.today_rounded, 'days': 1},
+      {'label': '3 Days', 'icon': Icons.date_range_rounded, 'days': 3},
+      {'label': '1 Week', 'icon': Icons.calendar_view_week_rounded, 'days': 7},
+      {'label': '2 Weeks', 'icon': Icons.calendar_month_rounded, 'days': 14},
+      {'label': 'Custom Date', 'icon': Icons.edit_calendar_rounded, 'custom': true},
+    ];
+
+    return PopupMenuButton<String>(
+      initialValue: currentLabel,
+      tooltip: 'Select Delegation Window',
+      offset: const Offset(0, 32),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+        ),
+      ),
+      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+      elevation: 6,
+      onSelected: (String label) {
+        if (label == 'Till I turn off') {
+          HapticFeedback.selectionClick();
+          setState(() {
+            _isTillTurnOff = true;
+            _startDate = DateTime.now();
+            _endDate = null;
+          });
+        } else if (label == 'Custom Date') {
+          _selectDateRange();
+        } else {
+          final match = presets.firstWhere((p) => p['label'] == label, orElse: () => {});
+          final days = match['days'] as int? ?? 1;
+          _applyQuickPreset(days);
+        }
+      },
+      itemBuilder: (BuildContext context) {
+        return presets.map((preset) {
+          final label = preset['label'] as String;
+          final icon = preset['icon'] as IconData;
+          final isSelected = label == currentLabel;
+          return PopupMenuItem<String>(
+            value: label,
+            height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 15,
+                  color: isSelected
+                      ? (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
+                      : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected
+                          ? (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
+                          : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                    ),
+                  ),
+                ),
+                if (isSelected)
+                  Icon(
+                    Icons.check_rounded,
+                    size: 16,
+                    color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                  ),
+              ],
+            ),
+          );
+        }).toList();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
         decoration: BoxDecoration(
-          color: isCurrent
-              ? AsmitaPalette.deepNavy
-              : Theme.of(context).colorScheme.surface,
+          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isCurrent ? AsmitaPalette.deepNavy : Theme.of(context).dividerColor,
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+            width: 1,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.15)
+                  : Colors.black.withValues(alpha: 0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Montserrat',
-            fontSize: 10,
-            fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600,
-            color: isCurrent
-                ? Colors.white
-                : Theme.of(context).colorScheme.onSurface,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              currentIcon,
+              size: 13,
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              currentLabel,
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(width: 3),
+            Icon(
+              Icons.arrow_drop_down_rounded,
+              size: 18,
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            ),
+          ],
         ),
       ),
     );

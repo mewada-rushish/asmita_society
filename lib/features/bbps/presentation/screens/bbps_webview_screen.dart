@@ -50,6 +50,7 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
   bool _isLoading = true;
   bool _hasError = false;
   bool _isExiting = false;
+  bool _hasNavigatedBeyondInitial = false;
 
   @override
   void initState() {
@@ -85,8 +86,16 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
           onProgress: (progress) {
             if (mounted) setState(() => _loadProgress = progress);
           },
-          onPageFinished: (_) {
+          onPageFinished: (url) {
             if (mounted) setState(() => _isLoading = false);
+            try {
+              final uri = Uri.parse(url);
+              final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+              // After initial session link loads and goes into billers / categories
+              if (segments.length > 1) {
+                _hasNavigatedBeyondInitial = true;
+              }
+            } catch (_) {}
           },
           onWebResourceError: (error) {
             if (mounted) {
@@ -106,8 +115,15 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
   /// When true, we return to the app's native BBPS screen instead of loading Setu's category list.
   bool _isRootCategoriesUrl(String url) {
     if (widget.categoryTitle == null) return false;
+    // Never exit during initial session load or before user has navigated deeper
+    if (!_hasNavigatedBeyondInitial) return false;
+
     try {
       final uri = Uri.parse(url);
+      final sessionUri = Uri.parse(widget.sessionUrl);
+      if (uri.host == sessionUri.host && uri.path == sessionUri.path) {
+        return false;
+      }
       final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
       // Setu category URLs have 3+ segments: /{sessionId}/billers/{category}
       // Root category screen has <= 1 segment: /{sessionId}

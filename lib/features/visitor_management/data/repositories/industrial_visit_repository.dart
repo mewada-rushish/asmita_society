@@ -234,6 +234,20 @@ class IndustrialVisitRepository {
         data: payload,
       );
       return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 409) {
+        final data = e.response?.data;
+        if (data is Map<String, dynamic>) {
+          return {
+            'success': true,
+            'already_handled': true,
+            ...data,
+          };
+        }
+        return {'success': true, 'already_handled': true};
+      }
+      debugPrint('[IndustrialVisitRepository] handleVisitAction Dio error: ${e.message}');
+      rethrow;
     } catch (e) {
       debugPrint('[IndustrialVisitRepository] handleVisitAction error: $e');
       rethrow;
@@ -307,6 +321,28 @@ class IndustrialVisitRepository {
       return IndustrialVisitModel.fromJson(visitJson);
     } catch (e) {
       debugPrint('[IndustrialVisitRepository] checkInPass error: $e');
+      rethrow;
+    }
+  }
+
+  /// Send visitor to lobby directing them to destination floor
+  Future<IndustrialVisitModel> sendToLobby({
+    required int visitId,
+    String? floor,
+  }) async {
+    try {
+      final payload = <String, dynamic>{};
+      if (floor != null && floor.isNotEmpty) payload['floor'] = floor;
+
+      final response = await dio.post(
+        EnvConfig.industrialSendToLobby(visitId),
+        data: payload,
+      );
+      final data = response.data;
+      final visitJson = (data['visit'] ?? data['data'] ?? data) as Map<String, dynamic>;
+      return IndustrialVisitModel.fromJson(visitJson);
+    } catch (e) {
+      debugPrint('[IndustrialVisitRepository] sendToLobby error: $e');
       rethrow;
     }
   }
