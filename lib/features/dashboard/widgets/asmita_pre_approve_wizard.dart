@@ -42,8 +42,8 @@ class AsmitaPreApproveWizard extends StatefulWidget {
       title: title ?? (isGuardMode ? 'New Walk-in Visitor' : 'Pre-Approve Entry'),
       subtitle: subtitle ?? (isGuardMode ? 'Record lobby guest entry details' : null),
       child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.only(bottom: 24.0),
+        physics: const ClampingScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: 16.0),
         child: AsmitaPreApproveWizard(isGuardMode: isGuardMode),
       ),
     );
@@ -1509,90 +1509,87 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
-        const SizedBox(height: 20),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            childAspectRatio: 0.7,
-          ),
-          itemCount: categories.length,
-          itemBuilder: (context, index) {
-            final cat = categories[index];
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedCategory = cat['label'] as String;
-                  _selectedDurationHours = 1;
-                  if (_selectedCategory == 'Cab') {
-                    _selectedCompany = 'Uber';
-                    _purposeController.text = 'Personal Visit';
-                  } else if (_selectedCategory == 'Delivery') {
-                    _selectedCompany = 'Zomato';
-                    _guestCount = 1;
-                    _purposeController.text = 'Delivery / Courier Drop';
-                    _capturedVisitorPhoto = null;
-                    _capturedVisitorPhotoBase64 = null;
-                  } else if (_selectedCategory == 'Visiting Help') {
-                    _selectedCompany = 'Service Partner';
-                    _purposeController.text = 'Maintenance & Repair';
-                  } else {
-                    _selectedCompany = 'Guest';
-                    _purposeController.text = 'Official Meeting';
-                  }
-                });
-                _nextStep();
-              },
-              behavior: HitTestBehavior.opaque,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainer,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Theme.of(context).dividerColor,
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(context).shadowColor.withValues(alpha: 0.03),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: categories.map((cat) {
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedCategory = cat['label'] as String;
+                    _selectedDurationHours = 1;
+                    if (_selectedCategory == 'Cab') {
+                      _selectedCompany = 'Uber';
+                      _purposeController.text = 'Personal Visit';
+                    } else if (_selectedCategory == 'Delivery') {
+                      _selectedCompany = 'Zomato';
+                      _guestCount = 1;
+                      _purposeController.text = 'Delivery / Courier Drop';
+                      _capturedVisitorPhoto = null;
+                      _capturedVisitorPhotoBase64 = null;
+                    } else if (_selectedCategory == 'Visiting Help') {
+                      _selectedCompany = 'Service Partner';
+                      _purposeController.text = 'Maintenance & Repair';
+                    } else {
+                      _selectedCompany = 'Guest';
+                      _purposeController.text = 'Official Meeting';
+                    }
+                  });
+                  _nextStep();
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceContainer,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor,
+                          width: 1.5,
                         ),
-                      ],
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(context).shadowColor.withValues(alpha: 0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Icon(
+                          cat['icon'] as IconData,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 26,
+                        ),
+                      ),
                     ),
-                    child: Icon(
-                      cat['icon'] as IconData,
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 28,
+                    const SizedBox(height: 8),
+                    Text(
+                      cat['label'] as String,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    cat['label'] as String,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
-          },
+          }).toList(),
         ),
         if (!widget.isGuardMode) ...[
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -2881,15 +2878,18 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                 children: [
                   Row(
                     children: [
-                      Text(
-                        'Mark as VIP Pass',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: _isVipGuestPass
-                              ? const Color(0xFFB45309)
-                              : Theme.of(context).colorScheme.onSurface,
+                      Flexible(
+                        child: Text(
+                          'Mark as VIP Pass',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: _isVipGuestPass
+                                ? const Color(0xFFB45309)
+                                : Theme.of(context).colorScheme.onSurface,
+                          ),
                         ),
                       ),
                       if (_isVipGuestPass) ...[
