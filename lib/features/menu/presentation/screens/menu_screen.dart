@@ -19,7 +19,6 @@ import 'family_members_screen.dart';
 import 'tenants_screen.dart';
 import 'history_requests_screen.dart';
 import 'help_support_screen.dart';
-import '../../../bbps/presentation/screens/bbps_home_screen.dart';
 import 'pets_screen.dart';
 import 'profile_screen.dart';
 import 'rules_screen.dart';
@@ -187,7 +186,6 @@ class MenuScreen extends StatelessWidget {
                         title: 'Application',
                         items: [
                           _buildMenuItem(context, Icons.settings_outlined, 'Settings'),
-                          _buildMenuItem(context, Icons.receipt_long_outlined, 'Utility Bill Clearances (BBPS)'),
                           _buildMenuItem(context, Icons.help_outline_rounded, 'Help & Support'),
                           _buildMenuItem(
                             context,
@@ -518,9 +516,6 @@ class MenuScreen extends StatelessWidget {
           case 'Security & Biometric Access':
           case 'Settings':
             screen = const SettingsScreen();
-            break;
-          case 'Utility Bill Clearances (BBPS)':
-            screen = BbpsHomeScreen(onNavigateToTab: onNavigateToTab);
             break;
           case 'Help & Support':
             screen = const HelpSupportScreen();
