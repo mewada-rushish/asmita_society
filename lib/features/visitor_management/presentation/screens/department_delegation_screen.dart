@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../auth/data/models/user_model.dart';
 import '../../../../core/security/secure_storage_service.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
@@ -72,8 +73,16 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
     try {
       final dio = AsmitaDioClient(SecureStorageService()).dio;
 
-      final authState = context.read<AuthBloc>().state;
-      final currentUser = authState is AuthAuthenticated ? authState.user : null;
+      UserModel? currentUser;
+      try {
+        final authBloc = context.read<AuthBloc?>();
+        final authState = authBloc?.state;
+        if (authState is AuthAuthenticated) {
+          currentUser = authState.user;
+        }
+      } catch (_) {
+        currentUser = null;
+      }
       final currentUserId = currentUser?.userId;
       final userPower = currentUser?.rolePower ?? 100;
       final userFloor = (currentUser?.roleDetails?['floor']?.toString() ?? '')
@@ -344,8 +353,16 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
     try {
       final dio = AsmitaDioClient(SecureStorageService()).dio;
-      final authState = context.read<AuthBloc>().state;
-      final currentUser = authState is AuthAuthenticated ? authState.user : null;
+      UserModel? currentUser;
+      try {
+        final authBloc = context.read<AuthBloc?>();
+        final authState = authBloc?.state;
+        if (authState is AuthAuthenticated) {
+          currentUser = authState.user;
+        }
+      } catch (_) {
+        currentUser = null;
+      }
       final propertyId = currentUser?.societyId ?? 115;
 
       if (!_isDelegationEnabled) {
