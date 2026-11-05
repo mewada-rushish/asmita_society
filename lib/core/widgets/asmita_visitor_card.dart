@@ -133,7 +133,7 @@ class AsmitaVisitorCard extends StatelessWidget {
     Key? key,
     required IndustrialVisitModel visit,
     BuildContext? context,
-    bool showSubtitle = true,
+    bool showSubtitle = false,
     VoidCallback? onTap,
     VoidCallback? onApprove,
     String? approveLabel,
@@ -193,7 +193,7 @@ class AsmitaVisitorCard extends StatelessWidget {
               : Icons.person_rounded),
       isPreApproved: visit.isPreApproved,
       isVip: visit.isVip,
-      showSubtitle: showSubtitle,
+      showSubtitle: false,
       timeAndDate: timeAndDate,
       metaLabel: metaLabel,
       metaValue: metaValue,
@@ -720,100 +720,102 @@ class AsmitaVisitorCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              if (isVip) ...[
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: isDark
-                                        ? const Color(0xFF78350F).withValues(alpha: 0.35)
-                                        : const Color(0xFFFEF3C7),
-                                    borderRadius: BorderRadius.circular(5),
-                                    border: Border.all(
-                                      color: isDark
-                                          ? const Color(0xFFB45309).withValues(alpha: 0.6)
-                                          : const Color(0xFFFDE68A),
-                                      width: 0.8,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.workspace_premium_rounded, size: 10, color: Color(0xFFD97706)),
-                                      const SizedBox(width: 3),
-                                      Text(
-                                        'VIP PASS',
-                                        style: TextStyle(
-                                          fontFamily: 'Montserrat',
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w800,
+                              if (isVip || isPreApproved) ...[
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    if (isVip) ...[
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
                                           color: isDark
-                                              ? const Color(0xFFFDE68A)
-                                              : const Color(0xFFB45309),
-                                          letterSpacing: 0.4,
+                                              ? const Color(0xFF78350F).withValues(alpha: 0.35)
+                                              : const Color(0xFFFEF3C7),
+                                          borderRadius: BorderRadius.circular(5),
+                                          border: Border.all(
+                                            color: isDark
+                                                ? const Color(0xFFB45309).withValues(alpha: 0.6)
+                                                : const Color(0xFFFDE68A),
+                                            width: 0.8,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.workspace_premium_rounded, size: 10, color: Color(0xFFD97706)),
+                                            const SizedBox(width: 3),
+                                            Text(
+                                              'VIP PASS',
+                                              style: TextStyle(
+                                                fontFamily: 'Montserrat',
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w800,
+                                                color: isDark
+                                                    ? const Color(0xFFFDE68A)
+                                                    : const Color(0xFFB45309),
+                                                letterSpacing: 0.4,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                              ] else if (isPreApproved) ...[
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: isDark
-                                        ? const Color(0xFF064E3B).withValues(alpha: 0.35)
-                                        : const Color(0xFFECFDF5),
-                                    borderRadius: BorderRadius.circular(5),
-                                    border: Border.all(
-                                      color: isDark
-                                          ? const Color(0xFF059669).withValues(alpha: 0.6)
-                                          : const Color(0xFFA7F3D0),
-                                      width: 0.8,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.verified_outlined, size: 10, color: Color(0xFF059669)),
-                                      const SizedBox(width: 3),
-                                      Text(
-                                        'PRE-APPROVED',
-                                        style: TextStyle(
-                                          fontFamily: 'Montserrat',
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w800,
+                                      const SizedBox(width: 6),
+                                    ] else if (isPreApproved) ...[
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
                                           color: isDark
-                                              ? const Color(0xFFA7F3D0)
-                                              : const Color(0xFF047857),
-                                          letterSpacing: 0.4,
+                                              ? const Color(0xFF064E3B).withValues(alpha: 0.35)
+                                              : const Color(0xFFECFDF5),
+                                          borderRadius: BorderRadius.circular(5),
+                                          border: Border.all(
+                                            color: isDark
+                                                ? const Color(0xFF059669).withValues(alpha: 0.6)
+                                                : const Color(0xFFA7F3D0),
+                                            width: 0.8,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.verified_outlined, size: 10, color: Color(0xFF059669)),
+                                            const SizedBox(width: 3),
+                                            Text(
+                                              'PRE-APPROVED',
+                                              style: TextStyle(
+                                                fontFamily: 'Montserrat',
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w800,
+                                                color: isDark
+                                                    ? const Color(0xFFA7F3D0)
+                                                    : const Color(0xFF047857),
+                                                letterSpacing: 0.4,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
+                                      const SizedBox(width: 6),
                                     ],
-                                  ),
+                                  ],
                                 ),
-                                const SizedBox(width: 6),
                               ],
-                              if (showSubtitle && subtitle != null && subtitle!.isNotEmpty)
-                                Flexible(
-                                  child: Text(
-                                    subtitle!,
-                                    style: TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: isDark
-                                          ? AsmitaPalette.textDarkModeMuted
-                                          : const Color(0xFF64748B),
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                              if (showSubtitle && subtitle != null && subtitle!.isNotEmpty) ...[
+                                const SizedBox(height: 3),
+                                Text(
+                                  subtitle!,
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark
+                                        ? AsmitaPalette.textDarkModeMuted
+                                        : const Color(0xFF64748B),
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                            ],
-                          ),
+                              ],
                           if (isOutsideSchedule) ...[
                             const SizedBox(height: 4),
                             Container(
