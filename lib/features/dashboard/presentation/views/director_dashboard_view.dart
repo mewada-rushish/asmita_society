@@ -986,13 +986,14 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     List<IndustrialVisitModel> visits, {
     required bool isLoading,
   }) {
-    final pendingVisits = visits.where((v) => v.isPending).toList();
-    final onSiteVisits = visits
-        .where((v) => v.status == IndustrialVisitStatus.checkedIn)
-        .toList();
-    final expectedVisits = visits
-        .where((v) => v.status == IndustrialVisitStatus.approved && !v.isCheckedIn)
-        .toList();
+    final todayVisits = widget.visits != null
+        ? widget.visits!
+        : visits.where((v) => _isToday(v.checkInAt) || _isToday(v.createdAt) || _isToday(v.passCodeExpiresAt)).toList();
+
+    final totalCount = todayVisits.length;
+    final pendingCount = todayVisits.where((v) => v.isPending).length;
+    final approvedCount = todayVisits.where((v) => v.status == IndustrialVisitStatus.approved).length;
+    final insideCount = todayVisits.where((v) => v.status == IndustrialVisitStatus.checkedIn).length;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -1043,13 +1044,13 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                         _buildQuickActionsGrid(context),
                         const SizedBox(height: 16),
 
-                        // 3. Operational KPI Overview Metrics (4 interactive cards: Pending, On-Site, Expected, Total)
+                        // 3. Operational KPI Overview Metrics (4 interactive cards: Total, Pending, Approved, Inside)
                         _buildMetricsOverview(
                           context,
-                          pendingCount: pendingVisits.length,
-                          onSiteCount: onSiteVisits.length,
-                          expectedCount: expectedVisits.length,
-                          totalCount: visits.length,
+                          totalCount: totalCount,
+                          pendingCount: pendingCount,
+                          approvedCount: approvedCount,
+                          insideCount: insideCount,
                         ),
                         const SizedBox(height: 18),
 
@@ -1336,180 +1337,173 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 3. OPERATIONAL KPI OVERVIEW METRICS (2x2 Grid Matching Employee View)
+  // ─────────────────────────────────────────────────────────────────────────
+  // 3. OPERATIONAL KPI OVERVIEW METRICS (4 Grid/Row Cards: Total, Pending, Approved, Inside)
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildMetricsOverview(
     BuildContext context, {
-    required int pendingCount,
-    required int onSiteCount,
-    required int expectedCount,
     required int totalCount,
+    required int pendingCount,
+    required int approvedCount,
+    required int insideCount,
   }) {
-    return Column(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Row(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildMetricTile(
-                context,
-                index: 0,
-                title: 'Pending',
-                count: pendingCount,
-                subtitle: pendingCount > 0 ? '$pendingCount Action Required' : 'All Clear',
-                icon: Icons.pending_actions_rounded,
-                accentColor: pendingCount > 0 ? AsmitaPalette.actionRed : const Color(0xFFF59E0B),
-                onTap: () {
-                  if (widget.onNavigateToVisitsWithFilter != null) {
-                    widget.onNavigateToVisitsWithFilter!('PENDING');
-                  } else {
-                    widget.onNavigateToTab?.call(1);
-                  }
-                },
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _buildMetricTile(
-                context,
-                index: 1,
-                title: 'On-Site',
-                count: onSiteCount,
-                subtitle: onSiteCount > 0 ? '$onSiteCount In Executive Suite' : 'No Visitors Inside',
-                icon: Icons.business_rounded,
-                accentColor: AsmitaPalette.successGreen,
-                onTap: () {
-                  if (widget.onNavigateToVisitsWithFilter != null) {
-                    widget.onNavigateToVisitsWithFilter!('INSIDE');
-                  } else {
-                    widget.onNavigateToTab?.call(1);
-                  }
-                },
-              ),
-            ),
-          ],
+        Expanded(
+          child: _buildKpiCard(
+            context,
+            label: 'Total',
+            count: totalCount,
+            icon: Icons.groups_rounded,
+            accentColor: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+            filterKey: 'ALL',
+            onTap: () => _handleFilterTap('ALL'),
+          ),
         ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: _buildMetricTile(
-                context,
-                index: 2,
-                title: 'Expected',
-                count: expectedCount,
-                subtitle: expectedCount > 0 ? '$expectedCount Scheduled' : 'None Expected',
-                icon: Icons.schedule_rounded,
-                accentColor: const Color(0xFF2563EB),
-                onTap: () {
-                  if (widget.onNavigateToVisitsWithFilter != null) {
-                    widget.onNavigateToVisitsWithFilter!('EXPECTED');
-                  } else {
-                    widget.onNavigateToTab?.call(1);
-                  }
-                },
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _buildMetricTile(
-                context,
-                index: 3,
-                title: 'Total Visits',
-                count: totalCount,
-                subtitle: totalCount > 0 ? '$totalCount Total Visits' : 'No Activity',
-                icon: Icons.receipt_long_rounded,
-                accentColor: AsmitaPalette.deepNavy,
-                onTap: () {
-                  if (widget.onNavigateToVisitsWithFilter != null) {
-                    widget.onNavigateToVisitsWithFilter!('ALL');
-                  } else {
-                    widget.onNavigateToTab?.call(1);
-                  }
-                },
-              ),
-            ),
-          ],
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildKpiCard(
+            context,
+            label: 'Pending',
+            count: pendingCount,
+            icon: Icons.pending_actions_rounded,
+            accentColor: isDark ? const Color(0xFFF87171) : AsmitaPalette.actionRed,
+            filterKey: 'PENDING',
+            showPulse: pendingCount > 0,
+            onTap: () => _handleFilterTap('PENDING'),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildKpiCard(
+            context,
+            label: 'Approved',
+            count: approvedCount,
+            icon: Icons.verified_rounded,
+            accentColor: isDark ? const Color(0xFF38BDF8) : const Color(0xFF1E88E5),
+            filterKey: 'APPROVED',
+            onTap: () => _handleFilterTap('APPROVED'),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildKpiCard(
+            context,
+            label: 'Inside',
+            count: insideCount,
+            icon: Icons.meeting_room_rounded,
+            accentColor: isDark ? const Color(0xFF34D399) : AsmitaPalette.successGreen,
+            filterKey: 'INSIDE',
+            onTap: () => _handleFilterTap('INSIDE'),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildMetricTile(
+  void _handleFilterTap(String filterKey) {
+    HapticFeedback.selectionClick();
+    if (widget.onNavigateToVisitsWithFilter != null) {
+      widget.onNavigateToVisitsWithFilter!(filterKey);
+    } else {
+      widget.onNavigateToTab?.call(1);
+    }
+  }
+
+  Widget _buildKpiCard(
     BuildContext context, {
-    required int index,
-    required String title,
+    required String label,
     required int count,
-    required String subtitle,
     required IconData icon,
     required Color accentColor,
-    VoidCallback? onTap,
+    required String filterKey,
+    required VoidCallback onTap,
+    bool showPulse = false,
   }) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return InkWell(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        if (onTap != null) {
-          onTap();
-        }
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(14),
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
+          color: isDark ? const Color(0xFF1E293B) : Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: theme.dividerColor,
+            color: isDark ? const Color(0xFF334155) : Theme.of(context).dividerColor,
             width: 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
-              blurRadius: 8,
+              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.03),
+              blurRadius: 6,
               offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: isDark ? 0.25 : 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, color: accentColor, size: 20),
+            // Premium Squircle Icon Container
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: isDark ? 0.22 : 0.10),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: accentColor.withValues(alpha: 0.18),
+                  width: 1.0,
                 ),
-                Text(
-                  '$count',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: accentColor,
-                  ),
+              ),
+              child: Center(
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(icon, color: accentColor, size: 18),
+                    if (showPulse)
+                      Positioned(
+                        right: -3,
+                        top: -3,
+                        child: Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: accentColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.surface,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-              ],
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 6),
             Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
+              '$count',
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 2),
             Text(
-              subtitle,
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontSize: 11,
-                color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+              label,
+              style: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: AsmitaPalette.textLight,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -1518,6 +1512,12 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         ),
       ),
     );
+  }
+
+  bool _isToday(DateTime? dt) {
+    if (dt == null) return false;
+    final now = DateTime.now();
+    return dt.year == now.year && dt.month == now.month && dt.day == now.day;
   }
 
   Widget _buildWaitingGrid(
