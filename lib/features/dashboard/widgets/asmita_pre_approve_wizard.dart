@@ -3331,7 +3331,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -3563,7 +3563,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     final options = ['1 week', '1 month', '6 months'];
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -3632,7 +3632,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -3698,7 +3698,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -3728,7 +3728,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -3760,7 +3760,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     TimeOfDay initialTime = isEndTime ? _selectedEndTime : _selectedTime;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -3825,7 +3825,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -4195,7 +4195,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
