@@ -22,6 +22,7 @@ import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/utils/property_role_resolver.dart';
 import 'package:asmita_society/core/widgets/asmita_text_field.dart';
+import 'package:asmita_society/core/widgets/asmita_vehicle_plate_field.dart';
 import 'package:asmita_society/core/widgets/asmita_camera_screen.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/security/secure_storage_service.dart';
@@ -2195,21 +2196,16 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         if (isCabOrVehicle) ...[
           _buildCabProviderSelector(),
           const SizedBox(height: 16),
-          AsmitaTextField(
+          AsmitaIndianVehiclePlateField(
             controller: _cabNoController,
-            label: 'Vehicle Registration Number*',
-            hint: 'e.g., MH 04 AB 1234',
-            icon: Icons.directions_car_outlined,
-            textCapitalization: TextCapitalization.characters,
+            label: 'Vehicle Registration Number',
+            isRequired: true,
           ),
           const SizedBox(height: 16),
         ] else if (!isDelivery) ...[
-          AsmitaTextField(
+          AsmitaIndianVehiclePlateField(
             controller: _cabNoController,
             label: 'Vehicle Number (Optional)',
-            hint: 'e.g., MH 04 AB 1234 (If arrived by vehicle)',
-            icon: Icons.directions_car_outlined,
-            textCapitalization: TextCapitalization.characters,
           ),
           const SizedBox(height: 16),
         ],
@@ -3022,12 +3018,10 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         if (_selectedCategory == 'Cab') ...[
           _buildCabProviderSelector(),
           const SizedBox(height: 16),
-          AsmitaTextField(
+          AsmitaIndianVehiclePlateField(
             controller: _cabNoController,
             label: 'Cab / Vehicle Registration Number',
-            hint: 'Enter Cab No. (e.g., MH 02 AB 1234)',
-            icon: Icons.directions_car_outlined,
-            textCapitalization: TextCapitalization.characters,
+            isRequired: true,
           ),
           const SizedBox(height: 16),
           _buildPurposeSection(),
@@ -3137,12 +3131,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             maxLength: 10,
           ),
           const SizedBox(height: 16),
-          AsmitaTextField(
+          AsmitaIndianVehiclePlateField(
             controller: _cabNoController,
             label: 'Vehicle Number (Optional)',
-            hint: 'e.g., MH 04 AB 1234 (If arrived by vehicle)',
-            icon: Icons.directions_car_outlined,
-            textCapitalization: TextCapitalization.characters,
           ),
           const SizedBox(height: 16),
           _buildPurposeSection(),
