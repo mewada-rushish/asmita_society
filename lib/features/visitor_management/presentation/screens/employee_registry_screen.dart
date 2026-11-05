@@ -7,24 +7,44 @@ import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
-import '../../../../core/widgets/asmita_sub_header.dart';
+import '../../../../core/widgets/asmita_primary_header.dart';
+import '../../../../core/widgets/asmita_bottom_nav_bar.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
 import '../../../dashboard/widgets/asmita_pre_approve_wizard.dart';
 
 /// Full-Page Employee / Staff Registry Screen
-/// Replaces the bottom sheet modal with a dedicated full screen page featuring:
-/// - AsmitaSubHeader navigation
+/// Featuring:
+/// - AsmitaPrimaryHeader with back button & subtitle matching standard app design
+/// - AsmitaBottomNavBar
+/// - Centered search bar with aligned placeholder
 /// - Dropdown filtering for Floor and Department matching BBPS aesthetic
-/// - Accurate society ID resolution from Auth session
-/// - In-memory attendance check-in / check-out movement logging
+/// - Premium, theme-compliant employee cards with squircle avatar, badge pills, and tactile In/Out actions
 class EmployeeRegistryScreen extends StatefulWidget {
   final int? societyId;
+  final ValueChanged<int>? onNavigateToTab;
 
   const EmployeeRegistryScreen({
     super.key,
     this.societyId,
+    this.onNavigateToTab,
   });
+
+  static Future<int?> open(
+    BuildContext context, {
+    int? societyId,
+    ValueChanged<int>? onNavigateToTab,
+  }) {
+    return Navigator.push<int>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EmployeeRegistryScreen(
+          societyId: societyId,
+          onNavigateToTab: onNavigateToTab,
+        ),
+      ),
+    );
+  }
 
   @override
   State<EmployeeRegistryScreen> createState() => _EmployeeRegistryScreenState();
@@ -96,7 +116,6 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
         if (clean.isNotEmpty) floors.add('Floor $clean');
       }
     }
-    // Also parse from master departments if available
     for (final dept in _allDepartments) {
       final f = (dept['floor'] ?? '').toString().trim();
       if (f.isNotEmpty) {
@@ -207,7 +226,6 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Drag Handle
                   Center(
                     child: Container(
                       width: 40,
@@ -219,8 +237,6 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                     ),
                   ),
                   const SizedBox(height: 14),
-
-                  // Header
                   Row(
                     children: [
                       Container(
@@ -260,10 +276,9 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 20),
 
-                  // Option 1: Current Real-time
+                  // Option 1: Real-time
                   InkWell(
                     onTap: () => setDialogState(() => useCurrentTime = true),
                     borderRadius: BorderRadius.circular(12),
@@ -316,7 +331,7 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
 
                   const SizedBox(height: 10),
 
-                  // Option 2: Add Custom Selected Time
+                  // Option 2: Custom Picked Time
                   InkWell(
                     onTap: () async {
                       setDialogState(() => useCurrentTime = false);
@@ -395,7 +410,6 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Confirm Action Button
                   ElevatedButton(
                     onPressed: () {
                       final recordedTime = useCurrentTime ? DateTime.now() : selectedDateTime;
@@ -577,266 +591,162 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Screen Header
-            AsmitaSubHeader(
-              title: 'Employee Registry',
-              onBackPressed: () => Navigator.pop(context),
-              trailing: IconButton(
-                icon: const Icon(Icons.refresh_rounded, size: 20),
-                tooltip: 'Refresh Registry',
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  _loadData(forceRefresh: true);
-                },
-              ),
+      bottomNavigationBar: AsmitaBottomNavBar(
+        currentIndex: -1,
+        onTap: (index) {
+          Navigator.pop(context, index);
+          if (widget.onNavigateToTab != null) {
+            widget.onNavigateToTab!(index);
+          }
+        },
+      ),
+      body: Column(
+        children: [
+          // Standard Primary App Header matching BBPS & Society views
+          AsmitaPrimaryHeader(
+            subtitleOverride: 'Staff Registry',
+            showBackButton: true,
+            allowPropertySwitching: false,
+            bottomPadding: 12.0,
+            trailingExtraAction: IconButton(
+              icon: const Icon(Icons.refresh_rounded, size: 20, color: Colors.white),
+              tooltip: 'Refresh Registry',
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                _loadData(forceRefresh: true);
+              },
             ),
+          ),
 
-            // Main Content Area
-            Expanded(
-              child: AsmitaPullToRefresh(
-                onRefresh: () async {
-                  await _loadData(forceRefresh: true);
-                },
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Search Bar
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                          width: 1.1,
-                        ),
+          // Main Content Area with Pull-to-Refresh
+          Expanded(
+            child: AsmitaPullToRefresh(
+              onRefresh: () async {
+                await _loadData(forceRefresh: true);
+              },
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Search Bar with perfectly aligned icon & placeholder text
+                  Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                        width: 1.1,
                       ),
-                      child: TextField(
-                        controller: _searchController,
-                        style: const TextStyle(fontSize: 13),
-                        decoration: InputDecoration(
-                          hintText: 'Search employee name, department or role...',
-                          hintStyle: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 12,
-                            color: isDark
-                                ? AsmitaPalette.textDarkModeMuted
-                                : const Color(0xFF94A3B8),
-                          ),
-                          prefixIcon: const Icon(Icons.search_rounded, size: 20),
-                          suffixIcon: _searchQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear_rounded, size: 18),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() => _searchQuery = '');
-                                  },
-                                )
-                              : null,
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark
+                              ? Colors.black.withValues(alpha: 0.15)
+                              : Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
                         ),
-                        onChanged: (val) => setState(() => _searchQuery = val),
-                      ),
+                      ],
                     ),
+                    child: TextField(
+                      controller: _searchController,
+                      textAlignVertical: TextAlignVertical.center,
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 13,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        hintText: 'Search employee name, department or role...',
+                        hintStyle: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12.5,
+                          color: isDark
+                              ? AsmitaPalette.textDarkModeMuted
+                              : const Color(0xFF94A3B8),
+                        ),
+                        prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 48),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          size: 20,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        ),
+                        suffixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 48),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear_rounded, size: 18),
+                                padding: EdgeInsets.zero,
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = '');
+                                },
+                              )
+                            : null,
+                        border: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+                      ),
+                      onChanged: (val) => setState(() => _searchQuery = val),
+                    ),
+                  ),
 
-                    const SizedBox(height: 14),
+                  const SizedBox(height: 14),
 
-                    // Modern Section Header with BBPS-Style Filter Dropdowns
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // Left: Staff count badge
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Staff',
+                  // Section Header with BBPS-Style Filter Dropdowns
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Left: Staff count badge
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Staff',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '${filtered.length}',
                                 style: TextStyle(
                                   fontFamily: 'Montserrat',
-                                  fontSize: 13,
+                                  fontSize: 10.5,
                                   fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                  letterSpacing: -0.2,
+                                  color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
                                 ),
-                              ),
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
-                                      .withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  '${filtered.length}',
-                                  style: TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          // Right: Reset button + Floor Dropdown + Department Dropdown
-                          Flexible(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                if (hasActiveFilter) ...[
-                                  GestureDetector(
-                                    onTap: () {
-                                      HapticFeedback.lightImpact();
-                                      _searchController.clear();
-                                      setState(() {
-                                        _searchQuery = '';
-                                        _selectedFloor = 'All Floors';
-                                        _selectedDepartment = 'All Departments';
-                                      });
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4.5),
-                                      margin: const EdgeInsets.only(right: 6),
-                                      decoration: BoxDecoration(
-                                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.refresh_rounded,
-                                            size: 11,
-                                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                          ),
-                                          const SizedBox(width: 3),
-                                          Text(
-                                            'Reset',
-                                            style: TextStyle(
-                                              fontFamily: 'Montserrat',
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w600,
-                                              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-
-                                // Floor Dropdown
-                                _buildDropdownPill(
-                                  context: context,
-                                  isDark: isDark,
-                                  selectedValue: _selectedFloor,
-                                  items: _availableFloors,
-                                  icon: Icons.layers_outlined,
-                                  tooltip: 'Filter by Floor',
-                                  onSelected: (val) {
-                                    HapticFeedback.selectionClick();
-                                    setState(() => _selectedFloor = val);
-                                  },
-                                ),
-
-                                const SizedBox(width: 6),
-
-                                // Department Dropdown
-                                _buildDropdownPill(
-                                  context: context,
-                                  isDark: isDark,
-                                  selectedValue: _selectedDepartment,
-                                  items: _availableDepartments,
-                                  icon: Icons.business_outlined,
-                                  tooltip: 'Filter by Department',
-                                  onSelected: (val) {
-                                    HapticFeedback.selectionClick();
-                                    setState(() => _selectedDepartment = val);
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    // Active movement count notice
-                    if (_sessionMovementLog.isNotEmpty) ...[
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.history_rounded, size: 14, color: AsmitaPalette.successGreen),
-                            const SizedBox(width: 5),
-                            Text(
-                              '${_sessionMovementLog.length} active attendance movements logged today',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: AsmitaPalette.successGreen,
-                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
 
-                    // Employee List or Loading / Empty States
-                    if (_isLoading)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 60),
-                        child: Center(
-                          child: AsmitaLoadingIndicator(
-                            color: AsmitaPalette.deepNavy,
-                            size: 32,
-                          ),
-                        ),
-                      )
-                    else if (filtered.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 60),
-                        child: Center(
-                          child: Column(
+                        // Right: Reset button + Floor Dropdown + Department Dropdown
+                        Flexible(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.person_off_rounded,
-                                size: 48,
-                                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.3),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                _searchQuery.isNotEmpty
-                                    ? 'No employees match "$_searchQuery"'
-                                    : 'No registered employees found matching filter',
-                                style: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-                                ),
-                              ),
                               if (hasActiveFilter) ...[
-                                const SizedBox(height: 10),
-                                OutlinedButton.icon(
-                                  onPressed: () {
+                                GestureDetector(
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
                                     _searchController.clear();
                                     setState(() {
                                       _searchQuery = '';
@@ -844,235 +754,493 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                                       _selectedDepartment = 'All Departments';
                                     });
                                   },
-                                  icon: const Icon(Icons.refresh_rounded, size: 14),
-                                  label: const Text('Clear Filters', style: TextStyle(fontSize: 12)),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      )
-                    else
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 10),
-                        itemBuilder: (context, idx) {
-                          final emp = filtered[idx];
-                          final empId = (emp['user_id'] ?? emp['id'] ?? 0) as int;
-                          final name = (emp['full_name'] ?? emp['name'] ?? 'Staff Member').toString();
-                          final dept = (emp['department_name'] ?? emp['department'] ?? 'General').toString();
-                          final role = (emp['primary_role'] ?? emp['role'] ?? emp['designation'] ?? 'Employee').toString();
-                          final floor = (emp['floor'] ?? '').toString().trim();
-                          final desk = (emp['desk_code'] ?? '').toString().trim();
-                          final cabin = (emp['cabin_code'] ?? '').toString().trim();
-                          final movement = _sessionMovementLog[empId];
-                          final isCheckedIn = movement != null && movement['status'] == 'IN';
-
-                          final List<String> locationTags = [];
-                          if (floor.isNotEmpty) {
-                            final clean = floor.replaceAll(RegExp(r'^floor\s*', caseSensitive: false), '').trim();
-                            locationTags.add('Fl $clean');
-                          }
-                          if (cabin.isNotEmpty) locationTags.add(cabin);
-                          if (desk.isNotEmpty) locationTags.add(desk);
-
-                          return Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surface,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: isCheckedIn
-                                    ? AsmitaPalette.successGreen.withValues(alpha: 0.5)
-                                    : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                // Avatar
-                                CircleAvatar(
-                                  radius: 20,
-                                  backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
-                                  child: Text(
-                                    name.isNotEmpty ? name[0].toUpperCase() : 'E',
-                                    style: const TextStyle(
-                                      fontFamily: 'Montserrat',
-                                      fontWeight: FontWeight.bold,
-                                      color: AsmitaPalette.deepNavy,
-                                      fontSize: 14,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4.5),
+                                    margin: const EdgeInsets.only(right: 6),
+                                    decoration: BoxDecoration(
+                                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                        width: 1,
+                                      ),
                                     ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-
-                                // Info
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Flexible(
-                                            child: Text(
-                                              name,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontFamily: 'Montserrat',
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ),
-                                          if (movement != null) ...[
-                                            const SizedBox(width: 6),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: isCheckedIn
-                                                    ? AsmitaPalette.successGreen.withValues(alpha: 0.15)
-                                                    : const Color(0xFFDC2626).withValues(alpha: 0.15),
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: Text(
-                                                isCheckedIn
-                                                    ? 'IN • ${DateFormat("hh:mm a").format(movement["time"] as DateTime)}'
-                                                    : 'OUT • ${DateFormat("hh:mm a").format(movement["time"] as DateTime)}',
-                                                style: TextStyle(
-                                                  fontSize: 9,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: isCheckedIn
-                                                      ? AsmitaPalette.successGreen
-                                                      : const Color(0xFFDC2626),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        '$dept • $role',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.refresh_rounded,
+                                          size: 11,
+                                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                                         ),
-                                      ),
-                                      if (locationTags.isNotEmpty) ...[
-                                        const SizedBox(height: 2),
+                                        const SizedBox(width: 3),
                                         Text(
-                                          locationTags.join(' • '),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                          'Reset',
                                           style: TextStyle(
+                                            fontFamily: 'Montserrat',
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
-                                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                            color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
                                           ),
                                         ),
                                       ],
-                                    ],
+                                    ),
                                   ),
                                 ),
+                              ],
 
-                                const SizedBox(width: 8),
+                              // Floor Dropdown
+                              _buildDropdownPill(
+                                context: context,
+                                isDark: isDark,
+                                selectedValue: _selectedFloor,
+                                items: _availableFloors,
+                                icon: Icons.layers_outlined,
+                                tooltip: 'Filter by Floor',
+                                onSelected: (val) {
+                                  HapticFeedback.selectionClick();
+                                  setState(() => _selectedFloor = val);
+                                },
+                              ),
 
-                                // Quick Action Buttons (Check In / Check Out)
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // In Button
-                                    InkWell(
-                                      onTap: () => _showMovementDialog(emp, isCheckIn: true),
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: AsmitaPalette.successGreen.withValues(alpha: isCheckedIn ? 0.2 : 0.08),
-                                          borderRadius: BorderRadius.circular(8),
-                                          border: Border.all(
-                                            color: AsmitaPalette.successGreen.withValues(alpha: isCheckedIn ? 0.8 : 0.3),
-                                          ),
-                                        ),
-                                        child: const Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(Icons.login_rounded, size: 14, color: AsmitaPalette.successGreen),
-                                            SizedBox(width: 4),
-                                            Text(
-                                              'In',
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.bold,
-                                                color: AsmitaPalette.successGreen,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
+                              const SizedBox(width: 6),
 
-                                    // Out Button
-                                    InkWell(
-                                      onTap: () => _showMovementDialog(emp, isCheckIn: false),
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFDC2626)
-                                              .withValues(alpha: !isCheckedIn && movement != null ? 0.2 : 0.08),
-                                          borderRadius: BorderRadius.circular(8),
-                                          border: Border.all(
-                                            color: const Color(0xFFDC2626)
-                                                .withValues(alpha: !isCheckedIn && movement != null ? 0.8 : 0.3),
-                                          ),
-                                        ),
-                                        child: const Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(Icons.logout_rounded, size: 14, color: Color(0xFFDC2626)),
-                                            SizedBox(width: 4),
-                                            Text(
-                                              'Out',
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.bold,
-                                                color: Color(0xFFDC2626),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                              // Department Dropdown
+                              _buildDropdownPill(
+                                context: context,
+                                isDark: isDark,
+                                selectedValue: _selectedDepartment,
+                                items: _availableDepartments,
+                                icon: Icons.business_outlined,
+                                tooltip: 'Filter by Department',
+                                onSelected: (val) {
+                                  HapticFeedback.selectionClick();
+                                  setState(() => _selectedDepartment = val);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  // Active movement count notice
+                  if (_sessionMovementLog.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.history_rounded, size: 14, color: AsmitaPalette.successGreen),
+                          const SizedBox(width: 5),
+                          Text(
+                            '${_sessionMovementLog.length} active attendance movements logged today',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AsmitaPalette.successGreen,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  // Employee List or Loading / Empty States
+                  if (_isLoading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 60),
+                      child: Center(
+                        child: AsmitaLoadingIndicator(
+                          color: AsmitaPalette.deepNavy,
+                          size: 32,
+                        ),
+                      ),
+                    )
+                  else if (filtered.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 60),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.person_off_rounded,
+                              size: 48,
+                              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.3),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              _searchQuery.isNotEmpty
+                                  ? 'No employees match "$_searchQuery"'
+                                  : 'No registered employees found matching filter',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                              ),
+                            ),
+                            if (hasActiveFilter) ...[
+                              const SizedBox(height: 10),
+                              OutlinedButton.icon(
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {
+                                    _searchQuery = '';
+                                    _selectedFloor = 'All Floors';
+                                    _selectedDepartment = 'All Departments';
+                                  });
+                                },
+                                icon: const Icon(Icons.refresh_rounded, size: 14),
+                                label: const Text('Clear Filters', style: TextStyle(fontSize: 12)),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
+                      itemBuilder: (context, idx) {
+                        final emp = filtered[idx];
+                        final empId = (emp['user_id'] ?? emp['id'] ?? 0) as int;
+                        final name = (emp['full_name'] ?? emp['name'] ?? 'Staff Member').toString();
+                        final dept = (emp['department_name'] ?? emp['department'] ?? 'General').toString();
+                        final role = (emp['primary_role'] ?? emp['role'] ?? emp['designation'] ?? 'Employee').toString();
+                        final floor = (emp['floor'] ?? '').toString().trim();
+                        final desk = (emp['desk_code'] ?? '').toString().trim();
+                        final cabin = (emp['cabin_code'] ?? '').toString().trim();
+                        final movement = _sessionMovementLog[empId];
+                        final isCheckedIn = movement != null && movement['status'] == 'IN';
+
+                        String cleanFloor = '';
+                        if (floor.isNotEmpty) {
+                          cleanFloor = floor.replaceAll(RegExp(r'^floor\s*', caseSensitive: false), '').trim();
+                        }
+
+                        // Gradient colors for avatar based on name hash
+                        final avatarColorIndex = name.hashCode.abs() % 4;
+                        final avatarGradients = [
+                          [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)],
+                          [const Color(0xFF0F766E), const Color(0xFF14B8A6)],
+                          [const Color(0xFF4C1D95), const Color(0xFF8B5CF6)],
+                          [const Color(0xFFB45309), const Color(0xFFF59E0B)],
+                        ];
+                        final avatarColors = avatarGradients[avatarColorIndex];
+
+                        return Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isCheckedIn
+                                  ? AsmitaPalette.successGreen.withValues(alpha: 0.5)
+                                  : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                              width: isCheckedIn ? 1.4 : 1.1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: isDark
+                                    ? Colors.black.withValues(alpha: 0.25)
+                                    : const Color(0xFF0F172A).withValues(alpha: 0.04),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Styled Squircle Avatar with Soft Gradient & Initials
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: avatarColors,
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: avatarColors[0].withValues(alpha: 0.25),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                  ],
-                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  name.isNotEmpty ? name[0].toUpperCase() : 'S',
+                                  style: const TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+
+                              // Info Column
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Row 1: Name and optional movement status tag
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            name,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontFamily: 'Montserrat',
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 13.5,
+                                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                              letterSpacing: -0.2,
+                                            ),
+                                          ),
+                                        ),
+                                        if (movement != null) ...[
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: isCheckedIn
+                                                  ? AsmitaPalette.successGreen.withValues(alpha: 0.15)
+                                                  : const Color(0xFFDC2626).withValues(alpha: 0.15),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              isCheckedIn
+                                                  ? 'IN • ${DateFormat("hh:mm a").format(movement["time"] as DateTime)}'
+                                                  : 'OUT • ${DateFormat("hh:mm a").format(movement["time"] as DateTime)}',
+                                              style: TextStyle(
+                                                fontSize: 9.5,
+                                                fontWeight: FontWeight.bold,
+                                                color: isCheckedIn
+                                                    ? AsmitaPalette.successGreen
+                                                    : const Color(0xFFDC2626),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    const SizedBox(height: 3),
+
+                                    // Row 2: Department & Designation
+                                    Text(
+                                      '$dept • $role',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w500,
+                                        color: isDark
+                                            ? AsmitaPalette.textDarkModeMuted
+                                            : const Color(0xFF64748B),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+
+                                    // Row 3: Meta Badges (Floor, Desk, Cabin)
+                                    Wrap(
+                                      spacing: 5,
+                                      runSpacing: 4,
+                                      children: [
+                                        if (cleanFloor.isNotEmpty)
+                                          _buildBadge(
+                                            icon: Icons.layers_rounded,
+                                            label: 'Floor $cleanFloor',
+                                            isDark: isDark,
+                                            color: const Color(0xFF0284C7),
+                                          ),
+                                        if (desk.isNotEmpty)
+                                          _buildBadge(
+                                            icon: Icons.desk_rounded,
+                                            label: desk,
+                                            isDark: isDark,
+                                            color: const Color(0xFF6366F1),
+                                          ),
+                                        if (cabin.isNotEmpty)
+                                          _buildBadge(
+                                            icon: Icons.meeting_room_rounded,
+                                            label: cabin,
+                                            isDark: isDark,
+                                            color: const Color(0xFF8B5CF6),
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(width: 8),
+
+                              // Quick Action Buttons (Check In / Check Out)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // In Button
+                                  Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () => _showMovementDialog(emp, isCheckIn: true),
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                        decoration: BoxDecoration(
+                                          color: isCheckedIn
+                                              ? AsmitaPalette.successGreen
+                                              : (isDark
+                                                  ? AsmitaPalette.successGreen.withValues(alpha: 0.15)
+                                                  : const Color(0xFFDCFCE7)),
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: isCheckedIn
+                                                ? AsmitaPalette.successGreen
+                                                : AsmitaPalette.successGreen.withValues(alpha: 0.35),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.login_rounded,
+                                              size: 13,
+                                              color: isCheckedIn ? Colors.white : AsmitaPalette.successGreen,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'In',
+                                              style: TextStyle(
+                                                fontFamily: 'Montserrat',
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                                color: isCheckedIn ? Colors.white : AsmitaPalette.successGreen,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+
+                                  // Out Button
+                                  Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () => _showMovementDialog(emp, isCheckIn: false),
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                        decoration: BoxDecoration(
+                                          color: !isCheckedIn && movement != null
+                                              ? const Color(0xFFDC2626)
+                                              : (isDark
+                                                  ? const Color(0xFFDC2626).withValues(alpha: 0.15)
+                                                  : const Color(0xFFFEE2E2)),
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: !isCheckedIn && movement != null
+                                                ? const Color(0xFFDC2626)
+                                                : const Color(0xFFDC2626).withValues(alpha: 0.35),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.logout_rounded,
+                                              size: 13,
+                                              color: !isCheckedIn && movement != null
+                                                  ? Colors.white
+                                                  : const Color(0xFFDC2626),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'Out',
+                                              style: TextStyle(
+                                                fontFamily: 'Montserrat',
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                                color: !isCheckedIn && movement != null
+                                                    ? Colors.white
+                                                    : const Color(0xFFDC2626),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                ],
               ),
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBadge({
+    required IconData icon,
+    required String label,
+    required bool isDark,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.2 : 0.08),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: color.withValues(alpha: isDark ? 0.4 : 0.2),
+          width: 0.8,
         ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 3.5),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }

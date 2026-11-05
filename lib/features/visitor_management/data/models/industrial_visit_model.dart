@@ -12,6 +12,12 @@ enum IndustrialVisitStatus {
   revoked,
   collected,
   checkedIn,
+  waitingToMeet,
+  onTheWay,
+  delegated,
+  arrived,
+  meetingInProgress,
+  completed,
   checkedOut;
 
   static IndustrialVisitStatus fromString(String? val) {
@@ -38,6 +44,18 @@ enum IndustrialVisitStatus {
       case 'CHECKED_IN':
       case 'INSIDE':
         return IndustrialVisitStatus.checkedIn;
+      case 'WAITING_TO_MEET':
+        return IndustrialVisitStatus.waitingToMeet;
+      case 'ON_THE_WAY':
+        return IndustrialVisitStatus.onTheWay;
+      case 'DELEGATED':
+        return IndustrialVisitStatus.delegated;
+      case 'ARRIVED':
+        return IndustrialVisitStatus.arrived;
+      case 'MEETING_IN_PROGRESS':
+        return IndustrialVisitStatus.meetingInProgress;
+      case 'COMPLETED':
+        return IndustrialVisitStatus.completed;
       case 'CHECKED_OUT':
         return IndustrialVisitStatus.checkedOut;
       default:
@@ -67,6 +85,18 @@ enum IndustrialVisitStatus {
         return 'COLLECTED';
       case IndustrialVisitStatus.checkedIn:
         return 'CHECKED_IN';
+      case IndustrialVisitStatus.waitingToMeet:
+        return 'WAITING_TO_MEET';
+      case IndustrialVisitStatus.onTheWay:
+        return 'ON_THE_WAY';
+      case IndustrialVisitStatus.delegated:
+        return 'DELEGATED';
+      case IndustrialVisitStatus.arrived:
+        return 'ARRIVED';
+      case IndustrialVisitStatus.meetingInProgress:
+        return 'MEETING_IN_PROGRESS';
+      case IndustrialVisitStatus.completed:
+        return 'COMPLETED';
       case IndustrialVisitStatus.checkedOut:
         return 'CHECKED_OUT';
     }
@@ -94,6 +124,18 @@ enum IndustrialVisitStatus {
         return 'Collected';
       case IndustrialVisitStatus.checkedIn:
         return 'Checked In';
+      case IndustrialVisitStatus.waitingToMeet:
+        return 'Waiting to Meet';
+      case IndustrialVisitStatus.onTheWay:
+        return 'On the Way';
+      case IndustrialVisitStatus.delegated:
+        return 'Delegated';
+      case IndustrialVisitStatus.arrived:
+        return 'Arrived';
+      case IndustrialVisitStatus.meetingInProgress:
+        return 'Meeting in Progress';
+      case IndustrialVisitStatus.completed:
+        return 'Completed';
       case IndustrialVisitStatus.checkedOut:
         return 'Checked Out';
     }
@@ -112,6 +154,18 @@ enum IndustrialVisitStatus {
         return const Color(0xFF1E3A8A);
       case IndustrialVisitStatus.checkedIn:
         return const Color(0xFF064E3B);
+      case IndustrialVisitStatus.waitingToMeet:
+        return const Color(0xFF075985);
+      case IndustrialVisitStatus.onTheWay:
+        return const Color(0xFF1E1B4B);
+      case IndustrialVisitStatus.delegated:
+        return const Color(0xFF3B0764);
+      case IndustrialVisitStatus.arrived:
+        return const Color(0xFF064E3B);
+      case IndustrialVisitStatus.meetingInProgress:
+        return const Color(0xFF14532D);
+      case IndustrialVisitStatus.completed:
+        return const Color(0xFF1E293B);
       case IndustrialVisitStatus.checkedOut:
         return const Color(0xFF334155);
       case IndustrialVisitStatus.rejected:
@@ -139,6 +193,18 @@ enum IndustrialVisitStatus {
         return const Color(0xFF93C5FD);
       case IndustrialVisitStatus.checkedIn:
         return const Color(0xFF6EE7B7);
+      case IndustrialVisitStatus.waitingToMeet:
+        return const Color(0xFF7DD3FC);
+      case IndustrialVisitStatus.onTheWay:
+        return const Color(0xFFA5B4FC);
+      case IndustrialVisitStatus.delegated:
+        return const Color(0xFFE9D5FF);
+      case IndustrialVisitStatus.arrived:
+        return const Color(0xFF86EFAC);
+      case IndustrialVisitStatus.meetingInProgress:
+        return const Color(0xFF4ADE80);
+      case IndustrialVisitStatus.completed:
+        return const Color(0xFFCBD5E1);
       case IndustrialVisitStatus.checkedOut:
         return const Color(0xFFF1F5F9);
       case IndustrialVisitStatus.rejected:
@@ -166,6 +232,18 @@ enum IndustrialVisitStatus {
         return const Color(0xFF93C5FD); // Bright Sky Blue
       case IndustrialVisitStatus.checkedIn:
         return const Color(0xFF6EE7B7); // Vibrant Emerald Mint
+      case IndustrialVisitStatus.waitingToMeet:
+        return const Color(0xFF38BDF8); // Cyan Sky
+      case IndustrialVisitStatus.onTheWay:
+        return const Color(0xFF818CF8); // Indigo
+      case IndustrialVisitStatus.delegated:
+        return const Color(0xFFC084FC); // Purple
+      case IndustrialVisitStatus.arrived:
+        return const Color(0xFF4ADE80); // Mint Green
+      case IndustrialVisitStatus.meetingInProgress:
+        return const Color(0xFF22C55E); // Green
+      case IndustrialVisitStatus.completed:
+        return const Color(0xFF94A3B8); // Slate
       case IndustrialVisitStatus.checkedOut:
         return const Color(0xFFF1F5F9); // Crisp Luminous Silver/White
       case IndustrialVisitStatus.rejected:
@@ -190,6 +268,18 @@ enum IndustrialVisitStatus {
         return const Color(0xFF3B82F6).withValues(alpha: 0.22);
       case IndustrialVisitStatus.checkedIn:
         return const Color(0xFF10B981).withValues(alpha: 0.22);
+      case IndustrialVisitStatus.waitingToMeet:
+        return const Color(0xFF0284C7).withValues(alpha: 0.22);
+      case IndustrialVisitStatus.onTheWay:
+        return const Color(0xFF6366F1).withValues(alpha: 0.22);
+      case IndustrialVisitStatus.delegated:
+        return const Color(0xFFA855F7).withValues(alpha: 0.22);
+      case IndustrialVisitStatus.arrived:
+        return const Color(0xFF10B981).withValues(alpha: 0.22);
+      case IndustrialVisitStatus.meetingInProgress:
+        return const Color(0xFF16A34A).withValues(alpha: 0.22);
+      case IndustrialVisitStatus.completed:
+        return Colors.white.withValues(alpha: 0.12);
       case IndustrialVisitStatus.checkedOut:
         return Colors.white.withValues(alpha: 0.14);
       case IndustrialVisitStatus.rejected:
@@ -214,6 +304,18 @@ enum IndustrialVisitStatus {
         return const Color(0xFF93C5FD).withValues(alpha: 0.6);
       case IndustrialVisitStatus.checkedIn:
         return const Color(0xFF6EE7B7).withValues(alpha: 0.6);
+      case IndustrialVisitStatus.waitingToMeet:
+        return const Color(0xFF38BDF8).withValues(alpha: 0.6);
+      case IndustrialVisitStatus.onTheWay:
+        return const Color(0xFF818CF8).withValues(alpha: 0.6);
+      case IndustrialVisitStatus.delegated:
+        return const Color(0xFFC084FC).withValues(alpha: 0.6);
+      case IndustrialVisitStatus.arrived:
+        return const Color(0xFF4ADE80).withValues(alpha: 0.6);
+      case IndustrialVisitStatus.meetingInProgress:
+        return const Color(0xFF22C55E).withValues(alpha: 0.6);
+      case IndustrialVisitStatus.completed:
+        return const Color(0xFF94A3B8).withValues(alpha: 0.5);
       case IndustrialVisitStatus.checkedOut:
         return const Color(0xFFCBD5E1).withValues(alpha: 0.5);
       case IndustrialVisitStatus.rejected:
@@ -239,6 +341,18 @@ enum IndustrialVisitStatus {
         return const Color(0xFFDBEAFE);
       case IndustrialVisitStatus.checkedIn:
         return const Color(0xFFDCFCE7);
+      case IndustrialVisitStatus.waitingToMeet:
+        return const Color(0xFFE0F2FE);
+      case IndustrialVisitStatus.onTheWay:
+        return const Color(0xFFEEF2FF);
+      case IndustrialVisitStatus.delegated:
+        return const Color(0xFFF3E8FF);
+      case IndustrialVisitStatus.arrived:
+        return const Color(0xFFDCFCE7);
+      case IndustrialVisitStatus.meetingInProgress:
+        return const Color(0xFFBBF7D0);
+      case IndustrialVisitStatus.completed:
+        return const Color(0xFFF1F5F9);
       case IndustrialVisitStatus.checkedOut:
         return const Color(0xFFF1F5F9);
       case IndustrialVisitStatus.rejected:
@@ -266,6 +380,18 @@ enum IndustrialVisitStatus {
         return const Color(0xFF1D4ED8);
       case IndustrialVisitStatus.checkedIn:
         return const Color(0xFF15803D);
+      case IndustrialVisitStatus.waitingToMeet:
+        return const Color(0xFF0369A1);
+      case IndustrialVisitStatus.onTheWay:
+        return const Color(0xFF4338CA);
+      case IndustrialVisitStatus.delegated:
+        return const Color(0xFF7E22CE);
+      case IndustrialVisitStatus.arrived:
+        return const Color(0xFF15803D);
+      case IndustrialVisitStatus.meetingInProgress:
+        return const Color(0xFF166534);
+      case IndustrialVisitStatus.completed:
+        return const Color(0xFF475569);
       case IndustrialVisitStatus.checkedOut:
         return const Color(0xFF475569);
       case IndustrialVisitStatus.rejected:
@@ -293,6 +419,18 @@ enum IndustrialVisitStatus {
         return Icons.check_circle_outline;
       case IndustrialVisitStatus.checkedIn:
         return Icons.meeting_room_outlined;
+      case IndustrialVisitStatus.waitingToMeet:
+        return Icons.hourglass_top_rounded;
+      case IndustrialVisitStatus.onTheWay:
+        return Icons.directions_walk_rounded;
+      case IndustrialVisitStatus.delegated:
+        return Icons.forward_to_inbox_rounded;
+      case IndustrialVisitStatus.arrived:
+        return Icons.where_to_vote_rounded;
+      case IndustrialVisitStatus.meetingInProgress:
+        return Icons.groups_rounded;
+      case IndustrialVisitStatus.completed:
+        return Icons.task_alt_rounded;
       case IndustrialVisitStatus.checkedOut:
         return Icons.logout;
       case IndustrialVisitStatus.rejected:
@@ -403,11 +541,30 @@ class IndustrialVisitModel {
       status == IndustrialVisitStatus.awaitingHost ||
       status == IndustrialVisitStatus.assigned;
   bool get isApproved => status == IndustrialVisitStatus.approved;
-  bool get isCheckedIn => status == IndustrialVisitStatus.checkedIn;
-  /// Active/live entries that are still ongoing (pending decision, approved, or currently checked in)
+  bool get isCheckedIn =>
+      status == IndustrialVisitStatus.checkedIn ||
+      status == IndustrialVisitStatus.waitingToMeet ||
+      status == IndustrialVisitStatus.onTheWay ||
+      status == IndustrialVisitStatus.delegated ||
+      status == IndustrialVisitStatus.arrived ||
+      status == IndustrialVisitStatus.meetingInProgress;
+  bool get isWaitingToMeet => status == IndustrialVisitStatus.waitingToMeet;
+  bool get isOnTheWay => status == IndustrialVisitStatus.onTheWay;
+  bool get isDelegated => status == IndustrialVisitStatus.delegated;
+  bool get isArrived => status == IndustrialVisitStatus.arrived;
+  bool get isMeetingInProgress => status == IndustrialVisitStatus.meetingInProgress;
+  bool get isCompleted => status == IndustrialVisitStatus.completed;
+
+  /// Active/live entries that are still ongoing (pending decision, approved, or currently checked in/meeting)
   bool get isActiveOrPending => isPending || isApproved || isCheckedIn;
   /// Historic entries that are completely resolved/finalized
-  bool get isFinalizedHistory => status == IndustrialVisitStatus.checkedOut || status == IndustrialVisitStatus.expired || status == IndustrialVisitStatus.cancelled || status == IndustrialVisitStatus.rejected || status == IndustrialVisitStatus.revoked;
+  bool get isFinalizedHistory =>
+      status == IndustrialVisitStatus.checkedOut ||
+      status == IndustrialVisitStatus.completed ||
+      status == IndustrialVisitStatus.expired ||
+      status == IndustrialVisitStatus.cancelled ||
+      status == IndustrialVisitStatus.rejected ||
+      status == IndustrialVisitStatus.revoked;
   bool get isPassValid =>
       passCode != null &&
       passCodeExpiresAt != null &&
