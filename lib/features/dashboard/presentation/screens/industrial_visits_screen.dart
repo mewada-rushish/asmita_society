@@ -206,36 +206,6 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                                   ],
                                 ],
                               ),
-                              const SizedBox(height: 3),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    visit.isDelivery
-                                        ? Icons.local_shipping_outlined
-                                        : Icons.badge_outlined,
-                                    size: 13,
-                                    color: Colors.white70,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Flexible(
-                                    child: Text(
-                                      visit.deliveryCompany ??
-                                          (visit.cleanPurpose.isNotEmpty
-                                              ? visit.cleanPurpose
-                                              : (visit.isDelivery ? 'Delivery Entry' : 'Guest Visitor')),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 12,
-                                        color: Colors.white70,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ],
                           ),
                         ),

@@ -370,17 +370,6 @@ class AsmitaVisitorCard extends StatelessWidget {
                                   ],
                                 ],
                               ),
-                              const SizedBox(height: 3),
-                              Text(
-                                visit.deliveryCompany ?? (visit.cleanPurpose.isNotEmpty ? visit.cleanPurpose : 'Campus Guest'),
-                                style: const TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 12,
-                                  color: Colors.white70,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
                             ],
                           ),
                         ),
