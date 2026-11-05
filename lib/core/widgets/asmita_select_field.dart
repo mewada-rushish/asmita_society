@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'asmita_bottom_sheet.dart';
 
 /// Item representation for [AsmitaSelectField] and [AsmitaChoiceChips].
 class AsmitaSelectItem<T> {
@@ -60,24 +61,26 @@ class AsmitaSelectField<T> extends StatelessWidget {
     if (!enabled || onChanged == null) return;
 
     final shouldShowSearch = showSearch ?? (items.length > 6);
+    final effectiveTitle = sheetTitle ??
+        (label != null
+            ? (label!.trim().toLowerCase().startsWith('select ')
+                ? label!
+                : 'Select $label')
+            : 'Select Option');
 
-    showModalBottomSheet(
+    showAsmitaBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (bottomSheetContext) {
-        return _SelectBottomSheet<T>(
-          title: sheetTitle ?? (label != null ? 'Select $label' : 'Select Option'),
-          subtitle: sheetSubtitle,
-          items: items,
-          selectedValue: value,
-          showSearch: shouldShowSearch,
-          onSelected: (selected) {
-            Navigator.pop(bottomSheetContext);
-            onChanged!(selected);
-          },
-        );
-      },
+      title: effectiveTitle,
+      subtitle: sheetSubtitle,
+      contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: _SelectSheetContent<T>(
+        items: items,
+        selectedValue: value,
+        showSearch: shouldShowSearch,
+        onSelected: (selected) {
+          onChanged!(selected);
+        },
+      ),
     );
   }
 
@@ -194,18 +197,14 @@ class AsmitaSelectField<T> extends StatelessWidget {
   }
 }
 
-/// The bottom sheet list picker for [AsmitaSelectField].
-class _SelectBottomSheet<T> extends StatefulWidget {
-  final String title;
-  final String? subtitle;
+/// The bottom sheet list picker content for [AsmitaSelectField], rendered inside [AsmitaBottomSheet].
+class _SelectSheetContent<T> extends StatefulWidget {
   final List<AsmitaSelectItem<T>> items;
   final T? selectedValue;
   final bool showSearch;
   final ValueChanged<T> onSelected;
 
-  const _SelectBottomSheet({
-    required this.title,
-    this.subtitle,
+  const _SelectSheetContent({
     required this.items,
     required this.selectedValue,
     required this.showSearch,
@@ -213,10 +212,10 @@ class _SelectBottomSheet<T> extends StatefulWidget {
   });
 
   @override
-  State<_SelectBottomSheet<T>> createState() => _SelectBottomSheetState<T>();
+  State<_SelectSheetContent<T>> createState() => _SelectSheetContentState<T>();
 }
 
-class _SelectBottomSheetState<T> extends State<_SelectBottomSheet<T>> {
+class _SelectSheetContentState<T> extends State<_SelectSheetContent<T>> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
 
@@ -229,7 +228,6 @@ class _SelectBottomSheetState<T> extends State<_SelectBottomSheet<T>> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surfaceColor = isDark ? AsmitaPalette.surfaceDark : AsmitaPalette.surfaceLight;
 
     final filteredItems = _searchQuery.isEmpty
         ? widget.items
@@ -239,249 +237,202 @@ class _SelectBottomSheetState<T> extends State<_SelectBottomSheet<T>> {
             return matchLabel || matchSub;
           }).toList();
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.75,
-      ),
-      decoration: BoxDecoration(
-        color: surfaceColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (widget.showSearch) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: (val) => setState(() => _searchQuery = val.trim()),
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 13,
+                color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Search...',
+                hintStyle: TextStyle(
+                  fontFamily: 'Montserrat',
+                  color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                  fontSize: 13,
+                ),
+                prefixIcon: const Icon(
+                  Icons.search_rounded,
+                  size: 20,
+                  color: AsmitaPalette.deepNavy,
+                ),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: isDark ? AsmitaPalette.surfaceDark : AsmitaPalette.surfaceLight,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: AsmitaPalette.deepNavy,
+                    width: 1.5,
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Drag Handle
-            const SizedBox(height: 12),
-            Center(
-              child: Container(
-                width: 38,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.white24 : Colors.black12,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            // Header Row
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 14, 12, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.title,
-                          style: TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
-                          ),
-                        ),
-                        if (widget.subtitle != null) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            widget.subtitle!,
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 12,
-                              color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+        Flexible(
+          child: filteredItems.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 28),
+                  child: Center(
+                    child: Text(
+                      'No matching options',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  shrinkWrap: true,
+                  physics: const ClampingScrollPhysics(),
+                  padding: EdgeInsets.zero,
+                  itemCount: filteredItems.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final item = filteredItems[index];
+                    final isSelected = item.value == widget.selectedValue;
+
+                    return Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(14),
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          widget.onSelected(item.value);
+                        },
+                        borderRadius: BorderRadius.circular(14),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AsmitaPalette.deepNavy.withValues(alpha: isDark ? 0.2 : 0.08)
+                                : (isDark
+                                    ? AsmitaPalette.surfaceDark
+                                    : Theme.of(context).colorScheme.surface),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AsmitaPalette.deepNavy
+                                  : (isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey.withValues(alpha: 0.8)),
+                              width: isSelected ? 1.5 : 1.0,
                             ),
                           ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.close_rounded,
-                      color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
-                      size: 22,
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-            ),
-            // Search Input if enabled
-            if (widget.showSearch) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-                child: TextField(
-                  controller: _searchCtrl,
-                  onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                  style: const TextStyle(fontSize: 13),
-                  decoration: InputDecoration(
-                    hintText: 'Search...',
-                    hintStyle: TextStyle(
-                      color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
-                      fontSize: 13,
-                    ),
-                    prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AsmitaPalette.deepNavy),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
-                            onPressed: () {
-                              _searchCtrl.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: isDark ? AsmitaPalette.systemBGDark : AsmitaPalette.systemBG,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-            const Divider(height: 12, thickness: 0.8),
-            // Options List
-            Flexible(
-              child: filteredItems.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 36),
-                      child: Center(
-                        child: Text(
-                          'No matching options',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
-                            fontSize: 13,
+                          child: Row(
+                            children: [
+                              if (item.icon != null) ...[
+                                Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: (item.iconColor ?? AsmitaPalette.deepNavy)
+                                        .withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(
+                                    item.icon,
+                                    size: 20,
+                                    color: item.iconColor ?? AsmitaPalette.deepNavy,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                              ],
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.label,
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 14,
+                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                        color: isSelected
+                                            ? (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy)
+                                            : (isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark),
+                                      ),
+                                    ),
+                                    if (item.subtitle != null) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        item.subtitle!,
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 11,
+                                          color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              if (isSelected)
+                                Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: const BoxDecoration(
+                                    color: AsmitaPalette.deepNavy,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.check,
+                                    size: 14,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              else
+                                Container(
+                                  width: 18,
+                                  height: 18,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ),
-                    )
-                  : ListView.separated(
-                      shrinkWrap: true,
-                      padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
-                      itemCount: filteredItems.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 6),
-                      itemBuilder: (context, index) {
-                        final item = filteredItems[index];
-                        final isSelected = item.value == widget.selectedValue;
-
-                        return Material(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                          child: InkWell(
-                            onTap: () => widget.onSelected(item.value),
-                            borderRadius: BorderRadius.circular(12),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? AsmitaPalette.deepNavy.withValues(alpha: isDark ? 0.2 : 0.08)
-                                    : (isDark ? AsmitaPalette.systemBGDark.withValues(alpha: 0.4) : AsmitaPalette.systemBG.withValues(alpha: 0.5)),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? AsmitaPalette.deepNavy
-                                      : (isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey),
-                                  width: isSelected ? 1.5 : 1.0,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  if (item.icon != null) ...[
-                                    Container(
-                                      width: 38,
-                                      height: 38,
-                                      decoration: BoxDecoration(
-                                        color: (item.iconColor ?? AsmitaPalette.deepNavy)
-                                            .withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Icon(
-                                        item.icon,
-                                        size: 20,
-                                        color: item.iconColor ?? AsmitaPalette.deepNavy,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                  ],
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item.label,
-                                          style: TextStyle(
-                                            fontFamily: 'Montserrat',
-                                            fontSize: 14,
-                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                            color: isSelected
-                                                ? (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy)
-                                                : (isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark),
-                                          ),
-                                        ),
-                                        if (item.subtitle != null) ...[
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            item.subtitle!,
-                                            style: TextStyle(
-                                              fontFamily: 'Poppins',
-                                              fontSize: 11,
-                                              color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  if (isSelected)
-                                    Container(
-                                      padding: const EdgeInsets.all(2),
-                                      decoration: const BoxDecoration(
-                                        color: AsmitaPalette.deepNavy,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.check,
-                                        size: 14,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  else
-                                    Container(
-                                      width: 18,
-                                      height: 18,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey,
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
+                    );
+                  },
+                ),
         ),
-      ),
+      ],
     );
   }
 }
