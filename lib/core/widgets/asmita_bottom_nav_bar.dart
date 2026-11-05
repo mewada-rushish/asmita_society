@@ -1,3 +1,4 @@
+import '../constants/design_system.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -134,7 +135,7 @@ class AsmitaBottomNavBar extends StatelessWidget {
                   width: 22,
                   height: 11,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondary,
+                    color: AsmitaPalette.actionRed,
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
                   ),
                 ),
