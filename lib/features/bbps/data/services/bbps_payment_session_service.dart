@@ -2,34 +2,168 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 import '../../../../core/config/env_config.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/security/secure_storage_service.dart';
 
 /// Secure configuration for Setu BBPS v2 Ethereal Integration.
-/// Configurable via `--dart-define` flags.
+/// Configurable via `.env` asset or `--dart-define` build flags.
 /// No hardcoded secrets or byte arrays are stored in client source code.
 class BbpsSecureConfig {
-  static String get clientID => const String.fromEnvironment('SETU_CLIENT_ID');
-  static String get secret => const String.fromEnvironment('SETU_CLIENT_SECRET');
-  static String get partnerId => const String.fromEnvironment('SETU_PARTNER_ID');
-  static String get orgId => const String.fromEnvironment('SETU_ORG_ID');
+  static final Map<String, String> _envMap = {};
+  static bool _isLoaded = false;
+
+  /// Loads configuration from root `.env` asset or provided raw string.
+  static Future<void> ensureLoaded({String? rawContent}) async {
+    if (_isLoaded && rawContent == null) return;
+    try {
+      final content = rawContent ?? await rootBundle.loadString('.env');
+      loadFromString(content);
+    } catch (e) {
+      debugPrint('[BbpsSecureConfig] Note: .env asset not found or unreadable ($e)');
+    } finally {
+      _isLoaded = true;
+    }
+  }
+
+  /// Parses .env formatted text supporting comments, single/double quotes,
+  /// multiline quoted blocks (e.g. JSON in SETU_BBPS_CONFIG), and exports.
+  static void loadFromString(String content) {
+    final lines = content.split(RegExp(r'\r?\n'));
+    String? multilineKey;
+    StringBuffer? multilineBuffer;
+    String quoteChar = '';
+
+    for (var rawLine in lines) {
+      if (multilineBuffer != null) {
+        multilineBuffer.write('\n$rawLine');
+        final trimmed = rawLine.trim();
+        if (trimmed.endsWith(quoteChar)) {
+          final fullVal = multilineBuffer.toString();
+          final unquoted = fullVal.substring(0, fullVal.length - 1);
+          if (multilineKey != null) {
+            _setKeyValue(multilineKey, unquoted);
+          }
+          multilineBuffer = null;
+          multilineKey = null;
+        }
+        continue;
+      }
+
+      final trimmed = rawLine.trim();
+      if (trimmed.isEmpty || trimmed.startsWith('#')) continue;
+
+      var lineToProcess = trimmed;
+      if (lineToProcess.startsWith('export ')) {
+        lineToProcess = lineToProcess.substring(7).trim();
+      }
+
+      final eqIdx = lineToProcess.indexOf('=');
+      if (eqIdx == -1) continue;
+
+      final key = lineToProcess.substring(0, eqIdx).trim();
+      var val = lineToProcess.substring(eqIdx + 1).trim();
+
+      if ((val.startsWith('"') && !val.endsWith('"')) ||
+          (val.startsWith("'") && !val.endsWith("'"))) {
+        quoteChar = val[0];
+        multilineBuffer = StringBuffer(val.substring(1));
+        multilineKey = key;
+        continue;
+      }
+
+      if ((val.startsWith('"') && val.endsWith('"') && val.length >= 2) ||
+          (val.startsWith("'") && val.endsWith("'") && val.length >= 2)) {
+        val = val.substring(1, val.length - 1);
+      }
+
+      _setKeyValue(key, val);
+    }
+
+    _extractNestedJsonConfig();
+    _isLoaded = true;
+  }
+
+  static void _setKeyValue(String key, String value) {
+    _envMap[key] = value;
+    _envMap[key.toUpperCase()] = value;
+    _envMap[key.toLowerCase()] = value;
+  }
+
+  static void _extractNestedJsonConfig() {
+    final configJsonStr = _envMap['SETU_BBPS_CONFIG'];
+    if (configJsonStr != null && configJsonStr.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(configJsonStr);
+        if (decoded is Map) {
+          if (decoded['client_id'] != null) {
+            _envMap.putIfAbsent('SETU_CLIENT_ID', () => decoded['client_id'].toString());
+          }
+          if (decoded['client_secret'] != null) {
+            _envMap.putIfAbsent('SETU_CLIENT_SECRET', () => decoded['client_secret'].toString());
+          }
+          if (decoded['partner_id'] != null) {
+            _envMap.putIfAbsent('SETU_PARTNER_ID', () => decoded['partner_id'].toString());
+          }
+          if (decoded['org_id'] != null) {
+            _envMap.putIfAbsent('SETU_ORG_ID', () => decoded['org_id'].toString());
+          }
+          if (decoded['product_instance_id'] != null) {
+            _envMap.putIfAbsent('SETU_PRODUCT_INSTANCE_ID', () => decoded['product_instance_id'].toString());
+          }
+          if (decoded['base_url'] != null) {
+            _envMap.putIfAbsent('SETU_BASE_URL', () => decoded['base_url'].toString());
+          }
+        }
+      } catch (e) {
+        debugPrint('[BbpsSecureConfig] Failed to parse SETU_BBPS_CONFIG JSON: $e');
+      }
+    }
+  }
+
+  static String _resolve(String key, [String compileTimeValue = '']) {
+    if (compileTimeValue.isNotEmpty) return compileTimeValue;
+    return _envMap[key] ?? _envMap[key.toUpperCase()] ?? _envMap[key.toLowerCase()] ?? '';
+  }
+
+  static String get clientID =>
+      _resolve('SETU_CLIENT_ID', const String.fromEnvironment('SETU_CLIENT_ID'));
+
+  static String get secret =>
+      _resolve('SETU_CLIENT_SECRET', const String.fromEnvironment('SETU_CLIENT_SECRET'));
+
+  static String get partnerId =>
+      _resolve('SETU_PARTNER_ID', const String.fromEnvironment('SETU_PARTNER_ID'));
+
+  static String get orgId =>
+      _resolve('SETU_ORG_ID', const String.fromEnvironment('SETU_ORG_ID'));
+
   static String get productInstanceId =>
-      const String.fromEnvironment('SETU_PRODUCT_INSTANCE_ID');
+      _resolve('SETU_PRODUCT_INSTANCE_ID', const String.fromEnvironment('SETU_PRODUCT_INSTANCE_ID'));
 
   static String get baseUrl {
-    const envVal = String.fromEnvironment('SETU_BASE_URL');
-    if (envVal.isNotEmpty) return envVal;
+    final fromEnv = _resolve('SETU_BASE_URL', const String.fromEnvironment('SETU_BASE_URL'));
+    if (fromEnv.isNotEmpty) return fromEnv;
+    final bbpsBase = _envMap['SETU_BBPS_BASE_URL'];
+    if (bbpsBase != null && bbpsBase.isNotEmpty) return bbpsBase;
     return 'https://coudc.setu.co/api/v2';
   }
 
-  /// Whether direct Setu client credentials have been provided via build environment.
+  /// Whether direct Setu client credentials have been provided via build environment or .env.
   static bool get hasClientCredentials =>
       clientID.isNotEmpty && secret.isNotEmpty;
+
+  @visibleForTesting
+  static void resetForTesting() {
+    _envMap.clear();
+    _isLoaded = false;
+  }
 }
 
-/// Ephemeral delegated session parameters obtained securely from backend or environment.
+/// Ephemeral delegated session parameters obtained securely from Setu direct auth,
+/// backend delegation, or environment.
 class DelegatedBbpsSession {
   final String token;
   final DateTime expiry;
@@ -58,6 +192,7 @@ class DelegatedBbpsSession {
 ///
 /// Flow:
 /// 1. Primary Strategy: Direct Client Setu v2 Ethereal Session
+///    - Reads credentials from app `.env` asset or `--dart-define` build flags
 ///    - Requests an ephemeral Bearer token directly from Setu (`/auth/token`)
 ///    - Caches token in memory for the duration of its validity (300s)
 ///    - Calls Setu v2 Ethereal Link endpoint (`/ethereal/link`) directly from the device
@@ -257,46 +392,62 @@ class BbpsPaymentSessionService {
   }
 
   /// Acquires or reuses a valid Setu v2 Auth Bearer token with in-memory caching.
-  /// Resolves credentials via backend delegated-token endpoint, or via `--dart-define` if set.
+  /// Resolves credentials via app `.env` file asset, `--dart-define` build flags,
+  /// or backend delegated-token endpoint.
   Future<DelegatedBbpsSession> _getValidDelegatedSession() async {
     final now = DateTime.now();
     if (_cachedSession != null && _cachedSession!.isValid) {
       return _cachedSession!;
     }
 
-    // 1. Direct env credentials override if configured via --dart-define
+    // Ensure environment / .env credentials are fully loaded
+    await BbpsSecureConfig.ensureLoaded();
+
+    // 1. Direct env credentials override if configured via .env or --dart-define
     if (BbpsSecureConfig.hasClientCredentials) {
       final baseUrl = BbpsSecureConfig.baseUrl;
-      final tokenRes = await _standaloneDio.post(
-        '$baseUrl/auth/token',
-        data: {
-          'clientID': BbpsSecureConfig.clientID,
-          'secret': BbpsSecureConfig.secret,
-        },
-      );
+      debugPrint('[BBPS] Direct Setu credentials resolved from app environment. Acquiring auth token directly from Setu ($baseUrl/auth/token)...');
+      try {
+        final tokenRes = await _standaloneDio.post(
+          '$baseUrl/auth/token',
+          data: {
+            'clientID': BbpsSecureConfig.clientID,
+            'secret': BbpsSecureConfig.secret,
+          },
+        );
 
-      if (tokenRes.statusCode == 200 && tokenRes.data != null) {
-        final token = tokenRes.data['token']?.toString();
-        final expiresIn = (tokenRes.data['expiresIn'] as num?)?.toInt() ?? 300;
-        if (token != null && token.isNotEmpty) {
-          final expiry = now.add(Duration(seconds: (expiresIn - 30).clamp(60, 300)));
-          final session = DelegatedBbpsSession(
-            token: token,
-            expiry: expiry,
-            orgId: BbpsSecureConfig.orgId,
-            partnerId: BbpsSecureConfig.partnerId,
-            productInstanceId: BbpsSecureConfig.productInstanceId.isNotEmpty
-                ? BbpsSecureConfig.productInstanceId
-                : null,
-            custID: '',
-            mobileNumber: '',
-            setuBaseUrl: baseUrl,
-          );
-          _cachedSession = session;
-          return session;
+        if (tokenRes.statusCode == 200 && tokenRes.data != null) {
+          final token = tokenRes.data['token']?.toString();
+          final expiresIn = (tokenRes.data['expiresIn'] as num?)?.toInt() ?? 300;
+          if (token != null && token.isNotEmpty) {
+            debugPrint('[BBPS] Direct Setu Bearer token acquired successfully (expiresIn: ${expiresIn}s).');
+            final expiry = now.add(Duration(seconds: (expiresIn - 30).clamp(60, 300)));
+            final session = DelegatedBbpsSession(
+              token: token,
+              expiry: expiry,
+              orgId: BbpsSecureConfig.orgId,
+              partnerId: BbpsSecureConfig.partnerId,
+              productInstanceId: BbpsSecureConfig.productInstanceId.isNotEmpty
+                  ? BbpsSecureConfig.productInstanceId
+                  : null,
+              custID: '',
+              mobileNumber: '',
+              setuBaseUrl: baseUrl,
+            );
+            _cachedSession = session;
+            return session;
+          }
         }
+        throw Exception('Direct Setu token acquisition failed: status=${tokenRes.statusCode}');
+      } on DioException catch (dioErr) {
+        debugPrint('[BBPS] Direct Setu Auth DioException: status=${dioErr.response?.statusCode}, data=${dioErr.response?.data}');
+        final msg = dioErr.response?.data?['error']?['message']?.toString() ??
+            dioErr.response?.data?['error']?['detail']?.toString() ??
+            dioErr.response?.data?['message']?.toString() ??
+            dioErr.message ??
+            'Setu Auth clearance failed';
+        throw Exception('Setu Auth error: $msg');
       }
-      throw Exception('Failed to obtain direct Setu auth token from environment credentials');
     }
 
     // 2. Standard flow: Request ephemeral delegated token from backend endpoint
@@ -419,23 +570,40 @@ class BbpsPaymentSessionService {
     }
 
     final baseUrl = session.setuBaseUrl;
-    final setuRes = await _standaloneDio.post(
-      '$baseUrl/ethereal/link',
-      data: linkPayload,
-      options: Options(headers: headers),
-    );
+    try {
+      debugPrint('[BBPS] Dispatching direct Setu Ethereal link request to $baseUrl/ethereal/link...');
+      final setuRes = await _standaloneDio.post(
+        '$baseUrl/ethereal/link',
+        data: linkPayload,
+        options: Options(headers: headers),
+      );
 
-    if (setuRes.statusCode == 200 && setuRes.data != null) {
-      final link = setuRes.data['link']?.toString();
-      if (link != null && link.isNotEmpty) {
-        return link;
+      if (setuRes.statusCode == 200 && setuRes.data != null) {
+        final data = setuRes.data is Map ? setuRes.data as Map : {};
+        final link = data['link']?.toString() ??
+            data['shortLink']?.toString() ??
+            (data['data'] is Map ? data['data']['link']?.toString() : null);
+        if (link != null && link.isNotEmpty) {
+          debugPrint('[BBPS] Direct Setu Ethereal Link generated: $link');
+          return link;
+        }
       }
-    }
 
-    final errMsg = setuRes.data?['error']?['message']?.toString() ??
-        setuRes.data?['error']?['detail']?.toString() ??
-        'Failed to generate Setu Ethereal link';
-    throw Exception(errMsg);
+      final errMsg = setuRes.data?['error']?['message']?.toString() ??
+          setuRes.data?['error']?['detail']?.toString() ??
+          setuRes.data?['message']?.toString() ??
+          'Failed to generate Setu Ethereal link (status ${setuRes.statusCode})';
+      debugPrint('[BBPS] Setu Ethereal Link Error: $errMsg (data: ${setuRes.data})');
+      throw Exception(errMsg);
+    } on DioException catch (dioErr) {
+      debugPrint('[BBPS] Setu Direct Ethereal DioException: status=${dioErr.response?.statusCode}, data=${dioErr.response?.data}');
+      final msg = dioErr.response?.data?['error']?['message']?.toString() ??
+          dioErr.response?.data?['error']?['detail']?.toString() ??
+          dioErr.response?.data?['message']?.toString() ??
+          dioErr.message ??
+          'Setu Ethereal clearance failed';
+      throw Exception(msg);
+    }
   }
 
   Future<String> _createServerSessionLink({
