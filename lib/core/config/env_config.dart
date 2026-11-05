@@ -125,4 +125,8 @@ class EnvConfig {
   static String get bbpsCategories => '$baseUrl/app-api/bbps/categories';
   static String get bbpsSessionLink => '$baseUrl/app-api/bbps/session-link';
   static String get bbpsDelegatedToken => '$baseUrl/app-api/bbps/delegated-token';
+
+  /// Invite Token & Team Member Endpoints
+  static String inviteTokenInfo(String token) => '$baseUrl/api/invites/token-info/$token';
+  static String get generateInvite => '$baseUrl/api/invites/generate';
 }

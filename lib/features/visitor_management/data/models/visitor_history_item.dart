@@ -78,5 +78,21 @@ class VisitorHistoryItem {
 
   bool get isPreApproved => recordType == 'PRE_APPROVED';
 
+  bool get isVip =>
+      rawData['is_vip'] == true ||
+      rawData['isVip'] == true ||
+      name.contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false)) ||
+      company.contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false));
+
+  /// Returns visitor name without legacy embedded "(VIP)" or "[VIP]" tags
+  String get cleanName => name
+      .replaceAll(RegExp(r'\s*[\(\[]VIP[\)\]]', caseSensitive: false), '')
+      .trim();
+
+  /// Returns company or purpose without legacy embedded "[VIP]" or "(VIP)" tags
+  String get cleanCompany => company
+      .replaceAll(RegExp(r'\s*[\(\[]VIP[\)\]]', caseSensitive: false), '')
+      .trim();
+
   dynamic operator [](String key) => rawData[key];
 }

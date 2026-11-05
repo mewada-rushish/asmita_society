@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
@@ -5,22 +7,75 @@ import '../../../../core/config/env_config.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/security/secure_storage_service.dart';
 
+/// Secure configuration for Setu BBPS v2 Ethereal Integration.
+/// Configurable via `--dart-define` flags.
+/// No hardcoded secrets or byte arrays are stored in client source code.
+class BbpsSecureConfig {
+  static String get clientID => const String.fromEnvironment('SETU_CLIENT_ID');
+  static String get secret => const String.fromEnvironment('SETU_CLIENT_SECRET');
+  static String get partnerId => const String.fromEnvironment('SETU_PARTNER_ID');
+  static String get orgId => const String.fromEnvironment('SETU_ORG_ID');
+  static String get productInstanceId =>
+      const String.fromEnvironment('SETU_PRODUCT_INSTANCE_ID');
+
+  static String get baseUrl {
+    const envVal = String.fromEnvironment('SETU_BASE_URL');
+    if (envVal.isNotEmpty) return envVal;
+    return 'https://coudc.setu.co/api/v2';
+  }
+
+  /// Whether direct Setu client credentials have been provided via build environment.
+  static bool get hasClientCredentials =>
+      clientID.isNotEmpty && secret.isNotEmpty;
+}
+
+/// Ephemeral delegated session parameters obtained securely from backend or environment.
+class DelegatedBbpsSession {
+  final String token;
+  final DateTime expiry;
+  final String orgId;
+  final String partnerId;
+  final String? productInstanceId;
+  final String custID;
+  final String mobileNumber;
+  final String setuBaseUrl;
+
+  DelegatedBbpsSession({
+    required this.token,
+    required this.expiry,
+    required this.orgId,
+    required this.partnerId,
+    this.productInstanceId,
+    required this.custID,
+    required this.mobileNumber,
+    required this.setuBaseUrl,
+  });
+
+  bool get isValid => DateTime.now().isBefore(expiry);
+}
+
 /// Service responsible for acquiring a Setu BBPS session link.
 ///
 /// Flow:
-/// 1. Primary Strategy: Delegated Ephemeral Token
-///    - Calls Asmita backend `/app-api/bbps/delegated-token` with the user's JWT
-///    - Receives a short-lived (300s) Setu Bearer token without exposing the client_secret
-///    - Makes a direct client-side request to Setu (`https://coudc.setu.co/api/v2/ethereal/link`)
-///      using the user device's IP (residential / mobile carrier), completely bypassing
-///      the server-to-server WAF IP block (403 Forbidden).
+/// 1. Primary Strategy: Direct Client Setu v2 Ethereal Session
+///    - Requests an ephemeral Bearer token directly from Setu (`/auth/token`)
+///    - Caches token in memory for the duration of its validity (300s)
+///    - Calls Setu v2 Ethereal Link endpoint (`/ethereal/link`) directly from the device
+///    - Bypasses any portal IP blocks or backend routing failures
 ///
-/// 2. Fallback Strategy: Server-side Session Link
-///    - If the delegated flow fails, calls `/app-api/bbps/session-link` so the app
-///      automatically switches back to server-side issuance once Setu's allowlist is active.
+/// 2. Fallback Strategy: Asmita Server-side Session Link (`/app-api/bbps/session-link`)
 class BbpsPaymentSessionService {
   final Dio _dio;
   final Dio _standaloneDio;
+  final SecureStorageService _secureStorage;
+
+  // Ephemeral in-memory session cache to minimize token delegation calls
+  static DelegatedBbpsSession? _cachedSession;
+
+  @visibleForTesting
+  static void clearSessionCache() {
+    _cachedSession = null;
+  }
 
   static const Map<String, String> _setuOfficialCategories = {
     'electricity': 'Electricity',
@@ -135,7 +190,9 @@ class BbpsPaymentSessionService {
   BbpsPaymentSessionService({
     Dio? dio,
     Dio? standaloneDio,
-  })  : _dio = dio ?? AsmitaDioClient(SecureStorageService()).dio,
+    SecureStorageService? secureStorage,
+  })  : _secureStorage = secureStorage ?? SecureStorageService(),
+        _dio = dio ?? AsmitaDioClient(secureStorage ?? SecureStorageService()).dio,
         _standaloneDio = standaloneDio ??
             Dio(
               BaseOptions(
@@ -159,33 +216,37 @@ class BbpsPaymentSessionService {
     return null;
   }
 
-  /// Obtains a bill pay session URL, trying direct client clearance first and falling back to backend.
+  /// Obtains a bill pay session URL using direct Setu clearance, with portal fallback.
   Future<String> obtainSessionUrl({
     String? categoryName,
     String? billerId,
     List<Map<String, String>>? billParams,
     String? redirectTo,
     Map<String, dynamic>? additionalInfo,
+    String? custID,
+    String? mobileNumber,
   }) async {
-    // 1. Try Direct Ephemeral Token Flow (bypasses server 403 WAF block)
+    // 1. Primary Strategy: Direct Client Setu Integration
     try {
-      debugPrint('[BBPS] Attempting direct client clearance via delegated ephemeral token...');
-      final directUrl = await _createDirectSessionLink(
+      debugPrint('[BBPS] Initializing direct Setu v2 payment session clearance...');
+      final directUrl = await _createDirectSetuSession(
         categoryName: categoryName,
         billerId: billerId,
         billParams: billParams,
         redirectTo: redirectTo,
         additionalInfo: additionalInfo,
+        custID: custID,
+        mobileNumber: mobileNumber,
       );
-      if (directUrl != null && directUrl.isNotEmpty) {
-        debugPrint('[BBPS] Direct client session created successfully: $directUrl');
+      if (directUrl.isNotEmpty) {
+        debugPrint('[BBPS] Direct Setu payment session generated successfully.');
         return directUrl;
       }
     } catch (e) {
-      debugPrint('[BBPS] Direct client session creation failed ($e). Falling back to server session...');
+      debugPrint('[BBPS] Direct Setu integration failed: $e. Falling back to server-side session...');
     }
 
-    // 2. Fallback to server-side session issuance
+    // 2. Fallback to portal server-side session issuance
     return await _createServerSessionLink(
       categoryName: categoryName,
       billerId: billerId,
@@ -195,44 +256,142 @@ class BbpsPaymentSessionService {
     );
   }
 
-  Future<String?> _createDirectSessionLink({
-    String? categoryName,
-    String? billerId,
-    List<Map<String, String>>? billParams,
-    String? redirectTo,
-    Map<String, dynamic>? additionalInfo,
-  }) async {
-    // Request delegated token from Asmita backend
+  /// Acquires or reuses a valid Setu v2 Auth Bearer token with in-memory caching.
+  /// Resolves credentials via backend delegated-token endpoint, or via `--dart-define` if set.
+  Future<DelegatedBbpsSession> _getValidDelegatedSession() async {
+    final now = DateTime.now();
+    if (_cachedSession != null && _cachedSession!.isValid) {
+      return _cachedSession!;
+    }
+
+    // 1. Direct env credentials override if configured via --dart-define
+    if (BbpsSecureConfig.hasClientCredentials) {
+      final baseUrl = BbpsSecureConfig.baseUrl;
+      final tokenRes = await _standaloneDio.post(
+        '$baseUrl/auth/token',
+        data: {
+          'clientID': BbpsSecureConfig.clientID,
+          'secret': BbpsSecureConfig.secret,
+        },
+      );
+
+      if (tokenRes.statusCode == 200 && tokenRes.data != null) {
+        final token = tokenRes.data['token']?.toString();
+        final expiresIn = (tokenRes.data['expiresIn'] as num?)?.toInt() ?? 300;
+        if (token != null && token.isNotEmpty) {
+          final expiry = now.add(Duration(seconds: (expiresIn - 30).clamp(60, 300)));
+          final session = DelegatedBbpsSession(
+            token: token,
+            expiry: expiry,
+            orgId: BbpsSecureConfig.orgId,
+            partnerId: BbpsSecureConfig.partnerId,
+            productInstanceId: BbpsSecureConfig.productInstanceId.isNotEmpty
+                ? BbpsSecureConfig.productInstanceId
+                : null,
+            custID: '',
+            mobileNumber: '',
+            setuBaseUrl: baseUrl,
+          );
+          _cachedSession = session;
+          return session;
+        }
+      }
+      throw Exception('Failed to obtain direct Setu auth token from environment credentials');
+    }
+
+    // 2. Standard flow: Request ephemeral delegated token from backend endpoint
+    debugPrint('[BBPS] Requesting ephemeral delegated token from backend: ${EnvConfig.bbpsDelegatedToken}');
     final tokenRes = await _dio.post(
       EnvConfig.bbpsDelegatedToken,
       options: Options(receiveTimeout: const Duration(seconds: 10)),
     );
 
-    if (tokenRes.statusCode != 200 || tokenRes.data?['success'] != true) {
-      final msg = tokenRes.data?['error']?.toString() ?? 'Unable to acquire delegated Setu token';
-      throw Exception(msg);
+    if (tokenRes.statusCode == 200 && tokenRes.data != null) {
+      final data = tokenRes.data is Map ? tokenRes.data as Map : <dynamic, dynamic>{};
+      final token = data['token']?.toString();
+      final expiresIn = (data['expiresIn'] as num?)?.toInt() ?? 300;
+      final orgId = data['orgId']?.toString() ?? BbpsSecureConfig.orgId;
+      final partnerId = data['partnerId']?.toString() ?? BbpsSecureConfig.partnerId;
+      final productInstanceId = data['productInstanceId']?.toString() ??
+          (BbpsSecureConfig.productInstanceId.isNotEmpty ? BbpsSecureConfig.productInstanceId : null);
+      final baseUrl = data['setuBaseUrl']?.toString() ?? BbpsSecureConfig.baseUrl;
+      final custID = data['custID']?.toString() ?? '';
+      final mobileNumber = data['mobileNumber']?.toString() ?? '';
+
+      if (token != null && token.isNotEmpty) {
+        final expiry = now.add(Duration(seconds: (expiresIn - 30).clamp(60, 300)));
+        final session = DelegatedBbpsSession(
+          token: token,
+          expiry: expiry,
+          orgId: orgId,
+          partnerId: partnerId,
+          productInstanceId: productInstanceId,
+          custID: custID,
+          mobileNumber: mobileNumber,
+          setuBaseUrl: baseUrl,
+        );
+        _cachedSession = session;
+        return session;
+      }
     }
 
-    final data = tokenRes.data as Map<String, dynamic>;
-    final token = data['token']?.toString();
-    final orgId = data['orgId']?.toString();
-    final partnerId = data['partnerId']?.toString();
-    final productInstanceId = data['productInstanceId']?.toString();
-    final custID = data['custID']?.toString() ?? 'GUEST_USER';
-    final mobileNumber = data['mobileNumber']?.toString() ?? '9999999999';
-    final baseUrl = data['setuBaseUrl']?.toString() ?? 'https://coudc.setu.co/api/v2';
+    throw Exception('Failed to obtain delegated Setu token from backend');
+  }
 
-    if (token == null || token.isEmpty || orgId == null || partnerId == null) {
-      throw Exception('Incomplete Setu delegated credentials');
+  /// Creates a session link directly via Setu's v2 Ethereal API using delegated credentials.
+  Future<String> _createDirectSetuSession({
+    String? categoryName,
+    String? billerId,
+    List<Map<String, String>>? billParams,
+    String? redirectTo,
+    Map<String, dynamic>? additionalInfo,
+    String? custID,
+    String? mobileNumber,
+  }) async {
+    final session = await _getValidDelegatedSession();
+
+    // Resolve user identifiers securely
+    String effectiveCustId = custID?.trim() ?? '';
+    if (effectiveCustId.isEmpty) {
+      if (session.custID.isNotEmpty) {
+        effectiveCustId = session.custID;
+      } else {
+        final storedId = await _secureStorage.getUserId();
+        effectiveCustId = storedId != null ? storedId.toString() : 'GUEST_USER';
+      }
+    }
+
+    String effectiveMobile = (mobileNumber ?? '').replaceAll(RegExp(r'\D'), '');
+    if (effectiveMobile.length < 10) {
+      if (session.mobileNumber.isNotEmpty) {
+        effectiveMobile = session.mobileNumber.replaceAll(RegExp(r'\D'), '');
+      } else {
+        try {
+          final profileJson = await _secureStorage.read(key: 'user_profile');
+          if (profileJson != null && profileJson.isNotEmpty) {
+            final map = jsonDecode(profileJson) as Map<String, dynamic>?;
+            final phone = map?['mobile_number']?.toString() ?? map?['mobile']?.toString();
+            if (phone != null && phone.isNotEmpty) {
+              effectiveMobile = phone.replaceAll(RegExp(r'\D'), '');
+            }
+          }
+        } catch (_) {}
+      }
+    }
+    if (effectiveMobile.length >= 10) {
+      effectiveMobile = effectiveMobile.substring(effectiveMobile.length - 10);
+    } else {
+      effectiveMobile = '9999999999';
     }
 
     final normalizedCategory = normalizeCategory(categoryName);
 
     final linkPayload = <String, dynamic>{
-      'orgId': orgId,
-      'custID': custID,
-      'mobileNumber': mobileNumber,
+      'orgId': session.orgId,
+      'custID': effectiveCustId,
+      'mobileNumber': effectiveMobile,
     };
+
     if (normalizedCategory != null) {
       linkPayload['categoryName'] = normalizedCategory;
     }
@@ -249,20 +408,21 @@ class BbpsPaymentSessionService {
       linkPayload['additionalInfo'] = additionalInfo;
     }
 
-    final setuHeaders = <String, dynamic>{
-      'Authorization': 'Bearer $token',
-      'X-PARTNER-ID': partnerId,
+    final headers = <String, dynamic>{
+      'Authorization': 'Bearer ${session.token}',
+      'X-PARTNER-ID': session.partnerId,
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
-    if (productInstanceId != null && productInstanceId.isNotEmpty) {
-      setuHeaders['X-PRODUCT-INSTANCE-ID'] = productInstanceId;
+    if (session.productInstanceId != null && session.productInstanceId!.isNotEmpty) {
+      headers['X-PRODUCT-INSTANCE-ID'] = session.productInstanceId;
     }
 
+    final baseUrl = session.setuBaseUrl;
     final setuRes = await _standaloneDio.post(
       '$baseUrl/ethereal/link',
       data: linkPayload,
-      options: Options(headers: setuHeaders),
+      options: Options(headers: headers),
     );
 
     if (setuRes.statusCode == 200 && setuRes.data != null) {
@@ -272,10 +432,10 @@ class BbpsPaymentSessionService {
       }
     }
 
-    final errDetail = setuRes.data?['error']?['message']?.toString() ??
+    final errMsg = setuRes.data?['error']?['message']?.toString() ??
         setuRes.data?['error']?['detail']?.toString() ??
-        'Setu direct clearance error';
-    throw Exception(errDetail);
+        'Failed to generate Setu Ethereal link';
+    throw Exception(errMsg);
   }
 
   Future<String> _createServerSessionLink({
@@ -302,22 +462,35 @@ class BbpsPaymentSessionService {
       payload['additionalInfo'] = additionalInfo;
     }
 
-    final response = await _dio.post(
-      EnvConfig.bbpsSessionLink,
-      data: payload,
-      options: Options(receiveTimeout: const Duration(seconds: 12)),
-    );
+    try {
+      debugPrint('[BBPS] Requesting server-side link: ${EnvConfig.bbpsSessionLink}');
+      final response = await _dio.post(
+        EnvConfig.bbpsSessionLink,
+        data: payload,
+        options: Options(receiveTimeout: const Duration(seconds: 12)),
+      );
 
-    if (response.statusCode == 200 && response.data?['success'] == true) {
-      final link = response.data['link'] as String?;
-      if (link != null && link.isNotEmpty) {
-        return link;
+      if (response.statusCode == 200 && response.data?['success'] == true) {
+        final link = response.data['link'] as String?;
+        if (link != null && link.isNotEmpty) {
+          return link;
+        }
       }
-    }
 
-    final errorMsg = response.data?['error']?.toString() ??
-        response.data?['message']?.toString() ??
-        'Failed to generate billpay session';
-    throw Exception(errorMsg);
+      final errorMsg = response.data?['error']?.toString() ??
+          response.data?['message']?.toString() ??
+          'Failed to generate billpay session';
+      throw Exception(errorMsg);
+    } on DioException catch (dioErr) {
+      debugPrint('[BBPS] Server-side link DioException: status=${dioErr.response?.statusCode}');
+      final msg = dioErr.response?.data?['error']?.toString() ??
+          dioErr.response?.data?['message']?.toString() ??
+          dioErr.message ??
+          'Server session failed';
+      throw Exception(msg);
+    } catch (e) {
+      debugPrint('[BBPS] Server-side link unexpected exception: $e');
+      rethrow;
+    }
   }
 }
