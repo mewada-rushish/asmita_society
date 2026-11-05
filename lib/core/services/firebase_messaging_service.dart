@@ -5,6 +5,13 @@ import 'package:flutter/foundation.dart';
 import 'package:asmita_society/core/security/secure_storage_service.dart';
 import 'package:asmita_society/features/auth/data/repositories/auth_repository.dart';
 import 'package:asmita_society/core/services/incoming_visitor_service.dart';
+import 'package:asmita_society/main.dart' show rootNavigatorKey;
+import 'package:asmita_society/core/di/injection_container.dart' as di;
+import 'package:asmita_society/core/services/property_config_service.dart';
+import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
+import 'package:asmita_society/features/auth/bloc/auth_event.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 @pragma('vm:entry-point')
 void notificationTapBackground(NotificationResponse notificationResponse) {
@@ -384,8 +391,54 @@ class FirebaseMessagingService {
     final eventType = message.data['event']?.toString() ??
         message.data['eventType']?.toString() ??
         message.data['event_type']?.toString() ??
+        message.data['type']?.toString() ??
         message.data['notification_type']?.toString() ??
         '';
+
+    // Handle real-time administrative cache invalidation & configuration updates (R5)
+    final isConfigOrRoleRefresh = eventType == 'PROPERTY_SETTINGS_UPDATED' ||
+        eventType == 'ROLES_UPDATED' ||
+        eventType == 'CONFIG_REFRESH' ||
+        eventType == 'SETTINGS_UPDATED' ||
+        eventType == 'USER_ROLE_CHANGED';
+
+    if (isConfigOrRoleRefresh) {
+      debugPrint('[FirebaseMessagingService] Received real-time portal update: $eventType');
+      
+      final societyIdStr = message.data['society_id']?.toString() ??
+          message.data['societyId']?.toString() ??
+          message.data['property_id']?.toString() ??
+          message.data['propertyId']?.toString();
+      final int? societyId = societyIdStr != null ? int.tryParse(societyIdStr) : null;
+
+      try {
+        di.sl<PropertyConfigService>().invalidateCache(societyId);
+      } catch (e) {
+        debugPrint('[FirebaseMessagingService] Error invalidating PropertyConfigService: $e');
+      }
+
+      try {
+        if (Hive.isBoxOpen('app_cache')) {
+          Hive.box('app_cache').clear();
+        }
+      } catch (e) {
+        debugPrint('[FirebaseMessagingService] Error clearing app_cache: $e');
+      }
+
+      final context = rootNavigatorKey.currentContext;
+      if (context != null) {
+        try {
+          context.read<AuthBloc>().add(AuthRefreshProfileRequested());
+        } catch (e) {
+          debugPrint('[FirebaseMessagingService] Error requesting AuthRefreshProfileRequested: $e');
+        }
+      }
+
+      // If this is purely a silent sync event without a display title, do not show noisy banner
+      if (message.notification == null && message.data['title'] == null) {
+        return;
+      }
+    }
 
     final userApprovalSound = await _secureStorage.getApprovalSound();
     final userNotifSound = await _secureStorage.getNotificationSound();
@@ -500,6 +553,34 @@ class FirebaseMessagingService {
 
   void _handleMessageOpenedApp(RemoteMessage message) {
     debugPrint('A new onMessageOpenedApp event was published! data: ${message.data}');
+    final eventType = message.data['event']?.toString() ??
+        message.data['eventType']?.toString() ??
+        message.data['event_type']?.toString() ??
+        message.data['type']?.toString() ??
+        message.data['notification_type']?.toString() ??
+        '';
+
+    if (eventType == 'PROPERTY_SETTINGS_UPDATED' ||
+        eventType == 'ROLES_UPDATED' ||
+        eventType == 'CONFIG_REFRESH' ||
+        eventType == 'SETTINGS_UPDATED' ||
+        eventType == 'USER_ROLE_CHANGED') {
+      final societyIdStr = message.data['society_id']?.toString() ??
+          message.data['societyId']?.toString() ??
+          message.data['property_id']?.toString() ??
+          message.data['propertyId']?.toString();
+      final int? societyId = societyIdStr != null ? int.tryParse(societyIdStr) : null;
+      try {
+        di.sl<PropertyConfigService>().invalidateCache(societyId);
+      } catch (_) {}
+      final context = rootNavigatorKey.currentContext;
+      if (context != null) {
+        try {
+          context.read<AuthBloc>().add(AuthRefreshProfileRequested());
+        } catch (_) {}
+      }
+    }
+
     if (_isApproval(message.data)) {
       IncomingVisitorService.onIncomingCallReceived(message.data);
     }
