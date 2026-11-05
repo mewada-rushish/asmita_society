@@ -337,7 +337,7 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       floatingActionButton: Padding(
         padding: EdgeInsets.only(
-          bottom: AsmitaBottomNavBar.fabBottomPadding(),
+          bottom: AsmitaBottomNavBar.fabBottomPadding(context),
         ),
         child: FloatingActionButton.extended(
           onPressed: () => _showAddTaskDialog(context),

@@ -18,8 +18,23 @@ class AsmitaBottomNavBar extends StatelessWidget {
   /// and [MediaQuery.viewPaddingOf(context).bottom], adding exactly [barHeight] (+ optional [extraMargin])
   /// places the bottom edge of the FAB perfectly [kFloatingActionButtonMargin + extraMargin] (16px)
   /// above the top curved edge of the bottom navigation bar.
-  static double fabBottomPadding({double extraMargin = 0.0}) {
-    return barHeight + extraMargin;
+  /// Dynamic bottom padding to apply to FloatingActionButton widgets inside
+  /// screens rendered above the [AsmitaBottomNavBar] in [MainDashboardScreen].
+  ///
+  /// Since the outer [Scaffold] in [MainDashboardScreen] uses `extendBody: true`, the body
+  /// extends behind the [AsmitaBottomNavBar]. Adding [barHeight] (64px) + device bottom inset
+  /// (gesture navigation bar or system bar) + [extraMargin] ensures FloatingActionButton widgets
+  /// hover cleanly above the curved navigation bar without being submerged or clipped.
+  static double fabBottomPadding([BuildContext? context, double extraMargin = 16.0]) {
+    double bottomDevicePadding = 0.0;
+    if (context != null) {
+      bottomDevicePadding = MediaQuery.viewPaddingOf(context).bottom;
+      if (bottomDevicePadding == 0.0) {
+        bottomDevicePadding = MediaQuery.paddingOf(context).bottom;
+      }
+    }
+    final effectiveBottomInset = bottomDevicePadding > 0 ? bottomDevicePadding : 34.0;
+    return barHeight + effectiveBottomInset + extraMargin;
   }
 
   final int currentIndex;
