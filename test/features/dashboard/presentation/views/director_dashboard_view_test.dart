@@ -9,12 +9,19 @@ import 'package:asmita_society/features/visitor_management/bloc/industrial_visit
 import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_event.dart';
 import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_state.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/asmita_employee_card.dart';
+import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
+import 'package:asmita_society/features/auth/bloc/auth_state.dart';
+import 'package:asmita_society/features/auth/data/models/user_model.dart';
 
 class MockIndustrialVisitBloc extends Mock implements IndustrialVisitBloc {}
+class MockAuthBloc extends Mock implements AuthBloc {}
 
 void main() {
   late MockIndustrialVisitBloc mockVisitBloc;
   late StreamController<IndustrialVisitState> visitStateController;
+  late MockAuthBloc mockAuthBloc;
+  late StreamController<AuthState> authStateController;
 
   setUpAll(() {
     registerFallbackValue(const LoadIndustrialVisits());
@@ -29,10 +36,34 @@ void main() {
     when(() => mockVisitBloc.state).thenReturn(const IndustrialVisitState());
     when(() => mockVisitBloc.close()).thenAnswer((_) async {});
     when(() => mockVisitBloc.add(any())).thenReturn(null);
+
+    mockAuthBloc = MockAuthBloc();
+    authStateController = StreamController<AuthState>.broadcast();
+    when(() => mockAuthBloc.stream).thenAnswer((_) => authStateController.stream);
+    when(() => mockAuthBloc.state).thenReturn(
+      AuthAuthenticated(
+        sessionRole: 'director',
+        user: UserModel(
+          userId: 10,
+          fullName: 'Executive Director',
+          primaryRole: 'director',
+          accountType: 'app',
+          societyName: 'AsmitA House',
+          roleDetails: {
+            'department_name': 'Executive Office',
+            'cabin_code': 'CAB-DIR-01',
+            'desk_code': 'DIR-DSK-01',
+            'designation': 'Executive Director',
+          },
+        ),
+      ),
+    );
+    when(() => mockAuthBloc.close()).thenAnswer((_) async {});
   });
 
   tearDown(() async {
     await visitStateController.close();
+    await authStateController.close();
   });
 
   Widget buildTestableWidget({
@@ -41,8 +72,11 @@ void main() {
     Function(int, String)? onDecideVisit,
     Function(int)? onAcknowledgeVisit,
   }) {
-    return BlocProvider<IndustrialVisitBloc>.value(
-      value: mockVisitBloc,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<IndustrialVisitBloc>.value(value: mockVisitBloc),
+        BlocProvider<AuthBloc>.value(value: mockAuthBloc),
+      ],
       child: MaterialApp(
         home: DirectorDashboardView(
           visits: visits,
@@ -62,7 +96,7 @@ void main() {
   }
 
   group('DirectorDashboardView Production Widget Tests', () {
-    testWidgets('renders executive title, KPI metrics, and VIP visits feed', (tester) async {
+    testWidgets('renders executive hero card, KPI metrics, quick actions and waiting queue', (tester) async {
       setMobileScreen(tester);
       final testVisits = [
         const IndustrialVisitModel(
@@ -95,21 +129,28 @@ void main() {
       await tester.pumpWidget(buildTestableWidget(visits: testVisits));
       await tester.pump();
 
-      expect(find.text('Executive Office'), findsAtLeastNWidgets(1));
-      expect(find.text('Director Operations & VIP Gateways'), findsOneWidget);
+      // 1. Executive Hero Card (AsmitaEmployeeCard)
+      expect(find.byType(AsmitaEmployeeCard), findsOneWidget);
+      expect(find.text('Executive Director'), findsWidgets);
+      expect(find.text('Executive Office'), findsWidgets);
+
+      // 2. Quick Actions
+      expect(find.text('Pre-Approve'), findsOneWidget);
+      expect(find.text('Car Valet'), findsOneWidget);
+      expect(find.text('Security'), findsOneWidget);
       expect(find.text('Receptionist'), findsOneWidget);
 
-      // KPI Counts
+      // 3. 2x2 Metric Overview
       expect(find.text('Pending'), findsOneWidget);
-      expect(find.text('Approved'), findsNWidgets(2)); // KPI label + Status badge
-      expect(find.text('Inside HQ'), findsOneWidget);
+      expect(find.text('On-Site'), findsOneWidget);
+      expect(find.text('Expected'), findsOneWidget);
+      expect(find.text('Total Visits'), findsOneWidget);
       expect(find.text('3 Total Visits'), findsOneWidget);
 
-      // Visitors
+      // 4. Waiting Queue Section
+      expect(find.text('Who is Waiting'), findsOneWidget);
+      expect(find.text('Waiting Since'), findsOneWidget);
       expect(find.text('Rajesh Mehra'), findsOneWidget);
-      expect(find.text('Purpose: Quarterly Audit Review'), findsOneWidget);
-      expect(find.text('Sanjay Singhania'), findsOneWidget);
-      expect(find.text('Ananya Birla'), findsOneWidget);
     });
 
     testWidgets('calls onContactReceptionist when provided', (tester) async {
@@ -150,11 +191,10 @@ void main() {
       expect(find.text('Calling Main Reception (Ext 101)...'), findsOneWidget);
     });
 
-    testWidgets('triggers callbacks for approve, reject, and acknowledge actions', (tester) async {
+    testWidgets('triggers callbacks for approve and reject from visit details modal', (tester) async {
       setMobileScreen(tester);
       int? decidedId;
       String? decidedAction;
-      int? ackedId;
 
       final testVisits = [
         const IndustrialVisitModel(
@@ -163,6 +203,7 @@ void main() {
           propertyId: 114,
           visitorName: 'Dr. Vikram Sarabhai',
           status: IndustrialVisitStatus.awaitingHost,
+          departmentName: 'Executive Office',
         ),
       ];
 
@@ -173,83 +214,34 @@ void main() {
             decidedId = id;
             decidedAction = action;
           },
-          onAcknowledgeVisit: (id) {
-            ackedId = id;
-          },
         ),
       );
       await tester.pump();
 
-      // Tap Acknowledge
-      await tester.tap(find.text('Acknowledge'));
+      // Tap on the waiting visitor card to open details modal
+      await tester.tap(find.text('Dr. Vikram Sarabhai'));
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
-      expect(ackedId, equals(42));
-      expect(find.text('Acknowledged'), findsOneWidget);
+      expect(find.text('Approve Priority Entry'), findsOneWidget);
+      expect(find.text('Decline Pass'), findsOneWidget);
 
-      // Tap Reject
-      await tester.tap(find.text('Reject'));
+      // Tap Reject / Decline
+      await tester.tap(find.text('Decline Pass'));
       await tester.pump();
 
       expect(decidedId, equals(42));
       expect(decidedAction, equals('REJECT'));
-
-      // Tap Approve
-      await tester.tap(find.text('Approve'));
-      await tester.pump();
-
-      expect(decidedId, equals(42));
-      expect(decidedAction, equals('APPROVE'));
     });
 
-    testWidgets('dispatches bloc events directly when live and callbacks are omitted', (tester) async {
-      setMobileScreen(tester);
-      final testVisits = [
-        const IndustrialVisitModel(
-          id: 55,
-          requestNumber: 'AH-DIR-055',
-          propertyId: 114,
-          visitorName: 'Ratan Tata',
-          status: IndustrialVisitStatus.awaitingHost,
-        ),
-      ];
-
-      when(() => mockVisitBloc.state).thenReturn(
-        IndustrialVisitState(
-          status: IndustrialVisitBlocStatus.loaded,
-          visits: testVisits,
-        ),
-      );
-
-      await tester.pumpWidget(buildTestableWidget());
-      await tester.pump();
-
-      // Tap Approve
-      await tester.tap(find.text('Approve'));
-      await tester.pump();
-
-      verify(() => mockVisitBloc.add(const DecideVisitEvent(visitId: 55, action: 'APPROVE'))).called(1);
-
-      // Tap Reject
-      await tester.tap(find.text('Reject'));
-      await tester.pump();
-
-      verify(() => mockVisitBloc.add(const DecideVisitEvent(visitId: 55, action: 'REJECT'))).called(1);
-
-      // Tap Acknowledge
-      await tester.tap(find.text('Acknowledge'));
-      await tester.pump();
-
-      verify(() => mockVisitBloc.add(const AcknowledgeVisitEvent(55))).called(1);
-    });
-
-    testWidgets('shows empty state when visits list is empty', (tester) async {
+    testWidgets('shows empty waiting queue card when visits list is empty', (tester) async {
       setMobileScreen(tester);
       await tester.pumpWidget(buildTestableWidget(visits: const []));
       await tester.pump();
 
-      expect(find.text('No pending executive visitor appointments.'), findsOneWidget);
-      expect(find.byIcon(Icons.person_pin_outlined), findsOneWidget);
+      expect(find.text('Who is Waiting'), findsOneWidget);
+      expect(find.text("No one's waiting"), findsOneWidget);
+      expect(find.text('Queue Clear'), findsOneWidget);
     });
 
     testWidgets('shows loading indicator and toasts on state changes', (tester) async {

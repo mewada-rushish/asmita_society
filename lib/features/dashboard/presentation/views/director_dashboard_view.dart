@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,13 +19,18 @@ import '../../../../core/utils/property_role_resolver.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
-import '../../widgets/bbps_bill_payments_sheet.dart';
 import '../../../visitor_management/bloc/visitor_bloc.dart';
 import '../../../visitor_management/bloc/visitor_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
+import '../../../../core/widgets/asmita_dialog.dart';
+import '../../../../core/widgets/asmita_employee_card.dart';
+import '../../../auth/data/models/user_model.dart';
+import '../../../services/presentation/widgets/asmita_facility_booking_wizard.dart';
+import '../../../services/data/models/amenity_model.dart';
+import '../../../visitor_management/presentation/widgets/invite_team_member_sheet.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
 import 'dart:math';
@@ -37,8 +43,16 @@ import 'package:url_launcher/url_launcher.dart' as url_launcher;
 /// - Quick direct contact hotlines to floor receptionist & security gate
 /// - VIP Pre-approval & pass scheduling wizard integration
 class DirectorDashboardView extends StatefulWidget {
+  final String? directorName;
+  final String? departmentName;
+  final String? cabinNumber;
+  final String? deskNumber;
+  final String? designation;
+  final bool isActive;
+  final bool? canDelegate;
   final List<IndustrialVisitModel>? visits;
   final VoidCallback? onContactReceptionist;
+  final VoidCallback? onOpenDelegation;
   final Function(int visitId, String action)? onDecideVisit;
   final Function(int visitId)? onAcknowledgeVisit;
   final Function(String filter)? onNavigateToVisitsWithFilter;
@@ -46,8 +60,16 @@ class DirectorDashboardView extends StatefulWidget {
 
   const DirectorDashboardView({
     super.key,
+    this.directorName,
+    this.departmentName,
+    this.cabinNumber,
+    this.deskNumber,
+    this.designation,
+    this.isActive = true,
+    this.canDelegate,
     this.visits,
     this.onContactReceptionist,
+    this.onOpenDelegation,
     this.onDecideVisit,
     this.onAcknowledgeVisit,
     this.onNavigateToVisitsWithFilter,
@@ -59,10 +81,14 @@ class DirectorDashboardView extends StatefulWidget {
 }
 
 class _DirectorDashboardViewState extends State<DirectorDashboardView> {
+  String? _activeDelegateName;
+  bool _hasIncomingDelegation = false;
+
   @override
   void initState() {
     super.initState();
     if (widget.visits == null) {
+      _fetchDelegationStatus();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         try {
@@ -70,6 +96,49 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         } catch (_) {}
       });
     }
+  }
+
+  Future<void> _fetchDelegationStatus() async {
+    try {
+      if (Platform.environment.containsKey('FLUTTER_TEST')) return;
+      final dio = AsmitaDioClient(SecureStorageService()).dio;
+      final res = await dio.get(EnvConfig.employeeDelegationStatus);
+      if (res.statusCode == 200 && res.data['success'] == true) {
+        final dData = res.data['data'] as Map<String, dynamic>?;
+        final outgoing = dData?['outgoingDelegation'] as Map<String, dynamic>?;
+        final incoming = dData?['incomingDelegations'] as List? ?? [];
+        final hasActiveIncoming = incoming.any((item) => item is Map && item['is_active'] == true);
+
+        if (mounted) {
+          setState(() {
+            _hasIncomingDelegation = hasActiveIncoming;
+            if (outgoing != null) {
+              final delegate = outgoing['delegate'] as Map<String, dynamic>?;
+              _activeDelegateName = delegate?['full_name'] as String? ?? 'Colleague';
+            } else if (_activeDelegateName != null) {
+              _activeDelegateName = null;
+            }
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  bool _canUserInviteTeam(UserModel? user) {
+    if (_hasIncomingDelegation || (widget.canDelegate ?? false)) {
+      return true;
+    }
+    if (user != null) {
+      final roleLower = user.primaryRole.toLowerCase();
+      final desigLower = user.designation.toLowerCase();
+      final widgetDesigLower = (widget.designation ?? '').toLowerCase();
+      final isDirector = (user.rolePower ?? 0) >= 500 ||
+          roleLower.contains('director') ||
+          desigLower.contains('director') ||
+          widgetDesigLower.contains('director');
+      if (isDirector) return true;
+    }
+    return true;
   }
 
   void _handleContactReceptionist(BuildContext context) {
@@ -81,8 +150,12 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   }
 
   Future<void> _showPreApproveModal(BuildContext context) async {
-    final authState = context.read<AuthBloc>().state;
-    final user = authState is AuthAuthenticated ? authState.user : null;
+    UserModel? user;
+    try {
+      final authBloc = context.read<AuthBloc?>();
+      final authState = authBloc?.state;
+      if (authState is AuthAuthenticated) user = authState.user;
+    } catch (_) {}
     if (!PropertyRoleResolver.canIssuePasses(user)) {
       AsmitaToast.show(
         context,
@@ -106,8 +179,12 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   }
 
   void _handleDecide(BuildContext context, int visitId, String action) {
-    final authState = context.read<AuthBloc>().state;
-    final user = authState is AuthAuthenticated ? authState.user : null;
+    UserModel? user;
+    try {
+      final authBloc = context.read<AuthBloc?>();
+      final authState = authBloc?.state;
+      if (authState is AuthAuthenticated) user = authState.user;
+    } catch (_) {}
     if (!PropertyRoleResolver.canApproveVisits(user)) {
       AsmitaToast.show(
         context,
@@ -128,7 +205,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   void _showContactReceptionistSheet(BuildContext context) {
     showAsmitaBottomSheet(
       context: context,
-      title: 'Campus Support Hotlines',
+      title: 'Floor Support Hotline',
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
@@ -138,13 +215,13 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           _buildHotlineTile(
             context,
             icon: Icons.support_agent_rounded,
-            title: 'Floor 8 Reception Desk',
+            title: 'Main Reception Desk',
             subtitle: 'Ext: 101 • Dedicated Executive Support',
             onCall: () {
               Navigator.pop(context);
               AsmitaToast.show(
                 context,
-                message: 'Connecting to Floor Reception (Ext 101)...',
+                message: 'Calling Main Reception (Ext 101)...',
                 type: AsmitaToastType.info,
               );
             },
@@ -909,13 +986,13 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     List<IndustrialVisitModel> visits, {
     required bool isLoading,
   }) {
-    final pendingCount = visits.where((v) => v.isPending).length;
-    final approvedCount = visits
-        .where((v) => v.status == IndustrialVisitStatus.approved)
-        .length;
-    final checkedInCount = visits
+    final pendingVisits = visits.where((v) => v.isPending).toList();
+    final onSiteVisits = visits
         .where((v) => v.status == IndustrialVisitStatus.checkedIn)
-        .length;
+        .toList();
+    final expectedVisits = visits
+        .where((v) => v.status == IndustrialVisitStatus.approved && !v.isCheckedIn)
+        .toList();
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -943,33 +1020,42 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                         final future = bloc.stream
                             .firstWhere((s) => s.status != IndustrialVisitBlocStatus.loading)
                             .timeout(const Duration(seconds: 4), onTimeout: () => bloc.state);
+                        _fetchDelegationStatus();
                         bloc.add(const LoadIndustrialVisits());
                         await future;
                       }
                     },
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Executive KPI Stat Cards
-                        _buildKpiRow(
-                          context,
-                          pendingCount: pendingCount,
-                          approvedCount: approvedCount,
-                          checkedInCount: checkedInCount,
-                        ),
-                        const SizedBox(height: 20),
+                        // 1. Executive Hero Card (AsmitaEmployeeCard)
+                        _buildHeroCard(context),
+                        const SizedBox(height: 16),
 
-                        // 4-Icon Executive Action Grid
-                        _buildFourIconGrid(context),
+                        // Active Delegation Status Banner (if active)
+                        if (_activeDelegateName != null) ...[
+                          _buildDelegationBanner(context),
+                          const SizedBox(height: 12),
+                        ],
+
+                        // 2. Quick Actions Grid (Square boxes matching employee style)
+                        _buildQuickActionsGrid(context),
+                        const SizedBox(height: 16),
+
+                        // 3. Operational KPI Overview Metrics (4 interactive cards: Pending, On-Site, Expected, Total)
+                        _buildMetricsOverview(
+                          context,
+                          pendingCount: pendingVisits.length,
+                          onSiteCount: onSiteVisits.length,
+                          expectedCount: expectedVisits.length,
+                          totalCount: visits.length,
+                        ),
                         const SizedBox(height: 18),
 
-                        // 2-Column Waiting Grid (Who is Waiting, Waiting Since)
+                        // 4. Waiting Queue Section (Instead of visitor list)
                         _buildWaitingGrid(context, visits),
-                        const SizedBox(height: 120),
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
@@ -979,84 +1065,403 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     );
   }
 
-  Widget _buildKpiRow(
+  // ─────────────────────────────────────────────────────────────────────────
+  // 1. EXECUTIVE HERO CARD (Global AsmitaEmployeeCard)
+  // ─────────────────────────────────────────────────────────────────────────
+  Widget _buildHeroCard(BuildContext context) {
+    UserModel? user;
+    try {
+      final authBloc = context.read<AuthBloc?>();
+      final authState = authBloc?.state;
+      if (authState is AuthAuthenticated) {
+        user = authState.user;
+      }
+    } catch (_) {
+      user = null;
+    }
+
+    final name = widget.directorName ??
+        ((user != null && user.fullName.isNotEmpty) ? user.fullName : 'Executive Director');
+    final desig = widget.designation ??
+        ((user != null && user.designation.isNotEmpty) ? user.designation : 'Executive Director');
+    final dept = widget.departmentName ??
+        ((user != null && user.departmentName.isNotEmpty) ? user.departmentName : 'Executive Suite');
+    final cabin = widget.cabinNumber ??
+        ((user?.cabinCode != null && user!.cabinCode.isNotEmpty) ? user.cabinCode : 'CAB-DIR-01');
+    final desk = widget.deskNumber ??
+        ((user?.deskCode != null && user!.deskCode.isNotEmpty) ? user.deskCode : 'DIR-DSK-01');
+
+    return AsmitaEmployeeCard(
+      name: name,
+      designation: desig,
+      departmentName: dept,
+      cabinNumber: cabin,
+      deskNumber: desk,
+      isActive: widget.isActive,
+    );
+  }
+
+  Widget _buildDelegationBanner(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.sync_alt_rounded, color: Color(0xFF2563EB), size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Visitor approvals currently delegated to $_activeDelegateName. Deliveries & cabs alert you directly.',
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF1E3A8A),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 2. QUICK ACTIONS (Square Icon Boxes Matching Employee Dashboard)
+  // ─────────────────────────────────────────────────────────────────────────
+  Widget _buildQuickActionsGrid(BuildContext context) {
+    UserModel? user;
+    try {
+      final authBloc = context.read<AuthBloc?>();
+      final authState = authBloc?.state;
+      if (authState is AuthAuthenticated) {
+        user = authState.user;
+      }
+    } catch (_) {
+      user = null;
+    }
+    final canDelegate = widget.canDelegate ??
+        PropertyRoleResolver.canDelegate(user, designation: widget.designation);
+    final canInviteTeam = _canUserInviteTeam(user);
+
+    final actions = <_QuickActionItemData>[
+      _QuickActionItemData(
+        label: 'Pre-Approve',
+        icon: Icons.person_add_alt_1_rounded,
+        onTap: () => _showPreApproveModal(context),
+      ),
+      _QuickActionItemData(
+        label: 'Car Valet',
+        icon: Icons.directions_car_filled_rounded,
+        onTap: () => _showCarValetModal(context),
+      ),
+      _QuickActionItemData(
+        label: 'Security',
+        icon: Icons.shield_rounded,
+        onTap: () => _showSecurityModal(context),
+      ),
+      _QuickActionItemData(
+        label: 'Receptionist',
+        icon: Icons.support_agent_rounded,
+        onTap: () => _handleContactReceptionist(context),
+      ),
+      if (canDelegate && widget.onOpenDelegation != null)
+        _QuickActionItemData(
+          label: 'Delegate',
+          icon: Icons.sync_alt_rounded,
+          onTap: widget.onOpenDelegation!,
+        ),
+      if (canInviteTeam)
+        _QuickActionItemData(
+          label: 'Invite Team',
+          icon: Icons.group_add_rounded,
+          onTap: () => showInviteTeamMemberSheet(context),
+        ),
+      _QuickActionItemData(
+        label: 'Meeting Rooms',
+        icon: Icons.meeting_room_rounded,
+        onTap: () => _openMeetingRoomReservation(context),
+      ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (actions.length > 5) {
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: actions.map((item) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: SizedBox(
+                      width: 64,
+                      child: _buildSquareActionBox(
+                        context,
+                        icon: item.icon,
+                        label: item.label,
+                        onTap: item.onTap,
+                        boxSize: 52,
+                        iconSize: 22,
+                        fontSize: 10.5,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            );
+          }
+
+          final count = actions.length;
+          final itemWidth = constraints.maxWidth / count;
+          final boxSize = itemWidth < 68 ? (itemWidth < 58 ? 44.0 : 48.0) : 56.0;
+          final iconSize = boxSize < 50 ? 20.0 : 24.0;
+          final fontSize = boxSize < 50 ? 9.5 : 11.0;
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: actions.map((item) {
+              return Expanded(
+                child: _buildSquareActionBox(
+                  context,
+                  icon: item.icon,
+                  label: item.label,
+                  onTap: item.onTap,
+                  boxSize: boxSize,
+                  iconSize: iconSize,
+                  fontSize: fontSize,
+                ),
+              );
+            }).toList(),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSquareActionBox(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    double boxSize = 56,
+    double iconSize = 24,
+    double fontSize = 11,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Semantics(
+      label: label.replaceAll('\n', ' '),
+      button: true,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(16),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: boxSize,
+              height: boxSize,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.shadowColor.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Icon(
+                  icon,
+                  color: isDark ? Colors.black : Colors.white,
+                  size: iconSize,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 28,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w600,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openMeetingRoomReservation(BuildContext context) {
+    AsmitaDialog.show(
+      context: context,
+      title: 'Meeting Room Reservation',
+      content: const AsmitaFacilityBookingWizard(
+        initialAmenity: AmenityModel(
+          amenityId: 991,
+          name: 'Conference & Meeting Room',
+          type: 'booking',
+          description: 'High-Speed Smart AV & Video Conferencing Room',
+          capacity: 20,
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 3. OPERATIONAL KPI OVERVIEW METRICS (2x2 Grid Matching Employee View)
+  // ─────────────────────────────────────────────────────────────────────────
+  Widget _buildMetricsOverview(
     BuildContext context, {
     required int pendingCount,
-    required int approvedCount,
-    required int checkedInCount,
+    required int onSiteCount,
+    required int expectedCount,
+    required int totalCount,
   }) {
-    return Row(
+    return Column(
       children: [
-        _kpiCard(
-          context,
-          label: 'Pending',
-          value: '$pendingCount',
-          color: AsmitaPalette.actionRed,
-          icon: Icons.pending_actions_rounded,
-          showPulse: pendingCount > 0,
-          onTap: () {
-            if (widget.onNavigateToVisitsWithFilter != null) {
-              widget.onNavigateToVisitsWithFilter!('PENDING');
-            }
-          },
+        Row(
+          children: [
+            Expanded(
+              child: _buildMetricTile(
+                context,
+                index: 0,
+                title: 'Pending',
+                count: pendingCount,
+                subtitle: pendingCount > 0 ? '$pendingCount Action Required' : 'All Clear',
+                icon: Icons.pending_actions_rounded,
+                accentColor: pendingCount > 0 ? AsmitaPalette.actionRed : const Color(0xFFF59E0B),
+                onTap: () {
+                  if (widget.onNavigateToVisitsWithFilter != null) {
+                    widget.onNavigateToVisitsWithFilter!('PENDING');
+                  } else {
+                    widget.onNavigateToTab?.call(1);
+                  }
+                },
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildMetricTile(
+                context,
+                index: 1,
+                title: 'On-Site',
+                count: onSiteCount,
+                subtitle: onSiteCount > 0 ? '$onSiteCount In Executive Suite' : 'No Visitors Inside',
+                icon: Icons.business_rounded,
+                accentColor: AsmitaPalette.successGreen,
+                onTap: () {
+                  if (widget.onNavigateToVisitsWithFilter != null) {
+                    widget.onNavigateToVisitsWithFilter!('INSIDE');
+                  } else {
+                    widget.onNavigateToTab?.call(1);
+                  }
+                },
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        _kpiCard(
-          context,
-          label: 'Approved',
-          value: '$approvedCount',
-          color: AsmitaPalette.deepNavy,
-          icon: Icons.verified_rounded,
-          onTap: () {
-            if (widget.onNavigateToVisitsWithFilter != null) {
-              widget.onNavigateToVisitsWithFilter!('APPROVED');
-            }
-          },
-        ),
-        const SizedBox(width: 8),
-        _kpiCard(
-          context,
-          label: 'Inside HQ',
-          value: '$checkedInCount',
-          color: AsmitaPalette.successGreen,
-          icon: Icons.meeting_room_rounded,
-          onTap: () {
-            if (widget.onNavigateToVisitsWithFilter != null) {
-              widget.onNavigateToVisitsWithFilter!('INSIDE');
-            }
-          },
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _buildMetricTile(
+                context,
+                index: 2,
+                title: 'Expected',
+                count: expectedCount,
+                subtitle: expectedCount > 0 ? '$expectedCount Scheduled' : 'None Expected',
+                icon: Icons.schedule_rounded,
+                accentColor: const Color(0xFF2563EB),
+                onTap: () {
+                  if (widget.onNavigateToVisitsWithFilter != null) {
+                    widget.onNavigateToVisitsWithFilter!('EXPECTED');
+                  } else {
+                    widget.onNavigateToTab?.call(1);
+                  }
+                },
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildMetricTile(
+                context,
+                index: 3,
+                title: 'Total Visits',
+                count: totalCount,
+                subtitle: totalCount > 0 ? '$totalCount Total Visits' : 'No Activity',
+                icon: Icons.receipt_long_rounded,
+                accentColor: AsmitaPalette.deepNavy,
+                onTap: () {
+                  if (widget.onNavigateToVisitsWithFilter != null) {
+                    widget.onNavigateToVisitsWithFilter!('ALL');
+                  } else {
+                    widget.onNavigateToTab?.call(1);
+                  }
+                },
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _kpiCard(
+  Widget _buildMetricTile(
     BuildContext context, {
-    required String label,
-    required String value,
-    required Color color,
+    required int index,
+    required String title,
+    required int count,
+    required String subtitle,
     required IconData icon,
-    bool showPulse = false,
+    required Color accentColor,
     VoidCallback? onTap,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    return Expanded(
-      child: InkWell(
-        onTap: onTap != null
-            ? () {
-                HapticFeedback.selectionClick();
-                onTap();
-              }
-            : null,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+    return InkWell(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        if (onTap != null) {
+          onTap();
+        }
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: Theme.of(context).dividerColor,
+            color: theme.dividerColor,
             width: 1.0,
           ),
           boxShadow: [
@@ -1068,235 +1473,53 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           ],
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Premium Squircle Icon Container
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: isDark ? 0.25 : 0.10),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: color.withValues(alpha: 0.2),
-                  width: 1.0,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: isDark ? 0.25 : 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: accentColor, size: 20),
                 ),
-              ),
-              child: Center(
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Icon(icon, color: color, size: 20),
-                    if (showPulse)
-                      Positioned(
-                        right: -3,
-                        top: -3,
-                        child: Container(
-                          width: 7,
-                          height: 7,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Theme.of(context).colorScheme.surface,
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
+                Text(
+                  '$count',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: accentColor,
+                  ),
                 ),
-              ),
+              ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
-              value,
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: isDark
-                    ? AsmitaPalette.textDarkModeMain
-                    : AsmitaPalette.textDark,
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 2),
             Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Montserrat',
+              subtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
                 fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: isDark
-                    ? AsmitaPalette.textDarkModeMuted
-                    : AsmitaPalette.textLight,
+                color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
-        ),
       ),
     );
   }
 
-  Widget _buildFourIconGrid(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final actions = [
-      _ExecutiveActionItem(
-        title: 'Pre-Approve',
-        icon: Icons.event_available_rounded,
-        containerColor: isDark
-            ? AsmitaPalette.surfaceDark
-            : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-        iconColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
-        onTap: () => _showPreApproveModal(context),
-      ),
-      _ExecutiveActionItem(
-        title: 'Car Valet',
-        icon: Icons.directions_car_filled_rounded,
-        containerColor: isDark
-            ? AsmitaPalette.surfaceDark
-            : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-        iconColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
-        onTap: () => _showCarValetModal(context),
-      ),
-      _ExecutiveActionItem(
-        title: 'Security',
-        icon: Icons.shield_rounded,
-        containerColor: isDark
-            ? AsmitaPalette.surfaceDark
-            : AsmitaPalette.actionRed.withValues(alpha: 0.08),
-        iconColor: AsmitaPalette.actionRed,
-        onTap: () => _showSecurityModal(context),
-      ),
-      _ExecutiveActionItem(
-        title: 'BBPS',
-        icon: Icons.bolt_rounded,
-        containerColor: isDark
-            ? AsmitaPalette.surfaceDark
-            : const Color(0xFFF59E0B).withValues(alpha: 0.12),
-        iconColor: const Color(0xFFD97706),
-        onTap: () => BbpsBillPaymentsSheet.show(context, onNavigateToTab: widget.onNavigateToTab),
-      ),
-    ];
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Quick Actions',
-            style: textTheme.titleLarge?.copyWith(
-              fontFamily: 'Montserrat',
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: isDark
-                  ? AsmitaPalette.textDarkModeMain
-                  : AsmitaPalette.textDark,
-            ),
-          ),
-          const SizedBox(height: 12),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final count = actions.length;
-              final itemWidth = constraints.maxWidth / count;
-              final iconBoxSize = itemWidth < 60 ? (itemWidth < 52 ? 42.0 : 46.0) : 52.0;
-              final iconSize = iconBoxSize < 48 ? 20.0 : 22.0;
-              final fontSize = itemWidth < 60 ? 9.5 : 10.5;
-
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: actions.map((action) {
-                  return Expanded(
-                    child: InkWell(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        action.onTap();
-                      },
-                      borderRadius: BorderRadius.circular(16),
-                      splashColor: Colors.transparent,
-                      highlightColor: Colors.transparent,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: iconBoxSize,
-                            height: iconBoxSize,
-                            decoration: BoxDecoration(
-                              color: action.containerColor,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: Theme.of(context).dividerColor,
-                                width: 1,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Theme.of(
-                                    context,
-                                  ).shadowColor.withValues(alpha: 0.02),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Icon(
-                              action.icon,
-                              color: action.iconColor,
-                              size: iconSize,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            action.title,
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: textTheme.bodyMedium?.copyWith(
-                              fontFamily: 'Montserrat',
-                              fontSize: fontSize,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? AsmitaPalette.textDarkModeMain
-                                  : AsmitaPalette.textDark,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  // =========================================================================
-  // 2-COLUMN WAITING GRID (Who is Waiting & Waiting Since)
-  // =========================================================================
-  // =========================================================================
-  // WAITING QUEUE (When empty: indicates no one's waiting. When waiting: Name, Waiting Since, and Queue Waiting After Them)
-  // =========================================================================
   Widget _buildWaitingGrid(
     BuildContext context,
     List<IndustrialVisitModel> visits,
@@ -2325,8 +2548,12 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   // =========================================================================
   void _showSecurityModal(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final authState = context.read<AuthBloc>().state;
-    final user = authState is AuthAuthenticated ? authState.user : null;
+    UserModel? user;
+    try {
+      final authBloc = context.read<AuthBloc?>();
+      final authState = authBloc?.state;
+      if (authState is AuthAuthenticated) user = authState.user;
+    } catch (_) {}
     final societyId = user?.societyId ?? 114;
 
     // Auto-provision security departments and roles along the way on backend
@@ -2659,18 +2886,14 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
 
 }
 
-class _ExecutiveActionItem {
-  final String title;
+class _QuickActionItemData {
+  final String label;
   final IconData icon;
-  final Color containerColor;
-  final Color iconColor;
   final VoidCallback onTap;
 
-  const _ExecutiveActionItem({
-    required this.title,
+  const _QuickActionItemData({
+    required this.label,
     required this.icon,
-    required this.containerColor,
-    required this.iconColor,
     required this.onTap,
   });
 }
