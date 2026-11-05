@@ -4,8 +4,13 @@ enum AppEnvironment { development, production }
 /// Central configuration for API environment endpoints and base URLs.
 class EnvConfig {
   static AppEnvironment get currentEnvironment {
-    const String env = String.fromEnvironment('APP_ENV', defaultValue: 'production');
-    return env == 'development' ? AppEnvironment.development : AppEnvironment.production;
+    const String env = String.fromEnvironment(
+      'APP_ENV',
+      defaultValue: 'production',
+    );
+    return env == 'development'
+        ? AppEnvironment.development
+        : AppEnvironment.production;
   }
 
   /// Resolves the base URL based on the current environment and platform.
@@ -44,26 +49,40 @@ class EnvConfig {
   static String get usersMe => '$baseUrl/app-api/users/me';
 
   /// Guard Endpoints
-  static String get gateSearchInvite => '$baseUrl/app-api/gate/pre-approved-invites/search';
-  static String get gateExpectedInvites => '$baseUrl/app-api/gate/pre-approved-invites/expected';
+  static String get gateSearchInvite =>
+      '$baseUrl/app-api/gate/pre-approved-invites/search';
+  static String get gateExpectedInvites =>
+      '$baseUrl/app-api/gate/pre-approved-invites/expected';
   static String get gateLogs => '$baseUrl/app-api/gate/logs';
   static String get gateCheckedInLogs => '$baseUrl/app-api/gate/logs';
-  static String gateCheckInInvite(String id) => '$baseUrl/app-api/gate/pre-approved-invites/$id/check-in';
-  static String gateCheckOutInvite(String id) => '$baseUrl/app-api/gate/pre-approved-invites/$id/check-out';
-  static String get guardVisitorEntries => '$baseUrl/app-api/guard/visitor-entries';
-  static String guardVisitorCheckOut(String id) => '$baseUrl/app-api/visitor-entries/$id/check-out';
-  static String guardVisitorCheckIn(String id) => '$baseUrl/app-api/visitor-entries/$id/check-in';
+  static String gateCheckInInvite(String id) =>
+      '$baseUrl/app-api/gate/pre-approved-invites/$id/check-in';
+  static String gateCheckOutInvite(String id) =>
+      '$baseUrl/app-api/gate/pre-approved-invites/$id/check-out';
+  static String get guardVisitorEntries =>
+      '$baseUrl/app-api/guard/visitor-entries';
+  static String guardVisitorCheckOut(String id) =>
+      '$baseUrl/app-api/visitor-entries/$id/check-out';
+  static String guardVisitorCheckIn(String id) =>
+      '$baseUrl/app-api/visitor-entries/$id/check-in';
   static String get createVisitorEntry => '$baseUrl/app-api/visitor-entries';
 
   /// AsmitA House Visitor Flow Endpoints
   static String get publicVisitorSubmit => '$baseUrl/api/public/visitor/submit';
-  static String publicVisitorStatus(String code) => '$baseUrl/api/public/visitor/status/$code';
-  static String get guardCreateVehicleDraft => '$baseUrl/api/public/visitor/guard/draft';
-  static String get guardListActiveDrafts => '$baseUrl/api/public/visitor/guard/drafts';
-  static String visitorAction(String id) => '$baseUrl/api/public/visitor/entries/$id/action';
-  static String visitorAssign(String id) => '$baseUrl/api/public/visitor/entries/$id/assign';
-  static String get visitorCheckInPass => '$baseUrl/api/public/visitor/entries/0/check-in';
-  static String get visitorAutoCheckoutEod => '$baseUrl/api/public/visitor/entries/auto-checkout-eod';
+  static String publicVisitorStatus(String code) =>
+      '$baseUrl/api/public/visitor/status/$code';
+  static String get guardCreateVehicleDraft =>
+      '$baseUrl/api/public/visitor/guard/draft';
+  static String get guardListActiveDrafts =>
+      '$baseUrl/api/public/visitor/guard/drafts';
+  static String visitorAction(String id) =>
+      '$baseUrl/api/public/visitor/entries/$id/action';
+  static String visitorAssign(String id) =>
+      '$baseUrl/api/public/visitor/entries/$id/assign';
+  static String get visitorCheckInPass =>
+      '$baseUrl/api/public/visitor/entries/0/check-in';
+  static String get visitorAutoCheckoutEod =>
+      '$baseUrl/api/public/visitor/entries/auto-checkout-eod';
   static String propertyVisitorConfig(int societyId) =>
       '$baseUrl/api/public/visitor/config?society_id=$societyId';
 
@@ -87,7 +106,8 @@ class EnvConfig {
   static String get userVehicles => '$baseUrl/app-api/vehicles';
   static String get userPets => '$baseUrl/app-api/pets';
   static String get parkingSlots => '$baseUrl/app-api/parking-slots';
-  static String get committeeMembers => '$baseUrl/app-api/society/committee-members';
+  static String get committeeMembers =>
+      '$baseUrl/app-api/society/committee-members';
   static String get societyRules => '$baseUrl/app-api/society/rules';
   static String get societyDocuments => '$baseUrl/app-api/society/documents';
   static String get supportTickets => '$baseUrl/app-api/support-tickets';
@@ -95,39 +115,62 @@ class EnvConfig {
 
   /// Industrial Visitor Management Endpoints (Property ID 114)
   static String get industrialVisits => '$baseUrl/app-api/industrial/visits';
-  static String get industrialGuardDraft => '$baseUrl/app-api/industrial/guard/draft';
-  static String get industrialGuardDrafts => '$baseUrl/app-api/industrial/guard/drafts';
-  static String get industrialDelivery => '$baseUrl/app-api/industrial/visits/delivery';
-  static String industrialHandover(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/confirm-handover';
-  static String industrialAction(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/action';
-  static String industrialAcknowledge(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/acknowledge';
-  static String industrialOverride(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/override';
-  static String industrialCheckIn(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/check-in';
-  static String industrialSendToLobby(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/send-to-lobby';
-  static String industrialCheckOut(dynamic id) => '$baseUrl/app-api/industrial/visits/$id/check-out';
-  static String get industrialGuardClockIn => '$baseUrl/app-api/industrial/guard/duty/clock-in';
-  static String get industrialGuardClockOut => '$baseUrl/app-api/industrial/guard/duty/clock-out';
-  static String get industrialSettings => '$baseUrl/app-api/industrial/settings';
-  static String get industrialOutageMode => '$baseUrl/app-api/industrial/outage-mode';
+  static String get industrialGuardDraft =>
+      '$baseUrl/app-api/industrial/guard/draft';
+  static String get industrialGuardDrafts =>
+      '$baseUrl/app-api/industrial/guard/drafts';
+  static String get industrialDelivery =>
+      '$baseUrl/app-api/industrial/visits/delivery';
+  static String industrialHandover(dynamic id) =>
+      '$baseUrl/app-api/industrial/visits/$id/confirm-handover';
+  static String industrialAction(dynamic id) =>
+      '$baseUrl/app-api/industrial/visits/$id/action';
+  static String industrialAcknowledge(dynamic id) =>
+      '$baseUrl/app-api/industrial/visits/$id/acknowledge';
+  static String industrialOverride(dynamic id) =>
+      '$baseUrl/app-api/industrial/visits/$id/override';
+  static String industrialCheckIn(dynamic id) =>
+      '$baseUrl/app-api/industrial/visits/$id/check-in';
+  static String industrialSendToLobby(dynamic id) =>
+      '$baseUrl/app-api/industrial/visits/$id/send-to-lobby';
+  static String industrialCheckOut(dynamic id) =>
+      '$baseUrl/app-api/industrial/visits/$id/check-out';
+  static String get industrialGuardClockIn =>
+      '$baseUrl/app-api/industrial/guard/duty/clock-in';
+  static String get industrialGuardClockOut =>
+      '$baseUrl/app-api/industrial/guard/duty/clock-out';
+  static String get industrialSettings =>
+      '$baseUrl/app-api/industrial/settings';
+  static String get industrialOutageMode =>
+      '$baseUrl/app-api/industrial/outage-mode';
 
-  static String get candidateDelegates => '$baseUrl/app-api/masters/departments/candidate-delegates';
-  static String get assignDepartmentDelegate => '$baseUrl/app-api/masters/departments/delegate';
+  static String get candidateDelegates =>
+      '$baseUrl/app-api/masters/departments/candidate-delegates';
+  static String get assignDepartmentDelegate =>
+      '$baseUrl/app-api/masters/departments/delegate';
 
   /// Employee Personal & Hierarchical Delegation Endpoints
-  static String get employeeDelegationStatus => '$baseUrl/app-api/employee/delegation/status';
-  static String get employeeDelegation => '$baseUrl/app-api/employee/delegation';
-  static String get employeeDelegationColleagues => '$baseUrl/app-api/employee/delegation/colleagues';
+  static String get employeeDelegationStatus =>
+      '$baseUrl/app-api/employee/delegation/status';
+  static String get employeeDelegation =>
+      '$baseUrl/app-api/employee/delegation';
+  static String get employeeDelegationColleagues =>
+      '$baseUrl/app-api/employee/delegation/colleagues';
 
   /// Public Visitor OTP Authentication
-  static String get publicVisitorOtpSend => '$baseUrl/app-api/public/visitor/otp/send';
-  static String get publicVisitorOtpVerify => '$baseUrl/app-api/public/visitor/otp/verify';
+  static String get publicVisitorOtpSend =>
+      '$baseUrl/app-api/public/visitor/otp/send';
+  static String get publicVisitorOtpVerify =>
+      '$baseUrl/app-api/public/visitor/otp/verify';
 
   /// Bharat BillPay (BBPS) Endpoints
   static String get bbpsCategories => '$baseUrl/app-api/bbps/categories';
   static String get bbpsSessionLink => '$baseUrl/app-api/bbps/session-link';
-  static String get bbpsDelegatedToken => '$baseUrl/app-api/bbps/delegated-token';
+  static String get bbpsDelegatedToken =>
+      '$baseUrl/app-api/bbps/delegated-token';
 
   /// Invite Token & Team Member Endpoints
-  static String inviteTokenInfo(String token) => '$baseUrl/api/invites/token-info/$token';
+  static String inviteTokenInfo(String token) =>
+      '$baseUrl/api/invites/token-info/$token';
   static String get generateInvite => '$baseUrl/api/invites/generate';
 }
