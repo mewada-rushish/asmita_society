@@ -17,24 +17,16 @@ class AsmitaBottomNavBar extends StatelessWidget {
   /// Since Flutter's [Scaffold] automatically offsets FABs by [kFloatingActionButtonMargin] (16px)
   /// and [MediaQuery.viewPaddingOf(context).bottom], adding exactly [barHeight] (+ optional [extraMargin])
   /// places the bottom edge of the FAB perfectly [kFloatingActionButtonMargin + extraMargin] (16px)
-  /// above the top curved edge of the bottom navigation bar.
   /// Dynamic bottom padding to apply to FloatingActionButton widgets inside
   /// screens rendered above the [AsmitaBottomNavBar] in [MainDashboardScreen].
   ///
   /// Since the outer [Scaffold] in [MainDashboardScreen] uses `extendBody: true`, the body
-  /// extends behind the [AsmitaBottomNavBar]. Adding [barHeight] (64px) + device bottom inset
-  /// (gesture navigation bar or system bar) + [extraMargin] ensures FloatingActionButton widgets
-  /// hover cleanly above the curved navigation bar without being submerged or clipped.
-  static double fabBottomPadding([BuildContext? context, double extraMargin = 16.0]) {
-    double bottomDevicePadding = 0.0;
-    if (context != null) {
-      bottomDevicePadding = MediaQuery.viewPaddingOf(context).bottom;
-      if (bottomDevicePadding == 0.0) {
-        bottomDevicePadding = MediaQuery.paddingOf(context).bottom;
-      }
-    }
-    final effectiveBottomInset = bottomDevicePadding > 0 ? bottomDevicePadding : 34.0;
-    return barHeight + effectiveBottomInset + extraMargin;
+  /// extends behind the [AsmitaBottomNavBar]. Flutter's inner [Scaffold] automatically offsets
+  /// the FAB by [kFloatingActionButtonMargin] (16px) and device insets. Adding [barHeight] (64px)
+  /// (+ optional [extraMargin]) ensures the FAB hovers cleanly 16-20px above the curved navigation bar
+  /// on all screen sizes and device types without floating awkwardly high or being submerged.
+  static double fabBottomPadding([BuildContext? context, double extraMargin = 0.0]) {
+    return barHeight + extraMargin;
   }
 
   final int currentIndex;
