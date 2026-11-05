@@ -495,6 +495,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final themeBlue = isDark ? const Color(0xFF7B96EC) : AsmitaPalette.deepNavy;
 
     return Semantics(
       label: label.replaceAll('\n', ' '),
@@ -515,11 +516,13 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
+                color: themeBlue,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: theme.shadowColor.withValues(alpha: 0.03),
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.25)
+                        : themeBlue.withValues(alpha: 0.22),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),

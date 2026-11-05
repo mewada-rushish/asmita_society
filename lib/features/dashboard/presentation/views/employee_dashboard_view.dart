@@ -285,7 +285,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         children: [
           // 1. Executive Team Lead / HOD Hero Card
           _buildHeroCard(context),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
           // Active Delegation Status Banner (if active)
           if (_activeDelegateName != null) ...[
@@ -321,7 +321,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
 
           // 2. Quick Action Grid (Square Icon Boxes: Pre-approve, Delegate, Meeting Rooms, Bill payments)
           _buildQuickActionsGrid(context),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
 
           // 3. Operational KPI Overview Metrics (4 interactive cards)
           _buildMetricsOverview(
@@ -463,7 +463,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
     ];
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.only(top: 4, bottom: 0),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final count = actions.length;
@@ -504,6 +504,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final themeBlue = isDark ? const Color(0xFF7B96EC) : AsmitaPalette.deepNavy;
 
     return Semantics(
       label: label.replaceAll('\n', ' '),
@@ -524,11 +525,13 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
               width: boxSize,
               height: boxSize,
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
+                color: themeBlue,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: theme.shadowColor.withValues(alpha: 0.03),
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.25)
+                        : themeBlue.withValues(alpha: 0.22),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),

@@ -25,12 +25,9 @@ import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
-import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_employee_card.dart';
+import '../../widgets/bbps_bill_payments_sheet.dart';
 import '../../../auth/data/models/user_model.dart';
-import '../../../services/presentation/widgets/asmita_facility_booking_wizard.dart';
-import '../../../services/data/models/amenity_model.dart';
-import '../../../visitor_management/presentation/widgets/invite_team_member_sheet.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
 import 'dart:math';
@@ -82,7 +79,6 @@ class DirectorDashboardView extends StatefulWidget {
 
 class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   String? _activeDelegateName;
-  bool _hasIncomingDelegation = false;
 
   @override
   void initState() {
@@ -106,12 +102,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
       if (res.statusCode == 200 && res.data['success'] == true) {
         final dData = res.data['data'] as Map<String, dynamic>?;
         final outgoing = dData?['outgoingDelegation'] as Map<String, dynamic>?;
-        final incoming = dData?['incomingDelegations'] as List? ?? [];
-        final hasActiveIncoming = incoming.any((item) => item is Map && item['is_active'] == true);
 
         if (mounted) {
           setState(() {
-            _hasIncomingDelegation = hasActiveIncoming;
             if (outgoing != null) {
               final delegate = outgoing['delegate'] as Map<String, dynamic>?;
               _activeDelegateName = delegate?['full_name'] as String? ?? 'Colleague';
@@ -122,23 +115,6 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         }
       }
     } catch (_) {}
-  }
-
-  bool _canUserInviteTeam(UserModel? user) {
-    if (_hasIncomingDelegation || (widget.canDelegate ?? false)) {
-      return true;
-    }
-    if (user != null) {
-      final roleLower = user.primaryRole.toLowerCase();
-      final desigLower = user.designation.toLowerCase();
-      final widgetDesigLower = (widget.designation ?? '').toLowerCase();
-      final isDirector = (user.rolePower ?? 0) >= 500 ||
-          roleLower.contains('director') ||
-          desigLower.contains('director') ||
-          widgetDesigLower.contains('director');
-      if (isDirector) return true;
-    }
-    return true;
   }
 
   void _handleContactReceptionist(BuildContext context) {
@@ -1032,7 +1008,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                       children: [
                         // 1. Executive Hero Card (AsmitaEmployeeCard)
                         _buildHeroCard(context),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 18),
 
                         // Active Delegation Status Banner (if active)
                         if (_activeDelegateName != null) ...[
@@ -1042,7 +1018,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
 
                         // 2. Quick Actions Grid (Square boxes matching employee style)
                         _buildQuickActionsGrid(context),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 10),
 
                         // 3. Operational KPI Overview Metrics (4 interactive cards: Total, Pending, Approved, Inside)
                         _buildMetricsOverview(
@@ -1136,20 +1112,6 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   // 2. QUICK ACTIONS (Square Icon Boxes Matching Employee Dashboard)
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildQuickActionsGrid(BuildContext context) {
-    UserModel? user;
-    try {
-      final authBloc = context.read<AuthBloc?>();
-      final authState = authBloc?.state;
-      if (authState is AuthAuthenticated) {
-        user = authState.user;
-      }
-    } catch (_) {
-      user = null;
-    }
-    final canDelegate = widget.canDelegate ??
-        PropertyRoleResolver.canDelegate(user, designation: widget.designation);
-    final canInviteTeam = _canUserInviteTeam(user);
-
     final actions = <_QuickActionItemData>[
       _QuickActionItemData(
         label: 'Pre-Approve',
@@ -1167,31 +1129,14 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         onTap: () => _showSecurityModal(context),
       ),
       _QuickActionItemData(
-        label: 'Receptionist',
-        icon: Icons.support_agent_rounded,
-        onTap: () => _handleContactReceptionist(context),
-      ),
-      if (canDelegate && widget.onOpenDelegation != null)
-        _QuickActionItemData(
-          label: 'Delegate',
-          icon: Icons.sync_alt_rounded,
-          onTap: widget.onOpenDelegation!,
-        ),
-      if (canInviteTeam)
-        _QuickActionItemData(
-          label: 'Invite Team',
-          icon: Icons.group_add_rounded,
-          onTap: () => showInviteTeamMemberSheet(context),
-        ),
-      _QuickActionItemData(
-        label: 'Meeting Rooms',
-        icon: Icons.meeting_room_rounded,
-        onTap: () => _openMeetingRoomReservation(context),
+        label: 'BillPay',
+        icon: Icons.receipt_long_rounded,
+        onTap: () => BbpsBillPaymentsSheet.show(context, onNavigateToTab: widget.onNavigateToTab),
       ),
     ];
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.only(top: 4, bottom: 0),
       child: LayoutBuilder(
         builder: (context, constraints) {
           if (actions.length > 5) {
@@ -1258,6 +1203,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final themeBlue = isDark ? const Color(0xFF7B96EC) : AsmitaPalette.deepNavy;
 
     return Semantics(
       label: label.replaceAll('\n', ' '),
@@ -1278,11 +1224,13 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
               width: boxSize,
               height: boxSize,
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
+                color: themeBlue,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: theme.shadowColor.withValues(alpha: 0.03),
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.25)
+                        : themeBlue.withValues(alpha: 0.22),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -1320,23 +1268,6 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     );
   }
 
-  void _openMeetingRoomReservation(BuildContext context) {
-    AsmitaDialog.show(
-      context: context,
-      title: 'Meeting Room Reservation',
-      content: const AsmitaFacilityBookingWizard(
-        initialAmenity: AmenityModel(
-          amenityId: 991,
-          name: 'Conference & Meeting Room',
-          type: 'booking',
-          description: 'High-Speed Smart AV & Video Conferencing Room',
-          capacity: 20,
-        ),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
   // ─────────────────────────────────────────────────────────────────────────
   // 3. OPERATIONAL KPI OVERVIEW METRICS (4 Grid/Row Cards: Total, Pending, Approved, Inside)
   // ─────────────────────────────────────────────────────────────────────────
