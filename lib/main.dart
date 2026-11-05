@@ -1,3 +1,4 @@
+import 'features/bbps/data/services/bbps_payment_session_service.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -75,6 +76,7 @@ Future<void> main() async {
       await Future.wait([
         Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
         Hive.initFlutter(),
+        BbpsSecureConfig.ensureLoaded(),
       ]);
 
       // Setup global error handling for Flutter framework
