@@ -617,7 +617,7 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
 
                   // Bottom Action Buttons (Material 3 AsmitA Corporate Style)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     child: _isSubmitting
                         ? const Center(
                             child: CircularProgressIndicator(
@@ -626,7 +626,7 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                           )
                         : Row(
                             children: [
-                              // Deny Entry Button
+                              // 1. Deny Entry Button
                               Expanded(
                                 flex: 1,
                                 child: Material(
@@ -654,15 +654,15 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                                         children: const [
                                           Icon(
                                             Icons.close_rounded,
-                                            size: 20,
+                                            size: 18,
                                             color: AsmitaPalette.actionRed,
                                           ),
-                                          SizedBox(width: 8),
+                                          SizedBox(width: 6),
                                           Text(
-                                            'Deny Entry',
+                                            'Deny',
                                             style: TextStyle(
                                               fontFamily: 'Montserrat',
-                                              fontSize: 14.5,
+                                              fontSize: 13.5,
                                               fontWeight: FontWeight.w700,
                                               color: AsmitaPalette.actionRed,
                                             ),
@@ -674,9 +674,63 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                                 ),
                               ),
 
-                              const SizedBox(width: 14),
+                              const SizedBox(width: 8),
 
-                              // Allow Entry Button
+                              // 2. Acknowledge Button
+                              Expanded(
+                                flex: 1,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () => _handleDecision('ACKNOWLEDGE'),
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Container(
+                                      height: 52,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: isDark
+                                            ? const Color(0xFF1E293B)
+                                            : const Color(0xFFF1F5F9),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: isDark
+                                              ? const Color(0xFF334155)
+                                              : const Color(0xFFCBD5E1),
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.touch_app_outlined,
+                                            size: 18,
+                                            color: isDark
+                                                ? const Color(0xFF93C5FD)
+                                                : AsmitaPalette.deepNavy,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Ack',
+                                            style: TextStyle(
+                                              fontFamily: 'Montserrat',
+                                              fontSize: 13.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: isDark
+                                                  ? const Color(0xFF93C5FD)
+                                                  : AsmitaPalette.deepNavy,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(width: 8),
+
+                              // 3. Allow Entry Button
                               Expanded(
                                 flex: 1,
                                 child: Material(
@@ -694,8 +748,8 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                                           BoxShadow(
                                             color: AsmitaPalette.successGreen
                                                 .withValues(alpha: 0.35),
-                                            blurRadius: 14,
-                                            offset: const Offset(0, 5),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
                                           ),
                                         ],
                                       ),
@@ -704,15 +758,15 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                                         children: const [
                                           Icon(
                                             Icons.check_rounded,
-                                            size: 20,
+                                            size: 18,
                                             color: Colors.white,
                                           ),
-                                          SizedBox(width: 8),
+                                          SizedBox(width: 6),
                                           Text(
-                                            'Allow Entry',
+                                            'Approve',
                                             style: TextStyle(
                                               fontFamily: 'Montserrat',
-                                              fontSize: 14.5,
+                                              fontSize: 13.5,
                                               fontWeight: FontWeight.w700,
                                               color: Colors.white,
                                             ),
