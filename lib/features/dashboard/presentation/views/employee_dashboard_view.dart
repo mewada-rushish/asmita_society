@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
-import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
@@ -577,12 +576,13 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
   }
 
   void _openMeetingRoomReservation(BuildContext context) {
-    AsmitaDialog.show(
+    showAsmitaBottomSheet(
       context: context,
       title: 'Meeting Room Reservation',
-      content: const AsmitaFacilityBookingWizard(
+      maxHeightFactor: 0.88,
+      child: const AsmitaFacilityBookingWizard(
         initialAmenity: AmenityModel(
-          amenityId: 991,
+          amenityId: 5,
           name: 'Conference & Meeting Room',
           type: 'booking',
           description: 'High-Speed Smart AV & Video Conferencing Room',
