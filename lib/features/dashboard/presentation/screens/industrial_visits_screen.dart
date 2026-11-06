@@ -89,10 +89,14 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     }
   }
 
-  void _showVisitDetailsModal(BuildContext context, IndustrialVisitModel visit) {
+  void _showVisitDetailsModal(
+    BuildContext context,
+    IndustrialVisitModel visit,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isPending = visit.isPending;
-    final isExpired = visit.status == IndustrialVisitStatus.expired ||
+    final isExpired =
+        visit.status == IndustrialVisitStatus.expired ||
         visit.status == IndustrialVisitStatus.cancelled ||
         visit.status == IndustrialVisitStatus.rejected;
 
@@ -158,17 +162,25 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                               if (visit.isVip) ...[
                                 const SizedBox(height: 5),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 2.5,
+                                  ),
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
-                                      colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                                      colors: [
+                                        Color(0xFFF59E0B),
+                                        Color(0xFFD97706),
+                                      ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
                                     borderRadius: BorderRadius.circular(6),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                                        color: const Color(
+                                          0xFFF59E0B,
+                                        ).withValues(alpha: 0.35),
                                         blurRadius: 6,
                                         offset: const Offset(0, 2),
                                       ),
@@ -177,7 +189,11 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                                   child: const Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.workspace_premium_rounded, size: 12, color: Colors.white),
+                                      Icon(
+                                        Icons.workspace_premium_rounded,
+                                        size: 12,
+                                        color: Colors.white,
+                                      ),
                                       SizedBox(width: 3),
                                       Text(
                                         'VIP',
@@ -199,7 +215,10 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                         const SizedBox(width: 8),
                         // Status Badge in header (Solid white background capsule pill)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5.5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 11,
+                            vertical: 5.5,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
@@ -262,7 +281,10 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(12),
@@ -291,7 +313,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                                         fontFamily: 'Montserrat',
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
-                                        color: Colors.white.withValues(alpha: 0.7),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.7,
+                                        ),
                                         letterSpacing: 0.8,
                                       ),
                                     ),
@@ -316,28 +340,40 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                               color: Colors.transparent,
                               child: InkWell(
                                 onTap: () {
-                                  Clipboard.setData(ClipboardData(text: visit.passCode!));
+                                  Clipboard.setData(
+                                    ClipboardData(text: visit.passCode!),
+                                  );
                                   HapticFeedback.lightImpact();
                                   AsmitaToast.show(
                                     context,
-                                    message: 'Pass code ${visit.passCode} copied!',
+                                    message:
+                                        'Pass code ${visit.passCode} copied!',
                                     type: AsmitaToastType.success,
                                   );
                                 },
                                 borderRadius: BorderRadius.circular(8),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.25),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.25,
+                                      ),
                                     ),
                                   ),
                                   child: const Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.copy_rounded, size: 12, color: Colors.white),
+                                      Icon(
+                                        Icons.copy_rounded,
+                                        size: 12,
+                                        color: Colors.white,
+                                      ),
                                       SizedBox(width: 5),
                                       Text(
                                         'Copy',
@@ -365,10 +401,14 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             // 2. Structured Information Card
             Container(
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.35) : Colors.white,
+                color: isDark
+                    ? const Color(0xFF1E293B).withValues(alpha: 0.35)
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Theme.of(context).dividerColor.withValues(alpha: isDark ? 0.3 : 0.8),
+                  color: Theme.of(
+                    context,
+                  ).dividerColor.withValues(alpha: isDark ? 0.3 : 0.8),
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -386,7 +426,10 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                     icon: Icons.flag_rounded,
                     label: 'Current Status',
                     customValue: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: visit.status.fillColor(isDark),
                         borderRadius: BorderRadius.circular(8),
@@ -427,7 +470,8 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       value: visit.hostName!,
                     ),
                   ],
-                  if (visit.visitorMobile != null && visit.visitorMobile!.isNotEmpty) ...[
+                  if (visit.visitorMobile != null &&
+                      visit.visitorMobile!.isNotEmpty) ...[
                     _buildRowDivider(context),
                     _buildDetailRow(
                       context,
@@ -437,31 +481,46 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       trailing: IconButton(
                         constraints: const BoxConstraints(),
                         padding: const EdgeInsets.all(4),
-                        icon: const Icon(Icons.phone_in_talk_rounded, size: 16, color: AsmitaPalette.successGreen),
+                        icon: const Icon(
+                          Icons.phone_in_talk_rounded,
+                          size: 16,
+                          color: AsmitaPalette.successGreen,
+                        ),
                         onPressed: () {
-                          Clipboard.setData(ClipboardData(text: visit.visitorMobile!));
+                          Clipboard.setData(
+                            ClipboardData(text: visit.visitorMobile!),
+                          );
                           HapticFeedback.lightImpact();
                           AsmitaToast.show(
                             context,
-                            message: 'Phone number ${visit.visitorMobile} copied!',
+                            message:
+                                'Phone number ${visit.visitorMobile} copied!',
                             type: AsmitaToastType.info,
                           );
                         },
                       ),
                     ),
                   ],
-                  if (visit.vehicleNumber != null && visit.vehicleNumber!.isNotEmpty) ...[
+                  if (visit.vehicleNumber != null &&
+                      visit.vehicleNumber!.isNotEmpty) ...[
                     _buildRowDivider(context),
                     _buildDetailRow(
                       context,
                       icon: Icons.directions_car_outlined,
                       label: 'Vehicle Plate',
                       customValue: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9),
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Theme.of(context).dividerColor),
+                          border: Border.all(
+                            color: Theme.of(context).dividerColor,
+                          ),
                         ),
                         child: Text(
                           visit.vehicleNumber!,
@@ -481,10 +540,14 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                     icon: Icons.access_time_rounded,
                     label: 'Scheduled Time',
                     value: visit.checkInAt != null
-                        ? DateFormat('dd MMM yyyy, hh:mm a').format(visit.checkInAt!)
+                        ? DateFormat(
+                            'dd MMM yyyy, hh:mm a',
+                          ).format(visit.checkInAt!)
                         : (visit.createdAt != null
-                            ? DateFormat('dd MMM yyyy, hh:mm a').format(visit.createdAt!)
-                            : 'Scheduled Visit'),
+                              ? DateFormat(
+                                  'dd MMM yyyy, hh:mm a',
+                                ).format(visit.createdAt!)
+                              : 'Scheduled Visit'),
                   ),
                   if (visit.checkOutAt != null) ...[
                     _buildRowDivider(context),
@@ -492,7 +555,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       context,
                       icon: Icons.logout_rounded,
                       label: 'Check Out Time',
-                      value: DateFormat('dd MMM yyyy, hh:mm a').format(visit.checkOutAt!),
+                      value: DateFormat(
+                        'dd MMM yyyy, hh:mm a',
+                      ).format(visit.checkOutAt!),
                     ),
                   ],
                 ],
@@ -505,10 +570,14 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.35) : Colors.white,
+                  color: isDark
+                      ? const Color(0xFF1E293B).withValues(alpha: 0.35)
+                      : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: Theme.of(context).dividerColor.withValues(alpha: isDark ? 0.3 : 0.8),
+                    color: Theme.of(
+                      context,
+                    ).dividerColor.withValues(alpha: isDark ? 0.3 : 0.8),
                   ),
                 ),
                 child: Column(
@@ -541,7 +610,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 11,
-                        color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                        color: isDark
+                            ? AsmitaPalette.textDarkModeMuted
+                            : AsmitaPalette.textLight,
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -581,15 +652,24 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                         ),
                         if (isExpired)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
-                              color: AsmitaPalette.actionRed.withValues(alpha: 0.9),
+                              color: AsmitaPalette.actionRed.withValues(
+                                alpha: 0.9,
+                              ),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.history_toggle_off_rounded, size: 14, color: Colors.white),
+                                Icon(
+                                  Icons.history_toggle_off_rounded,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
                                 SizedBox(width: 4),
                                 Text(
                                   'PASS EXPIRED',
@@ -622,16 +702,24 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       onPressed: () {
                         Navigator.pop(context);
                         context.read<IndustrialVisitBloc>().add(
-                              DecideVisitEvent(visitId: visit.id, action: 'DENY'),
-                            );
+                          DecideVisitEvent(visitId: visit.id, action: 'DENY'),
+                        );
                       },
                       icon: const Icon(Icons.close_rounded, size: 18),
-                      label: const Text('Deny Entry', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: const Text(
+                        'Deny Entry',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AsmitaPalette.actionRed,
-                        side: const BorderSide(color: AsmitaPalette.actionRed, width: 1.5),
+                        side: const BorderSide(
+                          color: AsmitaPalette.actionRed,
+                          width: 1.5,
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ),
@@ -641,16 +729,24 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       onPressed: () {
                         Navigator.pop(context);
                         context.read<IndustrialVisitBloc>().add(
-                              DecideVisitEvent(visitId: visit.id, action: 'APPROVE'),
-                            );
+                          DecideVisitEvent(
+                            visitId: visit.id,
+                            action: 'APPROVE',
+                          ),
+                        );
                       },
                       icon: const Icon(Icons.check_rounded, size: 18),
-                      label: const Text('Approve Entry', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: const Text(
+                        'Approve Entry',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AsmitaPalette.successGreen,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ),
@@ -665,18 +761,19 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                 Row(
                   children: [
                     // Wait Button (available when not already waiting and not checked out)
-                    if (visit.status != IndustrialVisitStatus.waitingToMeet && !visit.isCheckedIn) ...[
+                    if (visit.status != IndustrialVisitStatus.waitingToMeet &&
+                        !visit.isCheckedIn) ...[
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () {
                             Navigator.pop(context);
                             try {
                               context.read<IndustrialVisitBloc>().add(
-                                    DecideVisitEvent(
-                                      visitId: visit.id,
-                                      action: 'WAITING_TO_MEET',
-                                    ),
-                                  );
+                                DecideVisitEvent(
+                                  visitId: visit.id,
+                                  action: 'WAITING_TO_MEET',
+                                ),
+                              );
                               AsmitaToast.show(
                                 context,
                                 message: 'Visitor marked as Waiting.',
@@ -684,7 +781,11 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                               );
                             } catch (_) {}
                           },
-                          icon: const Icon(Icons.hourglass_top_rounded, size: 16, color: Color(0xFFD97706)),
+                          icon: const Icon(
+                            Icons.hourglass_top_rounded,
+                            size: 16,
+                            color: Color(0xFFD97706),
+                          ),
                           label: const Text(
                             'Wait',
                             style: TextStyle(
@@ -695,9 +796,14 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                             ),
                           ),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFD97706), width: 1.2),
+                            side: const BorderSide(
+                              color: Color(0xFFD97706),
+                              width: 1.2,
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ),
@@ -705,26 +811,32 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                     ],
 
                     // Forward CTA (when Approved & destination floor has receptionist)
-                    if (visit.status == IndustrialVisitStatus.approved && visit.hasFloorReceptionist)
+                    if (visit.status == IndustrialVisitStatus.approved &&
+                        visit.hasFloorReceptionist)
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () {
                             Navigator.pop(context);
                             try {
                               context.read<IndustrialVisitBloc>().add(
-                                    SendToLobbyEvent(
-                                      visitId: visit.id,
-                                      floor: visit.floor,
-                                    ),
-                                  );
+                                SendToLobbyEvent(
+                                  visitId: visit.id,
+                                  floor: visit.floor,
+                                ),
+                              );
                               AsmitaToast.show(
                                 context,
-                                message: 'Visitor forwarded to floor receptionist.',
+                                message:
+                                    'Visitor forwarded to floor receptionist.',
                                 type: AsmitaToastType.success,
                               );
                             } catch (_) {}
                           },
-                          icon: const Icon(Icons.forward_rounded, size: 16, color: Colors.white),
+                          icon: const Icon(
+                            Icons.forward_rounded,
+                            size: 16,
+                            color: Colors.white,
+                          ),
                           label: const Text(
                             'Forward',
                             style: TextStyle(
@@ -737,13 +849,16 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF0284C7),
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ),
 
                     // Check In CTA (when Approved without floor rec, or when Forwarded / Waiting)
-                    if ((visit.status == IndustrialVisitStatus.approved && !visit.hasFloorReceptionist) ||
+                    if ((visit.status == IndustrialVisitStatus.approved &&
+                            !visit.hasFloorReceptionist) ||
                         visit.status == IndustrialVisitStatus.onTheWay ||
                         visit.status == IndustrialVisitStatus.waitingToMeet)
                       Expanded(
@@ -752,12 +867,12 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                             Navigator.pop(context);
                             try {
                               context.read<IndustrialVisitBloc>().add(
-                                    CheckInPassEvent(
-                                      visitId: visit.id,
-                                      gateId: 1,
-                                      passCode: visit.passCode,
-                                    ),
-                                  );
+                                CheckInPassEvent(
+                                  visitId: visit.id,
+                                  gateId: 1,
+                                  passCode: visit.passCode,
+                                ),
+                              );
                               AsmitaToast.show(
                                 context,
                                 message: 'Visitor checked in successfully.',
@@ -765,7 +880,11 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                               );
                             } catch (_) {}
                           },
-                          icon: const Icon(Icons.how_to_reg_rounded, size: 16, color: Colors.white),
+                          icon: const Icon(
+                            Icons.how_to_reg_rounded,
+                            size: 16,
+                            color: Colors.white,
+                          ),
                           label: const Text(
                             'Check In',
                             style: TextStyle(
@@ -778,7 +897,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AsmitaPalette.successGreen,
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ),
@@ -791,11 +912,8 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                             Navigator.pop(context);
                             try {
                               context.read<IndustrialVisitBloc>().add(
-                                    CheckOutPassEvent(
-                                      visitId: visit.id,
-                                      gateId: 1,
-                                    ),
-                                  );
+                                CheckOutPassEvent(visitId: visit.id, gateId: 1),
+                              );
                               AsmitaToast.show(
                                 context,
                                 message: 'Visitor checked out successfully.',
@@ -803,7 +921,11 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                               );
                             } catch (_) {}
                           },
-                          icon: const Icon(Icons.logout_rounded, size: 16, color: Colors.white),
+                          icon: const Icon(
+                            Icons.logout_rounded,
+                            size: 16,
+                            color: Colors.white,
+                          ),
                           label: const Text(
                             'Check Out',
                             style: TextStyle(
@@ -816,7 +938,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AsmitaPalette.deepNavy,
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ),
@@ -829,7 +953,8 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
               if (visit.passCode != null) ...[
                 ElevatedButton.icon(
                   onPressed: () {
-                    final summary = 'Visitor Pass for ${visit.visitorName}\n'
+                    final summary =
+                        'Visitor Pass for ${visit.visitorName}\n'
                         'Pass Code: #${visit.passCode}\n'
                         'Status: ${visit.status.label}\n'
                         'Department: ${visit.departmentName ?? "General Campus"}\n'
@@ -855,22 +980,24 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ],
 
-              // Reapply Pass for Expired Passes
+              // Resend Approval for Expired Passes
               if (isExpired) ...[
                 const SizedBox(height: 10),
                 ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pop(context);
-                    _reapplyPass(context, visit);
+                    _resendApproval(context, visit);
                   },
-                  icon: const Icon(Icons.replay_rounded, size: 18),
+                  icon: const Icon(Icons.send_rounded, size: 18),
                   label: const Text(
-                    'Reapply Pass',
+                    'Resend Approval',
                     style: TextStyle(
                       fontFamily: 'Montserrat',
                       fontWeight: FontWeight.bold,
@@ -881,7 +1008,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                     backgroundColor: AsmitaPalette.deepNavy,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     elevation: 2,
                   ),
                 ),
@@ -894,7 +1023,10 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     );
   }
 
-  Widget _buildVisitorPhotoAvatar(IndustrialVisitModel visit, {double size = 48}) {
+  Widget _buildVisitorPhotoAvatar(
+    IndustrialVisitModel visit, {
+    double size = 48,
+  }) {
     final photo = visit.visitorPhotoUrl?.trim();
     final initial = visit.visitorName.isNotEmpty
         ? visit.visitorName[0].toUpperCase()
@@ -934,7 +1066,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     } else if (photo.startsWith('data:image')) {
       try {
         final commaIndex = photo.indexOf(',');
-        final base64Str = commaIndex != -1 ? photo.substring(commaIndex + 1) : photo;
+        final base64Str = commaIndex != -1
+            ? photo.substring(commaIndex + 1)
+            : photo;
         final bytes = base64Decode(base64Str);
         content = Image.memory(
           bytes,
@@ -1037,10 +1171,16 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
           Container(
             padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+            child: Icon(
+              icon,
+              size: 16,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
           const SizedBox(width: 12),
           Flexible(
@@ -1061,7 +1201,8 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             flex: 3,
             child: Align(
               alignment: Alignment.centerRight,
-              child: customValue ??
+              child:
+                  customValue ??
                   (value != null
                       ? Text(
                           value,
@@ -1078,10 +1219,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       : const SizedBox.shrink()),
             ),
           ),
-          if (trailing != null) ...[
-            const SizedBox(width: 6),
-            trailing,
-          ],
+          if (trailing != null) ...[const SizedBox(width: 6), trailing],
         ],
       ),
     );
@@ -1147,7 +1285,8 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                 }
               },
               builder: (context, state) {
-                final isInitialLoading = state.status == IndustrialVisitBlocStatus.initial;
+                final isInitialLoading =
+                    state.status == IndustrialVisitBlocStatus.initial;
 
                 if (isInitialLoading) {
                   return const Center(
@@ -1159,7 +1298,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                 }
 
                 // Filter visits to current day only (resets automatically at 00:00)
-                final todayVisits = state.visits.where((v) => v.isForToday).toList();
+                final todayVisits = state.visits
+                    .where((v) => v.isForToday)
+                    .toList();
 
                 final filteredVisits = todayVisits.where((v) {
                   if (_selectedFilter == 'PENDING' && !v.isPending) {
@@ -1183,10 +1324,20 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                     final matchName = v.visitorName.toLowerCase().contains(q);
                     final org = v.deliveryCompany ?? v.purpose ?? '';
                     final matchOrg = org.toLowerCase().contains(q);
-                    final matchDept = (v.departmentName ?? '').toLowerCase().contains(q);
-                    final matchPass = (v.passCode ?? '').toLowerCase().contains(q);
-                    final matchVehicle = (v.vehicleNumber ?? '').toLowerCase().contains(q);
-                    return matchName || matchOrg || matchDept || matchPass || matchVehicle;
+                    final matchDept = (v.departmentName ?? '')
+                        .toLowerCase()
+                        .contains(q);
+                    final matchPass = (v.passCode ?? '').toLowerCase().contains(
+                      q,
+                    );
+                    final matchVehicle = (v.vehicleNumber ?? '')
+                        .toLowerCase()
+                        .contains(q);
+                    return matchName ||
+                        matchOrg ||
+                        matchDept ||
+                        matchPass ||
+                        matchVehicle;
                   }
                   return true;
                 }).toList();
@@ -1200,13 +1351,22 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       onRefresh: () async {
                         final bloc = context.read<IndustrialVisitBloc>();
                         final future = bloc.stream
-                            .firstWhere((s) => s.status != IndustrialVisitBlocStatus.loading)
-                            .timeout(const Duration(seconds: 4), onTimeout: () => bloc.state);
+                            .firstWhere(
+                              (s) =>
+                                  s.status != IndustrialVisitBlocStatus.loading,
+                            )
+                            .timeout(
+                              const Duration(seconds: 4),
+                              onTimeout: () => bloc.state,
+                            );
                         bloc.add(const LoadIndustrialVisits());
                         final authState = context.read<AuthBloc>().state;
                         if (authState is AuthAuthenticated) {
                           context.read<VisitorBloc>().add(
-                            LoadMyHistory(residentId: authState.user.userId, isRefresh: true),
+                            LoadMyHistory(
+                              residentId: authState.user.userId,
+                              isRefresh: true,
+                            ),
                           );
                         }
                         await future;
@@ -1219,15 +1379,21 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E293B) : Theme.of(context).colorScheme.surface,
+                            color: isDark
+                                ? const Color(0xFF1E293B)
+                                : Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: isDark ? const Color(0xFF334155) : Theme.of(context).dividerColor,
+                              color: isDark
+                                  ? const Color(0xFF334155)
+                                  : Theme.of(context).dividerColor,
                               width: 1.2,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.03),
+                                color: Colors.black.withValues(
+                                  alpha: isDark ? 0.25 : 0.03,
+                                ),
                                 blurRadius: 10,
                                 offset: const Offset(0, 3),
                               ),
@@ -1235,29 +1401,39 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                           ),
                           child: TextField(
                             controller: _searchController,
-                            onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                            onChanged: (val) =>
+                                setState(() => _searchQuery = val.trim()),
                             style: TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 13,
-                              color: isDark ? Colors.white : AsmitaPalette.textDark,
+                              color: isDark
+                                  ? Colors.white
+                                  : AsmitaPalette.textDark,
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Search visitor, company, pass code, vehicle...',
+                              hintText:
+                                  'Search visitor, company, pass code, vehicle...',
                               hintStyle: TextStyle(
                                 fontSize: 13,
-                                color: isDark ? const Color(0xFF94A3B8) : AsmitaPalette.textLight,
+                                color: isDark
+                                    ? const Color(0xFF94A3B8)
+                                    : AsmitaPalette.textLight,
                               ),
                               prefixIcon: Icon(
                                 Icons.search_rounded,
                                 size: 20,
-                                color: isDark ? const Color(0xFF94A3B8) : AsmitaPalette.textLight,
+                                color: isDark
+                                    ? const Color(0xFF94A3B8)
+                                    : AsmitaPalette.textLight,
                               ),
                               suffixIcon: _searchQuery.isNotEmpty
-                                   ? IconButton(
+                                  ? IconButton(
                                       icon: Icon(
                                         Icons.clear_rounded,
                                         size: 18,
-                                        color: isDark ? const Color(0xFF94A3B8) : AsmitaPalette.textLight,
+                                        color: isDark
+                                            ? const Color(0xFF94A3B8)
+                                            : AsmitaPalette.textLight,
                                       ),
                                       onPressed: () {
                                         _searchController.clear();
@@ -1266,7 +1442,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                                     )
                                   : null,
                               border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 14,
+                              ),
                             ),
                           ),
                         ),
@@ -1300,13 +1478,13 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 200),
                         sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final visit = filteredVisits[index];
-                              return _buildVisitItem(context, visit);
-                            },
-                            childCount: filteredVisits.length,
-                          ),
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            final visit = filteredVisits[index];
+                            return _buildVisitItem(context, visit);
+                          }, childCount: filteredVisits.length),
                         ),
                       ),
                   ],
@@ -1319,10 +1497,17 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     );
   }
 
-  Widget _buildKpiMetrics(BuildContext context, List<IndustrialVisitModel> visits) {
+  Widget _buildKpiMetrics(
+    BuildContext context,
+    List<IndustrialVisitModel> visits,
+  ) {
     final pendingCount = visits.where((v) => v.isPending).length;
-    final approvedCount = visits.where((v) => v.status == IndustrialVisitStatus.approved).length;
-    final insideCount = visits.where((v) => v.status == IndustrialVisitStatus.checkedIn).length;
+    final approvedCount = visits
+        .where((v) => v.status == IndustrialVisitStatus.approved)
+        .length;
+    final insideCount = visits
+        .where((v) => v.status == IndustrialVisitStatus.checkedIn)
+        .length;
     final totalCount = visits.length;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -1334,7 +1519,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             label: 'Total',
             count: totalCount,
             icon: Icons.groups_rounded,
-            accentColor: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+            accentColor: isDark
+                ? const Color(0xFF60A5FA)
+                : AsmitaPalette.deepNavy,
             filterKey: 'ALL',
           ),
         ),
@@ -1345,7 +1532,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             label: 'Pending',
             count: pendingCount,
             icon: Icons.pending_actions_rounded,
-            accentColor: isDark ? const Color(0xFFF87171) : AsmitaPalette.actionRed,
+            accentColor: isDark
+                ? const Color(0xFFF87171)
+                : AsmitaPalette.actionRed,
             filterKey: 'PENDING',
             showPulse: pendingCount > 0,
           ),
@@ -1357,7 +1546,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             label: 'Approved',
             count: approvedCount,
             icon: Icons.verified_rounded,
-            accentColor: isDark ? const Color(0xFF38BDF8) : const Color(0xFF1E88E5),
+            accentColor: isDark
+                ? const Color(0xFF38BDF8)
+                : const Color(0xFF1E88E5),
             filterKey: 'APPROVED',
           ),
         ),
@@ -1368,7 +1559,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             label: 'Inside',
             count: insideCount,
             icon: Icons.meeting_room_rounded,
-            accentColor: isDark ? const Color(0xFF34D399) : AsmitaPalette.successGreen,
+            accentColor: isDark
+                ? const Color(0xFF34D399)
+                : AsmitaPalette.successGreen,
             filterKey: 'INSIDE',
           ),
         ),
@@ -1400,7 +1593,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
         decoration: BoxDecoration(
           color: isSelected
-              ? (isDark ? accentColor.withValues(alpha: 0.18) : accentColor.withValues(alpha: 0.08))
+              ? (isDark
+                    ? accentColor.withValues(alpha: 0.18)
+                    : accentColor.withValues(alpha: 0.08))
               : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
@@ -1430,7 +1625,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                 color: accentColor.withValues(alpha: isDark ? 0.22 : 0.10),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: accentColor.withValues(alpha: isSelected ? 0.45 : 0.18),
+                  color: accentColor.withValues(
+                    alpha: isSelected ? 0.45 : 0.18,
+                  ),
                   width: 1.0,
                 ),
               ),
@@ -1467,7 +1664,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                 fontFamily: 'Montserrat',
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
-                color: isSelected ? accentColor : Theme.of(context).colorScheme.onSurface,
+                color: isSelected
+                    ? accentColor
+                    : Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 2),
@@ -1497,17 +1696,23 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     switch (_selectedFilter) {
       case 'PENDING':
         filterLabel = 'Pending Approvals';
-        filterColor = isDark ? const Color(0xFFF87171) : AsmitaPalette.actionRed;
+        filterColor = isDark
+            ? const Color(0xFFF87171)
+            : AsmitaPalette.actionRed;
         filterIcon = Icons.pending_actions_rounded;
         break;
       case 'APPROVED':
         filterLabel = 'Approved Passes';
-        filterColor = isDark ? const Color(0xFF38BDF8) : const Color(0xFF1E88E5);
+        filterColor = isDark
+            ? const Color(0xFF38BDF8)
+            : const Color(0xFF1E88E5);
         filterIcon = Icons.verified_rounded;
         break;
       case 'INSIDE':
         filterLabel = 'Checked Inside HQ';
-        filterColor = isDark ? const Color(0xFF34D399) : AsmitaPalette.successGreen;
+        filterColor = isDark
+            ? const Color(0xFF34D399)
+            : AsmitaPalette.successGreen;
         filterIcon = Icons.meeting_room_rounded;
         break;
       default:
@@ -1556,7 +1761,11 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                       shape: BoxShape.circle,
                       color: filterColor.withValues(alpha: 0.2),
                     ),
-                    child: Icon(Icons.close_rounded, size: 12, color: filterColor),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 12,
+                      color: filterColor,
+                    ),
                   ),
                 ),
               ],
@@ -1590,20 +1799,24 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
 
   Widget _buildEmptyState(BuildContext context) {
     String emptyTitle = 'No Visitors Found';
-    String emptySubtitle = 'There are no visitor records matching your filter criteria.';
+    String emptySubtitle =
+        'There are no visitor records matching your filter criteria.';
     IconData emptyIcon = Icons.badge_outlined;
 
     if (_selectedFilter == 'PENDING') {
       emptyTitle = 'All Caught Up!';
-      emptySubtitle = 'There are currently no visitors awaiting entry approval.';
+      emptySubtitle =
+          'There are currently no visitors awaiting entry approval.';
       emptyIcon = Icons.done_all_rounded;
     } else if (_selectedFilter == 'INSIDE') {
       emptyTitle = 'Campus Clear';
-      emptySubtitle = 'No active visitors are currently checked inside the premises.';
+      emptySubtitle =
+          'No active visitors are currently checked inside the premises.';
       emptyIcon = Icons.domain_verification_rounded;
     } else if (_selectedFilter == 'APPROVED') {
       emptyTitle = 'No Approved Passes';
-      emptySubtitle = 'No upcoming approved passes found. Schedule a pass in seconds.';
+      emptySubtitle =
+          'No upcoming approved passes found. Schedule a pass in seconds.';
       emptyIcon = Icons.event_available_rounded;
     }
 
@@ -1612,62 +1825,61 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                emptyIcon,
-                size: 42,
-                color: AsmitaPalette.deepNavy,
-              ),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(height: 14),
-            Text(
-              emptyTitle,
-              style: const TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Icon(emptyIcon, size: 42, color: AsmitaPalette.deepNavy),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            emptyTitle,
+            style: const TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 6),
-            Text(
-              emptySubtitle,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            emptySubtitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AsmitaPalette.textLight,
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
   }
 
-  void _reapplyPass(BuildContext context, IndustrialVisitModel visit) {
-    String category = 'Guest';
-    if (visit.isDelivery) {
-      category = 'Delivery';
-    } else if (visit.vehicleNumber != null && visit.vehicleNumber!.trim().isNotEmpty) {
-      category = 'Cab';
+  void _resendApproval(BuildContext context, IndustrialVisitModel visit) {
+    try {
+      context.read<IndustrialVisitBloc>().add(
+        DecideVisitEvent(visitId: visit.id, action: 'RESEND'),
+      );
+      AsmitaToast.show(
+        context,
+        message: 'Approval request resent to host',
+        type: AsmitaToastType.success,
+      );
+    } catch (e) {
+      AsmitaToast.show(
+        context,
+        message: 'Failed to resend request',
+        type: AsmitaToastType.error,
+      );
     }
-
-    AsmitaPreApproveWizard.showAsModalSheet(
-      context,
-      title: 'Reapply Visitor Pass',
-      subtitle: 'Schedule a new pass for ${visit.cleanVisitorName}',
-      initialCategory: category,
-      initialVisitorName: visit.cleanVisitorName,
-      initialMobileNumber: visit.visitorMobile,
-      initialPurpose: visit.cleanPurpose,
-      initialCompany: visit.deliveryCompany,
-    );
   }
 
   Widget _buildVisitItem(BuildContext context, IndustrialVisitModel visit) {
     final isPending = visit.isPending;
     final isAck = _acknowledgedIds.contains(visit.id);
-    final isExpired = visit.status == IndustrialVisitStatus.expired ||
+    final isExpired =
+        visit.status == IndustrialVisitStatus.expired ||
         visit.status == IndustrialVisitStatus.cancelled ||
         visit.status == IndustrialVisitStatus.rejected;
 
@@ -1677,55 +1889,31 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       showSubtitle: false,
       isAcknowledged: isAck,
       onTap: () => _showVisitDetailsModal(context, visit),
-      bottomActions: isExpired
-          ? SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => _reapplyPass(context, visit),
-                icon: const Icon(Icons.replay_rounded, size: 16),
-                label: const Text(
-                  'Reapply',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AsmitaPalette.deepNavy,
-                  side: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF93C5FD)
-                        : AsmitaPalette.deepNavy,
-                    width: 1.2,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            )
-          : null,
+      onResend: isExpired ? () => _resendApproval(context, visit) : null,
       onApprove: isPending
           ? () {
               context.read<IndustrialVisitBloc>().add(
-                    DecideVisitEvent(visitId: visit.id, action: 'APPROVE'),
-                  );
+                DecideVisitEvent(visitId: visit.id, action: 'APPROVE'),
+              );
             }
           : null,
       onDeny: isPending
           ? () {
               context.read<IndustrialVisitBloc>().add(
-                    DecideVisitEvent(visitId: visit.id, action: 'DENY'),
-                  );
+                DecideVisitEvent(visitId: visit.id, action: 'DENY'),
+              );
             }
           : null,
       onAcknowledge: (isPending && !isAck)
           ? () {
               setState(() => _acknowledgedIds.add(visit.id));
-              context.read<IndustrialVisitBloc>().add(AcknowledgeVisitEvent(visit.id));
+              context.read<IndustrialVisitBloc>().add(
+                AcknowledgeVisitEvent(visit.id),
+              );
               AsmitaToast.show(
                 context,
-                message: 'Visitor pass #${visit.passCode ?? visit.id} acknowledged',
+                message:
+                    'Visitor pass #${visit.passCode ?? visit.id} acknowledged',
                 type: AsmitaToastType.success,
               );
             }
@@ -1733,4 +1921,3 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     );
   }
 }
-
