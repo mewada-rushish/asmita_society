@@ -24,6 +24,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/config/env_config.dart';
+import '../../../../core/utils/property_role_resolver.dart';
 
 class IndustrialVisitsScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -86,6 +87,35 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       context.read<VisitorBloc>().add(
         LoadMyHistory(residentId: authState.user.userId, isRefresh: true),
       );
+    }
+  }
+
+  bool _canUserApproveVisit(BuildContext context, IndustrialVisitModel visit) {
+    try {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is! AuthAuthenticated) return false;
+      final user = authState.user;
+      final role = PropertyRoleResolver.normalizeRole(
+        user.primaryRole,
+        scope: user.roleScope,
+        power: user.rolePower,
+        isIndustrial: true,
+      );
+
+      // Receptionists and Guards never approve/deny host visitor passes
+      if (role == 'receptionist' || role == 'guard') {
+        return false;
+      }
+
+      // Host themselves can approve
+      if (visit.hostUserId != null && visit.hostUserId == user.userId) {
+        return true;
+      }
+
+      // Directors, CSOs, and Admins can manage / approve campus visits
+      return PropertyRoleResolver.canApproveVisits(user);
+    } catch (_) {
+      return false;
     }
   }
 
@@ -694,7 +724,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             const SizedBox(height: 18),
 
             // 4. Action Buttons (Approve/Deny, Forward, Check In, Wait, Check Out, Share)
-            if (isPending) ...[
+            if (isPending && _canUserApproveVisit(context, visit)) ...[
               Row(
                 children: [
                   Expanded(
@@ -1882,6 +1912,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
         visit.status == IndustrialVisitStatus.expired ||
         visit.status == IndustrialVisitStatus.cancelled ||
         visit.status == IndustrialVisitStatus.rejected;
+    final canApprove = _canUserApproveVisit(context, visit);
 
     return AsmitaVisitorCard.fromIndustrialVisit(
       visit: visit,
@@ -1890,21 +1921,21 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       isAcknowledged: isAck,
       onTap: () => _showVisitDetailsModal(context, visit),
       onResend: isExpired ? () => _resendApproval(context, visit) : null,
-      onApprove: isPending
+      onApprove: (isPending && canApprove)
           ? () {
               context.read<IndustrialVisitBloc>().add(
                 DecideVisitEvent(visitId: visit.id, action: 'APPROVE'),
               );
             }
           : null,
-      onDeny: isPending
+      onDeny: (isPending && canApprove)
           ? () {
               context.read<IndustrialVisitBloc>().add(
                 DecideVisitEvent(visitId: visit.id, action: 'DENY'),
               );
             }
           : null,
-      onAcknowledge: (isPending && !isAck)
+      onAcknowledge: (isPending && canApprove && !isAck)
           ? () {
               setState(() => _acknowledgedIds.add(visit.id));
               context.read<IndustrialVisitBloc>().add(
