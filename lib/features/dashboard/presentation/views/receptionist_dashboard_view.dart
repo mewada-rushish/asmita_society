@@ -814,81 +814,87 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
               ),
             ),
           ],
-          // 1. If Floor Receptionist is present on the destination floor, show "Send to Lobby".
-          // 2. If Floor Receptionist is NOT there for the floor, show "Check In" directly!
-          if (visit.status == IndustrialVisitStatus.approved) ...[
+          // 1. Forward (When APPROVED and floor has receptionist)
+          if (visit.status == IndustrialVisitStatus.approved && visit.hasFloorReceptionist) ...[
             const SizedBox(width: 8),
-            if (visit.hasFloorReceptionist) ...[
-              ElevatedButton.icon(
-                onPressed: () {
-                  context.read<IndustrialVisitBloc>().add(
-                    SendToLobbyEvent(
-                      visitId: visit.id,
-                      floor: visit.floor,
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.send_to_mobile_rounded, size: 16),
-                label: const Text(
-                  'Send to Lobby',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+            ElevatedButton.icon(
+              onPressed: () {
+                context.read<IndustrialVisitBloc>().add(
+                  SendToLobbyEvent(
+                    visitId: visit.id,
+                    floor: visit.floor,
                   ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0284C7),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 0,
+                );
+              },
+              icon: const Icon(Icons.forward_rounded, size: 16),
+              label: const Text(
+                'Forward',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            ] else ...[
-              ElevatedButton.icon(
-                onPressed: () {
-                  context.read<IndustrialVisitBloc>().add(
-                    CheckInPassEvent(
-                      visitId: visit.id,
-                      gateId: 1,
-                      passCode: visit.passCode,
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.how_to_reg_rounded, size: 16),
-                label: const Text(
-                  'Check In',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0284C7),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AsmitaPalette.successGreen,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
+                elevation: 0,
               ),
-            ],
+            ),
           ],
-          // Button to make the person wait
-          if (visit.status == IndustrialVisitStatus.approved ||
-              visit.status == IndustrialVisitStatus.checkedIn ||
-              visit.status == IndustrialVisitStatus.onTheWay) ...[
+
+          // 2. Check In (When APPROVED without floor rec, or when Forwarded / Waiting on floor)
+          if ((visit.status == IndustrialVisitStatus.approved && !visit.hasFloorReceptionist) ||
+              visit.status == IndustrialVisitStatus.onTheWay ||
+              visit.status == IndustrialVisitStatus.waitingToMeet) ...[
+            const SizedBox(width: 8),
+            ElevatedButton.icon(
+              onPressed: () {
+                context.read<IndustrialVisitBloc>().add(
+                  CheckInPassEvent(
+                    visitId: visit.id,
+                    gateId: 1,
+                    passCode: visit.passCode,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.how_to_reg_rounded, size: 16),
+              label: const Text(
+                'Check In',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AsmitaPalette.successGreen,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ],
+
+          // 3. Wait button (Available for Approved, Forwarded, or Checked In when not already waiting)
+          if (visit.status != IndustrialVisitStatus.waitingToMeet &&
+              visit.status != IndustrialVisitStatus.checkedOut &&
+              (visit.status == IndustrialVisitStatus.approved ||
+               visit.status == IndustrialVisitStatus.onTheWay ||
+               visit.status == IndustrialVisitStatus.checkedIn)) ...[
             const SizedBox(width: 8),
             OutlinedButton.icon(
               onPressed: () {
@@ -925,6 +931,8 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
               ),
             ),
           ],
+
+          // 4. Check Out (When Checked In)
           if (visit.isCheckedIn) ...[
             const SizedBox(width: 8),
             ElevatedButton.icon(
