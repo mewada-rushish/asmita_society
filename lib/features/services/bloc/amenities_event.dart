@@ -10,7 +10,7 @@ abstract class AmenitiesEvent extends Equatable {
 class FetchAmenities extends AmenitiesEvent {
   final int? societyId;
   const FetchAmenities({this.societyId});
-  
+
   @override
   List<Object?> get props => [societyId];
 }
@@ -18,7 +18,7 @@ class FetchAmenities extends AmenitiesEvent {
 class FetchMyBookings extends AmenitiesEvent {
   final int? societyId;
   const FetchMyBookings({this.societyId});
-  
+
   @override
   List<Object?> get props => [societyId];
 }
@@ -48,14 +48,14 @@ class SubmitBookingRequest extends AmenitiesEvent {
 
   @override
   List<Object?> get props => [
-        amenityId,
-        societyId,
-        flatId,
-        bookingDate,
-        startTime,
-        endTime,
-        purpose,
-        expectedGuests,
-        specialNotes,
-      ];
+    amenityId,
+    societyId,
+    flatId,
+    bookingDate,
+    startTime,
+    endTime,
+    purpose,
+    expectedGuests,
+    specialNotes,
+  ];
 }
