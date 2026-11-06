@@ -228,9 +228,11 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
 
   Widget _buildScrollBody(
     BuildContext context,
-    List<IndustrialVisitModel> allVisits, {
+    List<IndustrialVisitModel> rawVisits, {
     required bool isLoading,
   }) {
+    // Visits & Passes show entries for today only (resets at 00:00)
+    final allVisits = rawVisits.where((v) => v.isForToday).toList();
     final pendingVisits = allVisits.where((v) => v.isPending).toList();
     final onSiteVisits = allVisits.where((v) => v.isCheckedIn).toList();
     final expectedVisits = allVisits.where((v) => v.isApproved && !v.isCheckedIn).toList();

@@ -1113,8 +1113,8 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
     required bool isLoading,
   }) {
     final todayVisits = widget.visits != null
-        ? widget.visits!
-        : visits.where((v) => _isToday(v.checkInAt) || _isToday(v.createdAt) || _isToday(v.passCodeExpiresAt)).toList();
+        ? widget.visits!.where((v) => v.isForToday).toList()
+        : visits.where((v) => v.isForToday).toList();
 
     final totalCount = todayVisits.length;
     final pendingCount = todayVisits.where((v) => v.isPending).length;
@@ -1626,12 +1626,6 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         ),
       ),
     );
-  }
-
-  bool _isToday(DateTime? dt) {
-    if (dt == null) return false;
-    final now = DateTime.now();
-    return dt.year == now.year && dt.month == now.month && dt.day == now.day;
   }
 
   Widget _buildWaitingGrid(

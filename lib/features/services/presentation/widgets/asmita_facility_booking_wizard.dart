@@ -13,6 +13,7 @@ import '../../bloc/amenities_event.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:asmita_society/core/utils/property_role_resolver.dart';
 
 enum FieldType { text, number, dropdown, checkbox, checkboxGroup, repeater }
 
@@ -99,6 +100,22 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
     }
     final facility = _facilitiesData.firstWhere((f) => f['label'] == _selectedFacility, orElse: () => _facilitiesData.first);
     return facility['type'] == 'event';
+  }
+
+  bool get _isCorporateOrMeetingRoom {
+    final authState = context.read<AuthBloc>().state;
+    final user = authState is AuthAuthenticated ? authState.user : null;
+    final isIndustrial = PropertyRoleResolver.isIndustrialContext(user);
+    if (isIndustrial) return true;
+
+    final name = (_selectedFacility.isNotEmpty ? _selectedFacility : widget.initialAmenity?.name ?? '').toLowerCase();
+    return name.contains('meeting') ||
+        name.contains('boardroom') ||
+        name.contains('conference') ||
+        name.contains('desk') ||
+        name.contains('cabin') ||
+        name.contains('office') ||
+        name.contains('huddle');
   }
 
   
@@ -853,7 +870,9 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
         ),
         SizedBox(height: 16),
         _buildNumberStepper(
-          'Expected Number of Guests (Excluding Family)',
+          _isCorporateOrMeetingRoom
+              ? 'Expected Number of External Attendees / Guests'
+              : 'Expected Number of Guests (Excluding Family)',
           _expectedGuests,
           (v) => setState(() => _expectedGuests = v),
           maxLimit: currentAmenity?.maxBookingSize,
