@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
@@ -112,12 +113,24 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     )
                   else if (state is CommunityLoading ||
                       state is CommunityInitial)
-                    SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: Center(
-                        child: AsmitaLoadingIndicator(
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 28,
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverList.list(
+                        children: List.generate(
+                          6,
+                          (index) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Align(
+                              alignment: index.isEven
+                                  ? Alignment.centerLeft
+                                  : Alignment.centerRight,
+                              child: AsmitaSkeleton.bone(
+                                width: index.isEven ? 220 : 180,
+                                height: 52,
+                                borderRadius: 16,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     )
@@ -137,7 +150,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              ElevatedButton.icon(
+                              AppButton(
                                 onPressed: () {
                                   final authState = context
                                       .read<AuthBloc>()
@@ -153,16 +166,15 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                     currentUserName: currentUserName,
                                   ));
                                 },
-                                icon: const Icon(Icons.refresh),
-                                label: const Text('Retry'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Theme.of(
-                                    context,
-                                  ).colorScheme.primary,
-                                  foregroundColor: Theme.of(
-                                    context,
-                                  ).colorScheme.surface,
-                                ),
+                                icon: Icons.refresh,
+                                label: 'Retry',
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.surface,
+                                borderRadius: 12,
                               ),
                             ],
                           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/app_skeleton.dart';
+import '../../../../core/widgets/app_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/features/community/bloc/community_post_bloc.dart';
 import 'package:asmita_society/features/community/bloc/community_post_state.dart';
@@ -12,7 +13,6 @@ import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/features/community/bloc/community_post_event.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
-import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 
 class AllNoticesScreen extends StatefulWidget {
   final ValueChanged<int>? onNavigateToTab;
@@ -82,7 +82,22 @@ class _AllNoticesScreenState extends State<AllNoticesScreen> {
             child: BlocBuilder<CommunityPostBloc, CommunityPostState>(
               builder: (context, state) {
                 if (state.status == CommunityPostStatus.loading) {
-                  return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    child: Column(
+                      children: List.generate(
+                        4,
+                        (index) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: AsmitaSkeleton.bone(
+                            width: double.infinity,
+                            height: 120,
+                            borderRadius: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
                 }
                 if (state.status == CommunityPostStatus.loaded) {
                   final activePosts = state.activePosts;
@@ -90,10 +105,9 @@ class _AllNoticesScreenState extends State<AllNoticesScreen> {
                   return CustomScrollView(
                     physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                     slivers: [
-                      AsmitaAnimatedRefresh(
+                      AppRefresh.sliver(
                         onRefresh: () async {
                           context.read<CommunityPostBloc>().add(LoadCommunityPosts());
-                          await Future.delayed(const Duration(milliseconds: 1000));
                         },
                       ),
                       if (activePosts.isEmpty)
