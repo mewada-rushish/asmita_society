@@ -170,11 +170,21 @@ class _DocumentsScreenBody extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Text(date, style: textTheme.bodySmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color)),
+                    Flexible(
+                      child: Text(
+                        date,
+                        style: textTheme.bodySmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     Container(width: 4, height: 4, decoration: BoxDecoration(color: Theme.of(context).dividerColor, shape: BoxShape.circle)),
                     const SizedBox(width: 8),
-                    Text(size, style: textTheme.bodySmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w600)),
+                    Text(
+                      size,
+                      style: textTheme.bodySmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w600),
+                    ),
                   ],
                 ),
               ],
