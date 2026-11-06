@@ -2,7 +2,8 @@ import 'package:asmita_society/features/dashboard/widgets/bbps_bill_payments_she
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
+import 'package:asmita_society/core/widgets/app_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
@@ -167,7 +168,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                         72 +
                         24, // Estimate header height
                   ),
-                  sliver: AsmitaAnimatedRefresh(
+                  sliver: AppRefresh.sliver(
                     onRefresh: () async {
                       await Future.delayed(const Duration(milliseconds: 1500));
                     },
@@ -788,10 +789,29 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                   );
                 }
                 return Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: AsmitaLoadingIndicator(
-                    color: Theme.of(context).colorScheme.secondary,
-                    size: 28,
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Row(
+                    children: List.generate(
+                      4,
+                      (index) => Padding(
+                        padding: const EdgeInsets.only(right: 14),
+                        child: Column(
+                          children: [
+                            AsmitaSkeleton.bone(
+                              width: 44,
+                              height: 44,
+                              borderRadius: BorderRadius.circular(22),
+                            ),
+                            const SizedBox(height: 6),
+                            AsmitaSkeleton.bone(
+                              width: 36,
+                              height: 10,
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 );
               },
@@ -807,10 +827,12 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
       builder: (context, state) {
         if (state.status == CommunityPostStatus.loading &&
             state.posts.isEmpty) {
-          return Center(
-            child: AsmitaLoadingIndicator(
-              color: Theme.of(context).colorScheme.secondary,
-              size: 28,
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: AsmitaSkeleton.bone(
+              width: double.infinity,
+              height: 180,
+              borderRadius: BorderRadius.circular(16),
             ),
           );
         }

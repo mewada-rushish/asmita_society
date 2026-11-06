@@ -28,7 +28,7 @@ class AppButton extends StatefulWidget {
   final FutureOr<void> Function()? onPressed;
   final bool? isLoading;
   final String? label;
-  final Widget? icon;
+  final dynamic icon;
   final Widget? child;
   final AppButtonStyle style;
   final double? width;
@@ -166,8 +166,15 @@ class _AppButtonState extends State<AppButton> {
             )
           : const SizedBox.shrink();
 
+      Widget? resolvedIcon;
+      if (widget.icon is IconData) {
+        resolvedIcon = Icon(widget.icon as IconData, size: 18, color: fg);
+      } else if (widget.icon is Widget) {
+        resolvedIcon = widget.icon as Widget;
+      }
+
       if (_effectiveLoading) {
-        if (widget.icon != null) {
+        if (resolvedIcon != null) {
           // Spinner REPLACES existing icon at same size/position
           content = Row(
             mainAxisSize: MainAxisSize.min,
@@ -199,8 +206,8 @@ class _AppButtonState extends State<AppButton> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (widget.icon != null) ...[
-              widget.icon!,
+            if (resolvedIcon != null) ...[
+              resolvedIcon,
               if (widget.label != null) const SizedBox(width: 8),
             ],
             textWidget,
