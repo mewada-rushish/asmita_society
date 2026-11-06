@@ -25,6 +25,7 @@ import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/utils/property_role_resolver.dart';
+import '../../../visitor_management/presentation/widgets/receptionist_reassign_sheet.dart';
 
 class IndustrialVisitsScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -107,8 +108,11 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
         return false;
       }
 
-      // Host themselves can approve
+      // Host themselves or designated assigned user can approve
       if (visit.hostUserId != null && visit.hostUserId == user.userId) {
+        return true;
+      }
+      if (visit.assignedToUserId != null && visit.assignedToUserId == user.userId) {
         return true;
       }
 
@@ -125,10 +129,15 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isPending = visit.isPending;
+    final expiryTime = visit.passCodeExpiresAt;
     final isExpired =
         visit.status == IndustrialVisitStatus.expired ||
-        (visit.passCodeExpiresAt != null &&
-            visit.passCodeExpiresAt!.isBefore(DateTime.now()));
+        (expiryTime != null && expiryTime.isBefore(DateTime.now()));
+    final isWithin30Min = expiryTime != null
+        ? DateTime.now().difference(expiryTime).inMinutes.abs() <= 30
+        : (visit.createdAt != null &&
+            DateTime.now().difference(visit.createdAt!).inMinutes.abs() <= 30);
+    final canResend = isExpired && isWithin30Min;
 
     showAsmitaBottomSheet(
       context: context,
@@ -1017,8 +1026,8 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                 ),
               ],
 
-              // Resend Approval for Expired Passes
-              if (isExpired) ...[
+              // Resend Approval for Expired Passes (Only within 30 minutes of expiry)
+              if (canResend) ...[
                 const SizedBox(height: 10),
                 ElevatedButton.icon(
                   onPressed: () {
@@ -1908,11 +1917,215 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
   Widget _buildVisitItem(BuildContext context, IndustrialVisitModel visit) {
     final isPending = visit.isPending;
     final isAck = _acknowledgedIds.contains(visit.id);
+    final expiryTime = visit.passCodeExpiresAt;
     final isExpired =
         visit.status == IndustrialVisitStatus.expired ||
-        (visit.passCodeExpiresAt != null &&
-            visit.passCodeExpiresAt!.isBefore(DateTime.now()));
+        (expiryTime != null && expiryTime.isBefore(DateTime.now()));
+    final isWithin30Min = expiryTime != null
+        ? DateTime.now().difference(expiryTime).inMinutes.abs() <= 30
+        : (visit.createdAt != null &&
+            DateTime.now().difference(visit.createdAt!).inMinutes.abs() <= 30);
+    final canResend = isExpired && isWithin30Min;
     final canApprove = _canUserApproveVisit(context, visit);
+
+    // Resolve user role
+    final authState = context.read<AuthBloc>().state;
+    String userRole = '';
+    int? currentUserId;
+    if (authState is AuthAuthenticated) {
+      currentUserId = authState.user.userId;
+      userRole = PropertyRoleResolver.normalizeRole(
+        authState.user.primaryRole,
+        scope: authState.user.roleScope,
+        power: authState.user.rolePower,
+        isIndustrial: true,
+      );
+    }
+
+    final isReceptionist = userRole == 'receptionist';
+    final isGuard = userRole == 'guard';
+    final isHostOrAssignee = (visit.hostUserId != null && visit.hostUserId == currentUserId) ||
+        (visit.assignedToUserId != null && visit.assignedToUserId == currentUserId);
+
+    // Dynamic receptionist front-desk actions
+    Widget? bottomActions;
+    if (isReceptionist || isGuard) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      bottomActions = FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerRight,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            // PTM update/assign button (Receptionist desk action)
+            OutlinedButton.icon(
+              onPressed: () {
+                ReceptionistReassignSheet.show(
+                  context,
+                  visit: visit,
+                  societyId: visit.propertyId,
+                  onConfirmReassign: (assignedUser, cabin, desk) {
+                    try {
+                      context.read<IndustrialVisitBloc>().add(
+                        DecideVisitEvent(
+                          visitId: visit.id,
+                          action: 'REASSIGN',
+                          assignedUserId: assignedUser,
+                          cabinId: cabin,
+                          deskId: desk,
+                        ),
+                      );
+                      AsmitaToast.show(
+                        context,
+                        message: 'Visitor successfully reassigned!',
+                        type: AsmitaToastType.success,
+                      );
+                    } catch (_) {}
+                  },
+                );
+              },
+              icon: const Icon(
+                Icons.swap_horiz_rounded,
+                size: 15,
+                color: AsmitaPalette.deepNavy,
+              ),
+              label: Text(
+                visit.hostName != null && visit.hostName!.isNotEmpty
+                    ? 'Update PTM'
+                    : 'Assign PTM',
+                style: const TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AsmitaPalette.deepNavy,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: isDark ? Colors.white : AsmitaPalette.deepNavy,
+                side: BorderSide(
+                  color: isDark
+                      ? const Color(0xFF475569)
+                      : AsmitaPalette.deepNavy.withValues(alpha: 0.6),
+                  width: 1.2,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            // Forward (When APPROVED and destination floor has receptionist)
+            if (visit.status == IndustrialVisitStatus.approved && visit.hasFloorReceptionist) ...[
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () {
+                  context.read<IndustrialVisitBloc>().add(
+                    SendToLobbyEvent(
+                      visitId: visit.id,
+                      floor: visit.floor,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.forward_rounded, size: 16),
+                label: const Text(
+                  'Forward',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0284C7),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ],
+            // Check In (When APPROVED without floor rec, or when Forwarded / Waiting)
+            if ((visit.status == IndustrialVisitStatus.approved && !visit.hasFloorReceptionist) ||
+                visit.status == IndustrialVisitStatus.onTheWay ||
+                visit.status == IndustrialVisitStatus.waitingToMeet) ...[
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () {
+                  context.read<IndustrialVisitBloc>().add(
+                    CheckInPassEvent(
+                      visitId: visit.id,
+                      gateId: 1,
+                      passCode: visit.passCode,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.how_to_reg_rounded, size: 16),
+                label: const Text(
+                  'Check In',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AsmitaPalette.successGreen,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ],
+            // Check Out (When Checked In)
+            if (visit.isCheckedIn) ...[
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () {
+                  context.read<IndustrialVisitBloc>().add(
+                    CheckOutPassEvent(visitId: visit.id, gateId: 1),
+                  );
+                },
+                icon: const Icon(Icons.logout_rounded, size: 16),
+                label: const Text(
+                  'Check Out',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AsmitaPalette.deepNavy,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    // Only allow Resend if within 30 minutes AND user is either host or receptionist or admin
+    final showResend = canResend && (isHostOrAssignee || isReceptionist || canApprove);
 
     return AsmitaVisitorCard.fromIndustrialVisit(
       visit: visit,
@@ -1920,7 +2133,8 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       showSubtitle: false,
       isAcknowledged: isAck,
       onTap: () => _showVisitDetailsModal(context, visit),
-      onResend: isExpired ? () => _resendApproval(context, visit) : null,
+      onResend: showResend ? () => _resendApproval(context, visit) : null,
+      bottomActions: bottomActions,
       onApprove: (isPending && canApprove)
           ? () {
               context.read<IndustrialVisitBloc>().add(
