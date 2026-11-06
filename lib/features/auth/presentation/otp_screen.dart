@@ -194,66 +194,98 @@ class _OtpScreenState extends State<OtpScreen> {
                               constraints: const BoxConstraints(maxWidth: 440),
                               child: GestureDetector(
                                 onTap: () => FocusScope.of(context).requestFocus(_focusNode),
-                                child: Stack(
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: List.generate(6, (index) {
-                                        final isFilled = index < _otp.length;
-                                        final isActive = index == _otp.length;
-                                        return Container(
-                                          height: 58,
-                                          width: 52,
-                                          alignment: Alignment.center,
-                                          decoration: BoxDecoration(
-                                            color: Theme.of(context).colorScheme.surface,
-                                            borderRadius: BorderRadius.circular(14),
-                                            border: Border.all(
-                                              color: isActive
-                                                  ? Theme.of(context).colorScheme.primary
-                                                  : (isFilled
-                                                      ? Theme.of(context).textTheme.bodyLarge!.color!
-                                                      : Theme.of(context).dividerColor),
-                                              width: isActive || isFilled ? 2.0 : 1.0,
-                                            ),
-                                            boxShadow: [
-                                              if (isActive)
-                                                BoxShadow(
-                                                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
-                                                  blurRadius: 8,
-                                                  offset: const Offset(0, 2),
+                                child: Builder(
+                                  builder: (context) {
+                                    // Total screen width and padding available
+                                    final screenWidth = MediaQuery.sizeOf(context).width;
+                                    // Modal padding is 24 on each side = 48
+                                    // ConstrainedBox max is 440
+                                    final availableWidth = (screenWidth - 48.0).clamp(0.0, 440.0);
+                                    
+                                    // Total 6 boxes and 5 gaps
+                                    const totalSlots = 6;
+                                    const totalGaps = totalSlots - 1;
+                                    
+                                    // Compute optimal gap and box width
+                                    // For narrow foldable screens (e.g. Galaxy Z Fold outer screen ~320-340px):
+                                    // availableWidth is ~272-292px.
+                                    // 6 boxes of 40px + 5 gaps of 6px = 270px -> fits cleanly!
+                                    // For normal phones (375-430px): 6 boxes of 48-52px + 5 gaps of 8px.
+                                    // For tablets / foldables unfolded (>600px): capped at maxWidth 440 with 54px boxes.
+                                    double boxGap = availableWidth < 330 ? 6.0 : 8.0;
+                                    double boxWidth = ((availableWidth - (totalGaps * boxGap)) / totalSlots).clamp(36.0, 52.0);
+                                    
+                                    if ((boxWidth * totalSlots + boxGap * totalGaps) > availableWidth && availableWidth > 0) {
+                                      boxGap = ((availableWidth - (boxWidth * totalSlots)) / totalGaps).clamp(4.0, 8.0);
+                                      boxWidth = ((availableWidth - (totalGaps * boxGap)) / totalSlots).clamp(34.0, 52.0);
+                                    }
+                                    
+                                    final boxHeight = (boxWidth * 1.15).clamp(44.0, 60.0);
+                                    final fontSize = (boxWidth * 0.44).clamp(17.0, 24.0);
+
+                                    return Stack(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: List.generate(6, (index) {
+                                            final isFilled = index < _otp.length;
+                                            final isActive = index == _otp.length;
+                                            return Container(
+                                              height: boxHeight,
+                                              width: boxWidth,
+                                              alignment: Alignment.center,
+                                              decoration: BoxDecoration(
+                                                color: Theme.of(context).colorScheme.surface,
+                                                borderRadius: BorderRadius.circular(boxWidth * 0.25),
+                                                border: Border.all(
+                                                  color: isActive
+                                                      ? Theme.of(context).colorScheme.primary
+                                                      : (isFilled
+                                                          ? Theme.of(context).textTheme.bodyLarge!.color!
+                                                          : Theme.of(context).dividerColor),
+                                                  width: isActive || isFilled ? 2.0 : 1.0,
                                                 ),
-                                            ],
-                                          ),
-                                          child: Text(
-                                            isFilled ? _otp[index] : '',
-                                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                                  color: Theme.of(context).textTheme.bodyLarge?.color,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                          ),
-                                        );
-                                      }),
-                                    ),
-                                    Positioned.fill(
-                                      child: Opacity(
-                                        opacity: 0.0,
-                                        child: TextField(
-                                          focusNode: _focusNode,
-                                          keyboardType: TextInputType.number,
-                                          autofillHints: const [AutofillHints.oneTimeCode],
-                                          scrollPadding: const EdgeInsets.only(bottom: 120),
-                                          maxLength: 6,
-                                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                          onChanged: (value) {
-                                            setState(() => _otp = value);
-                                            if (value.length == 6) _verifyOtp();
-                                          },
-                                          decoration: const InputDecoration(counterText: ''),
+                                                boxShadow: [
+                                                  if (isActive)
+                                                    BoxShadow(
+                                                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                                                      blurRadius: 8,
+                                                      offset: const Offset(0, 2),
+                                                    ),
+                                                ],
+                                              ),
+                                              child: Text(
+                                                isFilled ? _otp[index] : '',
+                                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: fontSize,
+                                                    ),
+                                              ),
+                                            );
+                                          }),
                                         ),
-                                      ),
-                                    ),
-                                  ],
+                                        Positioned.fill(
+                                          child: Opacity(
+                                            opacity: 0.0,
+                                            child: TextField(
+                                              focusNode: _focusNode,
+                                              keyboardType: TextInputType.number,
+                                              autofillHints: const [AutofillHints.oneTimeCode],
+                                              scrollPadding: const EdgeInsets.only(bottom: 120),
+                                              maxLength: 6,
+                                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                              onChanged: (value) {
+                                                setState(() => _otp = value);
+                                                if (value.length == 6) _verifyOtp();
+                                              },
+                                              decoration: const InputDecoration(counterText: ''),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
                                 ),
                               ),
                             ),
