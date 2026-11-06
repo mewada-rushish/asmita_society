@@ -93,6 +93,9 @@ class AsmitaVisitorCard extends StatelessWidget {
   final VoidCallback? onAcknowledge;
   final bool isAcknowledged;
 
+  /// Resend approval request callback
+  final VoidCallback? onResend;
+
   /// Custom bottom actions or trailing widget
   final Widget? bottomActions;
   final Widget? trailing;
@@ -127,6 +130,7 @@ class AsmitaVisitorCard extends StatelessWidget {
     this.denyLabel,
     this.onAcknowledge,
     this.isAcknowledged = false,
+    this.onResend,
     this.bottomActions,
     this.trailing,
   });
@@ -144,6 +148,7 @@ class AsmitaVisitorCard extends StatelessWidget {
     String? denyLabel,
     VoidCallback? onAcknowledge,
     bool isAcknowledged = false,
+    VoidCallback? onResend,
     Widget? bottomActions,
     Widget? trailing,
   }) {
@@ -216,6 +221,7 @@ class AsmitaVisitorCard extends StatelessWidget {
       denyLabel: denyLabel,
       onAcknowledge: onAcknowledge,
       isAcknowledged: isAcknowledged,
+      onResend: onResend,
       bottomActions: bottomActions,
       trailing: trailing,
     );
@@ -1338,7 +1344,7 @@ class AsmitaVisitorCard extends StatelessWidget {
                 ),
 
                 // 3. Unified Executive Action Bar (Single Sleek Row)
-                if (onApprove != null || onDeny != null || onAcknowledge != null) ...[
+                if (onApprove != null || onDeny != null || onAcknowledge != null || onResend != null) ...[
                   const SizedBox(height: 12),
                   _buildActionBar(context, isDark),
                 ],
@@ -1609,6 +1615,64 @@ class AsmitaVisitorCard extends StatelessWidget {
   }
 
   Widget _buildActionBar(BuildContext context, bool isDark) {
+    // If onResend is provided (typically for expired passes) and no approval actions exist
+    if (onResend != null && onApprove == null && onDeny == null && onAcknowledge == null) {
+      final resendBg = isDark
+          ? AsmitaPalette.deepNavyDark
+          : AsmitaPalette.deepNavy;
+
+      return Align(
+        alignment: Alignment.centerRight,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            key: const ValueKey('visit_card_resend_action'),
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              onResend!();
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              height: 38,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: resendBg,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: resendBg.withValues(alpha: isDark ? 0.35 : 0.25),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.send_rounded,
+                    size: 15,
+                    color: Colors.white,
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'Resend',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final hasDeny = onDeny != null;
     final hasAck = onAcknowledge != null;
     final hasApprove = onApprove != null;
