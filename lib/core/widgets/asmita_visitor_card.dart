@@ -526,8 +526,9 @@ class AsmitaVisitorCard extends StatelessWidget {
                   visit.status == IndustrialVisitStatus.onTheWay) ...[
                 Row(
                   children: [
-                    // Make Person Wait button
-                    if (visit.status != IndustrialVisitStatus.waitingToMeet)
+                    // 1. Make Person Wait button (shown when not already waiting and not checked out)
+                    if (visit.status != IndustrialVisitStatus.waitingToMeet &&
+                        visit.status != IndustrialVisitStatus.checkedOut) ...[
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () {
@@ -548,7 +549,7 @@ class AsmitaVisitorCard extends StatelessWidget {
                           },
                           icon: const Icon(Icons.hourglass_top_rounded, size: 16, color: Color(0xFFD97706)),
                           label: const Text(
-                            'Make Wait',
+                            'Wait',
                             style: TextStyle(
                               fontFamily: 'Montserrat',
                               fontWeight: FontWeight.bold,
@@ -563,85 +564,125 @@ class AsmitaVisitorCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                    if (visit.status != IndustrialVisitStatus.waitingToMeet &&
-                        visit.status == IndustrialVisitStatus.approved)
                       const SizedBox(width: 10),
-                    // If floor has receptionist -> Send to Lobby. If not -> Check In
-                    if (visit.status == IndustrialVisitStatus.approved) ...[
-                      if (visit.hasFloorReceptionist)
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.pop(ctx);
-                              try {
-                                context.read<IndustrialVisitBloc>().add(
-                                  SendToLobbyEvent(
-                                    visitId: visit.id,
-                                    floor: visit.floor,
-                                  ),
-                                );
-                                AsmitaToast.show(
-                                  context,
-                                  message: 'Visitor sent to Floor Lobby.',
-                                  type: AsmitaToastType.success,
-                                );
-                              } catch (_) {}
-                            },
-                            icon: const Icon(Icons.send_to_mobile_rounded, size: 16, color: Colors.white),
-                            label: const Text(
-                              'Send to Lobby',
-                              style: TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                                color: Colors.white,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF0284C7),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ],
+
+                    // 2. Forward CTA (When APPROVED and destination floor has a receptionist)
+                    if (visit.status == IndustrialVisitStatus.approved && visit.hasFloorReceptionist)
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            try {
+                              context.read<IndustrialVisitBloc>().add(
+                                SendToLobbyEvent(
+                                  visitId: visit.id,
+                                  floor: visit.floor,
+                                ),
+                              );
+                              AsmitaToast.show(
+                                context,
+                                message: 'Visitor forwarded to floor receptionist.',
+                                type: AsmitaToastType.success,
+                              );
+                            } catch (_) {}
+                          },
+                          icon: const Icon(Icons.forward_rounded, size: 16, color: Colors.white),
+                          label: const Text(
+                            'Forward',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: Colors.white,
                             ),
                           ),
-                        )
-                      else
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.pop(ctx);
-                              try {
-                                context.read<IndustrialVisitBloc>().add(
-                                  CheckInPassEvent(
-                                    visitId: visit.id,
-                                    gateId: 1,
-                                    passCode: visit.passCode,
-                                  ),
-                                );
-                                AsmitaToast.show(
-                                  context,
-                                  message: 'Visitor checked in directly.',
-                                  type: AsmitaToastType.success,
-                                );
-                              } catch (_) {}
-                            },
-                            icon: const Icon(Icons.how_to_reg_rounded, size: 16, color: Colors.white),
-                            label: const Text(
-                              'Check In',
-                              style: TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                                color: Colors.white,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AsmitaPalette.successGreen,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0284C7),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                         ),
-                    ],
+                      ),
+
+                    // 3. Check In CTA (When APPROVED without floor rec, or when Forwarded / Waiting on floor)
+                    if ((visit.status == IndustrialVisitStatus.approved && !visit.hasFloorReceptionist) ||
+                        visit.status == IndustrialVisitStatus.onTheWay ||
+                        visit.status == IndustrialVisitStatus.waitingToMeet)
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            try {
+                              context.read<IndustrialVisitBloc>().add(
+                                CheckInPassEvent(
+                                  visitId: visit.id,
+                                  gateId: 1,
+                                  passCode: visit.passCode,
+                                ),
+                              );
+                              AsmitaToast.show(
+                                context,
+                                message: 'Visitor checked in successfully.',
+                                type: AsmitaToastType.success,
+                              );
+                            } catch (_) {}
+                          },
+                          icon: const Icon(Icons.how_to_reg_rounded, size: 16, color: Colors.white),
+                          label: const Text(
+                            'Check In',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: Colors.white,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AsmitaPalette.successGreen,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+
+                    // 4. Check Out CTA (When CHECKED_IN)
+                    if (visit.isCheckedIn)
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            try {
+                              context.read<IndustrialVisitBloc>().add(
+                                CheckOutPassEvent(
+                                  visitId: visit.id,
+                                  gateId: 1,
+                                ),
+                              );
+                              AsmitaToast.show(
+                                context,
+                                message: 'Visitor checked out successfully.',
+                                type: AsmitaToastType.success,
+                              );
+                            } catch (_) {}
+                          },
+                          icon: const Icon(Icons.logout_rounded, size: 16, color: Colors.white),
+                          label: const Text(
+                            'Check Out',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: Colors.white,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AsmitaPalette.deepNavy,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ],
