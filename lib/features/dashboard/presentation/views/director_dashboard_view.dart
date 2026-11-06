@@ -13,7 +13,6 @@ import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
-import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_text_field.dart';
 import '../../../../core/widgets/asmita_select_field.dart';
 import '../../../../core/utils/property_role_resolver.dart';
@@ -206,13 +205,14 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   }
 
   void _openMeetingRoomReservation(BuildContext context) {
-    AsmitaDialog.show(
+    showAsmitaBottomSheet(
       context: context,
       title: 'Meeting Room Reservation',
-      content: const AsmitaFacilityBookingWizard(
+      maxHeightFactor: 0.88,
+      child: const AsmitaFacilityBookingWizard(
         initialAmenity: AmenityModel(
-          amenityId: 991,
-          name: 'Executive Boardroom',
+          amenityId: 4,
+          name: 'Executive Boardroom (Floor 1)',
           type: 'booking',
           description: 'High-Speed Smart AV & Video Conferencing Boardroom',
           capacity: 16,
