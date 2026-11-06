@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -46,11 +47,16 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   final Set<int> _acknowledgedIds = {};
+  Timer? _tickerTimer;
 
   @override
   void initState() {
     super.initState();
     _selectedFilter = widget.initialFilter;
+    // Periodic ticker so timestamps and relative countdowns update dynamically
+    _tickerTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       try {
@@ -71,6 +77,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
 
   @override
   void dispose() {
+    _tickerTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
