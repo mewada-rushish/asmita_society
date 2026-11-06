@@ -36,7 +36,14 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
     FetchAmenities event,
     Emitter<AmenitiesState> emit,
   ) async {
-    emit(state.copyWith(status: AmenitiesStatus.loading));
+    // If we already have amenities loaded for the app session and not forcing refresh,
+    // avoid flashing a loading state or refetching blocking the UI.
+    if (state.amenities.isNotEmpty && event.societyId == null) {
+      return;
+    }
+
+    // Preserve existing amenities while loading in the background
+    emit(state.copyWith(status: state.amenities.isEmpty ? AmenitiesStatus.loading : state.status));
     try {
       final societyId = event.societyId ?? _societyId;
       final amenities = await repository.getAmenities(societyId: societyId);
@@ -48,12 +55,14 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
         ),
       );
     } catch (e) {
-      emit(
-        state.copyWith(
-          status: AmenitiesStatus.error,
-          errorMessage: e.toString(),
-        ),
-      );
+      if (state.amenities.isEmpty) {
+        emit(
+          state.copyWith(
+            status: AmenitiesStatus.error,
+            errorMessage: e.toString(),
+          ),
+        );
+      }
     }
   }
 
