@@ -135,8 +135,8 @@ class MenuScreen extends StatelessWidget {
                           context,
                           title: 'Company & Compliance',
                           items: [
-                            _buildMenuItem(context, Icons.gavel_rounded, 'Workplace Rules & Compliance'),
-                            _buildMenuItem(context, Icons.description_outlined, 'Policies & Corporate Documents'),
+                            _buildMenuItem(context, Icons.gavel_rounded, 'Rules and Compliance'),
+                            _buildMenuItem(context, Icons.description_outlined, 'Company Policies'),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -530,6 +530,7 @@ class MenuScreen extends StatelessWidget {
             screen = CommitteeMembersScreen(onNavigateToTab: onNavigateToTab);
             break;
           case 'Rules & Regulations':
+          case 'Rules and Compliance':
           case 'Workplace Rules & Compliance':
           case 'Gate Rules & Safety Protocols':
             screen = const RulesScreen();
@@ -537,6 +538,7 @@ class MenuScreen extends StatelessWidget {
           case 'Important Documents':
           case 'Policies & Documents':
           case 'Policies & Corporate Documents':
+          case 'Company Policies':
             screen = const DocumentsScreen();
             break;
           case 'Family Members':
