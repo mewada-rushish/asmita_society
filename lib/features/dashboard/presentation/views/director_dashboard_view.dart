@@ -18,7 +18,9 @@ import '../../../../core/widgets/asmita_select_field.dart';
 import '../../../../core/utils/property_role_resolver.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
+import '../../../auth/bloc/auth_event.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
+import '../../widgets/bbps_bill_payments_sheet.dart';
 import '../../../visitor_management/bloc/visitor_bloc.dart';
 import '../../../visitor_management/bloc/visitor_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
@@ -26,7 +28,6 @@ import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
 import '../../../../core/widgets/asmita_employee_card.dart';
-import '../../widgets/bbps_bill_payments_sheet.dart';
 import '../../../auth/data/models/user_model.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
@@ -87,6 +88,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
       _fetchDelegationStatus();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
+        try {
+          context.read<AuthBloc?>()?.add(const AuthRefreshProfileRequested());
+        } catch (_) {}
         try {
           context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
         } catch (_) {}
@@ -998,6 +1002,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                             .firstWhere((s) => s.status != IndustrialVisitBlocStatus.loading)
                             .timeout(const Duration(seconds: 4), onTimeout: () => bloc.state);
                         _fetchDelegationStatus();
+                        try {
+                          context.read<AuthBloc?>()?.add(const AuthRefreshProfileRequested());
+                        } catch (_) {}
                         bloc.add(const LoadIndustrialVisits());
                         await future;
                       }
@@ -1046,27 +1053,56 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   // 1. EXECUTIVE HERO CARD (Global AsmitaEmployeeCard)
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildHeroCard(BuildContext context) {
-    UserModel? user;
+    AuthBloc? authBloc;
     try {
-      final authBloc = context.read<AuthBloc?>();
-      final authState = authBloc?.state;
-      if (authState is AuthAuthenticated) {
-        user = authState.user;
-      }
+      authBloc = context.read<AuthBloc?>();
     } catch (_) {
-      user = null;
+      authBloc = null;
     }
 
-    final name = widget.directorName ??
-        ((user != null && user.fullName.isNotEmpty) ? user.fullName : 'Executive Director');
-    final desig = widget.designation ??
-        ((user != null && user.designation.isNotEmpty) ? user.designation : 'Executive Director');
-    final dept = widget.departmentName ??
-        ((user != null && user.departmentName.isNotEmpty) ? user.departmentName : 'Executive Suite');
-    final cabin = widget.cabinNumber ??
-        ((user?.cabinCode != null && user!.cabinCode.isNotEmpty) ? user.cabinCode : 'CAB-DIR-01');
-    final desk = widget.deskNumber ??
-        ((user?.deskCode != null && user!.deskCode.isNotEmpty) ? user.deskCode : 'DIR-DSK-01');
+    if (authBloc == null) {
+      return _buildHeroCardContent(context, null);
+    }
+
+    return BlocBuilder<AuthBloc, AuthState>(
+      bloc: authBloc,
+      builder: (context, authState) {
+        final user = authState is AuthAuthenticated ? authState.user : null;
+        return _buildHeroCardContent(context, user);
+      },
+    );
+  }
+
+  Widget _buildHeroCardContent(BuildContext context, UserModel? user) {
+    final name = (user != null && user.fullName.trim().isNotEmpty)
+        ? user.fullName.trim()
+        : (widget.directorName?.trim().isNotEmpty == true
+            ? widget.directorName!.trim()
+            : 'Executive Director');
+
+    final desig = (user != null && user.designation.trim().isNotEmpty)
+        ? user.designation.trim()
+        : (widget.designation?.trim().isNotEmpty == true
+            ? widget.designation!.trim()
+            : 'Executive Director');
+
+    final dept = (user != null && user.departmentName.trim().isNotEmpty)
+        ? user.departmentName.trim()
+        : (widget.departmentName?.trim().isNotEmpty == true
+            ? widget.departmentName!.trim()
+            : 'Executive Office');
+
+    final cabin = (user != null && user.cabinCode.trim().isNotEmpty)
+        ? user.cabinCode.trim()
+        : (widget.cabinNumber?.trim().isNotEmpty == true
+            ? widget.cabinNumber!.trim()
+            : (user?.deskCode.trim().isNotEmpty == true ? 'N/A' : 'CAB-DIR-01'));
+
+    final desk = (user != null && user.deskCode.trim().isNotEmpty)
+        ? user.deskCode.trim()
+        : (widget.deskNumber?.trim().isNotEmpty == true
+            ? widget.deskNumber!.trim()
+            : 'N/A');
 
     return AsmitaEmployeeCard(
       name: name,
@@ -1109,7 +1145,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 2. QUICK ACTIONS (Square Icon Boxes Matching Employee Dashboard)
+  // 2. QUICK ACTIONS (4 Square Icon Boxes: Pre-Approve, Car Valet, Security, BillPay)
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildQuickActionsGrid(BuildContext context) {
     final actions = <_QuickActionItemData>[
@@ -1267,6 +1303,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
       ),
     );
   }
+
 
   // ─────────────────────────────────────────────────────────────────────────
   // 3. OPERATIONAL KPI OVERVIEW METRICS (4 Grid/Row Cards: Total, Pending, Approved, Inside)

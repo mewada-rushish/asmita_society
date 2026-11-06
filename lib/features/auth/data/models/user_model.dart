@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 class FlatMapping {
   final int mappingId;
   final int flatId;
   final String flatNumber;
+  final String unitType;
   final int towerId;
   final String towerName;
   final String ownershipType;
@@ -10,6 +13,7 @@ class FlatMapping {
     required this.mappingId,
     required this.flatId,
     required this.flatNumber,
+    this.unitType = '',
     required this.towerId,
     required this.towerName,
     required this.ownershipType,
@@ -23,9 +27,10 @@ class FlatMapping {
     return FlatMapping(
       mappingId: json['mapping_id'] is int ? json['mapping_id'] : int.tryParse(json['mapping_id']?.toString() ?? '0') ?? 0,
       flatId: json['flat_id'] is int ? json['flat_id'] : int.tryParse(json['flat_id']?.toString() ?? '0') ?? 0,
-      flatNumber: flats['flat_number']?.toString() ?? '',
+      flatNumber: flats['flat_number']?.toString() ?? json['flat_number']?.toString() ?? '',
+      unitType: flats['unit_type']?.toString() ?? json['unit_type']?.toString() ?? '',
       towerId: floors['tower_id'] is int ? floors['tower_id'] : int.tryParse(floors['tower_id']?.toString() ?? '0') ?? 0,
-      towerName: towers['tower_name']?.toString() ?? '',
+      towerName: towers['tower_name']?.toString() ?? json['tower_name']?.toString() ?? '',
       ownershipType: json['ownership_type']?.toString() ?? '',
     );
   }
@@ -37,6 +42,7 @@ class FlatMapping {
       'ownership_type': ownershipType,
       'flats': {
         'flat_number': flatNumber,
+        'unit_type': unitType,
         'floors': {
           'tower_id': towerId,
           'towers': {
@@ -92,17 +98,34 @@ class UserModel {
   /// Dynamic capability check based on backend platform settings
   bool hasPermission(String key) => permissions[key] ?? false;
 
-  String get cabinCode =>
-      roleDetails?['cabin_code']?.toString() ??
-      roleDetails?['cabin']?.toString() ??
-      '';
-  String get deskCode =>
-      roleDetails?['desk_code']?.toString() ??
-      roleDetails?['desk_number']?.toString() ??
-      roleDetails?['desk_id']?.toString() ??
-      roleDetails?['workstation_code']?.toString() ??
-      roleDetails?['desk']?.toString() ??
-      '';
+  String get cabinCode {
+    final c = roleDetails?['cabin_code']?.toString() ??
+        roleDetails?['cabin']?.toString();
+    if (c != null && c.trim().isNotEmpty) return c.trim();
+    if (flatMappings.isNotEmpty) {
+      final num = flatMappings.first.flatNumber.trim();
+      if (num.contains('-C') || num.contains('CAB') || num.contains('-c') || num.startsWith('C-') || num.startsWith('c-')) {
+        return num;
+      }
+    }
+    return '';
+  }
+
+  String get deskCode {
+    final d = roleDetails?['desk_code']?.toString() ??
+        roleDetails?['desk_number']?.toString() ??
+        roleDetails?['desk_id']?.toString() ??
+        roleDetails?['workstation_code']?.toString() ??
+        roleDetails?['desk']?.toString();
+    if (d != null && d.trim().isNotEmpty) return d.trim();
+    if (flatMappings.isNotEmpty) {
+      final num = flatMappings.first.flatNumber.trim();
+      if (!num.contains('-C') && !num.startsWith('C-') && !num.startsWith('c-') && !num.contains('CAB')) {
+        return num;
+      }
+    }
+    return '';
+  }
   String get designation =>
       roleDetails?['designation']?.toString() ??
       roleDetails?['leadership_role']?.toString() ??
@@ -113,11 +136,37 @@ class UserModel {
     }
     return null;
   }
-  String get departmentName {
-    if (flatMappings.isNotEmpty && flatMappings.first.flatNumber.isNotEmpty) {
-      return flatMappings.first.flatNumber;
+  String get buildingName {
+    if (flatMappings.isNotEmpty && flatMappings.first.towerName.isNotEmpty) {
+      return flatMappings.first.towerName;
     }
-    return roleDetails?['department_name']?.toString() ?? 'Department';
+    final b = roleDetails?['building_name']?.toString() ??
+        roleDetails?['tower_name']?.toString() ??
+        roleDetails?['building']?.toString();
+    if (b != null && b.isNotEmpty) return b;
+    return 'Main HQ';
+  }
+
+  String get departmentName {
+    final dept = roleDetails?['department']?.toString() ??
+        roleDetails?['department_name']?.toString();
+    if (dept != null &&
+        dept.trim().isNotEmpty &&
+        dept.trim().toLowerCase() != 'general' &&
+        dept.trim().toLowerCase() != 'department') {
+      return dept.trim();
+    }
+    if (flatMappings.isNotEmpty) {
+      final uType = flatMappings.first.unitType.trim();
+      if (uType.isNotEmpty &&
+          uType.toLowerCase() != 'general' &&
+          uType.toLowerCase() != 'desk' &&
+          uType.toLowerCase() != 'cabin' &&
+          uType.toLowerCase() != 'department') {
+        return uType;
+      }
+    }
+    return 'Administration';
   }
 
   bool get canManageVisitors => hasPermission('canManageVisitors');
@@ -182,7 +231,18 @@ class UserModel {
           ? json['role_power'] as int
           : int.tryParse(json['role_power']?.toString() ?? json['power']?.toString() ?? ''),
       propertyType: json['property_type']?.toString() ?? json['property_profile']?.toString(),
-      roleDetails: json['role_details'] is Map ? Map<String, dynamic>.from(json['role_details'] as Map) : null,
+      roleDetails: json['role_details'] is Map
+          ? Map<String, dynamic>.from(json['role_details'] as Map)
+          : (json['role_details'] is String && (json['role_details'] as String).isNotEmpty
+              ? () {
+                  try {
+                    final dec = jsonDecode(json['role_details'] as String);
+                    return dec is Map ? Map<String, dynamic>.from(dec) : null;
+                  } catch (_) {
+                    return null;
+                  }
+                }()
+              : null),
     );
   }
 
