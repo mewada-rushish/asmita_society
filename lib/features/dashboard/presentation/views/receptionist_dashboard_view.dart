@@ -540,20 +540,18 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
               ),
             ),
             const SizedBox(height: 8),
-            SizedBox(
-              height: 28,
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    height: 1.2,
-                  ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
                 ),
               ),
             ),
