@@ -762,59 +762,6 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
               ),
             ),
           ),
-          if (visit.isPending) ...[
-            const SizedBox(width: 8),
-            OutlinedButton(
-              onPressed: () => _handleDecide(context, visit.id, 'REJECT'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AsmitaPalette.actionRed,
-                side: BorderSide(
-                  color: AsmitaPalette.actionRed.withValues(alpha: 0.8),
-                  width: 1.2,
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text(
-                'Reject',
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton.icon(
-              onPressed: () => _handleDecide(context, visit.id, 'APPROVE'),
-              icon: const Icon(Icons.check_rounded, size: 16),
-              label: const Text(
-                'Approve Entry',
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AsmitaPalette.successGreen,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                elevation: 0,
-              ),
-            ),
-          ],
           // 1. Forward (When APPROVED and floor has receptionist)
           if (visit.status == IndustrialVisitStatus.approved && visit.hasFloorReceptionist) ...[
             const SizedBox(width: 8),
