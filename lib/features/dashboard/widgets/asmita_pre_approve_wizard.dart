@@ -28,8 +28,21 @@ import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/security/secure_storage_service.dart';
 class AsmitaPreApproveWizard extends StatefulWidget {
   final bool isGuardMode;
+  final String? initialCategory;
+  final String? initialVisitorName;
+  final String? initialMobileNumber;
+  final String? initialPurpose;
+  final String? initialCompany;
 
-  const AsmitaPreApproveWizard({super.key, this.isGuardMode = false});
+  const AsmitaPreApproveWizard({
+    super.key,
+    this.isGuardMode = false,
+    this.initialCategory,
+    this.initialVisitorName,
+    this.initialMobileNumber,
+    this.initialPurpose,
+    this.initialCompany,
+  });
 
   static const List<String> vehicleTypeOptions = [
     'Bike',
@@ -42,6 +55,11 @@ class AsmitaPreApproveWizard extends StatefulWidget {
     bool isGuardMode = false,
     String? title,
     String? subtitle,
+    String? initialCategory,
+    String? initialVisitorName,
+    String? initialMobileNumber,
+    String? initialPurpose,
+    String? initialCompany,
   }) {
     return showAsmitaBottomSheet<T>(
       context: context,
@@ -50,7 +68,14 @@ class AsmitaPreApproveWizard extends StatefulWidget {
       child: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
         padding: const EdgeInsets.only(bottom: 16.0),
-        child: AsmitaPreApproveWizard(isGuardMode: isGuardMode),
+        child: AsmitaPreApproveWizard(
+          isGuardMode: isGuardMode,
+          initialCategory: initialCategory,
+          initialVisitorName: initialVisitorName,
+          initialMobileNumber: initialMobileNumber,
+          initialPurpose: initialPurpose,
+          initialCompany: initialCompany,
+        ),
       ),
     );
   }
@@ -882,6 +907,25 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) setState(() {});
     });
+
+    if (widget.initialVisitorName != null && widget.initialVisitorName!.isNotEmpty) {
+      _visitorNameController.text = widget.initialVisitorName!;
+    }
+    if (widget.initialMobileNumber != null && widget.initialMobileNumber!.isNotEmpty) {
+      _mobileNumberController.text = widget.initialMobileNumber!;
+    }
+    if (widget.initialPurpose != null && widget.initialPurpose!.isNotEmpty) {
+      _purposeController.text = widget.initialPurpose!;
+    }
+    if (widget.initialCompany != null && widget.initialCompany!.isNotEmpty) {
+      _selectedCompany = widget.initialCompany!;
+      _customCompanyName = widget.initialCompany!;
+    }
+    if (widget.initialCategory != null && widget.initialCategory!.isNotEmpty) {
+      _selectedCategory = widget.initialCategory!;
+      _currentStep = 1;
+    }
+
     if (widget.isGuardMode) {
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
