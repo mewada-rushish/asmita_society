@@ -30,6 +30,9 @@ class SubmitBookingRequest extends AmenitiesEvent {
   final DateTime bookingDate;
   final DateTime startTime;
   final DateTime endTime;
+  final String? purpose;
+  final int? expectedGuests;
+  final String? specialNotes;
 
   const SubmitBookingRequest({
     required this.amenityId,
@@ -38,8 +41,21 @@ class SubmitBookingRequest extends AmenitiesEvent {
     required this.bookingDate,
     required this.startTime,
     required this.endTime,
+    this.purpose,
+    this.expectedGuests,
+    this.specialNotes,
   });
 
   @override
-  List<Object?> get props => [amenityId, societyId, flatId, bookingDate, startTime, endTime];
+  List<Object?> get props => [
+        amenityId,
+        societyId,
+        flatId,
+        bookingDate,
+        startTime,
+        endTime,
+        purpose,
+        expectedGuests,
+        specialNotes,
+      ];
 }
