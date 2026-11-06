@@ -45,7 +45,7 @@ class AmenitiesRepository {
     }
   }
 
-  Future<bool> bookAmenity({
+  Future<Map<String, dynamic>> bookAmenity({
     required int amenityId,
     required int societyId,
     required int userId,
@@ -53,9 +53,12 @@ class AmenitiesRepository {
     required DateTime bookingDate,
     required DateTime startTime,
     required DateTime endTime,
+    String? purpose,
+    int? expectedGuests,
+    String? specialNotes,
   }) async {
     try {
-      final response = await _dio.post('/app-api/amenities/book', data: {
+      final payload = <String, dynamic>{
         'amenity_id': amenityId,
         'society_id': societyId,
         'user_id': userId,
@@ -63,8 +66,17 @@ class AmenitiesRepository {
         'booking_date': bookingDate.toIso8601String(),
         'start_time': startTime.toIso8601String(),
         'end_time': endTime.toIso8601String(),
-      });
-      return response.data['success'] == true;
+      };
+      if (purpose != null) payload['purpose'] = purpose;
+      if (expectedGuests != null) payload['expected_guests'] = expectedGuests;
+      if (specialNotes != null) payload['special_notes'] = specialNotes;
+
+      final response = await _dio.post('/app-api/amenities/book', data: payload);
+      return {
+        'success': response.data['success'] == true,
+        'message': response.data['message']?.toString() ?? 'Booked successfully',
+        'is_override': response.data['is_override'] == true,
+      };
     } on DioException catch (e) {
       final msg = _extractError(e, 'Failed to book amenity');
       throw Exception(msg);
