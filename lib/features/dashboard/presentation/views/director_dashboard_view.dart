@@ -24,6 +24,7 @@ import '../../../auth/bloc/auth_state.dart';
 import '../../../auth/bloc/auth_event.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
 import '../../widgets/bbps_bill_payments_sheet.dart';
+import '../../widgets/asmita_hotline_sheet.dart';
 import '../../../visitor_management/bloc/visitor_bloc.dart';
 import '../../../visitor_management/bloc/visitor_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
@@ -186,79 +187,20 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   }
 
   void _showContactReceptionistSheet(BuildContext context) {
+    UserModel? user;
+    try {
+      final authBloc = context.read<AuthBloc?>();
+      final authState = authBloc?.state;
+      if (authState is AuthAuthenticated) user = authState.user;
+    } catch (_) {}
+    final societyId = user?.societyId ?? 115;
+
     showAsmitaBottomSheet(
       context: context,
       title: 'Floor Support & Security Hotline',
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildHotlineTile(
-            context,
-            icon: Icons.support_agent_rounded,
-            title: 'Main Reception Desk',
-            subtitle: 'Ext: 101 • Dedicated Executive Support',
-            onCall: () {
-              Navigator.pop(context);
-              AsmitaToast.show(
-                context,
-                message: 'Calling Main Reception (Ext 101)...',
-                type: AsmitaToastType.info,
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          _buildHotlineTile(
-            context,
-            icon: Icons.shield_rounded,
-            title: 'Gate 1 Security Control',
-            subtitle: 'Ext: 104 • Main Campus Gate & VIP Escort',
-            onCall: () {
-              Navigator.pop(context);
-              _callContact('Gate 1 Security', '+919820110104');
-            },
-          ),
-          const SizedBox(height: 8),
-          _buildHotlineTile(
-            context,
-            icon: Icons.admin_panel_settings_rounded,
-            title: 'Chief Security Officer (CSO)',
-            subtitle: 'Ext: 100 • Head of Campus Security',
-            onCall: () {
-              Navigator.pop(context);
-              _callContact('Campus CSO', '+919820110100');
-            },
-          ),
-          const SizedBox(height: 8),
-          _buildHotlineTile(
-            context,
-            icon: Icons.emergency_rounded,
-            title: 'Facility Emergency Desk',
-            subtitle: 'Ext: 999 • Rapid Response Team',
-            isEmergency: true,
-            onCall: () {
-              Navigator.pop(context);
-              _callContact('Emergency Response', '+919820110911');
-            },
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.shield_outlined, size: 16),
-            label: const Text('Campus Security Command & Dispatches', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              _showSecurityModal(context);
-            },
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
+      child: AsmitaHotlineSheet(
+        societyId: societyId,
+        onOpenSecurityCommand: () => _showSecurityModal(context),
       ),
     );
   }
