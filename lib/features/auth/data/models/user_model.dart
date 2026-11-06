@@ -116,14 +116,33 @@ class UserModel {
         roleDetails?['desk_number']?.toString() ??
         roleDetails?['desk_id']?.toString() ??
         roleDetails?['workstation_code']?.toString() ??
+        roleDetails?['seat_code']?.toString() ??
         roleDetails?['desk']?.toString();
     if (d != null && d.trim().isNotEmpty) return d.trim();
+
+    // Check mapped unit / flat number
     if (flatMappings.isNotEmpty) {
       final num = flatMappings.first.flatNumber.trim();
       if (!num.contains('-C') && !num.startsWith('C-') && !num.startsWith('c-') && !num.contains('CAB')) {
         return num;
       }
+      // If unit is a cabin with seat specifier (e.g., C-201-S1 or CAB-01-D1), extract seat code
+      final seatMatch = RegExp(r'[-_](S\d+|D\d+|SEAT\d+|DSK\d+)$', caseSensitive: false).firstMatch(num);
+      if (seatMatch != null) {
+        return seatMatch.group(1)!.toUpperCase();
+      }
     }
+
+    // Fallback: Check if cabinCode has a seat suffix (e.g. C-201-S1 -> S1 or C-201-S1)
+    final cabin = roleDetails?['cabin_code']?.toString() ?? roleDetails?['cabin']?.toString() ?? '';
+    if (cabin.isNotEmpty) {
+      final seatMatch = RegExp(r'[-_](S\d+|D\d+|SEAT\d+|DSK\d+)$', caseSensitive: false).firstMatch(cabin);
+      if (seatMatch != null) {
+        return seatMatch.group(1)!.toUpperCase();
+      }
+      return cabin;
+    }
+
     return '';
   }
   String get designation =>
