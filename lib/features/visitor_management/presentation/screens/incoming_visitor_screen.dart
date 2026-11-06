@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/config/env_config.dart';
 import 'package:asmita_society/core/services/incoming_visitor_service.dart';
 import 'package:asmita_society/features/visitor_management/data/repositories/industrial_visit_repository.dart';
@@ -131,12 +132,10 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
         }
 
         if (isAlreadyHandled) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result['message']?.toString() ?? 'Visit request has already been handled.'),
-              backgroundColor: AsmitaPalette.deepNavy,
-              duration: const Duration(seconds: 2),
-            ),
+          AsmitaToast.show(
+            context,
+            message: result['message']?.toString() ?? 'Visit request has already been handled.',
+            type: AsmitaToastType.info,
           );
         }
 
@@ -152,11 +151,19 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
         setState(() {
           _isSubmitting = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to process: $e'),
-            backgroundColor: AsmitaPalette.actionRed,
-          ),
+        String errorMsg = 'Failed to process request';
+        final str = e.toString();
+        if (str.contains('502')) {
+          errorMsg = 'Server is currently restarting/updating. Please retry in a moment.';
+        } else if (str.contains('503') || str.contains('504')) {
+          errorMsg = 'Server unavailable. Please try again.';
+        } else if (str.contains('Network') || str.contains('SocketException')) {
+          errorMsg = 'Network error. Please check your connection.';
+        }
+        AsmitaToast.show(
+          context,
+          message: errorMsg,
+          type: AsmitaToastType.error,
         );
       }
     }
