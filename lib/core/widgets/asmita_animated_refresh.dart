@@ -87,10 +87,15 @@ class _AsmitaAnimatedRefreshState extends State<AsmitaAnimatedRefresh> {
                     angle: percentageComplete * 6.283185307179586,
                     child: Opacity(
                       opacity: (percentageComplete * 1.3).clamp(0.2, 1.0),
-                      child: Icon(
-                        Icons.blur_on_rounded, // Branded dotted icon
-                        color: primaryBrandColor,
-                        size: 24 * (0.65 + (0.35 * percentageComplete)),
+                      child: SizedBox(
+                        width: 22 * (0.65 + (0.35 * percentageComplete)),
+                        height: 22 * (0.65 + (0.35 * percentageComplete)),
+                        child: CircularProgressIndicator(
+                          value: percentageComplete,
+                          strokeWidth: 2.2,
+                          strokeCap: StrokeCap.round,
+                          valueColor: AlwaysStoppedAnimation<Color>(primaryBrandColor),
+                        ),
                       ),
                     ),
                   ),
