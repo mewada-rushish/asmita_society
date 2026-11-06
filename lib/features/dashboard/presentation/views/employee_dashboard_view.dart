@@ -674,6 +674,19 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
               },
             ),
             const SizedBox(height: 12),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.shield_outlined, size: 16),
+              label: const Text('Campus Security Command & Dispatches', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+                _showSecurityModal(context);
+              },
+            ),
+            const SizedBox(height: 8),
           ],
         ),
       ),
