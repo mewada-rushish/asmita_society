@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:just_audio/just_audio.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/config/env_config.dart';
@@ -618,167 +620,87 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                   // Bottom Action Buttons (Material 3 AsmitA Corporate Style)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    child: _isSubmitting
-                        ? const Center(
-                            child: CircularProgressIndicator(
-                              color: AsmitaPalette.deepNavy,
+                    child: Row(
+                      children: [
+                        // 1. Deny Entry Button
+                        Expanded(
+                          flex: 1,
+                          child: AppButton(
+                            onPressed: _isSubmitting ? null : () => _handleDecision('REJECT'),
+                            isLoading: _isSubmitting && _decisionStatus == 'REJECT',
+                            style: AppButtonStyle.custom,
+                            height: 52,
+                            borderRadius: 16,
+                            backgroundColor: isDark
+                                ? const Color(0xFF4C0519).withValues(alpha: 0.35)
+                                : const Color(0xFFFFF1F2),
+                            foregroundColor: AsmitaPalette.actionRed,
+                            icon: Icons.close_rounded,
+                            label: 'Deny',
+                            textStyle: const TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
+                              color: AsmitaPalette.actionRed,
                             ),
-                          )
-                        : Row(
-                            children: [
-                              // 1. Deny Entry Button
-                              Expanded(
-                                flex: 1,
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () => _handleDecision('REJECT'),
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: Container(
-                                      height: 52,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: isDark
-                                            ? const Color(0xFF4C0519).withValues(alpha: 0.35)
-                                            : const Color(0xFFFFF1F2),
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                          color: isDark
-                                              ? const Color(0xFFBE123C).withValues(alpha: 0.4)
-                                              : const Color(0xFFFECDD3),
-                                          width: 1.2,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: const [
-                                          Icon(
-                                            Icons.close_rounded,
-                                            size: 18,
-                                            color: AsmitaPalette.actionRed,
-                                          ),
-                                          SizedBox(width: 6),
-                                          Text(
-                                            'Deny',
-                                            style: TextStyle(
-                                              fontFamily: 'Montserrat',
-                                              fontSize: 13.5,
-                                              fontWeight: FontWeight.w700,
-                                              color: AsmitaPalette.actionRed,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(width: 8),
-
-                              // 2. Acknowledge Button
-                              Expanded(
-                                flex: 1,
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () => _handleDecision('ACKNOWLEDGE'),
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: Container(
-                                      height: 52,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: isDark
-                                            ? const Color(0xFF1E293B)
-                                            : const Color(0xFFF1F5F9),
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                          color: isDark
-                                              ? const Color(0xFF334155)
-                                              : const Color(0xFFCBD5E1),
-                                          width: 1.2,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.touch_app_outlined,
-                                            size: 18,
-                                            color: isDark
-                                                ? const Color(0xFF93C5FD)
-                                                : AsmitaPalette.deepNavy,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            'Ack',
-                                            style: TextStyle(
-                                              fontFamily: 'Montserrat',
-                                              fontSize: 13.5,
-                                              fontWeight: FontWeight.w700,
-                                              color: isDark
-                                                  ? const Color(0xFF93C5FD)
-                                                  : AsmitaPalette.deepNavy,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(width: 8),
-
-                              // 3. Allow Entry Button
-                              Expanded(
-                                flex: 1,
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () => _handleDecision('APPROVE'),
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: Container(
-                                      height: 52,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: AsmitaPalette.successGreen,
-                                        borderRadius: BorderRadius.circular(16),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: AsmitaPalette.successGreen
-                                                .withValues(alpha: 0.35),
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: const [
-                                          Icon(
-                                            Icons.check_rounded,
-                                            size: 18,
-                                            color: Colors.white,
-                                          ),
-                                          SizedBox(width: 6),
-                                          Text(
-                                            'Approve',
-                                            style: TextStyle(
-                                              fontFamily: 'Montserrat',
-                                              fontSize: 13.5,
-                                              fontWeight: FontWeight.w700,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
                           ),
+                        ),
+
+                        const SizedBox(width: 8),
+
+                        // 2. Acknowledge Button
+                        Expanded(
+                          flex: 1,
+                          child: AppButton(
+                            onPressed: _isSubmitting ? null : () => _handleDecision('ACKNOWLEDGE'),
+                            isLoading: _isSubmitting && _decisionStatus == 'ACKNOWLEDGE',
+                            style: AppButtonStyle.custom,
+                            height: 52,
+                            borderRadius: 16,
+                            backgroundColor: isDark
+                                ? const Color(0xFF1E293B)
+                                : const Color(0xFFF1F5F9),
+                            foregroundColor: isDark
+                                ? const Color(0xFF93C5FD)
+                                : AsmitaPalette.deepNavy,
+                            icon: Icons.touch_app_outlined,
+                            label: 'Ack',
+                            textStyle: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? const Color(0xFF93C5FD)
+                                  : AsmitaPalette.deepNavy,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 8),
+
+                        // 3. Allow Entry Button
+                        Expanded(
+                          flex: 1,
+                          child: AppButton(
+                            onPressed: _isSubmitting ? null : () => _handleDecision('APPROVE'),
+                            isLoading: _isSubmitting && _decisionStatus == 'APPROVE',
+                            style: AppButtonStyle.custom,
+                            height: 52,
+                            borderRadius: 16,
+                            backgroundColor: AsmitaPalette.successGreen,
+                            foregroundColor: Colors.white,
+                            icon: Icons.check_rounded,
+                            label: 'Approve',
+                            textStyle: const TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
 
@@ -901,11 +823,10 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
     return CachedNetworkImage(
       imageUrl: fullUrl,
       fit: BoxFit.cover,
-      placeholder: (context, url) => const Center(
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          color: AsmitaPalette.deepNavy,
-        ),
+      placeholder: (context, url) => AsmitaSkeleton.bone(
+        width: double.infinity,
+        height: double.infinity,
+        borderRadius: BorderRadius.circular(20),
       ),
       errorWidget: (context, url, error) => _buildInitialsFallback(initials),
     );

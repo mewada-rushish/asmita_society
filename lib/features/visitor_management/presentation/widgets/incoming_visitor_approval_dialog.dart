@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:just_audio/just_audio.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/di/injection_container.dart' as di;
@@ -76,6 +78,7 @@ class _IncomingVisitorApprovalDialogState
   late final Animation<double> _pulseAnimation;
 
   bool _isSubmitting = false;
+  String? _submittingDecision;
   int _secondsRemaining = 60;
   Timer? _countdownTimer;
 
@@ -133,7 +136,10 @@ class _IncomingVisitorApprovalDialogState
 
   Future<void> _handleDecision(String action) async {
     if (_isSubmitting) return;
-    setState(() => _isSubmitting = true);
+    setState(() {
+      _isSubmitting = true;
+      _submittingDecision = action;
+    });
     await _stopAudio();
 
     try {
@@ -282,11 +288,10 @@ class _IncomingVisitorApprovalDialogState
                                     width: 92,
                                     height: 92,
                                     fit: BoxFit.cover,
-                                    placeholder: (context, url) => const Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: AsmitaPalette.actionRed,
-                                      ),
+                                    placeholder: (context, url) => AsmitaSkeleton.bone(
+                                      width: 92,
+                                      height: 92,
+                                      borderRadius: 46,
                                     ),
                                     errorWidget: (context, url, error) => Text(
                                       initials,
@@ -433,74 +438,50 @@ class _IncomingVisitorApprovalDialogState
                     const SizedBox(height: 22),
 
                     // Action Buttons (Approve / Reject)
-                    if (_isSubmitting)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12.0),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: AsmitaPalette.actionRed,
+                    Row(
+                      children: [
+                        // Reject Button
+                        Expanded(
+                          child: AppButton(
+                            onPressed: _isSubmitting ? null : () => _handleDecision('REJECT'),
+                            isLoading: _isSubmitting && _submittingDecision == 'REJECT',
+                            style: AppButtonStyle.dangerOutlined,
+                            height: 48,
+                            borderRadius: 14,
+                            icon: Icons.close_rounded,
+                            label: 'Reject',
+                            textStyle: const TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: AsmitaPalette.actionRed,
+                            ),
                           ),
                         ),
-                      )
-                    else
-                      Row(
-                        children: [
-                          // Reject Button
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => _handleDecision('REJECT'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AsmitaPalette.actionRed,
-                                side: const BorderSide(
-                                  color: AsmitaPalette.actionRed,
-                                  width: 1.5,
-                                ),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              icon: const Icon(Icons.close_rounded, size: 20),
-                              label: const Text(
-                                'Reject',
-                                style: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
+                        const SizedBox(width: 14),
 
-                          // Approve Button
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => _handleDecision('APPROVE'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF10B981),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                elevation: 4,
-                                shadowColor:
-                                    const Color(0xFF10B981).withValues(alpha: 0.4),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              icon: const Icon(Icons.check_rounded, size: 20),
-                              label: const Text(
-                                'Approve',
-                                style: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                        // Approve Button
+                        Expanded(
+                          child: AppButton(
+                            onPressed: _isSubmitting ? null : () => _handleDecision('APPROVE'),
+                            isLoading: _isSubmitting && _submittingDecision == 'APPROVE',
+                            style: AppButtonStyle.custom,
+                            height: 48,
+                            borderRadius: 14,
+                            backgroundColor: AsmitaPalette.successGreen,
+                            foregroundColor: Colors.white,
+                            icon: Icons.check_rounded,
+                            label: 'Approve',
+                            textStyle: const TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),

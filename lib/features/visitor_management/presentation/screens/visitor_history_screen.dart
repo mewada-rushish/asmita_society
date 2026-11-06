@@ -4,10 +4,11 @@ import '../../../../core/config/env_config.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/app_skeleton.dart';
+import '../../../../core/widgets/app_refresh.dart';
+import '../../../../core/widgets/app_button.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
-import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_visitor_card.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
@@ -1082,17 +1083,10 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
         width: size,
         height: size,
         fit: BoxFit.cover,
-        placeholder: (context, url) => Container(
+        placeholder: (context, url) => AsmitaSkeleton.bone(
           width: size,
           height: size,
-          color: Colors.white.withValues(alpha: 0.1),
-          child: const Center(
-            child: SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-            ),
-          ),
+          borderRadius: size / 2,
         ),
         errorWidget: (context, url, error) => initialsFallback(),
       );
@@ -2549,10 +2543,20 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
             child: BlocBuilder<VisitorBloc, VisitorState>(
               builder: (context, state) {
                 if (state is VisitorLoading) {
-                  return Center(
-                    child: AsmitaLoadingIndicator(
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 28,
+                  return Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: List.generate(
+                        4,
+                        (index) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: AsmitaSkeleton.bone(
+                            width: double.infinity,
+                            height: 120,
+                            borderRadius: 16,
+                          ),
+                        ),
+                      ),
                     ),
                   );
                 }
@@ -2573,7 +2577,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        ElevatedButton.icon(
+                        AppButton(
                           onPressed: () {
                             if (isPermissionError) {
                               String requestTarget = 'tenant to share logs';
@@ -2585,16 +2589,11 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                               _loadHistory(isRefresh: true);
                             }
                           },
-                          icon: Icon(isPermissionError ? Icons.lock_open_rounded : Icons.refresh),
-                          label: Text(isPermissionError ? 'Request Access' : 'Retry'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.primary,
-                            foregroundColor: Theme.of(
-                              context,
-                            ).colorScheme.surface,
-                          ),
+                          icon: isPermissionError ? Icons.lock_open_rounded : Icons.refresh,
+                          label: isPermissionError ? 'Request Access' : 'Retry',
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          foregroundColor: Theme.of(context).colorScheme.surface,
+                          borderRadius: 12,
                         ),
                       ],
                     ),
@@ -2611,7 +2610,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                     parent: BouncingScrollPhysics(),
                   ),
                   slivers: [
-                    AsmitaAnimatedRefresh(
+                    AppRefresh.sliver(
                       onRefresh: () async {
                         final bloc = context.read<VisitorBloc>();
                         final future = bloc.stream
