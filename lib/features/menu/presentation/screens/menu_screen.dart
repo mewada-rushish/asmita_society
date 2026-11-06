@@ -3,10 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/utils/property_role_resolver.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
-import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_event.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
+import 'package:asmita_society/features/auth/presentation/login_screen.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_bloc.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_event.dart';
 import 'package:asmita_society/features/visitor_management/presentation/screens/department_delegation_screen.dart';
@@ -413,52 +413,113 @@ class MenuScreen extends StatelessWidget {
                   ? 'Are you sure you want to logout? You will need to sign in again to resume security gate operations.'
                   : 'Are you sure you want to logout? You will need to sign in again to access society features.');
 
-          AsmitaDialog.show(
+          bool isLoggingOut = false;
+
+          showDialog(
             context: context,
-            title: 'Logout',
-            content: Text(
-              logoutScopeMessage,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 14,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-            ),
-            actions: [
-              OutlinedButton(
-                onPressed: () => Navigator.pop(context),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: Theme.of(context).dividerColor),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: Text(
-                  'Cancel',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  context.read<VisitorBloc>().add(ClearVisitorHistory());
-                  context.read<AuthBloc>().add(AuthLogoutRequested());
+            barrierDismissible: false,
+            builder: (dialogContext) {
+              return StatefulBuilder(
+                builder: (context, setDialogState) {
+                  return PopScope(
+                    canPop: !isLoggingOut,
+                    child: AlertDialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      title: const Text(
+                        'Logout',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      content: Text(
+                        logoutScopeMessage,
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 14,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                      actions: [
+                        OutlinedButton(
+                          onPressed: isLoggingOut
+                              ? null
+                              : () => Navigator.of(dialogContext).pop(),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: Theme.of(context).dividerColor),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: isLoggingOut
+                              ? null
+                              : () async {
+                                  setDialogState(() {
+                                    isLoggingOut = true;
+                                  });
+
+                                  final authBloc = context.read<AuthBloc>();
+                                  context.read<VisitorBloc>().add(ClearVisitorHistory());
+                                  authBloc.add(const AuthLogoutRequested());
+
+                                  // Wait for AuthUnauthenticated or timeout fallback
+                                  try {
+                                    await authBloc.stream
+                                        .firstWhere((state) => state is AuthUnauthenticated)
+                                        .timeout(const Duration(seconds: 4));
+                                  } catch (_) {
+                                    // Proceed anyway after timeout
+                                  }
+
+                                  if (dialogContext.mounted) {
+                                    Navigator.of(dialogContext, rootNavigator: true).pop();
+                                  }
+
+                                  if (context.mounted) {
+                                    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                                      (route) => false,
+                                    );
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: isLoggingOut
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Theme.of(context).colorScheme.surface,
+                                    ),
+                                  ),
+                                )
+                              : Text(
+                                  'Logout',
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.surface,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
+                      ],
+                    ),
+                  );
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: Text(
-                  'Logout',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.surface,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
+              );
+            },
           );
           return;
         }
