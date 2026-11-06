@@ -790,14 +790,18 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Meeting Room / Space Selector
-        if (availableAmenities.isNotEmpty) ...[
-          _buildBottomSheetTrigger(
-            label: 'Selected Meeting Room / Space *',
-            value: _selectedFacility.isNotEmpty ? _selectedFacility : 'Select Meeting Room',
-            onTap: () {
+        // Meeting Room / Space Selector (always rendered instantly without layout shift)
+        _buildBottomSheetTrigger(
+          label: 'Selected Meeting Room / Space *',
+          value: _selectedFacility.isNotEmpty ? _selectedFacility : 'Select Meeting Room',
+          onTap: () {
+            // If amenities are available, show picker sheet. Otherwise use fallback with initialAmenity.
+            final listToShow = availableAmenities.isNotEmpty
+                ? availableAmenities
+                : (currentAmenity != null ? [currentAmenity] : <AmenityModel>[]);
+            if (listToShow.isNotEmpty) {
               _buildMeetingRoomPickerSheet(
-                amenities: availableAmenities,
+                amenities: listToShow,
                 selectedName: _selectedFacility,
                 onSelected: (amenity) {
                   setState(() {
@@ -805,10 +809,10 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
                   });
                 },
               );
-            },
-          ),
-          const SizedBox(height: 16),
-        ],
+            }
+          },
+        ),
+        const SizedBox(height: 16),
         if (hasBookingOptions) ...[
           _buildBottomSheetTrigger(
             label: 'Purpose of Booking *',
