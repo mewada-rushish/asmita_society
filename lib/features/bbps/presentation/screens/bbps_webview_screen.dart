@@ -112,22 +112,34 @@ class _BbpsWebViewScreenState extends State<BbpsWebViewScreen> {
 
   /// Detects whether the URL points to Setu's root "Pay bills" category picker
   /// (e.g. `https://billpay.setu.co/{sessionId}` or `https://billpay.setu.co/{sessionId}/`).
-  /// When true, we return to the app's native BBPS screen instead of loading Setu's category list.
+  /// When true, we return to the app's native BBPS screen strictly instead of showing Setu's web category picker.
   bool _isRootCategoriesUrl(String url) {
     if (widget.categoryTitle == null) return false;
-    // Never exit during initial session load or before user has navigated deeper
-    if (!_hasNavigatedBeyondInitial) return false;
 
     try {
       final uri = Uri.parse(url);
       final sessionUri = Uri.parse(widget.sessionUrl);
-      if (uri.host == sessionUri.host && uri.path == sessionUri.path) {
+
+      // If URL host is different from session host (external redirect or OAuth), let it navigate
+      if (uri.host.isNotEmpty && sessionUri.host.isNotEmpty && uri.host != sessionUri.host) {
         return false;
       }
+
       final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
-      // Setu category URLs have 3+ segments: /{sessionId}/billers/{category}
-      // Root category screen has <= 1 segment: /{sessionId}
-      if (segments.length <= 1) {
+      final sessionSegments = sessionUri.pathSegments.where((s) => s.isNotEmpty).toList();
+
+      // If user is currently on or being routed to Setu's root category screen:
+      // In Setu v2, the root screen path is simply /{sessionId} or /{sessionId}/
+      // Whereas specific biller category / selection views have sub-paths like /{sessionId}/billers/{category}
+      // or /{sessionId}/fetch or /{sessionId}/biller/... (segments.length >= 2 or > sessionSegments.length).
+      final isRootPath = segments.length <= 1 || (sessionSegments.isNotEmpty && segments.length == sessionSegments.length);
+
+      if (isRootPath) {
+        // If we haven't navigated deeper into a biller yet, check if the initial sessionUrl itself already
+        // pointed to a sub-category/biller. If the current URL matches the exact initial sessionUrl, permit initial load.
+        if (uri.path == sessionUri.path && !_hasNavigatedBeyondInitial) {
+          return false;
+        }
         return true;
       }
     } catch (_) {}
