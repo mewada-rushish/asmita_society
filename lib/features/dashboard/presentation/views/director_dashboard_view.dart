@@ -13,9 +13,12 @@ import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
+import '../../../../core/widgets/asmita_dialog.dart';
 import '../../../../core/widgets/asmita_text_field.dart';
 import '../../../../core/widgets/asmita_select_field.dart';
 import '../../../../core/utils/property_role_resolver.dart';
+import '../../../services/presentation/widgets/asmita_facility_booking_wizard.dart';
+import '../../../services/data/models/amenity_model.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
 import '../../../auth/bloc/auth_event.dart';
@@ -185,7 +188,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   void _showContactReceptionistSheet(BuildContext context) {
     showAsmitaBottomSheet(
       context: context,
-      title: 'Floor Support Hotline',
+      title: 'Floor Support & Security Hotline',
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
@@ -209,36 +212,69 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           const SizedBox(height: 8),
           _buildHotlineTile(
             context,
-            icon: Icons.shield_outlined,
+            icon: Icons.shield_rounded,
             title: 'Gate 1 Security Control',
             subtitle: 'Ext: 104 • Main Campus Gate & VIP Escort',
             onCall: () {
               Navigator.pop(context);
-              AsmitaToast.show(
-                context,
-                message: 'Connecting to Gate 1 Control (Ext 104)...',
-                type: AsmitaToastType.info,
-              );
+              _callContact('Gate 1 Security', '+919820110104');
             },
           ),
           const SizedBox(height: 8),
           _buildHotlineTile(
             context,
-            icon: Icons.local_hospital_outlined,
-            title: 'Facility Emergency Desk',
-            subtitle: 'Ext: 999 • Rapid Response Team',
+            icon: Icons.admin_panel_settings_rounded,
+            title: 'Chief Security Officer (CSO)',
+            subtitle: 'Ext: 100 • Head of Campus Security',
             onCall: () {
               Navigator.pop(context);
-              AsmitaToast.show(
-                context,
-                message: 'Connecting to Emergency Response (Ext 999)...',
-                type: AsmitaToastType.info,
-              );
+              _callContact('Campus CSO', '+919820110100');
+            },
+          ),
+          const SizedBox(height: 8),
+          _buildHotlineTile(
+            context,
+            icon: Icons.emergency_rounded,
+            title: 'Facility Emergency Desk',
+            subtitle: 'Ext: 999 • Rapid Response Team',
+            isEmergency: true,
+            onCall: () {
+              Navigator.pop(context);
+              _callContact('Emergency Response', '+919820110911');
             },
           ),
           const SizedBox(height: 12),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.shield_outlined, size: 16),
+            label: const Text('Campus Security Command & Dispatches', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              _showSecurityModal(context);
+            },
+          ),
+          const SizedBox(height: 8),
         ],
       ),
+      ),
+    );
+  }
+
+  void _openMeetingRoomReservation(BuildContext context) {
+    AsmitaDialog.show(
+      context: context,
+      title: 'Meeting Room Reservation',
+      content: const AsmitaFacilityBookingWizard(
+        initialAmenity: AmenityModel(
+          amenityId: 991,
+          name: 'Executive Boardroom',
+          type: 'booking',
+          description: 'High-Speed Smart AV & Video Conferencing Boardroom',
+          capacity: 16,
+        ),
       ),
     );
   }
@@ -1313,7 +1349,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 2. QUICK ACTIONS (4 Square Icon Boxes: Pre-Approve, Car Valet, Security, BillPay)
+  // 2. QUICK ACTIONS (4 Square Icon Boxes: Pre-Approve, Car Valet, Meeting Rooms, BillPay)
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildQuickActionsGrid(BuildContext context) {
     final actions = <_QuickActionItemData>[
@@ -1328,9 +1364,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         onTap: () => _showCarValetModal(context),
       ),
       _QuickActionItemData(
-        label: 'Security',
-        icon: Icons.shield_rounded,
-        onTap: () => _showSecurityModal(context),
+        label: 'Meeting Rooms',
+        icon: Icons.meeting_room_rounded,
+        onTap: () => _openMeetingRoomReservation(context),
       ),
       _QuickActionItemData(
         label: 'BillPay',
