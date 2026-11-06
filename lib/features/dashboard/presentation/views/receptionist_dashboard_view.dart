@@ -187,10 +187,13 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
 
   Widget _buildScaffold(
     BuildContext context,
-    List<IndustrialVisitModel> visits, {
+    List<IndustrialVisitModel> rawVisits, {
     required bool isLoading,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Today's entries only (resets at 00:00)
+    final visits = rawVisits.where((v) => v.isForToday).toList();
 
     // Tab 1: Ground Waiting List (Awaiting Host or inside lobby)
     final waitingList = visits.where((v) => v.isPending).toList();
