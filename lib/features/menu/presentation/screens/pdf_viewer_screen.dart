@@ -12,11 +12,7 @@ class PdfViewerScreen extends StatefulWidget {
   final String title;
   final String pdfUrl;
 
-  const PdfViewerScreen({
-    super.key,
-    required this.title,
-    required this.pdfUrl,
-  });
+  const PdfViewerScreen({super.key, required this.title, required this.pdfUrl});
 
   @override
   State<PdfViewerScreen> createState() => _PdfViewerScreenState();
@@ -41,7 +37,8 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
     }
 
     // Google Docs Viewer renders PDFs seamlessly without requiring native device_info or binary plugins
-    final googleDocsViewerUrl = 'https://docs.google.com/gview?embedded=true&url=${Uri.encodeComponent(widget.pdfUrl)}';
+    final googleDocsViewerUrl =
+        'https://docs.google.com/gview?embedded=true&url=${Uri.encodeComponent(widget.pdfUrl)}';
 
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -91,12 +88,20 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: Icon(Icons.share_rounded, color: theme.colorScheme.primary, size: 22),
+                    icon: Icon(
+                      Icons.share_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 22,
+                    ),
                     tooltip: 'Share Document',
                     onPressed: _shareDocument,
                   ),
                   IconButton(
-                    icon: Icon(Icons.open_in_browser_rounded, color: theme.colorScheme.primary, size: 22),
+                    icon: Icon(
+                      Icons.open_in_browser_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 22,
+                    ),
                     tooltip: 'Open in Browser',
                     onPressed: _openInBrowser,
                   ),
@@ -113,9 +118,15 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          AsmitaLoadingIndicator(color: theme.colorScheme.primary, size: 36),
+                          AsmitaLoadingIndicator(
+                            color: theme.colorScheme.primary,
+                            size: 36,
+                          ),
                           const SizedBox(height: 12),
-                          Text('Rendering document...', style: theme.textTheme.bodyMedium),
+                          Text(
+                            'Rendering document...',
+                            style: theme.textTheme.bodyMedium,
+                          ),
                         ],
                       ),
                     ),
@@ -126,18 +137,25 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.error_outline_rounded, size: 48, color: theme.colorScheme.error),
+                            Icon(
+                              Icons.error_outline_rounded,
+                              size: 48,
+                              color: theme.colorScheme.error,
+                            ),
                             const SizedBox(height: 12),
                             Text(
                               'Failed to display document preview',
-                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             const SizedBox(height: 6),
                             Text(
                               _errorMessage!,
                               textAlign: TextAlign.center,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                                color: theme.textTheme.bodySmall?.color
+                                    ?.withValues(alpha: 0.7),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -171,12 +189,18 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
       if (widget.pdfUrl.isEmpty) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Preparing file to share...'), duration: Duration(seconds: 1)),
+        const SnackBar(
+          content: Text('Preparing file to share...'),
+          duration: Duration(seconds: 1),
+        ),
       );
 
       final tempDir = await getTemporaryDirectory();
-      final sanitizedTitle = widget.title.replaceAll(RegExp(r'[^\w\s\-]'), '_').trim();
-      final filePath = '${tempDir.path}/${sanitizedTitle.isNotEmpty ? sanitizedTitle : "document"}.pdf';
+      final sanitizedTitle = widget.title
+          .replaceAll(RegExp(r'[^\w\s\-]'), '_')
+          .trim();
+      final filePath =
+          '${tempDir.path}/${sanitizedTitle.isNotEmpty ? sanitizedTitle : "document"}.pdf';
 
       final file = File(filePath);
       if (!await file.exists()) {
@@ -184,16 +208,13 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
       }
 
       await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(filePath)],
-          text: widget.title,
-        ),
+        ShareParams(files: [XFile(filePath)], text: widget.title),
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not share document: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not share document: $e')));
       }
     }
   }
