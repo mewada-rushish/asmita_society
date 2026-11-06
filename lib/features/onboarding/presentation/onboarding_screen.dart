@@ -52,9 +52,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final authBloc = context.read<AuthBloc>();
     try {
       await authBloc.secureStorage.write(
-            key: 'has_seen_onboarding',
-            value: 'true',
-          );
+        key: 'has_seen_onboarding',
+        value: 'true',
+      );
     } catch (_) {}
 
     if (mounted) {
@@ -114,7 +114,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   onTap: _completeOnboarding,
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
                       color: AsmitaPalette.deepNavy.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(20),
@@ -158,7 +161,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             minHeight: constraints.maxHeight,
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32.0,
+                            ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -173,17 +178,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                       colors: [
-                                        AsmitaPalette.deepNavy.withValues(alpha: 0.06),
-                                        AsmitaPalette.deepNavy.withValues(alpha: 0.14),
+                                        AsmitaPalette.deepNavy.withValues(
+                                          alpha: 0.06,
+                                        ),
+                                        AsmitaPalette.deepNavy.withValues(
+                                          alpha: 0.14,
+                                        ),
                                       ],
                                     ),
                                     border: Border.all(
-                                      color: AsmitaPalette.deepNavy.withValues(alpha: 0.2),
+                                      color: AsmitaPalette.deepNavy.withValues(
+                                        alpha: 0.2,
+                                      ),
                                       width: 2,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AsmitaPalette.deepNavy.withValues(alpha: 0.04),
+                                        color: AsmitaPalette.deepNavy
+                                            .withValues(alpha: 0.04),
                                         blurRadius: 16,
                                         offset: const Offset(0, 8),
                                       ),
@@ -200,9 +212,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 const SizedBox(height: 36),
                                 // Subtitle badge
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: AsmitaPalette.deepNavy.withValues(alpha: 0.06),
+                                    color: AsmitaPalette.deepNavy.withValues(
+                                      alpha: 0.06,
+                                    ),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
@@ -221,7 +238,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 Text(
                                   slide['title'] as String,
                                   textAlign: TextAlign.center,
-                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
                                         fontFamily: 'Montserrat',
                                         fontWeight: FontWeight.w800,
                                         color: AsmitaPalette.deepNavy,
@@ -233,7 +253,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 Text(
                                   slide['description'] as String,
                                   textAlign: TextAlign.center,
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
                                         fontFamily: 'Poppins',
                                         color: const Color(0xFF64748B),
                                         height: 1.6,
@@ -276,7 +297,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: AsmitaPalette.deepNavy.withValues(alpha: 0.15),
+                            color: AsmitaPalette.deepNavy.withValues(
+                              alpha: 0.15,
+                            ),
                             width: 1.5,
                           ),
                         ),
@@ -312,7 +335,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         borderRadius: BorderRadius.circular(27),
                         boxShadow: [
                           BoxShadow(
-                            color: AsmitaPalette.deepNavy.withValues(alpha: 0.3),
+                            color: AsmitaPalette.deepNavy.withValues(
+                              alpha: 0.3,
+                            ),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -322,7 +347,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14.0,
+                            ),
                             child: _currentPage == _slides.length - 1
                                 ? const Row(
                                     mainAxisSize: MainAxisSize.min,
