@@ -29,8 +29,13 @@ class FormFieldConfig {
 
 class AsmitaFacilityBookingWizard extends StatefulWidget {
   final AmenityModel? initialAmenity;
+  final bool showRoomPicker;
 
-  const AsmitaFacilityBookingWizard({super.key, this.initialAmenity});
+  const AsmitaFacilityBookingWizard({
+    super.key,
+    this.initialAmenity,
+    this.showRoomPicker = false,
+  });
 
   @override
   State<AsmitaFacilityBookingWizard> createState() => _AsmitaFacilityBookingWizardState();
@@ -106,7 +111,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
 
     if (widget.initialAmenity != null) {
       _selectedFacility = widget.initialAmenity!.name;
-      _currentStep = 1; // Skip selection if opened from a specific card
+      _currentStep = widget.showRoomPicker ? 0 : 1; // Show room selection step if requested
     } else {
       _currentStep = 0;
     }
@@ -767,13 +772,15 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
   }
 
   Widget _buildHallBookingCard() {
+    final state = context.read<AmenitiesBloc>().state;
     AmenityModel? currentAmenity = widget.initialAmenity;
     if (currentAmenity == null || currentAmenity.name != _selectedFacility) {
-      final state = context.read<AmenitiesBloc>().state;
       try {
         currentAmenity = state.amenities.firstWhere((a) => a.name.toLowerCase() == _selectedFacility.toLowerCase());
       } catch (_) {}
     }
+
+    final availableAmenities = state.amenities;
 
     // If fetched from backend and options are empty, it means purpose is not needed
     bool hasBookingOptions = true;
@@ -784,6 +791,26 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Meeting Room / Space Selector
+        if (availableAmenities.isNotEmpty) ...[
+          _buildBottomSheetTrigger(
+            label: 'Selected Meeting Room / Space *',
+            value: _selectedFacility.isNotEmpty ? _selectedFacility : 'Select Meeting Room',
+            onTap: () {
+              _buildOptionPickerSheet(
+                title: 'Select Meeting Room / Space',
+                options: availableAmenities.map((a) => a.name).toList(),
+                selectedValue: _selectedFacility,
+                onSelected: (val) {
+                  setState(() {
+                    _selectedFacility = val;
+                  });
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
         if (hasBookingOptions) ...[
           _buildBottomSheetTrigger(
             label: 'Purpose of Booking *',
@@ -791,7 +818,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
             onTap: _showPurposePickerSheet,
           ),
           if (_bookingPurpose == 'Other') ...[
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             _buildTextField(
               'Specify Custom Purpose *',
               hintText: 'E.g., Corporate Meeting',
@@ -800,7 +827,7 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
               validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
             ),
           ],
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
         ],
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1480,8 +1507,14 @@ Show this at the gate for entry.
                       icon = Icons.cake_rounded;
                     } else if (lower.contains('wedding') || lower.contains('anniversary') || lower.contains('engagement')) {
                       icon = Icons.favorite_rounded;
-                    } else if (lower.contains('meeting') || lower.contains('corporate')) {
+                    } else if (lower.contains('boardroom')) {
+                      icon = Icons.meeting_room_rounded;
+                    } else if (lower.contains('conference') || lower.contains('meeting')) {
+                      icon = Icons.groups_rounded;
+                    } else if (lower.contains('corporate') || lower.contains('business')) {
                       icon = Icons.business_center_rounded;
+                    } else if (lower.contains('desk') || lower.contains('pod')) {
+                      icon = Icons.desk_rounded;
                     } else if (lower.contains('reception')) {
                       icon = Icons.people_alt_rounded;
                     } else if (lower.contains('religious')) {
