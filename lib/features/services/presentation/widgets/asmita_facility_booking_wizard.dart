@@ -797,13 +797,12 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
             label: 'Selected Meeting Room / Space *',
             value: _selectedFacility.isNotEmpty ? _selectedFacility : 'Select Meeting Room',
             onTap: () {
-              _buildOptionPickerSheet(
-                title: 'Select Meeting Room / Space',
-                options: availableAmenities.map((a) => a.name).toList(),
-                selectedValue: _selectedFacility,
-                onSelected: (val) {
+              _buildMeetingRoomPickerSheet(
+                amenities: availableAmenities,
+                selectedName: _selectedFacility,
+                onSelected: (amenity) {
                   setState(() {
-                    _selectedFacility = val;
+                    _selectedFacility = amenity.name;
                   });
                 },
               );
@@ -1467,6 +1466,193 @@ Show this at the gate for entry.
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _buildMeetingRoomPickerSheet({
+    required List<AmenityModel> amenities,
+    String? selectedName,
+    required ValueChanged<AmenityModel> onSelected,
+  }) {
+    bool isSheetClosing = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showAsmitaBottomSheet(
+      context: context,
+      title: 'Select Meeting Room / Space',
+      isScrollControlled: true,
+      contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.65,
+        ),
+        child: ListView.separated(
+          shrinkWrap: true,
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          itemCount: amenities.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
+          itemBuilder: (context, index) {
+            final amenity = amenities[index];
+            final isSelected = selectedName == amenity.name;
+
+            // Extract floor from customFields or name
+            String? floorText;
+            try {
+              final cf = amenity.customFields;
+              if (cf.isNotEmpty) {
+                final flEntry = cf.firstWhere(
+                  (c) => c['key'] == 'floor' || c['label']?.toString().toLowerCase() == 'floor',
+                  orElse: () => <String, dynamic>{},
+                );
+                if (flEntry['value'] != null) {
+                  floorText = 'Floor ${flEntry['value']}';
+                }
+              }
+            } catch (_) {}
+
+            if (floorText == null) {
+              final nameMatch = RegExp(r'Floor\s*(\d+|G)', caseSensitive: false).firstMatch(amenity.name);
+              if (nameMatch != null) {
+                final fNum = nameMatch.group(1);
+                floorText = fNum?.toUpperCase() == 'G' ? 'Ground Floor' : 'Floor $fNum';
+              } else if (amenity.name.contains('Boardroom')) {
+                floorText = 'Floor 1';
+              } else if (amenity.name.contains('Conference')) {
+                floorText = 'Floor 2';
+              }
+            }
+
+            // Clean display name by trimming any redundant trailing "(Floor X)"
+            final displayName = amenity.name.replaceAll(RegExp(r'\s*\(Floor\s*\d+\)', caseSensitive: false), '').trim();
+
+            IconData icon = Icons.meeting_room_rounded;
+            final lower = amenity.name.toLowerCase();
+            if (lower.contains('conference') || lower.contains('meeting')) {
+              icon = Icons.groups_rounded;
+            } else if (lower.contains('desk') || lower.contains('pod')) {
+              icon = Icons.desk_rounded;
+            }
+
+            return Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  if (!isSheetClosing) {
+                    isSheetClosing = true;
+                    onSelected(amenity);
+                    Navigator.pop(context);
+                  }
+                },
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary.withValues(alpha: isDark ? 0.18 : 0.06)
+                        : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                      width: isSelected ? 1.6 : 1.0,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
+                        blurRadius: 3,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 18),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    displayName,
+                                    style: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: 13.5,
+                                      color: Theme.of(context).colorScheme.primary,
+                                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                      letterSpacing: -0.2,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (floorText != null) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? const Color(0xFF334155)
+                                          : const Color(0xFFF1F5F9),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: isDark
+                                            ? const Color(0xFF475569)
+                                            : const Color(0xFFCBD5E1),
+                                        width: 0.8,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      floorText,
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            if (amenity.capacity != null && amenity.capacity! > 0) ...[
+                              const SizedBox(height: 3),
+                              Text(
+                                'Capacity: up to ${amenity.capacity} people',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 11,
+                                  color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.75),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      if (isSelected) ...[
+                        const SizedBox(width: 8),
+                        Icon(Icons.check_circle_rounded, color: Theme.of(context).colorScheme.primary, size: 20),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
