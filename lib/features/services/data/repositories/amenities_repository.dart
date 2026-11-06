@@ -7,7 +7,8 @@ import '../models/amenity_booking_model.dart';
 class AmenitiesRepository {
   final Dio _dio;
 
-  AmenitiesRepository({Dio? dio}) : _dio = dio ?? AsmitaDioClient(SecureStorageService()).dio;
+  AmenitiesRepository({Dio? dio})
+    : _dio = dio ?? AsmitaDioClient(SecureStorageService()).dio;
 
   Future<List<AmenityModel>> getAmenities({int? societyId}) async {
     try {
@@ -71,10 +72,14 @@ class AmenitiesRepository {
       if (expectedGuests != null) payload['expected_guests'] = expectedGuests;
       if (specialNotes != null) payload['special_notes'] = specialNotes;
 
-      final response = await _dio.post('/app-api/amenities/book', data: payload);
+      final response = await _dio.post(
+        '/app-api/amenities/book',
+        data: payload,
+      );
       return {
         'success': response.data['success'] == true,
-        'message': response.data['message']?.toString() ?? 'Booked successfully',
+        'message':
+            response.data['message']?.toString() ?? 'Booked successfully',
         'is_override': response.data['is_override'] == true,
       };
     } on DioException catch (e) {
@@ -86,7 +91,10 @@ class AmenitiesRepository {
   String _extractError(DioException e, String fallback) {
     if (e.response?.data is Map) {
       final data = e.response!.data as Map;
-      return data['message']?.toString() ?? data['error']?.toString() ?? e.message ?? fallback;
+      return data['message']?.toString() ??
+          data['error']?.toString() ??
+          e.message ??
+          fallback;
     }
     return e.message ?? fallback;
   }
