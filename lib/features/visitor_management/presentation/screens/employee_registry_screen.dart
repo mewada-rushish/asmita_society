@@ -428,7 +428,7 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: actionColor,
+                      backgroundColor: AsmitaPalette.deepNavy,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -439,8 +439,10 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                     child: Text(
                       'Confirm ${isCheckIn ? "Check-in" : "Check-out"}',
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Montserrat',
+                        fontWeight: FontWeight.w700,
                         fontSize: 14,
+                        letterSpacing: 0.2,
                       ),
                     ),
                   ),
@@ -1068,18 +1070,20 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                                       onTap: () => _showMovementDialog(emp, isCheckIn: true),
                                       borderRadius: BorderRadius.circular(10),
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
                                         decoration: BoxDecoration(
                                           color: isCheckedIn
-                                              ? AsmitaPalette.successGreen
+                                              ? (isDark ? const Color(0xFF064E3B) : const Color(0xFF059669))
                                               : (isDark
-                                                  ? AsmitaPalette.successGreen.withValues(alpha: 0.15)
-                                                  : AsmitaPalette.successGreen.withValues(alpha: 0.1)),
+                                                  ? const Color(0xFF064E3B).withValues(alpha: 0.25)
+                                                  : const Color(0xFFECFDF5)),
                                           borderRadius: BorderRadius.circular(10),
                                           border: Border.all(
                                             color: isCheckedIn
-                                                ? AsmitaPalette.successGreen
-                                                : AsmitaPalette.successGreen.withValues(alpha: 0.4),
+                                                ? (isDark ? const Color(0xFF059669) : const Color(0xFF047857))
+                                                : (isDark
+                                                    ? const Color(0xFF059669).withValues(alpha: 0.4)
+                                                    : const Color(0xFFA7F3D0)),
                                             width: 1,
                                           ),
                                         ),
@@ -1089,7 +1093,9 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                                             Icon(
                                               Icons.login_rounded,
                                               size: 13,
-                                              color: isCheckedIn ? Colors.white : AsmitaPalette.successGreen,
+                                              color: isCheckedIn
+                                                  ? Colors.white
+                                                  : (isDark ? const Color(0xFF34D399) : const Color(0xFF047857)),
                                             ),
                                             const SizedBox(width: 4),
                                             Text(
@@ -1098,7 +1104,9 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                                                 fontFamily: 'Montserrat',
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w700,
-                                                color: isCheckedIn ? Colors.white : AsmitaPalette.successGreen,
+                                                color: isCheckedIn
+                                                    ? Colors.white
+                                                    : (isDark ? const Color(0xFF34D399) : const Color(0xFF047857)),
                                               ),
                                             ),
                                           ],
@@ -1115,18 +1123,20 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                                       onTap: () => _showMovementDialog(emp, isCheckIn: false),
                                       borderRadius: BorderRadius.circular(10),
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
                                         decoration: BoxDecoration(
                                           color: !isCheckedIn && movement != null
-                                              ? AsmitaPalette.actionRed
+                                              ? (isDark ? const Color(0xFF991B1B) : AsmitaPalette.actionRed)
                                               : (isDark
-                                                  ? AsmitaPalette.actionRed.withValues(alpha: 0.15)
-                                                  : AsmitaPalette.actionRed.withValues(alpha: 0.08)),
+                                                  ? const Color(0xFF4C0519).withValues(alpha: 0.25)
+                                                  : const Color(0xFFFFF1F2)),
                                           borderRadius: BorderRadius.circular(10),
                                           border: Border.all(
                                             color: !isCheckedIn && movement != null
-                                                ? AsmitaPalette.actionRed
-                                                : AsmitaPalette.actionRed.withValues(alpha: 0.4),
+                                                ? (isDark ? const Color(0xFFB91C1C) : AsmitaPalette.actionRed)
+                                                : (isDark
+                                                    ? const Color(0xFFBE123C).withValues(alpha: 0.35)
+                                                    : const Color(0xFFFECDD3)),
                                             width: 1,
                                           ),
                                         ),

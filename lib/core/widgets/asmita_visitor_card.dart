@@ -1344,7 +1344,7 @@ class AsmitaVisitorCard extends StatelessWidget {
                 ),
 
                 // 3. Unified Executive Action Bar (Single Sleek Row)
-                if (onApprove != null || onDeny != null || onAcknowledge != null || onResend != null) ...[
+                if (onApprove != null || onDeny != null || onAcknowledge != null) ...[
                   const SizedBox(height: 12),
                   _buildActionBar(context, isDark),
                 ],
@@ -1489,10 +1489,56 @@ class AsmitaVisitorCard extends StatelessWidget {
   Widget _buildRightAffordance(BuildContext context, bool isDark) {
     if (trailing != null) return trailing!;
 
-    if (hasQrCode) {
+    if (hasQrCode || onResend != null) {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (onResend != null) ...[
+            Semantics(
+              label: 'Resend approval request',
+              button: true,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  key: const ValueKey('visit_card_resend_action'),
+                  onTap: () {
+                    HapticFeedback.mediumImpact();
+                    onResend!();
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    margin: const EdgeInsets.only(right: 6),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AsmitaPalette.deepNavyDark
+                          : AsmitaPalette.deepNavy,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (isDark
+                                  ? AsmitaPalette.deepNavyDark
+                                  : AsmitaPalette.deepNavy)
+                              .withValues(alpha: isDark ? 0.35 : 0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.send_rounded,
+                      size: 15,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
           if (onAcknowledge != null) ...[
             Semantics(
               label: isAcknowledged ? 'Acknowledged' : 'Acknowledge visitor status',
@@ -1532,38 +1578,39 @@ class AsmitaVisitorCard extends StatelessWidget {
               ),
             ),
           ],
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                width: 1,
+          if (hasQrCode)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.qr_code_2_rounded,
+                    size: 16,
+                    color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'QR',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.qr_code_2_rounded,
-                  size: 16,
-                  color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'QR',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       );
     }
@@ -1615,64 +1662,6 @@ class AsmitaVisitorCard extends StatelessWidget {
   }
 
   Widget _buildActionBar(BuildContext context, bool isDark) {
-    // If onResend is provided (typically for expired passes) and no approval actions exist
-    if (onResend != null && onApprove == null && onDeny == null && onAcknowledge == null) {
-      final resendBg = isDark
-          ? AsmitaPalette.deepNavyDark
-          : AsmitaPalette.deepNavy;
-
-      return Align(
-        alignment: Alignment.centerRight,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            key: const ValueKey('visit_card_resend_action'),
-            onTap: () {
-              HapticFeedback.mediumImpact();
-              onResend!();
-            },
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              height: 38,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: resendBg,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: resendBg.withValues(alpha: isDark ? 0.35 : 0.25),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.send_rounded,
-                    size: 15,
-                    color: Colors.white,
-                  ),
-                  SizedBox(width: 6),
-                  Text(
-                    'Resend',
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
     final hasDeny = onDeny != null;
     final hasAck = onAcknowledge != null;
     final hasApprove = onApprove != null;
