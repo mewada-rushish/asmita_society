@@ -58,18 +58,26 @@ class AsmitaSkeleton extends StatelessWidget {
 
   /// Helper placeholder for list items with realistic sizing
   static Widget bone({
-    required double width,
+    double? width,
     required double height,
-    double borderRadius = 8.0,
+    dynamic borderRadius = 8.0,
     EdgeInsetsGeometry? margin,
   }) {
+    BorderRadius effectiveRadius;
+    if (borderRadius is BorderRadius) {
+      effectiveRadius = borderRadius;
+    } else if (borderRadius is num) {
+      effectiveRadius = BorderRadius.circular(borderRadius.toDouble());
+    } else {
+      effectiveRadius = BorderRadius.circular(8.0);
+    }
     return Container(
       width: width,
       height: height,
       margin: margin,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(borderRadius),
+        borderRadius: effectiveRadius,
       ),
     );
   }
