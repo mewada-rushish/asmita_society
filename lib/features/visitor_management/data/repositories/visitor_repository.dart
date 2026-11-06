@@ -140,7 +140,10 @@ class VisitorRepository {
               'pass_code': passCode,
               'status': statusStr ?? 'Approved',
               'created_at': item['created_at'],
-              'valid_from': item['created_at'],
+              'valid_from': item['valid_from'] ?? item['created_at'],
+              'valid_to': item['valid_to'] ?? item['pass_code_expires_at'],
+              'start_time': item['start_time'] ?? item['check_in_at'],
+              'end_time': item['end_time'] ?? item['check_out_at'],
               'checkin_at': item['check_in_at'],
               'checkout_at': item['check_out_at'],
               'vehicle_number': item['vehicle_number'],
@@ -150,15 +153,31 @@ class VisitorRepository {
         }
       }
 
+      // Deduplicate merged history by pass_code or id to ensure consistency
+      final Map<String, dynamic> dedupedMap = {};
+      for (final item in mergedHistory) {
+        if (item is Map) {
+          final passCode = item['pass_code']?.toString();
+          final id = item['id']?.toString() ?? item['request_id']?.toString();
+          final key = (passCode != null && passCode.isNotEmpty)
+              ? 'PASS_$passCode'
+              : (id != null ? 'ID_${item['record_type']}_$id' : UniqueKey().toString());
+          if (!dedupedMap.containsKey(key)) {
+            dedupedMap[key] = item;
+          }
+        }
+      }
+      final dedupedList = dedupedMap.values.toList();
+
       // Sort by created_at or valid_from descending (falling back to requested_at if needed)
-      mergedHistory.sort((a, b) {
+      dedupedList.sort((a, b) {
         final dateA = DateTime.tryParse(a['created_at']?.toString() ?? a['requested_at']?.toString() ?? a['valid_from']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
         final dateB = DateTime.tryParse(b['created_at']?.toString() ?? b['requested_at']?.toString() ?? b['valid_from']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
         return dateB.compareTo(dateA);
       });
 
-      AsmitaLogger.info('VisitorRepository', 'Merged history items count: ${mergedHistory.length}');
-      return mergedHistory;
+      AsmitaLogger.info('VisitorRepository', 'Merged history items count: ${dedupedList.length}');
+      return dedupedList;
     } on DioException catch (e) {
       String msg = 'Network error fetching history';
       if (e.response?.data != null) {

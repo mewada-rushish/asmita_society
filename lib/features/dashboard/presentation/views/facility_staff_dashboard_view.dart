@@ -324,9 +324,10 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
 
   Widget _buildScaffold(
     BuildContext context,
-    List<IndustrialVisitModel> visits, {
+    List<IndustrialVisitModel> rawVisits, {
     required bool isLoading,
   }) {
+    final visits = rawVisits.where((v) => v.isForToday).toList();
     final checkedInVisitors = visits
         .where((v) => v.status == IndustrialVisitStatus.checkedIn)
         .toList();
