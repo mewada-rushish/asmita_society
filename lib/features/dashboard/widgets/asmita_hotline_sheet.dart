@@ -54,7 +54,9 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
         final List<dynamic> list = response.data['data'] ?? [];
         if (mounted) {
           setState(() {
-            _allHotlines = list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+            _allHotlines = list
+                .map((e) => Map<String, dynamic>.from(e as Map))
+                .toList();
             _isLoading = false;
           });
           return;
@@ -118,7 +120,9 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
       final isEmergency = h['is_emergency'] == true || cat == 'EMERGENCY';
       if (tab == 'Emergency') return isEmergency;
       if (tab == 'Security') return cat.contains('SECURITY') || cat == 'GATE';
-      if (tab == 'Reception') return cat.contains('RECEPTION') || cat == 'SUPPORT';
+      if (tab == 'Reception') {
+        return cat.contains('RECEPTION') || cat == 'SUPPORT';
+      }
       return cat == upper;
     }).toList();
   }
@@ -154,9 +158,13 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
   IconData _getCategoryIcon(String category, bool isEmergency) {
     if (isEmergency) return Icons.emergency_rounded;
     final upper = category.toUpperCase();
-    if (upper.contains('SECURITY') || upper.contains('GATE')) return Icons.shield_rounded;
+    if (upper.contains('SECURITY') || upper.contains('GATE')) {
+      return Icons.shield_rounded;
+    }
     if (upper.contains('RECEPTION')) return Icons.support_agent_rounded;
-    if (upper.contains('SUPPORT') || upper.contains('DESK')) return Icons.desk_rounded;
+    if (upper.contains('SUPPORT') || upper.contains('DESK')) {
+      return Icons.desk_rounded;
+    }
     return Icons.phone_in_talk_rounded;
   }
 
@@ -193,7 +201,9 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
             indicatorSize: TabBarIndicatorSize.tab,
             dividerColor: Colors.transparent,
             labelColor: isDark ? Colors.white : AsmitaPalette.deepNavy,
-            unselectedLabelColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            unselectedLabelColor: isDark
+                ? const Color(0xFF94A3B8)
+                : const Color(0xFF64748B),
             labelStyle: const TextStyle(
               fontFamily: 'Montserrat',
               fontSize: 11.5,
@@ -228,7 +238,9 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 12,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        color: isDark
+                            ? const Color(0xFF94A3B8)
+                            : const Color(0xFF64748B),
                       ),
                     ),
                   );
@@ -243,8 +255,10 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
                     final title = item['title'] ?? 'Support Hotline';
                     final subtitle = item['subtitle'] ?? '';
                     final phone = item['phone'] ?? item['contact_number'] ?? '';
-                    final isEmergency = item['is_emergency'] == true ||
-                        (item['category'] ?? '').toString().toUpperCase() == 'EMERGENCY';
+                    final isEmergency =
+                        item['is_emergency'] == true ||
+                        (item['category'] ?? '').toString().toUpperCase() ==
+                            'EMERGENCY';
                     final category = item['category'] ?? '';
 
                     return _buildHotlineTile(
@@ -275,7 +289,9 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
             ),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () {
               Navigator.pop(context);
@@ -325,11 +341,11 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
             decoration: BoxDecoration(
               color: isEmergency
                   ? (isDark
-                      ? const Color(0xFF7F1D1D).withValues(alpha: 0.35)
-                      : const Color(0xFFFEE2E2))
+                        ? const Color(0xFF7F1D1D).withValues(alpha: 0.35)
+                        : const Color(0xFFFEE2E2))
                   : (isDark
-                      ? const Color(0xFF1E3A8A).withValues(alpha: 0.3)
-                      : const Color(0xFFEFF6FF)),
+                        ? const Color(0xFF1E3A8A).withValues(alpha: 0.3)
+                        : const Color(0xFFEFF6FF)),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -363,7 +379,9 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 10.5,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      color: isDark
+                          ? const Color(0xFF94A3B8)
+                          : const Color(0xFF64748B),
                     ),
                   ),
                 ],
@@ -377,14 +395,22 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
               onTap: onCall,
               borderRadius: BorderRadius.circular(10),
               child: Ink(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 7,
+                ),
                 decoration: BoxDecoration(
-                  color: isEmergency ? const Color(0xFFDC2626) : AsmitaPalette.deepNavy,
+                  color: isEmergency
+                      ? const Color(0xFFDC2626)
+                      : AsmitaPalette.deepNavy,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: (isEmergency ? const Color(0xFFDC2626) : AsmitaPalette.deepNavy)
-                          .withValues(alpha: 0.25),
+                      color:
+                          (isEmergency
+                                  ? const Color(0xFFDC2626)
+                                  : AsmitaPalette.deepNavy)
+                              .withValues(alpha: 0.25),
                       blurRadius: 4,
                       offset: const Offset(0, 1.5),
                     ),
