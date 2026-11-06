@@ -742,6 +742,174 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                 ),
               ],
             ),
+          ] else ...[
+            // Operational CTAs for Approved, Forwarded, Waiting, or Checked In visitors
+            if (visit.status == IndustrialVisitStatus.approved ||
+                visit.status == IndustrialVisitStatus.onTheWay ||
+                visit.status == IndustrialVisitStatus.waitingToMeet ||
+                visit.isCheckedIn) ...[
+              Row(
+                children: [
+                  // Wait button (when not already waiting)
+                  if (visit.status != IndustrialVisitStatus.waitingToMeet && !visit.isCheckedIn) ...[
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          try {
+                            context.read<IndustrialVisitBloc>().add(
+                                  DecideVisitEvent(
+                                    visitId: visit.id,
+                                    action: 'WAITING_TO_MEET',
+                                  ),
+                                );
+                            AsmitaToast.show(
+                              context,
+                              message: 'Visitor marked as Waiting.',
+                              type: AsmitaToastType.info,
+                            );
+                          } catch (_) {}
+                        },
+                        icon: const Icon(Icons.hourglass_top_rounded, size: 16, color: Color(0xFFD97706)),
+                        label: const Text(
+                          'Wait',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Color(0xFFD97706),
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFD97706), width: 1.2),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+
+                  // Forward CTA (when Approved & destination floor has receptionist)
+                  if (visit.status == IndustrialVisitStatus.approved && visit.hasFloorReceptionist)
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          try {
+                            context.read<IndustrialVisitBloc>().add(
+                                  SendToLobbyEvent(
+                                    visitId: visit.id,
+                                    floor: visit.floor,
+                                  ),
+                                );
+                            AsmitaToast.show(
+                              context,
+                              message: 'Visitor forwarded to floor receptionist.',
+                              type: AsmitaToastType.success,
+                            );
+                          } catch (_) {}
+                        },
+                        icon: const Icon(Icons.forward_rounded, size: 16, color: Colors.white),
+                        label: const Text(
+                          'Forward',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Colors.white,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0284C7),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+
+                  // Check In CTA (when Approved without floor rec, or when Forwarded / Waiting)
+                  if ((visit.status == IndustrialVisitStatus.approved && !visit.hasFloorReceptionist) ||
+                      visit.status == IndustrialVisitStatus.onTheWay ||
+                      visit.status == IndustrialVisitStatus.waitingToMeet)
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          try {
+                            context.read<IndustrialVisitBloc>().add(
+                                  CheckInPassEvent(
+                                    visitId: visit.id,
+                                    gateId: 1,
+                                    passCode: visit.passCode,
+                                  ),
+                                );
+                            AsmitaToast.show(
+                              context,
+                              message: 'Visitor checked in successfully.',
+                              type: AsmitaToastType.success,
+                            );
+                          } catch (_) {}
+                        },
+                        icon: const Icon(Icons.how_to_reg_rounded, size: 16, color: Colors.white),
+                        label: const Text(
+                          'Check In',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Colors.white,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AsmitaPalette.successGreen,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+
+                  // Check Out CTA (when Checked In)
+                  if (visit.isCheckedIn)
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          try {
+                            context.read<IndustrialVisitBloc>().add(
+                                  CheckOutPassEvent(
+                                    visitId: visit.id,
+                                    gateId: 1,
+                                  ),
+                                );
+                            AsmitaToast.show(
+                              context,
+                              message: 'Visitor checked out successfully.',
+                              type: AsmitaToastType.success,
+                            );
+                          } catch (_) {}
+                        },
+                        icon: const Icon(Icons.logout_rounded, size: 16, color: Colors.white),
+                        label: const Text(
+                          'Check Out',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Colors.white,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AsmitaPalette.deepNavy,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
           ],
           const SizedBox(height: 8),
         ],
