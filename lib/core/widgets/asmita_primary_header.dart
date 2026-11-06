@@ -373,19 +373,34 @@ class AsmitaPrimaryHeader extends StatelessWidget {
             societyName = user.societyName!;
           }
 
+          final tempRole = role;
+          final normalizedRoleTemp = PropertyRoleResolver.normalizeRole(tempRole);
+          final isIndTemp = propertyType == AsmitaPropertyType.industrial ||
+              propertyType == AsmitaPropertyType.commercial ||
+              (propertyType == null &&
+                  (normalizedRoleTemp == 'director' ||
+                      normalizedRoleTemp == 'employee' ||
+                      normalizedRoleTemp == 'receptionist' ||
+                      normalizedRoleTemp == 'facility'));
+
           if (subtitleOverride != null) {
             flatDetails = subtitleOverride!;
           } else if (user.flatMappings.isNotEmpty) {
             final mapping = user.flatMappings.first;
             final tower = mapping.towerName.trim();
             final flat = mapping.flatNumber.trim();
-            if (tower.isNotEmpty && flat.isNotEmpty) {
+            if (isIndTemp) {
+              // In Industrial / Commercial Campus, subtitle under property is the Building Name
+              flatDetails = tower.isNotEmpty ? tower : 'Main HQ';
+            } else if (tower.isNotEmpty && flat.isNotEmpty) {
               flatDetails = '$tower • $flat';
             } else if (flat.isNotEmpty) {
               flatDetails = flat;
             } else if (tower.isNotEmpty) {
               flatDetails = tower;
             }
+          } else if (isIndTemp) {
+            flatDetails = user.buildingName;
           }
 
           if (user.fullName.isNotEmpty) {
@@ -417,22 +432,16 @@ class AsmitaPrimaryHeader extends StatelessWidget {
           }
         }
 
-        // Only fall back to role titles if flatDetails was not provided or retrieved from user.flatMappings
+        // Subtitle defaults to Building Name in industrial/commercial campus
         if (flatDetails.isEmpty) {
           if (isGuard) {
             flatDetails = 'Campus Security • On Duty';
-          } else if (normalizedRole == 'director') {
-            flatDetails = 'Executive Suite';
-          } else if (normalizedRole == 'employee') {
-            flatDetails = 'Employee Workspace';
-          } else if (normalizedRole == 'receptionist') {
-            flatDetails = 'Front Desk & Reception';
-          } else if (normalizedRole == 'facility') {
-            flatDetails = 'Facility Operations';
+          } else if (isIndustrial) {
+            flatDetails = 'Main HQ';
           } else {
             flatDetails = role?.isNotEmpty == true
                 ? role!.toUpperCase()
-                : (isIndustrial ? 'Workplace Member' : 'A Wing - 101');
+                : 'A Wing - 101';
           }
         }
 
