@@ -18,25 +18,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<Map<String, dynamic>> _slides = const [
     {
-      'title': 'Smart IoT Access',
-      'subtitle': 'Enterprise & Society Automation',
-      'description':
-          'Control your premises lighting, secure digital smart locks, and monitor hardware directly from your device.',
-      'icon': Icons.home_repair_service_rounded,
-    },
-    {
       'title': 'High-Assurance Security',
-      'subtitle': 'Gate-Sync & Visitor Logs',
+      'subtitle': 'Gate-Sync & Visitor Passes',
       'description':
-          'Approve live visitor entries, track vehicle movement, and pre-authorize guests with secure, time-bound QR codes.',
-      'icon': Icons.security_rounded,
+          'Instant visitor approvals, live check-in alerts, seamless OTP verification, and time-bound digital QR passes for corporate and residential campuses.',
+      'icon': Icons.shield_rounded,
     },
     {
-      'title': 'Seamless ERP & BBPS',
-      'subtitle': 'Operations & Ledgers',
+      'title': 'Executive Meeting Rooms',
+      'subtitle': 'Smart Workspace Reservation',
       'description':
-          'View maintenance ledgers, track service requests, and clear utility bills instantly through the integrated payment system.',
-      'icon': Icons.account_balance_wallet_rounded,
+          'Book company boardrooms, conference spaces, and quiet pods on your floor with instant time slot scheduling and attendee management.',
+      'icon': Icons.meeting_room_rounded,
+    },
+    {
+      'title': 'Campus Support & Hotlines',
+      'subtitle': 'Directory & Instant Contact',
+      'description':
+          'Direct-dial security command, front desk reception, floor assistance, and emergency desks configured specifically for your premises.',
+      'icon': Icons.support_agent_rounded,
+    },
+    {
+      'title': 'Unified Deliveries & BBPS',
+      'subtitle': 'Operations & Clearances',
+      'description':
+          'Pre-approve courier carriers and cab arrivals, settle maintenance and utility dues with BBPS, and track company fleet access seamlessly.',
+      'icon': Icons.local_shipping_rounded,
     },
   ];
 
