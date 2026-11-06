@@ -442,7 +442,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         onTap: () => _showPreApproveModal(context),
       ),
       _QuickActionItemData(
-        label: 'Meeting Rooms',
+        label: 'Meetings',
         icon: Icons.meeting_room_rounded,
         onTap: () => _openMeetingRoomReservation(context),
       ),
@@ -554,20 +554,18 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
               ),
             ),
             const SizedBox(height: 8),
-            SizedBox(
-              height: 28,
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontSize: fontSize,
-                    fontWeight: FontWeight.w600,
-                    height: 1.2,
-                  ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
                 ),
               ),
             ),
