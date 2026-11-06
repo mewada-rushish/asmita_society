@@ -27,6 +27,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/property_role_resolver.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
+import 'package:asmita_society/features/auth/bloc/auth_event.dart';
 import 'package:asmita_society/features/services/bloc/daily_help_bloc.dart';
 import 'package:asmita_society/features/services/bloc/daily_help_event.dart';
 import 'package:asmita_society/features/services/data/repositories/daily_help_repository.dart';
@@ -53,6 +54,9 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
   void initState() {
     super.initState();
     _loadPropertyConfig();
+    try {
+      context.read<AuthBloc>().add(const AuthRefreshProfileRequested());
+    } catch (_) {}
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         PermissionManagerService.showPermissionSetupDialog(context);
@@ -274,11 +278,11 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
         return _wrapWithIndustrialBloc(
           context,
           DirectorDashboardView(
-            directorName: (directorUser != null && directorUser.fullName.isNotEmpty) ? directorUser.fullName : 'Executive Director',
-            departmentName: directorUser?.departmentName ?? 'Executive Suite',
-            cabinNumber: (directorUser?.cabinCode != null && directorUser!.cabinCode.isNotEmpty) ? directorUser.cabinCode : 'CAB-DIR-01',
-            deskNumber: (directorUser?.deskCode != null && directorUser!.deskCode.isNotEmpty) ? directorUser.deskCode : 'DIR-DSK-01',
-            designation: directorUser?.designation ?? 'Executive Director',
+            directorName: (directorUser != null && directorUser.fullName.isNotEmpty) ? directorUser.fullName : null,
+            departmentName: directorUser?.departmentName,
+            cabinNumber: (directorUser?.cabinCode != null && directorUser!.cabinCode.isNotEmpty) ? directorUser.cabinCode : null,
+            deskNumber: (directorUser?.deskCode != null && directorUser!.deskCode.isNotEmpty) ? directorUser.deskCode : null,
+            designation: directorUser?.designation,
             onNavigateToTab: (index) => setState(() => _currentIndex = index),
             onNavigateToVisitsWithFilter: (filter) {
               setState(() {
