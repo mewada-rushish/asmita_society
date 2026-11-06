@@ -12,6 +12,7 @@ import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_employee_card.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
+import 'package:asmita_society/features/auth/bloc/auth_event.dart';
 import 'package:asmita_society/features/auth/data/models/user_model.dart';
 
 class MockIndustrialVisitBloc extends Mock implements IndustrialVisitBloc {}
@@ -27,6 +28,7 @@ void main() {
     registerFallbackValue(const LoadIndustrialVisits());
     registerFallbackValue(const DecideVisitEvent(visitId: 1, action: 'APPROVE'));
     registerFallbackValue(const AcknowledgeVisitEvent(1));
+    registerFallbackValue(const AuthRefreshProfileRequested());
   });
 
   setUp(() {
@@ -59,6 +61,7 @@ void main() {
       ),
     );
     when(() => mockAuthBloc.close()).thenAnswer((_) async {});
+    when(() => mockAuthBloc.add(any())).thenReturn(null);
   });
 
   tearDown(() async {
@@ -201,6 +204,44 @@ void main() {
       expect(find.text('Car Valet'), findsOneWidget);
       expect(find.text('Security'), findsOneWidget);
       expect(find.text('BillPay'), findsOneWidget);
+    });
+
+    testWidgets('calls onContactReceptionist when provided', (tester) async {
+      setMobileScreen(tester);
+      bool contacted = false;
+      await tester.pumpWidget(
+        buildTestableWidget(
+          visits: const [],
+          onContactReceptionist: () => contacted = true,
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.byIcon(Icons.support_agent_rounded));
+      expect(contacted, isTrue);
+    });
+
+    testWidgets('opens Floor Support Hotline sheet when onContactReceptionist is omitted', (tester) async {
+      setMobileScreen(tester);
+      await tester.pumpWidget(buildTestableWidget(visits: const []));
+      await tester.pump();
+
+      // Tap Hotline button in header
+      await tester.tap(find.byIcon(Icons.support_agent_rounded));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Floor Support Hotline'), findsOneWidget);
+      expect(find.text('Main Reception Desk'), findsOneWidget);
+      expect(find.text('Gate 1 Security Control'), findsOneWidget);
+
+      // Tap Call
+      await tester.tap(find.text('Call').first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Floor Support Hotline'), findsNothing);
+      expect(find.text('Calling Main Reception (Ext 101)...'), findsOneWidget);
     });
 
     testWidgets('triggers callbacks for approve and reject from visit details modal', (tester) async {
