@@ -56,7 +56,6 @@ dependencies:
   camera: ^0.12.1
   app_links: ^7.2.2
   webview_flutter: ^4.14.1
-  syncfusion_flutter_pdfviewer: ^33.2.13
 dev_dependencies:
   flutter_test:
     sdk: flutter

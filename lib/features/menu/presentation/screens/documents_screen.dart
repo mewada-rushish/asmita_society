@@ -31,9 +31,12 @@ class DocumentsScreen extends StatelessWidget {
         if (!hasBloc) {
           final repo = di.sl.isRegistered<SocietyRepository>()
               ? di.sl<SocietyRepository>()
-              : SocietyRepository(dio: AsmitaDioClient(SecureStorageService()).dio);
+              : SocietyRepository(
+                  dio: AsmitaDioClient(SecureStorageService()).dio,
+                );
           return BlocProvider<SocietyBloc>(
-            create: (_) => SocietyBloc(repository: repo)..add(const LoadSocietyData()),
+            create: (_) =>
+                SocietyBloc(repository: repo)..add(const LoadSocietyData()),
             child: const _DocumentsScreenBody(),
           );
         }
@@ -65,17 +68,28 @@ class _DocumentsScreenBody extends StatelessWidget {
             Expanded(
               child: BlocBuilder<SocietyBloc, SocietyState>(
                 builder: (context, societyState) {
-                  if (societyState is SocietyLoading || societyState is SocietyInitial) {
-                    return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+                  if (societyState is SocietyLoading ||
+                      societyState is SocietyInitial) {
+                    return Center(
+                      child: AsmitaLoadingIndicator(
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 28,
+                      ),
+                    );
                   } else if (societyState is SocietyError) {
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('Error: ${societyState.message}', style: const TextStyle(color: Colors.red)),
+                          Text(
+                            'Error: ${societyState.message}',
+                            style: const TextStyle(color: Colors.red),
+                          ),
                           const SizedBox(height: 12),
                           ElevatedButton(
-                            onPressed: () => context.read<SocietyBloc>().add(const LoadSocietyData()),
+                            onPressed: () => context.read<SocietyBloc>().add(
+                              const LoadSocietyData(),
+                            ),
                             child: const Text('Retry'),
                           ),
                         ],
@@ -84,12 +98,18 @@ class _DocumentsScreenBody extends StatelessWidget {
                   } else if (societyState is SocietyLoaded) {
                     final docs = societyState.documents;
                     return CustomScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
+                      ),
                       slivers: [
                         AsmitaAnimatedRefresh(
                           onRefresh: () async {
-                            context.read<SocietyBloc>().add(const LoadSocietyData());
-                            await Future.delayed(const Duration(milliseconds: 600));
+                            context.read<SocietyBloc>().add(
+                              const LoadSocietyData(),
+                            );
+                            await Future.delayed(
+                              const Duration(milliseconds: 600),
+                            );
                           },
                         ),
                         if (docs.isEmpty)
@@ -98,19 +118,27 @@ class _DocumentsScreenBody extends StatelessWidget {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.description_outlined, size: 56, color: Theme.of(context).dividerColor),
+                                  Icon(
+                                    Icons.description_outlined,
+                                    size: 56,
+                                    color: Theme.of(context).dividerColor,
+                                  ),
                                   const SizedBox(height: 12),
                                   Text(
                                     'No documents uploaded yet',
                                     style: textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.w600,
-                                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                                      color: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium?.color,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     'Policies and notices will appear here once published.',
-                                    style: textTheme.bodySmall?.copyWith(color: Theme.of(context).hintColor),
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context).hintColor,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -118,18 +146,21 @@ class _DocumentsScreenBody extends StatelessWidget {
                           )
                         else
                           SliverPadding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                             sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                                  final doc = docs[index];
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: _DocumentCard(doc: doc),
-                                  );
-                                },
-                                childCount: docs.length,
-                              ),
+                              delegate: SliverChildBuilderDelegate((
+                                context,
+                                index,
+                              ) {
+                                final doc = docs[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _DocumentCard(doc: doc),
+                                );
+                              }, childCount: docs.length),
                             ),
                           ),
                       ],
@@ -172,10 +203,7 @@ class _DocumentCard extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PdfViewerScreen(
-          title: doc.title,
-          pdfUrl: doc.fileUrl,
-        ),
+        builder: (_) => PdfViewerScreen(title: doc.title, pdfUrl: doc.fileUrl),
       ),
     );
   }
@@ -214,12 +242,16 @@ class _DocumentCard extends StatelessWidget {
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : const Color(0xFFE2E8F0),
               width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
-                color: isDark ? Colors.black.withValues(alpha: 0.25) : const Color(0xFF1E293B).withValues(alpha: 0.04),
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.25)
+                    : const Color(0xFF1E293B).withValues(alpha: 0.04),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -273,7 +305,9 @@ class _DocumentCard extends StatelessWidget {
                         Icon(
                           Icons.schedule_rounded,
                           size: 13,
-                          color: textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                          color: textTheme.bodySmall?.color?.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                         const SizedBox(width: 4),
                         Expanded(
@@ -281,7 +315,9 @@ class _DocumentCard extends StatelessWidget {
                             dateFormatted,
                             style: textTheme.bodySmall?.copyWith(
                               fontSize: 12,
-                              color: textTheme.bodySmall?.color?.withValues(alpha: 0.75),
+                              color: textTheme.bodySmall?.color?.withValues(
+                                alpha: 0.75,
+                              ),
                               fontWeight: FontWeight.w500,
                             ),
                             maxLines: 1,
@@ -304,7 +340,10 @@ class _DocumentCard extends StatelessWidget {
                     onTap: () => _openInAppViewer(context),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -312,7 +351,11 @@ class _DocumentCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.visibility_outlined, size: 15, color: theme.colorScheme.primary),
+                          Icon(
+                            Icons.visibility_outlined,
+                            size: 15,
+                            color: theme.colorScheme.primary,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'View',
