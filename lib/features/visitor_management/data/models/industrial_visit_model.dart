@@ -572,6 +572,25 @@ class IndustrialVisitModel {
       passCodeExpiresAt != null &&
       passCodeExpiresAt!.isAfter(DateTime.now());
 
+  /// Returns true if this visit or pass belongs to today (between 00:00:00 and 23:59:59).
+  /// Resets daily at 00:00.
+  bool get isForToday {
+    final now = DateTime.now();
+    // Primary date of activity: check-in time if checked in, else visit date / creation time
+    final target = checkInAt ?? createdAt;
+    if (target != null) {
+      final loc = target.toLocal();
+      if (loc.year == now.year && loc.month == now.month && loc.day == now.day) {
+        return true;
+      }
+    }
+    // Also include currently active/checked-in visits inside premises today
+    if (isCheckedIn) {
+      return true;
+    }
+    return false;
+  }
+
   factory IndustrialVisitModel.fromJson(Map<String, dynamic> json) {
     return IndustrialVisitModel(
       id: json['id'] is int
