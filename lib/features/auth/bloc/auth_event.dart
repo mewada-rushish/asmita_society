@@ -80,5 +80,9 @@ class AuthUpdateProfileRequested extends AuthEvent {
   List<Object?> get props => [fullName, email, mobile];
 }
 
-class AuthLogoutRequested extends AuthEvent {}
-class AuthRefreshProfileRequested extends AuthEvent {}
+class AuthLogoutRequested extends AuthEvent {
+  const AuthLogoutRequested();
+}
+class AuthRefreshProfileRequested extends AuthEvent {
+  const AuthRefreshProfileRequested();
+}
