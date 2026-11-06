@@ -859,6 +859,33 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                   ),
                 ),
               ],
+
+              // Reapply Pass for Expired Passes
+              if (isExpired) ...[
+                const SizedBox(height: 10),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _reapplyPass(context, visit);
+                  },
+                  icon: const Icon(Icons.replay_rounded, size: 18),
+                  label: const Text(
+                    'Reapply Pass',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AsmitaPalette.deepNavy,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 2,
+                  ),
+                ),
+              ],
             ],
             const SizedBox(height: 8),
           ],
@@ -1617,9 +1644,32 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       );
   }
 
+  void _reapplyPass(BuildContext context, IndustrialVisitModel visit) {
+    String category = 'Guest';
+    if (visit.isDelivery) {
+      category = 'Delivery';
+    } else if (visit.vehicleNumber != null && visit.vehicleNumber!.trim().isNotEmpty) {
+      category = 'Cab';
+    }
+
+    AsmitaPreApproveWizard.showAsModalSheet(
+      context,
+      title: 'Reapply Visitor Pass',
+      subtitle: 'Schedule a new pass for ${visit.cleanVisitorName}',
+      initialCategory: category,
+      initialVisitorName: visit.cleanVisitorName,
+      initialMobileNumber: visit.visitorMobile,
+      initialPurpose: visit.cleanPurpose,
+      initialCompany: visit.deliveryCompany,
+    );
+  }
+
   Widget _buildVisitItem(BuildContext context, IndustrialVisitModel visit) {
     final isPending = visit.isPending;
     final isAck = _acknowledgedIds.contains(visit.id);
+    final isExpired = visit.status == IndustrialVisitStatus.expired ||
+        visit.status == IndustrialVisitStatus.cancelled ||
+        visit.status == IndustrialVisitStatus.rejected;
 
     return AsmitaVisitorCard.fromIndustrialVisit(
       visit: visit,
@@ -1627,6 +1677,34 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       showSubtitle: false,
       isAcknowledged: isAck,
       onTap: () => _showVisitDetailsModal(context, visit),
+      bottomActions: isExpired
+          ? SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _reapplyPass(context, visit),
+                icon: const Icon(Icons.replay_rounded, size: 16),
+                label: const Text(
+                  'Reapply',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AsmitaPalette.deepNavy,
+                  side: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF93C5FD)
+                        : AsmitaPalette.deepNavy,
+                    width: 1.2,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            )
+          : null,
       onApprove: isPending
           ? () {
               context.read<IndustrialVisitBloc>().add(
