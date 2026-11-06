@@ -61,7 +61,7 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
         throw Exception('User not logged in');
       }
 
-      await repository.bookAmenity(
+      final result = await repository.bookAmenity(
         amenityId: event.amenityId,
         societyId: event.societyId,
         userId: userId,
@@ -69,11 +69,14 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
         bookingDate: event.bookingDate,
         startTime: event.startTime,
         endTime: event.endTime,
+        purpose: event.purpose,
+        expectedGuests: event.expectedGuests,
+        specialNotes: event.specialNotes,
       );
       
       emit(state.copyWith(
         isSubmittingBooking: false, 
-        bookingSuccessMessage: 'Amenity booked successfully. Waiting for approval.',
+        bookingSuccessMessage: result['message']?.toString() ?? 'Amenity booked successfully.',
       ));
       
       // Refresh bookings

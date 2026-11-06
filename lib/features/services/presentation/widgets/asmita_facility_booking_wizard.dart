@@ -230,6 +230,9 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
         bookingDate: baseDate,
         startTime: startTime,
         endTime: endTime,
+        purpose: _bookingPurpose == 'Other' ? _customBookingPurpose : _bookingPurpose,
+        expectedGuests: _expectedGuests > 0 ? _expectedGuests : null,
+        specialNotes: _specialNotes,
       ));
     } catch (e) {
       if (mounted) {
@@ -294,73 +297,181 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
   // STEP 0: Facility Selection Grid
   // =========================================================================
   Widget _buildFacilitySelection() {
+    final amenitiesState = context.watch<AmenitiesBloc>().state;
+    final availableAmenities = amenitiesState.amenities;
+
+    // Use dynamic amenities from backend if available, otherwise fallback to _facilitiesData
+    final hasBackendAmenities = availableAmenities.isNotEmpty;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Book a Facility',
+          'Select Room / Facility',
           style: TextStyle(fontFamily: 'Montserrat', fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary),
         ),
-        SizedBox(height: 20),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2, 
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.2,
-          ),
-          itemCount: _facilitiesData.length,
-          itemBuilder: (context, index) {
-            final facility = _facilitiesData[index];
-            final isAvailable = facility['available'] as bool;
-            return InkWell(
-              onTap: () {
-                if (isAvailable) {
+        const SizedBox(height: 8),
+        Text(
+          'Choose the specific meeting room, boardroom, or desk you want to reserve:',
+          style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color),
+        ),
+        const SizedBox(height: 20),
+        if (hasBackendAmenities)
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 1,
+              mainAxisSpacing: 12,
+              childAspectRatio: 3.4,
+            ),
+            itemCount: availableAmenities.length,
+            itemBuilder: (context, index) {
+              final amenity = availableAmenities[index];
+              final isSelected = _selectedFacility == amenity.name;
+              return InkWell(
+                onTap: () {
                   setState(() {
-                    _selectedFacility = facility['label'] as String;
+                    _selectedFacility = amenity.name;
                   });
                   _nextStep();
-                } else {
-                  AsmitaToast.show(context, message: '${facility['label']} is currently unavailable.', type: AsmitaToastType.info);
-                }
-              },
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
-                  boxShadow: [BoxShadow(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 4))],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Icon(facility['icon'] as IconData, color: isAvailable ? Theme.of(context).colorScheme.primary : Colors.grey, size: 28),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          facility['label'] as String,
-                          style: TextStyle(fontFamily: 'Montserrat', fontSize: 13, fontWeight: FontWeight.w700, color: isAvailable ? Theme.of(context).colorScheme.primary : Colors.grey),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          isAvailable ? 'Available' : 'Unavailable',
-                          style: TextStyle(fontFamily: 'Poppins', fontSize: 11, fontWeight: FontWeight.w600, color: isAvailable ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyMedium?.color),
-                        ),
-                      ],
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08)
+                        : Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor,
+                      width: isSelected ? 2.0 : 1.2,
                     ),
-                  ],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      )
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          amenity.name.toLowerCase().contains('boardroom')
+                              ? Icons.meeting_room_rounded
+                              : (amenity.name.toLowerCase().contains('conference')
+                                  ? Icons.groups_rounded
+                                  : Icons.desk_rounded),
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              amenity.name,
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              amenity.description ?? 'Available for reservations',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 11,
+                                color: Theme.of(context).textTheme.bodyMedium?.color,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
+              );
+            },
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2, 
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1.2,
+            ),
+            itemCount: _facilitiesData.length,
+            itemBuilder: (context, index) {
+              final facility = _facilitiesData[index];
+              final isAvailable = facility['available'] as bool;
+              return InkWell(
+                onTap: () {
+                  if (isAvailable) {
+                    setState(() {
+                      _selectedFacility = facility['label'] as String;
+                    });
+                    _nextStep();
+                  } else {
+                    AsmitaToast.show(context, message: '${facility['label']} is currently unavailable.', type: AsmitaToastType.info);
+                  }
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
+                    boxShadow: [BoxShadow(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 4))],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Icon(facility['icon'] as IconData, color: isAvailable ? Theme.of(context).colorScheme.primary : Colors.grey, size: 28),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            facility['label'] as String,
+                            style: TextStyle(fontFamily: 'Montserrat', fontSize: 13, fontWeight: FontWeight.w700, color: isAvailable ? Theme.of(context).colorScheme.primary : Colors.grey),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            isAvailable ? 'Available' : 'Unavailable',
+                            style: TextStyle(fontFamily: 'Poppins', fontSize: 11, fontWeight: FontWeight.w600, color: isAvailable ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyMedium?.color),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
       ],
     );
   }
@@ -1120,6 +1231,12 @@ Show this at the gate for entry.
   // =========================================================================
   void _showDatePickerSheet() {
     bool isSheetClosing = false;
+    final authState = context.read<AuthBloc>().state;
+    final userPower = (authState is AuthAuthenticated) ? (authState.user.rolePower ?? 80) : 80;
+    // Users with power <= 80 can only book max 3 days ahead in the future.
+    // Executives, Managers, and Directors with power > 80 (or active delegates) can book further.
+    final maxAdvanceDays = userPower > 80 ? 30 : 3;
+
     showAsmitaBottomSheet(
       context: context,
       title: 'Select Date',
@@ -1128,9 +1245,9 @@ Show this at the gate for entry.
         mainAxisSize: MainAxisSize.min,
         children: [
           CalendarDatePicker(
-            initialDate: _bookingDate ?? DateTime.now().add(const Duration(days: 1)),
+            initialDate: _bookingDate ?? DateTime.now(),
             firstDate: DateTime.now(),
-            lastDate: DateTime.now().add(const Duration(days: 365)),
+            lastDate: DateTime.now().add(Duration(days: maxAdvanceDays)),
             onDateChanged: (date) {
               if (!isSheetClosing) {
                 isSheetClosing = true;
