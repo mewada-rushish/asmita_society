@@ -1947,9 +1947,14 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     final isHostOrAssignee = (visit.hostUserId != null && visit.hostUserId == currentUserId) ||
         (visit.assignedToUserId != null && visit.assignedToUserId == currentUserId);
 
-    // Dynamic receptionist front-desk actions
+    // Dynamic receptionist front-desk actions (Only for active non-terminal visits)
     Widget? bottomActions;
-    if (isReceptionist || isGuard) {
+    final isTerminal = isExpired ||
+        visit.status == IndustrialVisitStatus.checkedOut ||
+        visit.status == IndustrialVisitStatus.rejected ||
+        visit.status == IndustrialVisitStatus.cancelled;
+
+    if ((isReceptionist || isGuard) && !isTerminal) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
       bottomActions = FittedBox(
         fit: BoxFit.scaleDown,
@@ -1957,7 +1962,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            // PTM update/assign button (Receptionist desk action)
+            // PTM update/assign button (Receptionist desk action - only when not checked out/expired)
             OutlinedButton.icon(
               onPressed: () {
                 ReceptionistReassignSheet.show(
