@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -1830,62 +1829,143 @@ Show this at the gate for entry.
   }
 
   void _showTimePickerSheet() {
-    TimeOfDay initialTime = TimeOfDay.fromDateTime(DateTime.now().add(const Duration(minutes: 30)));
-    showModalBottomSheet(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Standard business meeting slot batches from 09:00 AM to 07:00 PM (30 min batches)
+    const List<TimeOfDay> slotBatches = [
+      TimeOfDay(hour: 9, minute: 0),
+      TimeOfDay(hour: 9, minute: 30),
+      TimeOfDay(hour: 10, minute: 0),
+      TimeOfDay(hour: 10, minute: 30),
+      TimeOfDay(hour: 11, minute: 0),
+      TimeOfDay(hour: 11, minute: 30),
+      TimeOfDay(hour: 12, minute: 0),
+      TimeOfDay(hour: 12, minute: 30),
+      TimeOfDay(hour: 13, minute: 0),
+      TimeOfDay(hour: 13, minute: 30),
+      TimeOfDay(hour: 14, minute: 0),
+      TimeOfDay(hour: 14, minute: 30),
+      TimeOfDay(hour: 15, minute: 0),
+      TimeOfDay(hour: 15, minute: 30),
+      TimeOfDay(hour: 16, minute: 0),
+      TimeOfDay(hour: 16, minute: 30),
+      TimeOfDay(hour: 17, minute: 0),
+      TimeOfDay(hour: 17, minute: 30),
+      TimeOfDay(hour: 18, minute: 0),
+      TimeOfDay(hour: 18, minute: 30),
+      TimeOfDay(hour: 19, minute: 0),
+    ];
+
+    String formatSlot(TimeOfDay start) {
+      final endMinutes = start.hour * 60 + start.minute + 30;
+      final end = TimeOfDay(hour: endMinutes ~/ 60, minute: endMinutes % 60);
+
+      String formatSingle(TimeOfDay t) {
+        final h = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
+        final m = t.minute.toString().padLeft(2, '0');
+        final period = t.period == DayPeriod.am ? 'AM' : 'PM';
+        return '$h:$m $period';
+      }
+
+      return '${formatSingle(start)} - ${formatSingle(end)}';
+    }
+
+    showAsmitaBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Select Time',
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-              SizedBox(height: 16),
-              SizedBox(
-                height: 180,
-                child: CupertinoDatePicker(
-                  mode: CupertinoDatePickerMode.time,
-                  initialDateTime: DateTime(
-                    DateTime.now().year,
-                    DateTime.now().month,
-                    DateTime.now().day,
-                    initialTime.hour,
-                    initialTime.minute,
-                  ),
-                  onDateTimeChanged: (time) {
-                    setState(() {
-                      _selectedTimeSlot = _formatTime(time);
-                    });
-                  },
-                ),
-              ),
-              SizedBox(height: 16),
-              _buildPrimaryButton(
-                label: 'Done',
-                onPressed: () {
-                  if (_selectedTimeSlot == null) {
-                    final dt = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, initialTime.hour, initialTime.minute);
-                    setState(() => _selectedTimeSlot = _formatTime(dt));
-                  }
-                  Navigator.pop(ctx);
-                },
-              ),
-            ],
+      title: 'Select Meeting Time Slot',
+      subtitle: 'Choose a 30-minute meeting window',
+      isScrollControlled: true,
+      maxHeightFactor: 0.75,
+      contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.60,
+        ),
+        child: GridView.builder(
+          shrinkWrap: true,
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 2.8,
           ),
+          itemCount: slotBatches.length,
+          itemBuilder: (ctx, index) {
+            final slotTime = slotBatches[index];
+            final slotString = formatSlot(slotTime);
+            final singleStart = slotString.split(' - ').first;
+
+            final isSelected = _selectedTimeSlot == slotString || _selectedTimeSlot == singleStart;
+
+            return InkWell(
+              onTap: () {
+                setState(() {
+                  _selectedTimeSlot = slotString;
+                });
+                Navigator.pop(ctx);
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.08)
+                      : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                    width: isSelected ? 1.8 : 1.0,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
+                      blurRadius: 3,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.schedule_rounded,
+                      size: 15,
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        slotString,
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 11,
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primary
+                              : (isDark ? Colors.white : const Color(0xFF1E293B)),
+                          letterSpacing: -0.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    if (isSelected) ...[
+                      const SizedBox(width: 4),
+                      Icon(Icons.check_circle_rounded, size: 14, color: Theme.of(context).colorScheme.primary),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
