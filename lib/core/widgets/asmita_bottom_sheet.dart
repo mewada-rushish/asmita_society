@@ -25,7 +25,7 @@ Future<T?> showAsmitaBottomSheet<T>({
   bool isDismissible = true,
   bool enableDrag = true,
   EdgeInsetsGeometry? contentPadding,
-  double maxHeightFactor = 0.80,
+  double maxHeightFactor = 0.85,
 }) {
   return showModalBottomSheet<T>(
     context: context,
@@ -35,22 +35,27 @@ Future<T?> showAsmitaBottomSheet<T>({
     isDismissible: isDismissible,
     enableDrag: enableDrag,
     constraints: BoxConstraints(
-      maxHeight: MediaQuery.of(context).size.height * maxHeightFactor,
+      maxHeight: MediaQuery.of(context).size.height * 0.95,
     ),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
-    builder: (ctx) => Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-      child: AsmitaBottomSheet(
-        title: title,
-        subtitle: subtitle,
-        customHeader: customHeader,
-        contentPadding: contentPadding,
-        maxHeightFactor: maxHeightFactor,
-        child: child,
-      ),
-    ),
+    builder: (ctx) {
+      final viewInsets = MediaQuery.of(ctx).viewInsets;
+      return AnimatedPadding(
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+        padding: EdgeInsets.only(bottom: viewInsets.bottom),
+        child: AsmitaBottomSheet(
+          title: title,
+          subtitle: subtitle,
+          customHeader: customHeader,
+          contentPadding: contentPadding,
+          maxHeightFactor: maxHeightFactor,
+          child: child,
+        ),
+      );
+    },
   );
 }
 
@@ -69,7 +74,7 @@ class AsmitaBottomSheet extends StatelessWidget {
     this.subtitle,
     this.customHeader,
     this.contentPadding,
-    this.maxHeightFactor = 0.80,
+    this.maxHeightFactor = 0.85,
     required this.child,
   });
 
@@ -78,9 +83,13 @@ class AsmitaBottomSheet extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final screenHeight = MediaQuery.of(context).size.height;
     final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
-    final availableHeight = (screenHeight - keyboardInset).clamp(0.0, screenHeight);
-    final maxLimit = availableHeight < 100.0 ? 100.0 : availableHeight;
-    final maxSheetHeight = (availableHeight * maxHeightFactor).clamp(100.0, maxLimit);
+    final isKeyboardOpen = keyboardInset > 0;
+
+    // When keyboard is open, allow up to 95% of the visible viewport so the user gets ample space to see inputs.
+    // When keyboard is closed, respect the default maxHeightFactor (e.g. 85%).
+    final effectiveFactor = isKeyboardOpen ? 0.95 : maxHeightFactor;
+    final availableHeight = (screenHeight - keyboardInset).clamp(150.0, screenHeight);
+    final maxSheetHeight = (availableHeight * effectiveFactor).clamp(150.0, availableHeight);
 
     return Container(
       constraints: BoxConstraints(
