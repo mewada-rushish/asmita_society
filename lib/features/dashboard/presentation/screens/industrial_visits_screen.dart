@@ -1963,176 +1963,279 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
 
     if ((isReceptionist || isGuard) && !isTerminal) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
-      bottomActions = FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.centerRight,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            // PTM update/assign button (Receptionist desk action - only when not checked out/expired)
-            OutlinedButton.icon(
-              onPressed: () {
-                ReceptionistReassignSheet.show(
-                  context,
-                  visit: visit,
-                  societyId: visit.propertyId,
-                  onConfirmReassign: (assignedUser, cabin, desk) {
-                    try {
-                      context.read<IndustrialVisitBloc>().add(
-                        DecideVisitEvent(
-                          visitId: visit.id,
-                          action: 'REASSIGN',
-                          assignedUserId: assignedUser,
-                          cabinId: cabin,
-                          deskId: desk,
+      bottomActions = Row(
+        children: [
+          // PTM update/assign button (Receptionist desk action - secondary corporate outlined style)
+          Expanded(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  ReceptionistReassignSheet.show(
+                    context,
+                    visit: visit,
+                    societyId: visit.propertyId,
+                    onConfirmReassign: (assignedUser, cabin, desk) {
+                      try {
+                        context.read<IndustrialVisitBloc>().add(
+                          DecideVisitEvent(
+                            visitId: visit.id,
+                            action: 'REASSIGN',
+                            assignedUserId: assignedUser,
+                            cabinId: cabin,
+                            deskId: desk,
+                          ),
+                        );
+                        AsmitaToast.show(
+                          context,
+                          message: 'Visitor successfully reassigned!',
+                          type: AsmitaToastType.success,
+                        );
+                      } catch (_) {}
+                    },
+                  );
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  height: 40,
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF1E293B)
+                        : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isDark
+                          ? const Color(0xFF334155)
+                          : const Color(0xFFCBD5E1),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.swap_horiz_rounded,
+                        size: 15,
+                        color: isDark ? const Color(0xFF93C5FD) : AsmitaPalette.deepNavy,
+                      ),
+                      const SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
+                          visit.hostName != null && visit.hostName!.isNotEmpty
+                              ? 'Update PTM'
+                              : 'Assign PTM',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? const Color(0xFF93C5FD) : AsmitaPalette.deepNavy,
+                            letterSpacing: 0.2,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      );
-                      AsmitaToast.show(
-                        context,
-                        message: 'Visitor successfully reassigned!',
-                        type: AsmitaToastType.success,
-                      );
-                    } catch (_) {}
-                  },
-                );
-              },
-              icon: const Icon(
-                Icons.swap_horiz_rounded,
-                size: 15,
-                color: AsmitaPalette.deepNavy,
-              ),
-              label: Text(
-                visit.hostName != null && visit.hostName!.isNotEmpty
-                    ? 'Update PTM'
-                    : 'Assign PTM',
-                style: const TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AsmitaPalette.deepNavy,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: isDark ? Colors.white : AsmitaPalette.deepNavy,
-                side: BorderSide(
-                  color: isDark
-                      ? const Color(0xFF475569)
-                      : AsmitaPalette.deepNavy.withValues(alpha: 0.6),
-                  width: 1.2,
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-            // Forward (When APPROVED and destination floor has receptionist)
-            if (visit.status == IndustrialVisitStatus.approved && visit.hasFloorReceptionist) ...[
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: () {
-                  context.read<IndustrialVisitBloc>().add(
-                    SendToLobbyEvent(
-                      visitId: visit.id,
-                      floor: visit.floor,
+          ),
+
+          // Forward (When APPROVED and destination floor has receptionist)
+          if (visit.status == IndustrialVisitStatus.approved && visit.hasFloorReceptionist) ...[
+            const SizedBox(width: 8),
+            Expanded(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    context.read<IndustrialVisitBloc>().add(
+                      SendToLobbyEvent(
+                        visitId: visit.id,
+                        floor: visit.floor,
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    height: 40,
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF0369A1) : const Color(0xFF0284C7),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.25),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                  );
-                },
-                icon: const Icon(Icons.forward_rounded, size: 16),
-                label: const Text(
-                  'Forward',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0284C7),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 0,
-                ),
-              ),
-            ],
-            // Check In (When APPROVED without floor rec, or when Forwarded / Waiting)
-            if ((visit.status == IndustrialVisitStatus.approved && !visit.hasFloorReceptionist) ||
-                visit.status == IndustrialVisitStatus.onTheWay ||
-                visit.status == IndustrialVisitStatus.waitingToMeet) ...[
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: () {
-                  context.read<IndustrialVisitBloc>().add(
-                    CheckInPassEvent(
-                      visitId: visit.id,
-                      gateId: 1,
-                      passCode: visit.passCode,
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.forward_rounded, size: 16, color: Colors.white),
+                        SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
+                            'Forward',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
-                  );
-                },
-                icon: const Icon(Icons.how_to_reg_rounded, size: 16),
-                label: const Text(
-                  'Check In',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
                   ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AsmitaPalette.successGreen,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 0,
                 ),
               ),
-            ],
-            // Check Out (When Checked In)
-            if (visit.isCheckedIn) ...[
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: () {
-                  context.read<IndustrialVisitBloc>().add(
-                    CheckOutPassEvent(visitId: visit.id, gateId: 1),
-                  );
-                },
-                icon: const Icon(Icons.logout_rounded, size: 16),
-                label: const Text(
-                  'Check Out',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AsmitaPalette.deepNavy,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 0,
-                ),
-              ),
-            ],
+            ),
           ],
-        ),
+
+          // Check In (When APPROVED without floor rec, or when Forwarded / Waiting)
+          if ((visit.status == IndustrialVisitStatus.approved && !visit.hasFloorReceptionist) ||
+              visit.status == IndustrialVisitStatus.onTheWay ||
+              visit.status == IndustrialVisitStatus.waitingToMeet) ...[
+            const SizedBox(width: 8),
+            Expanded(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    context.read<IndustrialVisitBloc>().add(
+                      CheckInPassEvent(
+                        visitId: visit.id,
+                        gateId: 1,
+                        passCode: visit.passCode,
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    height: 40,
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFF27347B),
+                          Color(0xFF1A2352),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF27347B).withValues(alpha: 0.28),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.how_to_reg_rounded, size: 16, color: Colors.white),
+                        SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
+                            'Check In',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+
+          // Check Out (When Checked In)
+          if (visit.isCheckedIn) ...[
+            const SizedBox(width: 8),
+            Expanded(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    context.read<IndustrialVisitBloc>().add(
+                      CheckOutPassEvent(visitId: visit.id, gateId: 1),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    height: 40,
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFF27347B),
+                          Color(0xFF1A2352),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF27347B).withValues(alpha: 0.28),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.logout_rounded, size: 16, color: Colors.white),
+                        SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
+                            'Check Out',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
       );
     }
 
