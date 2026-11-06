@@ -55,9 +55,9 @@ void main() {
 
       expect(find.text('Executive Office'), findsOneWidget);
       expect(find.text('VIP Client Rajesh'), findsOneWidget);
-      expect(find.text('Receptionist'), findsOneWidget);
+      expect(find.text('BillPay'), findsOneWidget);
 
-      await tester.tap(find.text('Receptionist'));
+      await tester.tap(find.byIcon(Icons.support_agent_rounded));
       expect(contacted, isTrue);
     });
 
