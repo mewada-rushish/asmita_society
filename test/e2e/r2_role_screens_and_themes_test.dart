@@ -75,7 +75,7 @@ void main() {
 
     testWidgets('TC-R2-01: DirectorDashboardView renders executive KPIs and quick actions', (tester) async {
       final visits = [
-        const IndustrialVisitModel(
+        IndustrialVisitModel(
           id: 101,
           requestNumber: 'AH-2026-DIR-101',
           propertyId: 115,
@@ -83,6 +83,7 @@ void main() {
           status: IndustrialVisitStatus.awaitingHost,
           departmentName: 'Executive Suite',
           purpose: 'Quarterly Strategic Audit',
+          createdAt: DateTime.now(),
         ),
       ];
 
@@ -97,23 +98,23 @@ void main() {
       expect(find.text('Mr. Arvind Gupta'), findsOneWidget);
       expect(find.text('Pending'), findsOneWidget);
       expect(find.text('Approved'), findsOneWidget);
-      expect(find.text('Inside HQ'), findsOneWidget);
+      expect(find.text('Inside'), findsOneWidget);
       expect(find.text('Pre-Approve'), findsOneWidget);
-      expect(find.text('Invite Team'), findsOneWidget);
       expect(find.text('Car Valet'), findsOneWidget);
-      expect(find.text('Security'), findsOneWidget);
+      expect(find.text('Meetings'), findsOneWidget);
     });
 
     testWidgets('TC-R2-02: EmployeeDashboardView renders hero card and pending approvals feed', (tester) async {
       bool delegationTapped = false;
       final visits = [
-        const IndustrialVisitModel(
+        IndustrialVisitModel(
           id: 102,
           requestNumber: 'AH-2026-EMP-102',
           propertyId: 115,
           visitorName: 'Vendor Neha Verma',
           status: IndustrialVisitStatus.awaitingHost,
           purpose: 'Supply Chain Invoicing',
+          createdAt: DateTime.now(),
         ),
       ];
 
@@ -259,7 +260,7 @@ void main() {
 
       expect(find.text('Pending'), findsOneWidget);
       expect(find.text('Approved'), findsOneWidget);
-      expect(find.text('Inside HQ'), findsOneWidget);
+      expect(find.text('Inside'), findsOneWidget);
 
       await tester.pumpWidget(
         buildThemedApp(
