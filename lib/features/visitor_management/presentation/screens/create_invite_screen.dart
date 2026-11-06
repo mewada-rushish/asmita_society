@@ -1,8 +1,8 @@
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/app_button.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import '../../bloc/visitor_bloc.dart';
 import '../../bloc/visitor_event.dart';
 import '../../bloc/visitor_state.dart';
@@ -629,22 +629,18 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                     return Semantics(
                       button: true,
                       label: 'Generate Pass Button',
-                      child: ElevatedButton(
+                      child: AppButton(
                         onPressed: state is VisitorLoading ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          minimumSize: const Size(double.infinity, 54),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        isLoading: state is VisitorLoading,
+                        label: 'Generate Pass',
+                        height: 54,
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Theme.of(context).colorScheme.surface,
+                        borderRadius: 16,
+                        textStyle: textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.surface,
+                          fontWeight: FontWeight.w600,
                         ),
-                        child: state is VisitorLoading
-                            ? AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.surface, size: 24)
-                            : Text(
-                                'Generate Pass',
-                                style: textTheme.bodyLarge?.copyWith(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
                       ),
                     );
                   },
