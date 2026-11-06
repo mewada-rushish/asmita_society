@@ -127,8 +127,8 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     final isPending = visit.isPending;
     final isExpired =
         visit.status == IndustrialVisitStatus.expired ||
-        visit.status == IndustrialVisitStatus.cancelled ||
-        visit.status == IndustrialVisitStatus.rejected;
+        (visit.passCodeExpiresAt != null &&
+            visit.passCodeExpiresAt!.isBefore(DateTime.now()));
 
     showAsmitaBottomSheet(
       context: context,
@@ -1910,8 +1910,8 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     final isAck = _acknowledgedIds.contains(visit.id);
     final isExpired =
         visit.status == IndustrialVisitStatus.expired ||
-        visit.status == IndustrialVisitStatus.cancelled ||
-        visit.status == IndustrialVisitStatus.rejected;
+        (visit.passCodeExpiresAt != null &&
+            visit.passCodeExpiresAt!.isBefore(DateTime.now()));
     final canApprove = _canUserApproveVisit(context, visit);
 
     return AsmitaVisitorCard.fromIndustrialVisit(
