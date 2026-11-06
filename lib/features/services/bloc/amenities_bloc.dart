@@ -9,7 +9,8 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
   final AmenitiesRepository repository;
   final AuthBloc authBloc;
 
-  AmenitiesBloc({required this.repository, required this.authBloc}) : super(const AmenitiesState()) {
+  AmenitiesBloc({required this.repository, required this.authBloc})
+    : super(const AmenitiesState()) {
     on<FetchAmenities>(_onFetchAmenities);
     on<FetchMyBookings>(_onFetchMyBookings);
     on<SubmitBookingRequest>(_onSubmitBookingRequest);
@@ -31,29 +32,60 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
     return null;
   }
 
-  Future<void> _onFetchAmenities(FetchAmenities event, Emitter<AmenitiesState> emit) async {
+  Future<void> _onFetchAmenities(
+    FetchAmenities event,
+    Emitter<AmenitiesState> emit,
+  ) async {
     emit(state.copyWith(status: AmenitiesStatus.loading));
     try {
       final societyId = event.societyId ?? _societyId;
       final amenities = await repository.getAmenities(societyId: societyId);
-      emit(state.copyWith(status: AmenitiesStatus.loaded, amenities: amenities, errorMessage: null));
+      emit(
+        state.copyWith(
+          status: AmenitiesStatus.loaded,
+          amenities: amenities,
+          errorMessage: null,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(status: AmenitiesStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: AmenitiesStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
-  Future<void> _onFetchMyBookings(FetchMyBookings event, Emitter<AmenitiesState> emit) async {
+  Future<void> _onFetchMyBookings(
+    FetchMyBookings event,
+    Emitter<AmenitiesState> emit,
+  ) async {
     emit(state.copyWith(status: AmenitiesStatus.loading));
     try {
       final societyId = event.societyId ?? _societyId;
       final bookings = await repository.getMyBookings(societyId: societyId);
-      emit(state.copyWith(status: AmenitiesStatus.loaded, myBookings: bookings, errorMessage: null));
+      emit(
+        state.copyWith(
+          status: AmenitiesStatus.loaded,
+          myBookings: bookings,
+          errorMessage: null,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(status: AmenitiesStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: AmenitiesStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
-  Future<void> _onSubmitBookingRequest(SubmitBookingRequest event, Emitter<AmenitiesState> emit) async {
+  Future<void> _onSubmitBookingRequest(
+    SubmitBookingRequest event,
+    Emitter<AmenitiesState> emit,
+  ) async {
     emit(state.copyWith(isSubmittingBooking: true));
     try {
       final userId = _userId;
@@ -73,19 +105,21 @@ class AmenitiesBloc extends Bloc<AmenitiesEvent, AmenitiesState> {
         expectedGuests: event.expectedGuests,
         specialNotes: event.specialNotes,
       );
-      
-      emit(state.copyWith(
-        isSubmittingBooking: false, 
-        bookingSuccessMessage: result['message']?.toString() ?? 'Amenity booked successfully.',
-      ));
-      
+
+      emit(
+        state.copyWith(
+          isSubmittingBooking: false,
+          bookingSuccessMessage:
+              result['message']?.toString() ?? 'Amenity booked successfully.',
+        ),
+      );
+
       // Refresh bookings
       add(const FetchMyBookings());
     } catch (e) {
-      emit(state.copyWith(
-        isSubmittingBooking: false,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(isSubmittingBooking: false, errorMessage: e.toString()),
+      );
     }
   }
 }
