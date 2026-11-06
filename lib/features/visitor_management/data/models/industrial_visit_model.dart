@@ -465,6 +465,7 @@ class IndustrialVisitModel {
   final String? departmentName;
   final int? hostUserId;
   final String? hostName;
+  final int? assignedToUserId;
   final IndustrialVisitStatus status;
   final String? statusToken;
   final String? passCode;
@@ -501,6 +502,7 @@ class IndustrialVisitModel {
     this.departmentName,
     this.hostUserId,
     this.hostName,
+    this.assignedToUserId,
     required this.status,
     this.statusToken,
     this.passCode,
@@ -622,6 +624,9 @@ class IndustrialVisitModel {
           json['host_name']?.toString() ??
           json['host']?['name']?.toString() ??
           json['host_user']?['full_name']?.toString(),
+      assignedToUserId: json['assigned_to_user_id'] is int
+          ? json['assigned_to_user_id']
+          : int.tryParse(json['assigned_to_user_id']?.toString() ?? ''),
       status: IndustrialVisitStatus.fromString(json['status']?.toString()),
       statusToken: json['status_token']?.toString(),
       passCode: json['pass_code']?.toString(),
@@ -681,6 +686,7 @@ class IndustrialVisitModel {
       'vehicle_number': vehicleNumber,
       'department_id': departmentId,
       'host_user_id': hostUserId,
+      'assigned_to_user_id': assignedToUserId,
       'status': status.apiValue,
       'status_token': statusToken,
       'pass_code': passCode,
