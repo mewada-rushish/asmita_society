@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../constants/design_system.dart';
@@ -13,24 +14,39 @@ import '../constants/design_system.dart';
 /// - Debounces rapid triggers
 /// - Provides a subtle haptic feedback (`HapticFeedback.lightImpact()`) upon trigger
 class AppRefresh extends StatefulWidget {
-  final Widget child;
+  final Widget? child;
   final Future<void> Function() onRefresh;
   final Color? color;
   final Color? backgroundColor;
   final double displacement;
   final double edgeOffset;
+  final EdgeInsetsGeometry? padding;
   final ScrollNotificationPredicate? notificationPredicate;
+  final bool isSliver;
 
   const AppRefresh({
     super.key,
-    required this.child,
+    required Widget this.child,
     required this.onRefresh,
     this.color,
     this.backgroundColor,
     this.displacement = 40.0,
     this.edgeOffset = 0.0,
+    this.padding,
     this.notificationPredicate,
-  });
+  }) : isSliver = false;
+
+  const AppRefresh.sliver({
+    super.key,
+    required this.onRefresh,
+    this.color,
+    this.backgroundColor,
+    this.displacement = 40.0,
+    this.edgeOffset = 0.0,
+    this.padding,
+    this.notificationPredicate,
+  })  : child = null,
+        isSliver = true;
 
   @override
   State<AppRefresh> createState() => _AppRefreshState();
@@ -71,6 +87,16 @@ class _AppRefreshState extends State<AppRefresh> {
     final effectiveBg = widget.backgroundColor ??
         (isDark ? const Color(0xFF1E293B) : Colors.white);
 
+    if (widget.isSliver) {
+      return CupertinoSliverRefreshControl(
+        onRefresh: _handleRefresh,
+      );
+    }
+
+    final body = widget.padding != null
+        ? Padding(padding: widget.padding!, child: widget.child!)
+        : widget.child!;
+
     return RefreshIndicator.adaptive(
       onRefresh: _handleRefresh,
       color: effectiveColor,
@@ -78,11 +104,11 @@ class _AppRefreshState extends State<AppRefresh> {
       displacement: widget.displacement,
       edgeOffset: widget.edgeOffset,
       notificationPredicate: widget.notificationPredicate ?? defaultScrollNotificationPredicate,
-      child: widget.child is ScrollView
-          ? widget.child
+      child: body is ScrollView
+          ? body
           : SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              child: widget.child,
+              child: body,
             ),
     );
   }
