@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../../data/models/industrial_visit_model.dart';
 import '../../../dashboard/widgets/asmita_pre_approve_wizard.dart';
 
@@ -278,10 +280,20 @@ class _ReceptionistReassignSheetState extends State<ReceptionistReassignSheet> {
               // Employee List Section
               Expanded(
                 child: _isLoading
-                    ? const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(20.0),
-                          child: CircularProgressIndicator(strokeWidth: 2.5),
+                    ? Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: List.generate(
+                            3,
+                            (index) => Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: AsmitaSkeleton.bone(
+                                width: double.infinity,
+                                height: 56,
+                                borderRadius: 12,
+                              ),
+                            ),
+                          ),
                         ),
                       )
                     : _filteredEmployees.isEmpty
@@ -449,28 +461,27 @@ class _ReceptionistReassignSheetState extends State<ReceptionistReassignSheet> {
               const SizedBox(height: 16),
 
               // Confirm Button
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  final cabin = int.tryParse(_cabinController.text.trim());
-                  final desk = int.tryParse(_deskController.text.trim());
-                  widget.onConfirmReassign(_selectedExecutiveId, cabin, desk);
-                },
-                icon: const Icon(Icons.check_rounded, size: 18),
-                label: const Text(
-                  'Confirm Person to Meet',
-                  style: TextStyle(
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: AppButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    final cabin = int.tryParse(_cabinController.text.trim());
+                    final desk = int.tryParse(_deskController.text.trim());
+                    widget.onConfirmReassign(_selectedExecutiveId, cabin, desk);
+                  },
+                  icon: Icons.check_rounded,
+                  label: 'Confirm Person to Meet',
+                  backgroundColor: AsmitaPalette.deepNavy,
+                  foregroundColor: Colors.white,
+                  borderRadius: 12,
+                  textStyle: const TextStyle(
                     fontFamily: 'Montserrat',
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
+                    color: Colors.white,
                   ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AsmitaPalette.deepNavy,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
                 ),
               ),
             ],
