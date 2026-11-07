@@ -8,8 +8,6 @@ import '../../../../core/constants/design_system.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/security/secure_storage_service.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
-import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
@@ -31,6 +29,8 @@ import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
 import '../../../../core/widgets/asmita_employee_card.dart';
+import '../../../../core/widgets/app_skeleton.dart';
+import '../../../../core/widgets/app_refresh.dart';
 import '../../../auth/data/models/user_model.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
@@ -974,20 +974,10 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         width: size,
         height: size,
         fit: BoxFit.cover,
-        placeholder: (context, url) => Container(
+        placeholder: (context, url) => AsmitaSkeleton.bone(
           width: size,
           height: size,
-          color: Colors.white.withValues(alpha: 0.1),
-          child: const Center(
-            child: SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            ),
-          ),
+          borderRadius: BorderRadius.circular(size / 2),
         ),
         errorWidget: (context, url, error) => initialsFallback(),
       );
@@ -1134,13 +1124,8 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           // 2. Scrollable Body
           Expanded(
             child: isLoading
-                ? const Center(
-                    child: AsmitaLoadingIndicator(
-                      color: AsmitaPalette.deepNavy,
-                      size: 32,
-                    ),
-                  )
-                : AsmitaPullToRefresh(
+                ? _buildDirectorSkeleton(context)
+                : AppRefresh(
                     onRefresh: () async {
                       if (widget.visits == null) {
                         final bloc = context.read<IndustrialVisitBloc>();
@@ -1198,6 +1183,74 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   // ─────────────────────────────────────────────────────────────────────────
   // 1. EXECUTIVE HERO CARD (Global AsmitaEmployeeCard)
   // ─────────────────────────────────────────────────────────────────────────
+  Widget _buildDirectorSkeleton(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Hero Employee ID card bone
+          AsmitaSkeleton.bone(
+            width: double.infinity,
+            height: 200,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          const SizedBox(height: 18),
+          // 4 Action boxes bone
+          Row(
+            children: List.generate(
+              4,
+              (index) => Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: index < 3 ? 8.0 : 0),
+                  child: Column(
+                    children: [
+                      AsmitaSkeleton.bone(
+                        width: 56,
+                        height: 56,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      const SizedBox(height: 6),
+                      AsmitaSkeleton.bone(
+                        width: 48,
+                        height: 12,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          // 4 KPI Cards bone
+          Row(
+            children: List.generate(
+              4,
+              (index) => Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: index < 3 ? 8.0 : 0),
+                  child: AsmitaSkeleton.bone(
+                    height: 80,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          // Waiting card bone
+          AsmitaSkeleton.bone(
+            width: double.infinity,
+            height: 140,
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHeroCard(BuildContext context) {
     AuthBloc? authBloc;
     try {

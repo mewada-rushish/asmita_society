@@ -4,9 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/app_skeleton.dart';
+import '../../../../core/widgets/app_refresh.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
-import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_visitor_card.dart';
@@ -207,12 +207,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
               ),
               Expanded(
                 child: isLoading
-                    ? const Center(
-                        child: AsmitaLoadingIndicator(
-                          color: AsmitaPalette.deepNavy,
-                          size: 32,
-                        ),
-                      )
+                    ? _buildEmployeeSkeleton(context)
                     : _buildScrollBody(
                         context,
                         state.visits,
@@ -223,6 +218,71 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildEmployeeSkeleton(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 180),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Hero Employee ID card bone
+          AsmitaSkeleton.bone(
+            width: double.infinity,
+            height: 200,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          const SizedBox(height: 14),
+          // 4 Action boxes bone
+          Row(
+            children: List.generate(
+              4,
+              (index) => Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: index < 3 ? 8.0 : 0),
+                  child: Column(
+                    children: [
+                      AsmitaSkeleton.bone(
+                        width: 56,
+                        height: 56,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      const SizedBox(height: 6),
+                      AsmitaSkeleton.bone(
+                        width: 48,
+                        height: 12,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Tab bar bone
+          AsmitaSkeleton.bone(
+            width: double.infinity,
+            height: 44,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          const SizedBox(height: 16),
+          // Visitor Card skeletons
+          ...List.generate(
+            3,
+            (index) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: AsmitaSkeleton.bone(
+                width: double.infinity,
+                height: 150,
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -272,7 +332,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
       }).toList();
     }
 
-    return AsmitaPullToRefresh(
+    return AppRefresh(
       onRefresh: () async {
         final bloc = context.read<IndustrialVisitBloc>();
         final future = bloc.stream

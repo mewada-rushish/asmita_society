@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/design_system.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
-import '../../../../core/widgets/asmita_animated_refresh.dart';
+import '../../../../core/widgets/app_skeleton.dart';
+import '../../../../core/widgets/app_refresh.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_select_field.dart';
 import '../../../../core/widgets/asmita_toast.dart';
@@ -356,13 +356,8 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
           ),
           Expanded(
             child: isLoading
-                ? const Center(
-                    child: AsmitaLoadingIndicator(
-                      color: AsmitaPalette.deepNavy,
-                      size: 32,
-                    ),
-                  )
-                : AsmitaPullToRefresh(
+                ? _buildFacilitySkeleton(context)
+                : AppRefresh(
                     onRefresh: () async {
                       _handleRefresh(context);
                     },
@@ -552,6 +547,59 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
                     ],
                   ),
                 ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFacilitySkeleton(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AsmitaSkeleton.bone(
+            width: double.infinity,
+            height: 90,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: AsmitaSkeleton.bone(
+                  height: 90,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: AsmitaSkeleton.bone(
+                  height: 90,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          AsmitaSkeleton.bone(
+            width: 140,
+            height: 18,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 12),
+          ...List.generate(
+            4,
+            (index) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: AsmitaSkeleton.bone(
+                width: double.infinity,
+                height: 64,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
           ),
         ],
       ),

@@ -6,9 +6,11 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/security/secure_storage_service.dart';
-import '../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_skeleton.dart';
 import '../../../core/widgets/asmita_toast.dart';
 import '../../../core/widgets/asmita_bottom_sheet.dart';
+import '../../../core/navigation/app_transitions.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -471,7 +473,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             );
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(
+              AsmitaPageTransitions.adaptiveRoute(
                 builder: (_) => MainDashboardScreen(userRole: state.sessionRole),
               ),
               (route) => false,
@@ -488,7 +490,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 : (widget.verifiedMobile ?? '');
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (_) => ApprovalPendingScreen(mobile: effectiveMobile)),
+              AsmitaPageTransitions.adaptiveRoute(builder: (_) => ApprovalPendingScreen(mobile: effectiveMobile)),
               (route) => false,
             );
           }
@@ -901,12 +903,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: isLoading
-                          ? const Align(
+                          ? Align(
                               alignment: Alignment.centerRight,
-                              child: SizedBox(
+                              child: AsmitaSkeleton.bone(
+                                width: 70,
                                 height: 16,
-                                width: 16,
-                                child: AsmitaLoadingIndicator(color: Color(0xFFE21F26), size: 16),
+                                borderRadius: 4,
                               ),
                             )
                           : Text(
@@ -1236,35 +1238,26 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           BlocBuilder<AuthBloc, AuthState>(
             builder: (context, state) {
               final isLoading = state is AuthLoading;
-              return InkWell(
-                onTap: isLoading ? null : _nextStep,
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  height: 56,
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE21F26),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 250),
-                    child: Row(
-                      key: ValueKey('$_currentStep-$isLoading'),
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (isLoading)
-                          const SizedBox(height: 20, width: 20, child: AsmitaLoadingIndicator(color: Colors.white, size: 20))
-                        else ...[
-                          Text(
-                            _currentStep == 0 ? 'Next' : 'Complete',
-                            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600, fontFamily: 'Poppins'),
-                          ),
-                          const SizedBox(width: 8),
-                          Icon(_currentStep == 0 ? Icons.arrow_forward_rounded : Icons.check_rounded, color: Colors.white, size: 20),
-                        ]
-                      ],
-                    ),
-                  ),
+              return AppButton(
+                style: AppButtonStyle.custom,
+                backgroundColor: const Color(0xFFE21F26),
+                foregroundColor: Colors.white,
+                height: 56,
+                borderRadius: 16,
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                isLoading: isLoading,
+                onPressed: _nextStep,
+                label: _currentStep == 0 ? 'Next' : 'Complete',
+                icon: Icon(
+                  _currentStep == 0 ? Icons.arrow_forward_rounded : Icons.check_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                textStyle: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Poppins',
                 ),
               );
             },

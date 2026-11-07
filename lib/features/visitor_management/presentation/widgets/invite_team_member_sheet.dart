@@ -6,6 +6,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_text_field.dart';
 import '../../../../core/widgets/asmita_toast.dart';
@@ -479,10 +481,28 @@ class _InviteTeamMemberSheetState extends State<InviteTeamMemberSheet> {
   @override
   Widget build(BuildContext context) {
     if (_isLoadingPermission) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32.0),
-          child: CircularProgressIndicator(),
+      return Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            AsmitaSkeleton.bone(
+              width: double.infinity,
+              height: 48,
+              borderRadius: 12,
+            ),
+            const SizedBox(height: 16),
+            AsmitaSkeleton.bone(
+              width: double.infinity,
+              height: 48,
+              borderRadius: 12,
+            ),
+            const SizedBox(height: 16),
+            AsmitaSkeleton.bone(
+              width: double.infinity,
+              height: 48,
+              borderRadius: 12,
+            ),
+          ],
         ),
       );
     }
@@ -712,33 +732,18 @@ class _InviteTeamMemberSheetState extends State<InviteTeamMemberSheet> {
             SizedBox(
               width: double.infinity,
               height: 50,
-              child: ElevatedButton(
+              child: AppButton(
                 onPressed: _isSubmitting ? null : _onSubmit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AsmitaPalette.deepNavy,
-                  disabledBackgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.6),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
+                isLoading: _isSubmitting,
+                label: 'Generate Invite Link',
+                backgroundColor: AsmitaPalette.deepNavy,
+                foregroundColor: Colors.white,
+                borderRadius: 12,
+                textStyle: GoogleFonts.montserrat(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
                 ),
-                child: _isSubmitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(
-                        'Generate Invite Link',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
               ),
             ),
             const SizedBox(height: 12),
@@ -791,11 +796,11 @@ class _InviteTeamMemberSheetState extends State<InviteTeamMemberSheet> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Theme.of(context).dividerColor),
         ),
-        child: const Center(
-          child: SizedBox(
-            height: 18,
+        child: Center(
+          child: AsmitaSkeleton.bone(
             width: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
+            height: 18,
+            borderRadius: 9,
           ),
         ),
       );
