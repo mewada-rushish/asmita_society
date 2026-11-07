@@ -2,8 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/asmita_toast.dart';
+import '../../../core/navigation/app_transitions.dart';
 import '../../../core/utils/property_role_resolver.dart';
 import '../../dashboard/presentation/main_dashboard_screen.dart'; // Added dashboard routing import
 import '../bloc/auth_bloc.dart';
@@ -91,7 +92,7 @@ class _OtpScreenState extends State<OtpScreen> {
             final normalizedRole = PropertyRoleResolver.normalizeRole(state.sessionRole);
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(
+              AsmitaPageTransitions.adaptiveRoute(
                 builder: (_) => MainDashboardScreen(userRole: normalizedRole),
               ),
               (route) => false,
@@ -99,14 +100,14 @@ class _OtpScreenState extends State<OtpScreen> {
           } else if (state is AuthRegistrationRequired) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
+              AsmitaPageTransitions.adaptiveRoute(
                 builder: (_) => RegistrationScreen(verifiedMobile: state.mobile),
               ),
             );
           } else if (state is AuthPendingApproval) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
+              AsmitaPageTransitions.adaptiveRoute(
                 builder: (_) => ApprovalPendingScreen(mobile: widget.phoneNumber),
               ),
             );
@@ -307,24 +308,24 @@ class _OtpScreenState extends State<OtpScreen> {
                               final isComplete = _otp.length == 6;
                               final primaryColor = Theme.of(context).colorScheme.primary;
                               return SizedBox(
-                                width: double.infinity, height: 56,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: isComplete ? primaryColor : primaryColor.withValues(alpha: 0.38), 
-                                    elevation: 0, 
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                width: double.infinity,
+                                height: 56,
+                                child: AppButton(
+                                  style: AppButtonStyle.custom,
+                                  height: 56,
+                                  borderRadius: 16,
+                                  backgroundColor: isComplete ? primaryColor : primaryColor.withValues(alpha: 0.38),
+                                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                                  isLoading: isLoading,
+                                  onPressed: isComplete ? _verifyOtp : null,
+                                  label: 'Verify Secure Code',
+                                  textStyle: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    color: isComplete ? Theme.of(context).colorScheme.onPrimary : Colors.white.withValues(alpha: 0.85),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.2,
                                   ),
-                                  onPressed: isLoading || !isComplete ? null : _verifyOtp,
-                                  child: isLoading 
-                                    ? SizedBox(height: 24, width: 24, child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.onPrimary, size: 24))
-                                    : Text(
-                                        'Verify Secure Code', 
-                                        style: TextStyle(
-                                          color: isComplete ? Theme.of(context).colorScheme.onPrimary : Colors.white.withValues(alpha: 0.85), 
-                                          fontSize: 16, 
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
                                 ),
                               );
                             },

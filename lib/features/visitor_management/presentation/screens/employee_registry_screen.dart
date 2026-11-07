@@ -4,9 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/app_skeleton.dart';
+import '../../../../core/widgets/app_refresh.dart';
 import '../../../../core/widgets/asmita_toast.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
-import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_bottom_nav_bar.dart';
 import '../../../auth/bloc/auth_bloc.dart';
@@ -613,7 +613,7 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
 
           // Main Content Area with Pull-to-Refresh
           Expanded(
-            child: AsmitaPullToRefresh(
+            child: AppRefresh(
               onRefresh: () async {
                 await _loadData(forceRefresh: true);
               },
@@ -834,12 +834,19 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
 
                   // Employee List or Loading / Empty States
                   if (_isLoading)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 60),
-                      child: Center(
-                        child: AsmitaLoadingIndicator(
-                          color: AsmitaPalette.deepNavy,
-                          size: 32,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Column(
+                        children: List.generate(
+                          4,
+                          (index) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: AsmitaSkeleton.bone(
+                              width: double.infinity,
+                              height: 140,
+                              borderRadius: 16,
+                            ),
+                          ),
                         ),
                       ),
                     )

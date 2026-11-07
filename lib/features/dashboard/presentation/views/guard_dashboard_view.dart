@@ -7,6 +7,7 @@ import 'package:asmita_society/core/config/env_config.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/widgets/app_button.dart';
 
 
 import '../../../../../core/widgets/asmita_loading_indicator.dart';
@@ -531,25 +532,17 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                 ),
               ),
               const SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: isSubmitting ? null : _searchCode,
-                style: ElevatedButton.styleFrom(
+              SizedBox(
+                width: 52,
+                height: 52,
+                child: AppButton(
+                  icon: Icons.search,
+                  isLoading: isSubmitting,
+                  onPressed: isSubmitting ? null : _searchCode,
                   backgroundColor: Theme.of(context).colorScheme.primary,
-                  padding: const EdgeInsets.all(16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  foregroundColor: Colors.white,
+                  borderRadius: 12,
                 ),
-                child: isSubmitting
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: AsmitaLoadingIndicator(
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      )
-                    : const Icon(Icons.search, color: Colors.white),
               ),
             ],
           ),
@@ -1732,31 +1725,15 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
+            child: AppButton(
               onPressed: _isCapturing ? null : _takePhoto,
-              icon: _isCapturing
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(Icons.camera_alt, size: 16),
-              label: Text(
-                _isCapturing ? 'Opening Camera...' : 'Take Visitor Photo Now',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AsmitaPalette.deepNavy,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                elevation: 0,
-              ),
+              isLoading: _isCapturing,
+              icon: Icons.camera_alt,
+              label: _isCapturing ? 'Opening Camera...' : 'Take Visitor Photo Now',
+              backgroundColor: AsmitaPalette.deepNavy,
+              foregroundColor: Colors.white,
+              borderRadius: 8,
+              height: 40,
             ),
           ),
         ],

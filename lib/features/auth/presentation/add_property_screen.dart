@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_skeleton.dart';
 import '../../../core/widgets/asmita_toast.dart';
 import '../../../core/widgets/asmita_bottom_sheet.dart';
 import '../data/models/property_models.dart';
@@ -311,10 +312,10 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                   Expanded(
                     child: Align(
                       alignment: Alignment.centerRight,
-                      child: SizedBox(
-                        width: 16,
+                      child: AsmitaSkeleton.bone(
+                        width: 70,
                         height: 16,
-                        child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 16),
+                        borderRadius: 4,
                       ),
                     ),
                   )
@@ -512,8 +513,14 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    ElevatedButton(
-                      onPressed: _isSubmitting ? null : () async {
+                    AppButton(
+                      style: AppButtonStyle.custom,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                      height: 56,
+                      borderRadius: 12,
+                      isLoading: _isSubmitting,
+                      onPressed: () async {
                         if (_selectedSociety == null || _selectedTower == null || _selectedFloor == null || _selectedFlat == null || _selectedRole == null) {
                           AsmitaToast.show(context, message: 'Please complete all selections.', type: AsmitaToastType.error);
                           return;
@@ -538,30 +545,12 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                           if (mounted) setState(() => _isSubmitting = false);
                         }
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                        elevation: 0,
-                        minimumSize: const Size(double.infinity, 56),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        disabledBackgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
-                        disabledForegroundColor: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+                      label: 'Submit Request',
+                      textStyle: const TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
-                      child: _isSubmitting
-                          ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: AsmitaLoadingIndicator(color: Colors.white, size: 24),
-                            )
-                          : const Text(
-                              'Submit Request',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
                     ),
                   ],
                 ),
