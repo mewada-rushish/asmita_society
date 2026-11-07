@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/design_system.dart';
-import '../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../core/widgets/app_button.dart';
+import '../../../core/navigation/app_transitions.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -179,7 +180,7 @@ class _ApprovalPendingScreenState extends State<ApprovalPendingScreen> {
                                     onPressed: () {
                                       Navigator.pushAndRemoveUntil(
                                         context,
-                                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                                        AsmitaPageTransitions.adaptiveRoute(builder: (_) => const LoginScreen()),
                                         (route) => false,
                                       );
                                     },
@@ -197,15 +198,14 @@ class _ApprovalPendingScreenState extends State<ApprovalPendingScreen> {
                                 SizedBox(
                                   width: double.infinity,
                                   height: 56,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Theme.of(context).colorScheme.primary,
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                    ),
-                                    onPressed: (isLoading || !_canRefresh)
+                                  child: AppButton(
+                                    style: AppButtonStyle.custom,
+                                    height: 56,
+                                    borderRadius: 16,
+                                    backgroundColor: Theme.of(context).colorScheme.primary,
+                                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                                    isLoading: isLoading,
+                                    onPressed: !_canRefresh
                                         ? null
                                         : () {
                                             _startCooldown();
@@ -213,23 +213,13 @@ class _ApprovalPendingScreenState extends State<ApprovalPendingScreen> {
                                                   AuthCheckStatusRequested(mobile: widget.mobile),
                                                 );
                                           },
-                                    child: isLoading
-                                        ? const SizedBox(
-                                            height: 24,
-                                            width: 24,
-                                            child: AsmitaLoadingIndicator(
-                                              color: Colors.white,
-                                              size: 24,
-                                            ),
-                                          )
-                                        : Text(
-                                            _canRefresh ? 'Refresh Status' : 'Refresh Status ($_cooldownSeconds)',
-                                            style: TextStyle(
-                                              color: Theme.of(context).colorScheme.onPrimary,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
+                                    label: _canRefresh ? 'Refresh Status' : 'Refresh Status ($_cooldownSeconds)',
+                                    textStyle: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      color: Theme.of(context).colorScheme.onPrimary,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
                               const SizedBox(height: 16),
@@ -239,7 +229,7 @@ class _ApprovalPendingScreenState extends State<ApprovalPendingScreen> {
                                   onPressed: () {
                                     Navigator.pushAndRemoveUntil(
                                       context,
-                                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                                      AsmitaPageTransitions.adaptiveRoute(builder: (_) => const LoginScreen()),
                                       (route) => false,
                                     );
                                   },

@@ -12,7 +12,8 @@ import '../../../../core/network/dio_client.dart';
 import '../../../auth/data/models/user_model.dart';
 import '../../../../core/security/secure_storage_service.dart';
 import 'package:shimmer/shimmer.dart';
-import '../../../../core/widgets/asmita_animated_refresh.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_refresh.dart';
 import '../../../../core/widgets/asmita_sub_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 
@@ -442,7 +443,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
             // Scrollable Settings Content with Pull to Refresh
             Expanded(
-              child: AsmitaPullToRefresh(
+              child: AppRefresh(
                 onRefresh: () async {
                   await _fetchCandidateDelegates();
                 },
@@ -895,36 +896,25 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                     ],
 
                     // Save Button
-                    ElevatedButton(
-                      onPressed: _isSubmitting ? null : _submitDelegation,
-                      style: ElevatedButton.styleFrom(
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: AppButton(
+                        onPressed: _isSubmitting ? null : _submitDelegation,
+                        isLoading: _isSubmitting,
+                        label: _isDelegationEnabled
+                            ? 'Save & Activate Delegation'
+                            : (_activeOutgoing != null ? 'Deactivate Delegation' : 'Save Preferences'),
                         backgroundColor: AsmitaPalette.deepNavy,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                        borderRadius: 14,
+                        textStyle: const TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
-                        elevation: 2,
                       ),
-                      child: _isSubmitting
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Text(
-                              _isDelegationEnabled
-                                  ? 'Save & Activate Delegation'
-                                  : (_activeOutgoing != null ? 'Deactivate Delegation' : 'Save Preferences'),
-                              style: const TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
                     ),
                     const SizedBox(height: 40),
                   ],

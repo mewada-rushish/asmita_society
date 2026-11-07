@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/widgets/asmita_loading_indicator.dart';
-import '../../../core/widgets/asmita_toast.dart'; // Added Toast Import
+import '../../../core/widgets/asmita_toast.dart';
+import '../../../core/widgets/app_button.dart';
+import '../../../core/navigation/app_transitions.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -70,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
             );
             Navigator.push(
               context,
-              MaterialPageRoute(
+              AsmitaPageTransitions.adaptiveRoute(
                 builder: (_) => BlocProvider.value(
                   value: context.read<AuthBloc>(),
                   child: OtpScreen(phoneNumber: state.mobile),
@@ -229,43 +230,29 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: SizedBox(
                                   width: double.infinity,
                                   height: 56,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: buttonActive
-                                          ? primaryColor
-                                          : primaryColor.withValues(alpha: 0.38),
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
+                                  child: AppButton(
+                                    style: AppButtonStyle.custom,
+                                    height: 56,
+                                    borderRadius: 16,
+                                    backgroundColor: buttonActive
+                                        ? primaryColor
+                                        : primaryColor.withValues(alpha: 0.38),
+                                    foregroundColor: Colors.white,
+                                    isLoading: isLoading,
+                                    onPressed: _submitPhone,
+                                    icon: const Icon(
+                                      Icons.arrow_forward_rounded,
+                                      color: Colors.white,
+                                      size: 20,
                                     ),
-                                    onPressed: isLoading ? null : _submitPhone,
-                                    child: isLoading 
-                                      ? const SizedBox(
-                                          height: 24, 
-                                          width: 24, 
-                                          child: AsmitaLoadingIndicator(color: Colors.white, size: 24),
-                                        )
-                                      : Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              'Login',
-                                              style: TextStyle(
-                                                color: buttonActive ? Colors.white : Colors.white.withValues(alpha: 0.85),
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
-                                                letterSpacing: 0.3,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Icon(
-                                              Icons.arrow_forward_rounded,
-                                              color: buttonActive ? Colors.white : Colors.white.withValues(alpha: 0.85),
-                                              size: 20,
-                                            ),
-                                          ],
-                                        ),
+                                    label: 'Login',
+                                    textStyle: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      color: buttonActive ? Colors.white : Colors.white.withValues(alpha: 0.85),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.3,
+                                    ),
                                   ),
                                 ),
                               );
