@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/app_button.dart';
 import 'package:asmita_society/features/community/bloc/community_post_bloc.dart';
 import 'package:asmita_society/features/community/bloc/community_post_event.dart';
 import 'package:asmita_society/features/community/bloc/community_post_state.dart';
@@ -256,16 +256,22 @@ class _AddCommunityPostModalState extends State<AddCommunityPostModal> {
                 _wasSubmitting = state.isSubmitting;
               },
               builder: (context, state) {
-                return ElevatedButton(
-                  onPressed: state.isSubmitting ? null : _submitPost,
-                  style: ElevatedButton.styleFrom(
+                return SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: AppButton(
+                    onPressed: state.isSubmitting ? null : _submitPost,
+                    isLoading: state.isSubmitting,
+                    label: 'Post',
                     backgroundColor: Theme.of(context).colorScheme.primary,
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    foregroundColor: Theme.of(context).colorScheme.surface,
+                    borderRadius: 12,
+                    textStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.surface,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  child: state.isSubmitting 
-                    ? SizedBox(width: 24, height: 24, child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.surface, size: 24))
-                    : Text('Post', style: TextStyle(color: Theme.of(context).colorScheme.surface, fontSize: 16, fontWeight: FontWeight.bold)),
                 );
               },
             ),

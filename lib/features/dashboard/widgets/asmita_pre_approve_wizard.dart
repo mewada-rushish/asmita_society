@@ -4,6 +4,8 @@ import 'dart:io';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -2505,18 +2507,15 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               border: Border.all(color: AsmitaPalette.borderGrey, width: 1.0),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                SizedBox(
+                AsmitaSkeleton.bone(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AsmitaPalette.deepNavy),
-                  ),
+                  borderRadius: 8,
                 ),
-                SizedBox(width: 10),
-                Text(
+                const SizedBox(width: 10),
+                const Text(
                   'Loading host directory...',
                   style: TextStyle(
                     fontFamily: 'Poppins',
@@ -2709,14 +2708,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                       shape: BoxShape.circle,
                     ),
                     child: _isCapturingPhoto
-                        ? const Center(
-                            child: SizedBox(
+                        ? Center(
+                            child: AsmitaSkeleton.bone(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AsmitaPalette.deepNavy,
-                              ),
+                              borderRadius: 10,
                             ),
                           )
                         : const Icon(
@@ -4855,12 +4851,19 @@ class _EmployeePickerModalState extends State<_EmployeePickerModal> {
           const SizedBox(height: 8),
           Expanded(
             child: _isLoading && filteredEmployees.isEmpty
-                ? const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24.0),
-                      child: AsmitaLoadingIndicator(
-                        color: AsmitaPalette.deepNavy,
-                        size: 32,
+                ? Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: List.generate(
+                        4,
+                        (index) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: AsmitaSkeleton.bone(
+                            width: double.infinity,
+                            height: 60,
+                            borderRadius: 12,
+                          ),
+                        ),
                       ),
                     ),
                   )
@@ -5321,32 +5324,19 @@ class _VisitorOtpSheetWidgetState extends State<_VisitorOtpSheetWidget> {
           SizedBox(
             width: double.infinity,
             height: 48,
-            child: ElevatedButton(
+            child: AppButton(
               onPressed: _isVerifying ? null : _verifyOtp,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AsmitaPalette.deepNavy,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
+              isLoading: _isVerifying,
+              label: 'Verify & Authorize Entry',
+              backgroundColor: AsmitaPalette.deepNavy,
+              foregroundColor: Colors.white,
+              borderRadius: 14,
+              textStyle: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
-              child: _isVerifying
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : const Text(
-                      'Verify & Authorize Entry',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
             ),
           ),
         ],

@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/design_system.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
@@ -1155,15 +1155,15 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
         placeholder: (context, url) => Container(
           width: size,
           height: size,
-          color: Colors.white.withValues(alpha: 0.1),
-          child: const Center(
-            child: SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: AsmitaSkeleton.bone(
+              width: size,
+              height: size,
+              borderRadius: size / 2,
             ),
           ),
         ),
@@ -1335,10 +1335,25 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                     state.status == IndustrialVisitBlocStatus.initial;
 
                 if (isInitialLoading) {
-                  return const Center(
-                    child: AsmitaLoadingIndicator(
-                      color: AsmitaPalette.deepNavy,
-                      size: 32,
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: AsmitaSkeleton(
+                      isLoading: true,
+                      child: Column(
+                        children: List.generate(
+                          3,
+                          (index) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Container(
+                              height: 120,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   );
                 }

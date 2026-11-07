@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/app_skeleton.dart';
+import '../../../../core/widgets/app_refresh.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_visitor_card.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
-import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
 import '../../../auth/bloc/auth_bloc.dart';
@@ -219,11 +219,14 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
 
           // 2. Single Continuous Scroll Page
           Expanded(
-            child: AsmitaPullToRefresh(
+            child: AppRefresh(
               onRefresh: () async {
-                context.read<IndustrialVisitBloc>().add(
-                  const LoadIndustrialVisits(),
-                );
+                final bloc = context.read<IndustrialVisitBloc>();
+                final future = bloc.stream
+                    .firstWhere((s) => s.status != IndustrialVisitBlocStatus.loading)
+                    .timeout(const Duration(seconds: 4), onTimeout: () => bloc.state);
+                bloc.add(const LoadIndustrialVisits());
+                await future;
               },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -249,15 +252,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                       vertical: 8,
                     ),
                     child: isLoading
-                        ? const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 40),
-                            child: Center(
-                              child: AsmitaLoadingIndicator(
-                                color: AsmitaPalette.deepNavy,
-                                size: 32,
-                              ),
-                            ),
-                          )
+                        ? _buildReceptionistListSkeleton(context)
                         : (_selectedTabIndex == 0
                               ? _buildInlineVisitList(
                                   context,
@@ -556,6 +551,22 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReceptionistListSkeleton(BuildContext context) {
+    return Column(
+      children: List.generate(
+        3,
+        (index) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: AsmitaSkeleton.bone(
+            width: double.infinity,
+            height: 140,
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
     );
