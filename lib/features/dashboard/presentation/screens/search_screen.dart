@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../core/widgets/asmita_loading_indicator.dart';
-import '../../../../core/widgets/asmita_animated_refresh.dart';
+import '../../../../core/widgets/app_skeleton.dart';
+import '../../../../core/widgets/app_refresh.dart';
 import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_state.dart';
 import '../../bloc/search/search_bloc.dart';
@@ -245,8 +245,21 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
         if (state is SearchLoading) {
-          return Center(
-            child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.secondary, size: 28),
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: List.generate(
+                4,
+                (index) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: AsmitaSkeleton.bone(
+                    width: double.infinity,
+                    height: 72,
+                    borderRadius: 12,
+                  ),
+                ),
+              ),
+            ),
           );
         }
 
@@ -268,7 +281,7 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
           return CustomScrollView(
             physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
             slivers: [
-              AsmitaAnimatedRefresh(
+              AppRefresh.sliver(
                 onRefresh: () async {
                   _executeSearch(_currentSearchQuery);
                 },
