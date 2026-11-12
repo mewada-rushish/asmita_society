@@ -16,6 +16,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_refresh.dart';
 import '../../../../core/widgets/asmita_sub_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
+import '../../../../core/utils/property_role_resolver.dart';
 
 /// Dedicated Settings Screen for Department Delegation:
 /// - Department Head / Director / Executive out-of-office visitor approval delegation
@@ -86,6 +87,17 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
       }
       final currentUserId = currentUser?.userId;
 
+      if (!PropertyRoleResolver.canDelegate(currentUser)) {
+        if (mounted) {
+          setState(() {
+            _isLoadingStaff = false;
+            _candidates = [];
+            _isDelegationEnabled = false;
+          });
+        }
+        return;
+      }
+
       int computeRolePower(UserModel? u) {
         if (u == null) return 100;
         final r = u.primaryRole.toLowerCase();
@@ -93,6 +105,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         final lead = (u.roleDetails?['leadership_role']?.toString() ?? '').toLowerCase();
         final isHod = u.roleDetails?['is_hod'] == true;
 
+        if ((r.contains('gate') || d.contains('gate')) && (r.contains('reception') || d.contains('reception'))) return 0;
         if (r.contains('director') || d.contains('director') || lead.contains('director')) return 500;
         if (isHod || r.contains('hod') || r.contains('head') || d.contains('hod') || d.contains('head') || lead.contains('hod') || lead.contains('head')) return 400;
         if (r.contains('lead') || r.contains('manager') || r.contains('tl') || d.contains('lead') || d.contains('manager') || d.contains('tl')) return 300;
@@ -384,6 +397,17 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         currentUser = null;
       }
       final propertyId = currentUser?.societyId ?? 115;
+
+      if (!PropertyRoleResolver.canDelegate(currentUser)) {
+        if (mounted) {
+          AsmitaToast.show(
+            context,
+            message: 'Gate receptionists handle perimeter intake and cannot delegate approvals.',
+            type: AsmitaToastType.error,
+          );
+        }
+        return;
+      }
 
       if (!_isDelegationEnabled) {
         // Revoke active delegation
