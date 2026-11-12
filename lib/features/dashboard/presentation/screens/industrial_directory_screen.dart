@@ -243,7 +243,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     const Text(
-                                      'Visitor Approval Delegation',
+                                      'Approval Delegation',
                                       style: TextStyle(
                                         fontFamily: 'Montserrat',
                                         fontWeight: FontWeight.bold,
