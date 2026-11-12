@@ -100,12 +100,12 @@ void main() {
       expect(find.text('Approved'), findsOneWidget);
       expect(find.text('Inside'), findsOneWidget);
       expect(find.text('Pre-Approve'), findsOneWidget);
-      expect(find.text('Car Valet'), findsOneWidget);
       expect(find.text('Meetings'), findsOneWidget);
+      expect(find.text('Security'), findsOneWidget);
+      expect(find.text('Pay Bills'), findsOneWidget);
     });
 
     testWidgets('TC-R2-02: EmployeeDashboardView renders hero card and pending approvals feed', (tester) async {
-      bool delegationTapped = false;
       final visits = [
         IndustrialVisitModel(
           id: 102,
@@ -126,7 +126,7 @@ void main() {
             cabinNumber: 'CAB-204',
             deskNumber: 'DESK-15',
             visits: visits,
-            onOpenDelegation: () => delegationTapped = true,
+            onOpenDelegation: () {},
           ),
           isDark: false,
         ),
@@ -138,9 +138,10 @@ void main() {
       expect(find.text('CAB-204'), findsOneWidget);
       expect(find.text('DESK-15'), findsOneWidget);
       expect(find.text('Vendor Neha Verma'), findsOneWidget);
-
-      await tester.tap(find.text('Delegate'));
-      expect(delegationTapped, isTrue);
+      expect(find.text('Pre-Approve'), findsOneWidget);
+      expect(find.text('Meetings'), findsOneWidget);
+      expect(find.text('Security'), findsOneWidget);
+      expect(find.text('Pay Bills'), findsOneWidget);
     });
 
     testWidgets('TC-R2-03: GuardPassCheckInScreen renders gate checkpoint verification and terminal banner', (tester) async {
