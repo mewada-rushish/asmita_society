@@ -2279,20 +2279,6 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
               );
             }
           : null,
-      onAcknowledge: (isPending && canApprove && !isAck)
-          ? () {
-              setState(() => _acknowledgedIds.add(visit.id));
-              context.read<IndustrialVisitBloc>().add(
-                AcknowledgeVisitEvent(visit.id),
-              );
-              AsmitaToast.show(
-                context,
-                message:
-                    'Visitor pass #${visit.passCode ?? visit.id} acknowledged',
-                type: AsmitaToastType.success,
-              );
-            }
-          : null,
     );
   }
 }

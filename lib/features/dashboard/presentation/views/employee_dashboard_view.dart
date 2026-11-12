@@ -136,16 +136,6 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
     }
   }
 
-  void _handleAcknowledge(BuildContext context, int visitId) {
-    if (widget.onAcknowledgeVisit != null) {
-      widget.onAcknowledgeVisit!(visitId);
-    } else {
-      context.read<IndustrialVisitBloc>().add(
-            AcknowledgeVisitEvent(visitId),
-          );
-    }
-  }
-
   Future<void> _showPreApproveModal([BuildContext? ctx]) async {
     await AsmitaPreApproveWizard.showAsModalSheet(
       ctx ?? context,
@@ -1069,9 +1059,6 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
           : null,
       onDeny: (isPending && !visit.isDelivery)
           ? () => _handleDecide(context, visit.id, 'REJECT')
-          : null,
-      onAcknowledge: (isPending && !visit.isDelivery)
-          ? () => _handleAcknowledge(context, visit.id)
           : null,
       bottomActions: bottomActions,
     );
