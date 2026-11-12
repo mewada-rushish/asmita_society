@@ -1718,18 +1718,20 @@ class AsmitaVisitorCard extends StatelessWidget {
                       width: 1.0,
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.close_rounded,
-                        size: 15,
-                        color: AsmitaPalette.actionRed,
-                      ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.close_rounded,
+                          size: 15,
+                          color: AsmitaPalette.actionRed,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
                           denyLabel ?? (actionCount == 3 ? 'Deny' : 'Deny Entry'),
                           style: const TextStyle(
                             fontFamily: 'Montserrat',
@@ -1739,10 +1741,9 @@ class AsmitaVisitorCard extends StatelessWidget {
                             letterSpacing: 0.2,
                           ),
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1774,18 +1775,20 @@ class AsmitaVisitorCard extends StatelessWidget {
                         width: 1.0,
                       ),
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.check_circle_rounded,
-                          size: 14,
-                          color: Color(0xFF047857),
-                        ),
-                        SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
+                    child: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle_rounded,
+                            size: 14,
+                            color: Color(0xFF047857),
+                          ),
+                          SizedBox(width: 4),
+                          Text(
                             "Ack'd",
                             style: TextStyle(
                               fontFamily: 'Montserrat',
@@ -1795,10 +1798,9 @@ class AsmitaVisitorCard extends StatelessWidget {
                               letterSpacing: 0.2,
                             ),
                             maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   )
                 : Material(
@@ -1826,20 +1828,22 @@ class AsmitaVisitorCard extends StatelessWidget {
                             width: 1.0,
                           ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.touch_app_outlined,
-                              size: 15,
-                              color: isDark
-                                  ? const Color(0xFF93C5FD)
-                                  : AsmitaPalette.deepNavy,
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.center,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.touch_app_outlined,
+                                size: 15,
+                                color: isDark
+                                    ? const Color(0xFF93C5FD)
+                                    : AsmitaPalette.deepNavy,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
                                 actionCount == 3 ? 'Ack' : 'Acknowledge Visit',
                                 style: TextStyle(
                                   fontFamily: 'Montserrat',
@@ -1851,10 +1855,9 @@ class AsmitaVisitorCard extends StatelessWidget {
                                   letterSpacing: 0.2,
                                 ),
                                 maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -1900,18 +1903,20 @@ class AsmitaVisitorCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.check_rounded,
-                        size: 16,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 5),
-                      Flexible(
-                        child: Text(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.check_rounded,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
                           approveLabel ?? (actionCount == 3 ? 'Approve' : 'Approve Entry'),
                           style: const TextStyle(
                             fontFamily: 'Montserrat',
@@ -1921,10 +1926,9 @@ class AsmitaVisitorCard extends StatelessWidget {
                             letterSpacing: 0.2,
                           ),
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
