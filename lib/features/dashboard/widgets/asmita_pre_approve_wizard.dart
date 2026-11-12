@@ -19,6 +19,8 @@ import '../../visitor_management/bloc/visitor_state.dart';
 import '../../visitor_management/bloc/guard_gate_bloc.dart';
 import '../../visitor_management/bloc/guard_gate_event.dart';
 import '../../visitor_management/bloc/guard_gate_state.dart';
+import '../../visitor_management/bloc/industrial_visit_bloc.dart';
+import '../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../visitor_management/presentation/screens/invite_pass_screen.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
@@ -1441,6 +1443,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     return BlocListener<GuardGateBloc, GuardGateState>(
       listener: (context, guardState) {
         if (guardState.status == GuardGateStatus.success) {
+          try {
+            context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+          } catch (_) {}
           AsmitaToast.show(
             context,
             message: 'Walk-in visitor logged successfully!',
@@ -1461,6 +1466,9 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         listener: (context, state) {
           if (state is VisitorCreateSuccess) {
             final passInvite = state.invite;
+            try {
+              context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+            } catch (_) {}
             _clearFormSession();
             if (_selectedCategory == 'Cab' || _selectedCategory == 'Delivery') {
               setState(() {
