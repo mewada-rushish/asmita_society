@@ -11,7 +11,6 @@ import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_visitor_card.dart';
 import '../../../../core/widgets/asmita_employee_card.dart';
-import '../../../../core/utils/property_role_resolver.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
 import '../../../auth/data/models/user_model.dart';
@@ -22,7 +21,6 @@ import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
 import '../../../visitor_management/data/models/industrial_visit_model.dart';
 import '../../../visitor_management/presentation/widgets/delivery_action_sheet.dart';
-import '../../../visitor_management/presentation/widgets/invite_team_member_sheet.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/security/secure_storage_service.dart';
@@ -78,7 +76,6 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
   String _searchQuery = '';
   bool _showSearchBar = false;
   String? _activeDelegateName;
-  bool _hasIncomingDelegation = false;
 
   @override
   void initState() {
@@ -102,12 +99,9 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
       if (res.statusCode == 200 && res.data['success'] == true) {
         final dData = res.data['data'] as Map<String, dynamic>?;
         final outgoing = dData?['outgoingDelegation'] as Map<String, dynamic>?;
-        final incoming = dData?['incomingDelegations'] as List? ?? [];
-        final hasActiveIncoming = incoming.any((item) => item is Map && item['is_active'] == true);
 
         if (mounted) {
           setState(() {
-            _hasIncomingDelegation = hasActiveIncoming;
             if (outgoing != null) {
               final delegate = outgoing['delegate'] as Map<String, dynamic>?;
               _activeDelegateName = delegate?['full_name'] as String? ?? 'Colleague';
@@ -426,65 +420,8 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
     );
   }
 
-  bool _canUserInviteTeam(UserModel? user) {
-    if (user != null) {
-      final roleLower = user.primaryRole.toLowerCase();
-      final desigLower = user.designation.toLowerCase();
-      final widgetDesigLower = widget.designation.toLowerCase();
-      final isHod = user.roleDetails?['is_hod'] == true ||
-          roleLower.contains('hod') ||
-          desigLower.contains('hod') ||
-          desigLower.contains('head') ||
-          widgetDesigLower.contains('hod') ||
-          widgetDesigLower.contains('head');
-      final isTL = roleLower.contains('team leader') ||
-          roleLower.contains('lead') ||
-          desigLower.contains('lead') ||
-          desigLower.contains('tl') ||
-          widgetDesigLower.contains('lead') ||
-          widgetDesigLower.contains('tl');
-      final isDirector = (user.rolePower ?? 0) >= 500 ||
-          roleLower.contains('director') ||
-          desigLower.contains('director') ||
-          widgetDesigLower.contains('director');
-
-      if (isHod || isTL || isDirector) {
-        return true;
-      }
-    } else {
-      final widgetDesigLower = widget.designation.toLowerCase();
-      if (widgetDesigLower.contains('hod') ||
-          widgetDesigLower.contains('head') ||
-          widgetDesigLower.contains('lead') ||
-          widgetDesigLower.contains('tl') ||
-          widgetDesigLower.contains('director')) {
-        return true;
-      }
-    }
-
-    if (_hasIncomingDelegation || (widget.canDelegate ?? false)) {
-      return true;
-    }
-
-    return false;
-  }
-
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildQuickActionsGrid(BuildContext context) {
-    UserModel? user;
-    try {
-      final authBloc = context.read<AuthBloc?>();
-      final authState = authBloc?.state;
-      if (authState is AuthAuthenticated) {
-        user = authState.user;
-      }
-    } catch (_) {
-      user = null;
-    }
-    final canDelegate = widget.canDelegate ??
-        PropertyRoleResolver.canDelegate(user, designation: widget.designation);
-    final canInviteTeam = _canUserInviteTeam(user);
-
     final actions = <_QuickActionItemData>[
       _QuickActionItemData(
         label: 'Pre-Approve',
@@ -506,18 +443,6 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         icon: Icons.receipt_long_rounded,
         onTap: () => _openBillPayments(context),
       ),
-      if (canDelegate)
-        _QuickActionItemData(
-          label: 'Delegate',
-          icon: Icons.sync_alt_rounded,
-          onTap: widget.onOpenDelegation,
-        ),
-      if (canInviteTeam)
-        _QuickActionItemData(
-          label: 'Invite Team',
-          icon: Icons.group_add_rounded,
-          onTap: () => showInviteTeamMemberSheet(context),
-        ),
     ];
 
     return Padding(
