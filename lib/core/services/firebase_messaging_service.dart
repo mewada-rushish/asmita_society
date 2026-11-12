@@ -12,6 +12,10 @@ import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_event.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:asmita_society/features/visitor_management/bloc/guard_gate_bloc.dart';
+import 'package:asmita_society/features/visitor_management/bloc/guard_gate_event.dart';
+import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_bloc.dart';
+import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_event.dart';
 
 @pragma('vm:entry-point')
 void notificationTapBackground(NotificationResponse notificationResponse) {
@@ -437,6 +441,43 @@ class FirebaseMessagingService {
       // If this is purely a silent sync event without a display title, do not show noisy banner
       if (message.notification == null && message.data['title'] == null) {
         return;
+      }
+    }
+
+    // Live sync for Guard terminal when visitor is approved/rejected/acknowledged
+    final isGateStatusUpdate = eventType == 'VISITOR_APPROVED' ||
+        eventType == 'VISITOR_REJECTED' ||
+        eventType == 'VISITOR_ACKNOWLEDGED' ||
+        eventType == 'PASS_REVOKED';
+
+    if (isGateStatusUpdate) {
+      final context = rootNavigatorKey.currentContext;
+      if (context != null) {
+        try {
+          final visitId = message.data['visit_id']?.toString() ??
+              message.data['visitId']?.toString() ??
+              message.data['request_id']?.toString() ??
+              message.data['id']?.toString() ??
+              '';
+          final newStatus = eventType == 'VISITOR_APPROVED'
+              ? 'APPROVED'
+              : (eventType == 'VISITOR_REJECTED' ? 'REJECTED' : 'ACKNOWLEDGED');
+          final passCode = message.data['pass_code']?.toString();
+
+          context.read<GuardGateBloc>().add(
+                UpdateGateVisitorStatus(
+                  visitId: visitId,
+                  newStatus: newStatus,
+                  passCode: passCode,
+                ),
+              );
+          // Also trigger feed reload so all lists sync cleanly
+          context.read<GuardGateBloc>().add(LoadExpectedInvites());
+        } catch (_) {}
+
+        try {
+          context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+        } catch (_) {}
       }
     }
 

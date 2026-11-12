@@ -56,3 +56,18 @@ class SubmitWalkInVisitor extends GuardGateEvent {
   @override
   List<Object?> get props => [payloads];
 }
+
+class UpdateGateVisitorStatus extends GuardGateEvent {
+  final String visitId;
+  final String newStatus;
+  final String? passCode;
+
+  const UpdateGateVisitorStatus({
+    required this.visitId,
+    required this.newStatus,
+    this.passCode,
+  });
+
+  @override
+  List<Object?> get props => [visitId, newStatus, passCode];
+}

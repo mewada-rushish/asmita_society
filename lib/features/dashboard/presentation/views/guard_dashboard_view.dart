@@ -50,11 +50,20 @@ class GuardDashboardView extends StatefulWidget {
 class _GuardDashboardViewState extends State<GuardDashboardView> {
   final TextEditingController _codeController = TextEditingController();
   int _selectedGateId = 1;
+  Timer? _autoSyncTimer;
 
   @override
   void initState() {
     super.initState();
     context.read<GuardGateBloc>().add(LoadExpectedInvites());
+
+    // Auto-sync gate queue silently every 25 seconds for unattended terminals
+    _autoSyncTimer = Timer.periodic(const Duration(seconds: 25), (_) {
+      if (mounted) {
+        context.read<GuardGateBloc>().add(LoadExpectedInvites());
+      }
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final authState = context.read<AuthBloc>().state;
@@ -68,18 +77,19 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
 
   @override
   void dispose() {
+    _autoSyncTimer?.cancel();
     _codeController.dispose();
     super.dispose();
   }
 
   void _searchCode() {
     final code = _codeController.text.trim();
-    if (code.length == 6) {
+    if (code.isNotEmpty) {
       context.read<GuardGateBloc>().add(SearchInviteByCode(code));
     } else {
       AsmitaToast.show(
         context,
-        message: 'Please enter a 6-digit access code',
+        message: 'Please enter access code or pass number',
         type: AsmitaToastType.error,
       );
     }
