@@ -39,7 +39,9 @@ class AsmitaSubHeader extends StatelessWidget {
                 fontFamily: 'Montserrat',
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFFF1F5F9)
+                    : Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
