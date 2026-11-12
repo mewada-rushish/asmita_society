@@ -485,6 +485,9 @@ class IndustrialVisitModel {
   final bool isBatched;
   final bool isPreApproved;
   final bool isVip;
+  final bool isAcknowledged;
+  final DateTime? acknowledgedAt;
+  final int? acknowledgedByUserId;
   final DateTime? createdAt;
   final DateTime? checkInAt;
   final DateTime? checkOutAt;
@@ -522,6 +525,9 @@ class IndustrialVisitModel {
     this.isBatched = false,
     this.isPreApproved = false,
     this.isVip = false,
+    this.isAcknowledged = false,
+    this.acknowledgedAt,
+    this.acknowledgedByUserId,
     this.createdAt,
     this.checkInAt,
     this.checkOutAt,
@@ -662,6 +668,15 @@ class IndustrialVisitModel {
           json['isVip'] == true ||
           (json['visitor_name']?.toString().contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false)) ?? false) ||
           (json['purpose']?.toString().contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false)) ?? false),
+      isAcknowledged: json['is_acknowledged'] == true ||
+          json['isAcknowledged'] == true ||
+          json['acknowledged_at'] != null,
+      acknowledgedAt: json['acknowledged_at'] != null
+          ? DateTime.tryParse(json['acknowledged_at'].toString())
+          : null,
+      acknowledgedByUserId: json['acknowledged_by_user_id'] is int
+          ? json['acknowledged_by_user_id']
+          : int.tryParse(json['acknowledged_by_user_id']?.toString() ?? ''),
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
