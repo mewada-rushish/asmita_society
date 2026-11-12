@@ -104,7 +104,8 @@ class _AppButtonState extends State<AppButton> {
 
     switch (widget.style) {
       case AppButtonStyle.primaryElevated:
-        bg = widget.backgroundColor ?? AsmitaPalette.deepNavy;
+        final rawBg = widget.backgroundColor ?? AsmitaPalette.deepNavy;
+        bg = (isDark && rawBg == AsmitaPalette.deepNavy) ? AsmitaPalette.deepNavyDark : rawBg;
         fg = widget.foregroundColor ?? Colors.white;
         break;
       case AppButtonStyle.secondaryOutlined:
@@ -120,19 +121,20 @@ class _AppButtonState extends State<AppButton> {
         fg = widget.foregroundColor ?? (isDark ? const Color(0xFF93C5FD) : AsmitaPalette.deepNavy);
         break;
       case AppButtonStyle.dangerElevated:
-        bg = widget.backgroundColor ?? AsmitaPalette.actionRed;
+        bg = widget.backgroundColor ?? (isDark ? const Color(0xFFEF4444) : AsmitaPalette.actionRed);
         fg = widget.foregroundColor ?? Colors.white;
         break;
       case AppButtonStyle.dangerOutlined:
         bg = widget.backgroundColor ?? (isDark ? const Color(0xFF4C0519).withValues(alpha: 0.25) : const Color(0xFFFFF1F2));
-        fg = widget.foregroundColor ?? AsmitaPalette.actionRed;
+        fg = widget.foregroundColor ?? (isDark ? const Color(0xFFF87171) : AsmitaPalette.actionRed);
         border ??= BorderSide(
           color: isDark ? const Color(0xFFBE123C).withValues(alpha: 0.35) : const Color(0xFFFECDD3),
           width: 1.0,
         );
         break;
       case AppButtonStyle.custom:
-        bg = widget.backgroundColor ?? AsmitaPalette.deepNavy;
+        final rawBg = widget.backgroundColor ?? AsmitaPalette.deepNavy;
+        bg = (isDark && rawBg == AsmitaPalette.deepNavy) ? AsmitaPalette.deepNavyDark : rawBg;
         fg = widget.foregroundColor ?? Colors.white;
         break;
     }

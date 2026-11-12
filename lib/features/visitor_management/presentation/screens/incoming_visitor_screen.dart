@@ -366,9 +366,9 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                               height: 160,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: AsmitaPalette.deepNavy.withValues(alpha: 0.05),
+                                color: (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy).withValues(alpha: isDark ? 0.12 : 0.05),
                                 border: Border.all(
-                                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.18),
+                                  color: (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy).withValues(alpha: isDark ? 0.28 : 0.18),
                                   width: 1.5,
                                 ),
                               ),
@@ -381,7 +381,7 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                             height: 130,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: AsmitaPalette.deepNavy.withValues(alpha: 0.09),
+                              color: (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy).withValues(alpha: isDark ? 0.18 : 0.09),
                             ),
                           ),
 
@@ -397,7 +397,7 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.18),
+                                  color: (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy).withValues(alpha: isDark ? 0.25 : 0.18),
                                   blurRadius: 22,
                                   offset: const Offset(0, 8),
                                 ),
@@ -469,13 +469,15 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                                     Container(
                                       padding: const EdgeInsets.all(7),
                                       decoration: BoxDecoration(
-                                        color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                                        color: isDark
+                                            ? AsmitaPalette.deepNavyDark.withValues(alpha: 0.18)
+                                            : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      child: const Icon(
+                                      child: Icon(
                                         Icons.business_rounded,
                                         size: 16,
-                                        color: AsmitaPalette.deepNavy,
+                                        color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
                                       ),
                                     ),
                                     const SizedBox(width: 10),
