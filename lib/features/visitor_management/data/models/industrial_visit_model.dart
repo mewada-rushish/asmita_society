@@ -606,7 +606,7 @@ class IndustrialVisitModel {
       isBatched: isBatched ?? this.isBatched,
       isPreApproved: isPreApproved ?? this.isPreApproved,
       isVip: isVip ?? this.isVip,
-      isAcknowledged: isAcknowledged ?? this.isAcknowledged,
+      isAcknowledged: isAcknowledged ?? (this.isAcknowledged == true),
       acknowledgedAt: acknowledgedAt ?? this.acknowledgedAt,
       acknowledgedByUserId: acknowledgedByUserId ?? this.acknowledgedByUserId,
       createdAt: createdAt ?? this.createdAt,

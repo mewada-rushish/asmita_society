@@ -80,8 +80,16 @@ Future<void> main() async {
       ]);
 
       // Setup global error handling for Flutter framework
-      FlutterError.onError = (details) =>
+      FlutterError.onError = (details) {
+        final isLayoutOverflow = details.exceptionAsString().contains('RenderFlex overflowed') ||
+            details.exceptionAsString().contains('overflowed by');
+        if (isLayoutOverflow) {
+          // Record layout overflow warnings as non-fatal to avoid distorting crash-free session statistics
+          FirebaseCrashlytics.instance.recordFlutterError(details);
+        } else {
           FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+        }
+      };
       PlatformDispatcher.instance.onError = (error, stack) {
         FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
         return true;

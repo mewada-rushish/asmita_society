@@ -233,7 +233,11 @@ class _AppButtonState extends State<AppButton> {
             borderRadius: BorderRadius.circular(widget.borderRadius),
             border: border != null ? Border.fromBorderSide(border) : null,
           ),
-          child: content,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.center,
+            child: content,
+          ),
         ),
       ),
     );
