@@ -43,6 +43,8 @@ class IncomingVisitorData {
     final visitId = int.tryParse(
       map['visit_id']?.toString() ??
       map['visitId']?.toString() ??
+      map['requestId']?.toString() ??
+      map['request_id']?.toString() ??
       map['entry_id']?.toString() ??
       map['id']?.toString() ??
       '0',

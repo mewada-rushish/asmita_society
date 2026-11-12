@@ -1938,7 +1938,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
 
   Widget _buildVisitItem(BuildContext context, IndustrialVisitModel visit) {
     final isPending = visit.isPending;
-    final isAck = _acknowledgedIds.contains(visit.id);
+    final isAck = _acknowledgedIds.contains(visit.id) || visit.isAcknowledged;
     final expiryTime = visit.passCodeExpiresAt;
     final isExpired =
         visit.status == IndustrialVisitStatus.expired ||
@@ -2262,6 +2262,16 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       context: context,
       showSubtitle: false,
       isAcknowledged: isAck,
+      onAcknowledge: (isPending && !isAck)
+          ? () {
+              setState(() {
+                _acknowledgedIds.add(visit.id);
+              });
+              context.read<IndustrialVisitBloc>().add(
+                    AcknowledgeVisitEvent(visit.id),
+                  );
+            }
+          : null,
       onTap: () => _showVisitDetailsModal(context, visit),
       onResend: showResend ? () => _resendApproval(context, visit) : null,
       bottomActions: bottomActions,

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/repositories/industrial_visit_repository.dart';
 import 'industrial_visit_event.dart';
 import 'industrial_visit_state.dart';
+import '../../../core/services/incoming_visitor_service.dart';
 
 class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitState> {
   final IndustrialVisitRepository repository;
@@ -38,6 +39,28 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
         status: IndustrialVisitBlocStatus.loaded,
         visits: visits,
       ));
+
+      // Foreground In-App Detection:
+      // If there is any unhandled AWAITING_HOST / SUBMITTED visit, trigger incoming visitor modal
+      // so active in-app users are immediately alerted even if FCM was delayed or throttled
+      for (final v in visits) {
+        if (v.isPending && !v.isPreApproved && v.id > 0) {
+          final payload = {
+            'visit_id': v.id.toString(),
+            'visitor_name': v.cleanVisitorName,
+            'department': v.departmentName ?? 'Department',
+            'floor': v.floor ?? '',
+            'purpose': v.cleanPurpose,
+            'vehicle_number': v.vehicleNumber ?? '',
+            'photo_url': v.visitorPhotoUrl ?? '',
+            'status': v.status.apiValue,
+            'requires_approval': 'true',
+            'event': 'VISITOR_ARRIVAL',
+          };
+          IncomingVisitorService.onIncomingCallReceived(payload);
+          break; // present top pending arrival
+        }
+      }
     } catch (e) {
       emit(state.copyWith(
         status: IndustrialVisitBlocStatus.error,
