@@ -289,5 +289,31 @@ class GuardGateBloc extends Bloc<GuardGateEvent, GuardGateState> {
         );
       }
     });
+
+    on<UpdateGateVisitorStatus>((event, emit) {
+      final updatedExpected = state.expectedInvites.map((item) {
+        if (item is Map<String, dynamic>) {
+          final id = item['id']?.toString() ??
+              item['visit_id']?.toString() ??
+              item['request_number']?.toString();
+          if (id == event.visitId || item['pass_code'] == event.passCode) {
+            final copy = Map<String, dynamic>.from(item);
+            copy['status'] = event.newStatus;
+            copy['action'] = event.newStatus;
+            if (event.passCode != null) {
+              copy['pass_code'] = event.passCode;
+            }
+            return copy;
+          }
+        }
+        return item;
+      }).toList();
+
+      emit(
+        state.copyWith(
+          expectedInvites: updatedExpected,
+        ),
+      );
+    });
   }
 }
