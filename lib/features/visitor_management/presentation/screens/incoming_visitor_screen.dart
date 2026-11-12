@@ -11,6 +11,10 @@ import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/config/env_config.dart';
 import 'package:asmita_society/core/services/incoming_visitor_service.dart';
 import 'package:asmita_society/features/visitor_management/data/repositories/industrial_visit_repository.dart';
+import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_bloc.dart';
+import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_event.dart';
+import 'package:asmita_society/main.dart' show rootNavigatorKey;
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/di/injection_container.dart' as di;
 
 class IncomingVisitorScreen extends StatefulWidget {
@@ -126,6 +130,14 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
         // Cancel any pending notifications for this visit from the notification shade
         try {
           IncomingVisitorService.cancelNotificationForVisit(widget.data.visitId);
+        } catch (_) {}
+
+        // Auto-refresh the visits list on active dashboard screens
+        try {
+          final rootContext = rootNavigatorKey.currentContext;
+          if (rootContext != null && rootContext.mounted) {
+            rootContext.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+          }
         } catch (_) {}
 
         // If approved on lock screen, attempt to dismiss keyguard
@@ -619,7 +631,7 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
 
                   // Bottom Action Buttons (Material 3 AsmitA Corporate Style)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     child: Row(
                       children: [
                         // 1. Deny Entry Button
@@ -629,7 +641,8 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                             onPressed: _isSubmitting ? null : () => _handleDecision('REJECT'),
                             isLoading: _isSubmitting && _decisionStatus == 'REJECT',
                             style: AppButtonStyle.custom,
-                            height: 52,
+                            height: 50,
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
                             borderRadius: 16,
                             backgroundColor: isDark
                                 ? const Color(0xFF4C0519).withValues(alpha: 0.35)
@@ -639,14 +652,14 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                             label: 'Deny',
                             textStyle: const TextStyle(
                               fontFamily: 'Montserrat',
-                              fontSize: 13.5,
+                              fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: AsmitaPalette.actionRed,
                             ),
                           ),
                         ),
 
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
 
                         // 2. Acknowledge Button
                         Expanded(
@@ -655,7 +668,8 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                             onPressed: _isSubmitting ? null : () => _handleDecision('ACKNOWLEDGE'),
                             isLoading: _isSubmitting && _decisionStatus == 'ACKNOWLEDGE',
                             style: AppButtonStyle.custom,
-                            height: 52,
+                            height: 50,
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
                             borderRadius: 16,
                             backgroundColor: isDark
                                 ? const Color(0xFF1E293B)
@@ -667,7 +681,7 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                             label: 'Ack',
                             textStyle: TextStyle(
                               fontFamily: 'Montserrat',
-                              fontSize: 13.5,
+                              fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: isDark
                                   ? const Color(0xFF93C5FD)
@@ -676,7 +690,7 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                           ),
                         ),
 
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
 
                         // 3. Allow Entry Button
                         Expanded(
@@ -685,7 +699,8 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                             onPressed: _isSubmitting ? null : () => _handleDecision('APPROVE'),
                             isLoading: _isSubmitting && _decisionStatus == 'APPROVE',
                             style: AppButtonStyle.custom,
-                            height: 52,
+                            height: 50,
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
                             borderRadius: 16,
                             backgroundColor: AsmitaPalette.successGreen,
                             foregroundColor: Colors.white,
@@ -693,7 +708,7 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                             label: 'Approve',
                             textStyle: const TextStyle(
                               fontFamily: 'Montserrat',
-                              fontSize: 13.5,
+                              fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
                             ),

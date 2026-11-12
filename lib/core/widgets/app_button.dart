@@ -182,8 +182,8 @@ class _AppButtonState extends State<AppButton> {
             children: [
               spinner,
               if (widget.label != null) ...[
-                const SizedBox(width: 8),
-                textWidget,
+                const SizedBox(width: 6),
+                Flexible(child: textWidget),
               ],
             ],
           );
@@ -195,8 +195,8 @@ class _AppButtonState extends State<AppButton> {
             children: [
               spinner,
               if (widget.label != null) ...[
-                const SizedBox(width: 8),
-                textWidget,
+                const SizedBox(width: 6),
+                Flexible(child: textWidget),
               ],
             ],
           );
@@ -208,9 +208,10 @@ class _AppButtonState extends State<AppButton> {
           children: [
             if (resolvedIcon != null) ...[
               resolvedIcon,
-              if (widget.label != null) const SizedBox(width: 8),
+              if (widget.label != null) const SizedBox(width: 6),
             ],
-            textWidget,
+            if (widget.label != null)
+              Flexible(child: textWidget),
           ],
         );
       }

@@ -2285,7 +2285,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       onDeny: (isPending && canApprove)
           ? () {
               context.read<IndustrialVisitBloc>().add(
-                DecideVisitEvent(visitId: visit.id, action: 'DENY'),
+                DecideVisitEvent(visitId: visit.id, action: 'REJECT'),
               );
             }
           : null,

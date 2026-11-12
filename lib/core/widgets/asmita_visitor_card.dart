@@ -1692,7 +1692,7 @@ class AsmitaVisitorCard extends StatelessWidget {
         // 1. Destructive Deny Action
         if (hasDeny) ...[
           Expanded(
-            flex: actionCount == 3 ? 10 : 1,
+            flex: 1,
             child: Material(
               color: Colors.transparent,
               child: InkWell(
@@ -1705,7 +1705,7 @@ class AsmitaVisitorCard extends StatelessWidget {
                 child: Container(
                   height: 40,
                   alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: EdgeInsets.symmetric(horizontal: actionCount == 3 ? 6 : 8),
                   decoration: BoxDecoration(
                     color: isDark
                         ? const Color(0xFF4C0519).withValues(alpha: 0.35)
@@ -1751,17 +1751,17 @@ class AsmitaVisitorCard extends StatelessWidget {
         ],
 
         // Spacing
-        if (hasDeny && (hasAck || hasApprove)) const SizedBox(width: 8),
+        if (hasDeny && (hasAck || hasApprove)) SizedBox(width: actionCount == 3 ? 6 : 8),
 
         // 2. Secondary Acknowledge Action
         if (hasAck) ...[
           Expanded(
-            flex: actionCount == 3 ? 10 : 1,
+            flex: 1,
             child: isAcknowledged
                 ? Container(
                     height: 40,
                     alignment: Alignment.center,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: EdgeInsets.symmetric(horizontal: actionCount == 3 ? 6 : 8),
                     decoration: BoxDecoration(
                       color: isDark
                           ? const Color(0xFF064E3B).withValues(alpha: 0.35)
@@ -1813,7 +1813,7 @@ class AsmitaVisitorCard extends StatelessWidget {
                       child: Container(
                         height: 40,
                         alignment: Alignment.center,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        padding: EdgeInsets.symmetric(horizontal: actionCount == 3 ? 6 : 8),
                         decoration: BoxDecoration(
                           color: isDark
                               ? const Color(0xFF1E293B)
@@ -1840,7 +1840,7 @@ class AsmitaVisitorCard extends StatelessWidget {
                             const SizedBox(width: 4),
                             Flexible(
                               child: Text(
-                                actionCount == 3 ? 'Acknowledge' : 'Acknowledge Visit',
+                                actionCount == 3 ? 'Ack' : 'Acknowledge Visit',
                                 style: TextStyle(
                                   fontFamily: 'Montserrat',
                                   fontSize: 12,
@@ -1863,12 +1863,12 @@ class AsmitaVisitorCard extends StatelessWidget {
         ],
 
         // Spacing
-        if (hasAck && hasApprove) const SizedBox(width: 8),
+        if (hasAck && hasApprove) SizedBox(width: actionCount == 3 ? 6 : 8),
 
         // 3. Primary Approve Action (Hero Luxury Navy Gradient)
         if (hasApprove) ...[
           Expanded(
-            flex: actionCount == 3 ? 13 : 1,
+            flex: 1,
             child: Material(
               color: Colors.transparent,
               child: InkWell(
@@ -1881,7 +1881,7 @@ class AsmitaVisitorCard extends StatelessWidget {
                 child: Container(
                   height: 40,
                   alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: EdgeInsets.symmetric(horizontal: actionCount == 3 ? 6 : 8),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
