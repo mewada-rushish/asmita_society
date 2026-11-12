@@ -871,8 +871,8 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
     return AsmitaVisitorCard.fromIndustrialVisit(
       visit: visit,
       context: context,
-      isAcknowledged: visit.isAcknowledged,
-      onAcknowledge: (isPending && !visit.isAcknowledged)
+      isAcknowledged: visit.isAcknowledged == true,
+      onAcknowledge: (isPending && visit.isAcknowledged != true)
           ? () {
               if (widget.onAcknowledgeVisit != null) {
                 widget.onAcknowledgeVisit!(visit.id);

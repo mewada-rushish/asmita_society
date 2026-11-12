@@ -61,6 +61,7 @@ class IndustrialVisitCard extends StatelessWidget {
       onTap: onTap,
       onApprove: onPrimaryAction,
       approveLabel: primaryActionLabel,
+      onAcknowledge: onSecondaryAction,
       onDeny: onDestructiveAction,
       denyLabel: destructiveActionLabel,
       bottomActions: bottomActions,

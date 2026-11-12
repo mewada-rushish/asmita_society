@@ -227,9 +227,16 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
           height: double.infinity,
           color: bgColor,
           child: SafeArea(
-            child: Column(
-              children: [
-                // Top Status Bar
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        children: [
+                          // Top Status Bar
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   child: Row(
@@ -723,6 +730,11 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
               ],
             ),
           ),
+        ),
+      );
+    },
+  ),
+),
         ),
       ),
     );
