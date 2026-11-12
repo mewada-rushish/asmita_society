@@ -227,9 +227,11 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
           height: double.infinity,
           color: bgColor,
           child: SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
+            child: BoundedCanvas(
+              maxWidth: 580.0,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
                   physics: const ClampingScrollPhysics(),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(minHeight: constraints.maxHeight),
@@ -638,7 +640,7 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
 
                   // Bottom Action Buttons (Material 3 AsmitA Corporate Style)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    padding: EdgeInsets.symmetric(horizontal: context.isCompact ? 10 : 14, vertical: 14),
                     child: Row(
                       children: [
                         // 1. Deny Entry Button
@@ -649,7 +651,7 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                             isLoading: _isSubmitting && _decisionStatus == 'REJECT',
                             style: AppButtonStyle.custom,
                             height: 50,
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            padding: EdgeInsets.symmetric(horizontal: context.isCompact ? 4 : 6),
                             borderRadius: 16,
                             backgroundColor: isDark
                                 ? const Color(0xFF4C0519).withValues(alpha: 0.35)
@@ -657,16 +659,16 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                             foregroundColor: AsmitaPalette.actionRed,
                             icon: Icons.close_rounded,
                             label: 'Deny',
-                            textStyle: const TextStyle(
+                            textStyle: TextStyle(
                               fontFamily: 'Montserrat',
-                              fontSize: 13,
+                              fontSize: context.isCompact ? 12 : 13,
                               fontWeight: FontWeight.w700,
                               color: AsmitaPalette.actionRed,
                             ),
                           ),
                         ),
 
-                        const SizedBox(width: 6),
+                        SizedBox(width: context.isCompact ? 4 : 6),
 
                         // 2. Acknowledge Button
                         Expanded(
@@ -676,7 +678,7 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                             isLoading: _isSubmitting && _decisionStatus == 'ACKNOWLEDGE',
                             style: AppButtonStyle.custom,
                             height: 50,
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            padding: EdgeInsets.symmetric(horizontal: context.isCompact ? 4 : 6),
                             borderRadius: 16,
                             backgroundColor: isDark
                                 ? const Color(0xFF1E293B)
@@ -688,7 +690,7 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                             label: 'Ack',
                             textStyle: TextStyle(
                               fontFamily: 'Montserrat',
-                              fontSize: 13,
+                              fontSize: context.isCompact ? 12 : 13,
                               fontWeight: FontWeight.w700,
                               color: isDark
                                   ? const Color(0xFF93C5FD)
@@ -697,7 +699,7 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                           ),
                         ),
 
-                        const SizedBox(width: 6),
+                        SizedBox(width: context.isCompact ? 4 : 6),
 
                         // 3. Allow Entry Button
                         Expanded(
@@ -707,15 +709,15 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
                             isLoading: _isSubmitting && _decisionStatus == 'APPROVE',
                             style: AppButtonStyle.custom,
                             height: 50,
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            padding: EdgeInsets.symmetric(horizontal: context.isCompact ? 4 : 6),
                             borderRadius: 16,
                             backgroundColor: AsmitaPalette.successGreen,
                             foregroundColor: Colors.white,
                             icon: Icons.check_rounded,
                             label: 'Approve',
-                            textStyle: const TextStyle(
+                            textStyle: TextStyle(
                               fontFamily: 'Montserrat',
-                              fontSize: 13,
+                              fontSize: context.isCompact ? 12 : 13,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
                             ),
@@ -734,6 +736,7 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
       );
     },
   ),
+),
 ),
         ),
       ),

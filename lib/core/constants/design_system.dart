@@ -137,3 +137,107 @@ class AsmitaTheme {
     );
   }
 }
+
+/// Standard device breakpoints and responsive scaling system for AsmitA app.
+///
+/// Designed to:
+/// 1. Maintain identical 1.0x layout on standard mobile reference devices (390dp width).
+/// 2. Gracefully scale typography, gaps, and padding across small/compact phones (down to 320dp).
+/// 3. Prevent stretched, distorted cards on tablets (>= 600dp) by providing bounded max-width canvases,
+///    keeping layouts structured like a crisp document or PDF.
+class AppResponsive {
+  // Breakpoints
+  static const double compactPhoneBreakpoint = 360.0;
+  static const double tabletBreakpoint = 600.0;
+  static const double desktopBreakpoint = 1024.0;
+
+  // Reference baseline width (standard modern mobile, e.g. iPhone 14/15/16, modern Pixel emulator)
+  static const double referencePhoneWidth = 390.0;
+
+  /// Whether current device is a compact phone (< 360dp, e.g. small Androids or iPhone SE).
+  static bool isCompact(BuildContext context) => MediaQuery.sizeOf(context).width < compactPhoneBreakpoint;
+
+  /// Whether current device is a tablet (>= 600dp, e.g. iPad, Android tablet, unfolded foldables).
+  static bool isTablet(BuildContext context) => MediaQuery.sizeOf(context).width >= tabletBreakpoint;
+
+  /// Whether current device is desktop / wide screen (>= 1024dp).
+  static bool isDesktop(BuildContext context) => MediaQuery.sizeOf(context).width >= desktopBreakpoint;
+
+  /// Device width
+  static double width(BuildContext context) => MediaQuery.sizeOf(context).width;
+
+  /// Device height
+  static double height(BuildContext context) => MediaQuery.sizeOf(context).height;
+
+  /// Proportional scaling factor anchored at [referencePhoneWidth] (390dp).
+  /// Clamped between [minScale] (0.88) and [maxScale] (1.15) for phones.
+  /// On tablets, returns a controlled scale factor (1.05) to prevent oversized elements.
+  static double scaleFactor(BuildContext context, {double minScale = 0.88, double maxScale = 1.15}) {
+    final w = MediaQuery.sizeOf(context).width;
+    if (w >= tabletBreakpoint) {
+      // Tablets use a bounded layout rather than continuous scalar inflation
+      return 1.05;
+    }
+    return (w / referencePhoneWidth).clamp(minScale, maxScale);
+  }
+
+  /// Scales a base dimension proportionally based on device width.
+  /// On reference 390dp screen, returns exactly [size].
+  static double scale(BuildContext context, double size, {double minScale = 0.88, double maxScale = 1.15}) {
+    return size * scaleFactor(context, minScale: minScale, maxScale: maxScale);
+  }
+
+  /// Scales font size safely.
+  static double font(BuildContext context, double baseFontSize, {double minScale = 0.90, double maxScale = 1.12}) {
+    final factor = scaleFactor(context, minScale: minScale, maxScale: maxScale);
+    return (baseFontSize * factor).roundToDouble();
+  }
+
+  /// Scales horizontal/vertical padding proportionally (never dropping below [minPadding]).
+  static double padding(BuildContext context, double basePadding, {double minPadding = 8.0}) {
+    final scaled = scale(context, basePadding);
+    return scaled < minPadding ? minPadding : scaled;
+  }
+}
+
+/// Wraps content in a centered, bounded canvas on tablets and wide screens
+/// so that cards, forms, and views do not stretch across wide displays
+/// and remain intact like an executive PDF document.
+class BoundedCanvas extends StatelessWidget {
+  final Widget child;
+  final double maxWidth;
+  final AlignmentGeometry alignment;
+
+  const BoundedCanvas({
+    super.key,
+    required this.child,
+    this.maxWidth = 600.0,
+    this.alignment = Alignment.topCenter,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (!AppResponsive.isTablet(context)) {
+      return child;
+    }
+    return Align(
+      alignment: alignment,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: child,
+      ),
+    );
+  }
+}
+
+/// Convenience BuildContext extension for responsive utilities.
+extension ResponsiveContext on BuildContext {
+  bool get isCompact => AppResponsive.isCompact(this);
+  bool get isTablet => AppResponsive.isTablet(this);
+  bool get isDesktop => AppResponsive.isDesktop(this);
+  double get screenWidth => AppResponsive.width(this);
+  double get screenHeight => AppResponsive.height(this);
+  double responsiveScale(double size) => AppResponsive.scale(this, size);
+  double responsiveFont(double baseFontSize) => AppResponsive.font(this, baseFontSize);
+  double responsivePadding(double basePadding) => AppResponsive.padding(this, basePadding);
+}

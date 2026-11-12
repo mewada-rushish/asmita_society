@@ -297,6 +297,21 @@ class _AsmitaAppState extends State<AsmitaApp> with WidgetsBindingObserver {
             ],
             supportedLocales: AppLocalizations.supportedLocales,
             navigatorObservers: [CrashlyticsNavigationObserver()],
+            builder: (context, child) {
+              final mediaQuery = MediaQuery.of(context);
+              // Clamp OS accessibility font scaling so layout-critical rows (e.g. action buttons, tabs)
+              // do not crash/overflow on extreme font scales while preserving readability.
+              final clampedMediaQuery = mediaQuery.copyWith(
+                textScaler: mediaQuery.textScaler.clamp(
+                  minScaleFactor: 0.85,
+                  maxScaleFactor: 1.15,
+                ),
+              );
+              return MediaQuery(
+                data: clampedMediaQuery,
+                child: child ?? const SizedBox.shrink(),
+              );
+            },
             home: widget.isDeviceSafe ? const RootScreen() : const UnsafeDeviceScreen(),
           );
         },
