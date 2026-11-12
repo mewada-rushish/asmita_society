@@ -85,7 +85,26 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         currentUser = null;
       }
       final currentUserId = currentUser?.userId;
-      final userPower = currentUser?.rolePower ?? 100;
+
+      int computeRolePower(UserModel? u) {
+        if (u == null) return 100;
+        final r = u.primaryRole.toLowerCase();
+        final d = (u.roleDetails?['designation']?.toString() ?? '').toLowerCase();
+        final lead = (u.roleDetails?['leadership_role']?.toString() ?? '').toLowerCase();
+        final isHod = u.roleDetails?['is_hod'] == true;
+
+        if (r.contains('director') || d.contains('director') || lead.contains('director')) return 500;
+        if (isHod || r.contains('hod') || r.contains('head') || d.contains('hod') || d.contains('head') || lead.contains('hod') || lead.contains('head')) return 400;
+        if (r.contains('lead') || r.contains('manager') || r.contains('tl') || d.contains('lead') || d.contains('manager') || d.contains('tl')) return 300;
+        if (r.contains('reception') || d.contains('reception')) return 200;
+        if (r.contains('employee') || d.contains('employee') || r.contains('staff') || d.contains('member') || d.contains('executive')) return 100;
+        if (r.contains('intern') || d.contains('intern') || r.contains('trainee') || d.contains('trainee')) return 50;
+
+        if (u.rolePower != null && u.rolePower! >= 200) return u.rolePower!;
+        return 100;
+      }
+
+      final userPower = computeRolePower(currentUser);
       final userFloor = (currentUser?.roleDetails?['floor']?.toString() ?? '')
           .toLowerCase()
           .replaceAll('floor', '')
@@ -211,6 +230,13 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
             (m['role_details'] is Map && m['role_details']['is_delegatee'] == false);
         if (isExplicitlyDisabled) return false;
 
+        // DIRECT SUBORDINATE: If candidate reports directly to current user, they are ALWAYS eligible!
+        final reportsTo = m['reports_to_user_id'] ?? m['reports_to_id'] ??
+            (m['role_details'] is Map ? (m['role_details']['reports_to_user_id'] ?? m['role_details']['reports_to_id']) : null);
+        if (currentUserId != null && reportsTo != null && reportsTo.toString() == currentUserId.toString()) {
+          return true;
+        }
+
         // 4. Candidate role power MUST NOT be greater than delegator (peers with equal power are allowed)
         final candidatePower = m['power'] is int
             ? m['power'] as int
@@ -218,13 +244,6 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
         if (userPower < 500 && candidatePower > userPower) {
           return false;
-        }
-
-        // 5. Must be an employee under the delegator:
-        final reportsTo = m['reports_to_user_id'] ?? m['reports_to_id'] ??
-            (m['role_details'] is Map ? (m['role_details']['reports_to_user_id'] ?? m['role_details']['reports_to_id']) : null);
-        if (currentUserId != null && reportsTo != null && reportsTo.toString() == currentUserId.toString()) {
-          return true;
         }
 
         // Director (power 500)
