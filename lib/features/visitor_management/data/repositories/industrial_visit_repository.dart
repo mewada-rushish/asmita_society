@@ -103,6 +103,7 @@ class IndustrialVisitRepository {
               createdAt: DateTime.tryParse(item['created_at']?.toString() ?? '') ?? DateTime.now(),
               checkInAt: rawStatus == 'used' ? DateTime.tryParse(item['updated_at']?.toString() ?? '') : null,
               isPreApproved: true,
+              isAcknowledged: false,
             ));
           }
         }
