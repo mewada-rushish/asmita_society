@@ -271,9 +271,10 @@ class GuardGateBloc extends Bloc<GuardGateEvent, GuardGateState> {
             successMessage: 'Walk-in visitor logged successfully!',
           ),
         );
-        // Reload history and expected lists
+        // Reload history, expected and checked-in lists
         add(LoadGuardHistory());
         add(LoadCheckedInVisitors());
+        add(LoadExpectedInvites());
       } catch (e) {
         emit(
           state.copyWith(
