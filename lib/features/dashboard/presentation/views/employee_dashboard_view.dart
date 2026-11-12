@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -78,6 +79,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
   String _searchQuery = '';
   bool _showSearchBar = false;
   String? _activeDelegateName;
+  Timer? _autoSyncTimer;
 
   @override
   void initState() {
@@ -89,6 +91,15 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         try {
           context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
         } catch (_) {}
+      });
+
+      // Periodic auto-sync so newly arrived walk-ins & decisions reflect automatically
+      _autoSyncTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+        if (mounted) {
+          try {
+            context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+          } catch (_) {}
+        }
       });
     }
   }
@@ -118,6 +129,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
 
   @override
   void dispose() {
+    _autoSyncTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }

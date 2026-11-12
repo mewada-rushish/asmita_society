@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -80,6 +81,7 @@ class DirectorDashboardView extends StatefulWidget {
 
 class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   String? _activeDelegateName;
+  Timer? _autoSyncTimer;
 
   @override
   void initState() {
@@ -95,7 +97,22 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
           context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
         } catch (_) {}
       });
+
+      // Periodic auto-sync so newly arrived walk-ins & decisions reflect automatically
+      _autoSyncTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+        if (mounted) {
+          try {
+            context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+          } catch (_) {}
+        }
+      });
     }
+  }
+
+  @override
+  void dispose() {
+    _autoSyncTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _fetchDelegationStatus() async {
