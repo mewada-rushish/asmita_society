@@ -471,13 +471,13 @@ class AsmitaVisitorCard extends StatelessWidget {
                       const Divider(height: 1),
                     ],
                     if (visit.floor != null && visit.floor!.isNotEmpty) ...[
-                      const Divider(height: 1),
                       _buildModalRow(
                         ctx,
                         icon: Icons.layers_rounded,
                         label: 'Floor',
                         value: visit.floor!.startsWith('Floor') ? visit.floor! : 'Floor ${visit.floor}',
                       ),
+                      const Divider(height: 1),
                     ],
                     _buildModalRow(
                       ctx,
@@ -705,28 +705,46 @@ class AsmitaVisitorCard extends StatelessWidget {
     required String label,
     required String value,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, size: 16, color: AsmitaPalette.deepNavy),
+          Icon(
+            icon,
+            size: 16,
+            color: isDark ? const Color(0xFF94A3B8) : AsmitaPalette.deepNavy,
+          ),
           const SizedBox(width: 10),
-          Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AsmitaPalette.textLight,
+          Expanded(
+            flex: 4,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AsmitaPalette.textLight,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const Spacer(),
-          Text(
-            value,
-            style: const TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 12.5,
-              fontWeight: FontWeight.bold,
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 5,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
