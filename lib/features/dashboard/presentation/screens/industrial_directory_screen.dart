@@ -167,6 +167,9 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final authState = context.read<AuthBloc>().state;
+    final currentUser = authState is AuthAuthenticated ? authState.user : null;
+    final canDelegate = PropertyRoleResolver.canDelegate(currentUser);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -193,7 +196,8 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Host Delegation Card (Compact Executive Bar)
-                  Container(
+                  if (canDelegate) ...[
+                    Container(
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [
@@ -331,6 +335,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                   ),
 
                   const SizedBox(height: 16),
+                ],
 
                   // Campus Hotline Section Header
                   Text(
