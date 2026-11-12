@@ -479,8 +479,10 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: Column(
-          children: [
+        child: BoundedCanvas(
+          maxWidth: 640,
+          child: Column(
+            children: [
             // Standard Unified SubHeader
             const AsmitaSubHeader(title: 'Visitor Approval Delegation'),
 
@@ -967,8 +969,9 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSkeletalDelegateList(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
