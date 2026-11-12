@@ -11,8 +11,6 @@ import '../../../../core/security/secure_storage_service.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
-import '../../../../core/widgets/asmita_text_field.dart';
-import '../../../../core/widgets/asmita_select_field.dart';
 import '../../../../core/utils/property_role_resolver.dart';
 import '../../../services/presentation/widgets/asmita_facility_booking_wizard.dart';
 import '../../../services/data/models/amenity_model.dart';
@@ -34,7 +32,6 @@ import '../../../../core/widgets/app_refresh.dart';
 import '../../../auth/data/models/user_model.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
-import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
@@ -1344,7 +1341,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 2. QUICK ACTIONS (4 Square Icon Boxes: Pre-Approve, Car Valet, Meeting Rooms, BillPay)
+  // 2. QUICK ACTIONS (4 Square Icon Boxes: Pre-Approve, Meetings, Security, Pay Bills)
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildQuickActionsGrid(BuildContext context) {
     final actions = <_QuickActionItemData>[
@@ -1354,17 +1351,17 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         onTap: () => _showPreApproveModal(context),
       ),
       _QuickActionItemData(
-        label: 'Car Valet',
-        icon: Icons.directions_car_filled_rounded,
-        onTap: () => _showCarValetModal(context),
-      ),
-      _QuickActionItemData(
         label: 'Meetings',
         icon: Icons.meeting_room_rounded,
         onTap: () => _openMeetingRoomReservation(context),
       ),
       _QuickActionItemData(
-        label: 'BillPay',
+        label: 'Security',
+        icon: Icons.shield_rounded,
+        onTap: () => _showSecurityModal(context),
+      ),
+      _QuickActionItemData(
+        label: 'Pay Bills',
         icon: Icons.receipt_long_rounded,
         onTap: () => BbpsBillPaymentsSheet.show(context, onNavigateToTab: widget.onNavigateToTab),
       ),
@@ -2361,346 +2358,6 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   }
 
   // FUNCTIONAL MODAL: ISSUE VIP PASS (Integrated into Pre-Approve Wizard toggle)
-
-  // =========================================================================
-  // FUNCTIONAL MODAL: CAR VALET (Take Out to gate.)
-  // =========================================================================
-  void _showCarValetModal(BuildContext context) {
-    String selectedVehicle = 'Mercedes-Benz E220d (MH 04 AB 1234)';
-    String targetGate = 'Gate 1 - Main Portico';
-    String timing = 'Immediate (Ready in ~5 min)';
-    final notesCtrl = TextEditingController();
-
-    showAsmitaBottomSheet(
-      context: context,
-      title: 'Car Valet (Take Out to Gate)',
-      child: StatefulBuilder(
-        builder: (ctx, setModalState) {
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 12,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Dispatches facility valet to retrieve your executive vehicle and park at the designated gate.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AsmitaPalette.textLight,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  AsmitaSelectField<String>(
-                    label: 'Select Vehicle',
-                    hint: 'Choose your registered vehicle',
-                    value: selectedVehicle,
-                    prefixIcon: Icons.directions_car_rounded,
-                    items: const [
-                      AsmitaSelectItem(
-                        value: 'Mercedes-Benz E220d (MH 04 AB 1234)',
-                        label: 'Mercedes E220d • MH 04 AB 1234',
-                        subtitle: 'Primary Executive Saloon',
-                        icon: Icons.directions_car_filled_rounded,
-                      ),
-                      AsmitaSelectItem(
-                        value: 'BMW 730Ld (MH 01 CZ 9999)',
-                        label: 'BMW 730Ld • MH 01 CZ 9999',
-                        subtitle: 'Chauffeured Limousine',
-                        icon: Icons.directions_car_filled_rounded,
-                      ),
-                      AsmitaSelectItem(
-                        value: 'Audi A6 (MH 02 EF 5678)',
-                        label: 'Audi A6 • MH 02 EF 5678',
-                        subtitle: 'Secondary Sedan',
-                        icon: Icons.directions_car_filled_rounded,
-                      ),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        setModalState(() => selectedVehicle = val);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 14),
-                  AsmitaSelectField<String>(
-                    label: 'Delivery Destination Gate',
-                    hint: 'Choose destination gate',
-                    value: targetGate,
-                    prefixIcon: Icons.meeting_room_rounded,
-                    items: const [
-                      AsmitaSelectItem(
-                        value: 'Gate 1 - Main Portico',
-                        label: 'Gate 1 - Main Portico (Express)',
-                        subtitle: 'Main Executive Entrance Porch',
-                        icon: Icons.door_sliding_rounded,
-                      ),
-                      AsmitaSelectItem(
-                        value: 'Gate 2 - Executive Bay',
-                        label: 'Gate 2 - Executive Bay',
-                        subtitle: 'Private Director Parking Bay',
-                        icon: Icons.garage_rounded,
-                      ),
-                      AsmitaSelectItem(
-                        value: 'VIP Loading Porch',
-                        label: 'VIP Loading Bay Porch',
-                        subtitle: 'Sheltered Porch Zone',
-                        icon: Icons.local_shipping_rounded,
-                      ),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        setModalState(() => targetGate = val);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 14),
-                  AsmitaSelectField<String>(
-                    label: 'Vehicle Ready Timing',
-                    hint: 'When do you need the vehicle?',
-                    value: timing,
-                    prefixIcon: Icons.schedule_rounded,
-                    items: const [
-                      AsmitaSelectItem(
-                        value: 'Immediate (Ready in ~5 min)',
-                        label: 'Immediate (Ready in ~5 min)',
-                        subtitle: 'Instant priority dispatch',
-                        icon: Icons.bolt_rounded,
-                      ),
-                      AsmitaSelectItem(
-                        value: 'In 10 Minutes',
-                        label: 'In 10 Minutes',
-                        subtitle: 'Standard dispatch lead time',
-                        icon: Icons.timer_rounded,
-                      ),
-                      AsmitaSelectItem(
-                        value: 'In 20 Minutes',
-                        label: 'In 20 Minutes',
-                        subtitle: 'Scheduled departure preparation',
-                        icon: Icons.hourglass_bottom_rounded,
-                      ),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        setModalState(() => timing = val);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 14),
-                  AsmitaTextField(
-                    label: 'Valet Instructions (Optional)',
-                    hint: 'e.g., Turn on AC, park at VIP porch lane',
-                    icon: Icons.notes_rounded,
-                    controller: notesCtrl,
-                  ),
-                  const SizedBox(height: 18),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      final notes = notesCtrl.text.trim();
-
-                      // Auto-provision valet department & role along the way via backend valet API
-                      final authState = context.read<AuthBloc>().state;
-                      final user = authState is AuthAuthenticated
-                          ? authState.user
-                          : null;
-                      final societyId = user?.societyId ?? 114;
-
-                      try {
-                        final dio = AsmitaDioClient(SecureStorageService()).dio;
-                        dio
-                            .post(
-                              '${EnvConfig.baseUrl}/app-api/valet/request',
-                              data: {
-                                'society_id': societyId,
-                                'vehicle_number': selectedVehicle,
-                                'target_gate': targetGate,
-                                'ready_time': timing,
-                                'notes': notes,
-                              },
-                            )
-                            .ignore();
-                      } catch (_) {}
-
-                      _showValetSuccessDialog(
-                        context,
-                        vehicle: selectedVehicle,
-                        targetGate: targetGate,
-                        timing: timing,
-                      );
-                    },
-                    icon: const Icon(Icons.send_rounded, size: 18),
-                    label: const Text(
-                      'Dispatch Valet to Gate',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AsmitaPalette.deepNavy,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _showValetSuccessDialog(
-    BuildContext context, {
-    required String vehicle,
-    required String targetGate,
-    required String timing,
-  }) {
-    final ticketNo = 'VALET-${1000 + Random().nextInt(9000)}';
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        contentPadding: const EdgeInsets.all(20),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.directions_car_filled_rounded,
-                color: AsmitaPalette.deepNavy,
-                size: 38,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Valet Dispatched',
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Ticket #$ticketNo • Assigned to Valet Desk',
-              style: const TextStyle(
-                fontSize: 12,
-                color: AsmitaPalette.textLight,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Theme.of(context).dividerColor),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: const [
-                      Icon(
-                        Icons.check_circle_rounded,
-                        color: AsmitaPalette.successGreen,
-                        size: 16,
-                      ),
-                      SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          'Driver En Route: Mohan Sharma (Ext 112)',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            color: AsmitaPalette.successGreen,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Retrieving $vehicle from Basement 2 (Bay B-14). Vehicle will be ready at $targetGate ($timing).',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AsmitaPalette.textDarkModeMuted
-                          : AsmitaPalette.textLight,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      _callContact('Valet Control Desk', '+919820110112');
-                    },
-                    icon: const Icon(Icons.phone, size: 14),
-                    label: const Text(
-                      'Call Valet',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 11),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AsmitaPalette.deepNavy,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 11),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text(
-                      'Dismiss',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   // =========================================================================
   // FUNCTIONAL MODAL: SECURITY COMMAND
