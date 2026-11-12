@@ -450,30 +450,41 @@ class FirebaseMessagingService {
         eventType == 'VISITOR_ACKNOWLEDGED' ||
         eventType == 'PASS_REVOKED';
 
-    if (isGateStatusUpdate) {
+    final isVisitorArrivalOrSubmitted = eventType == 'VISITOR_ARRIVAL' ||
+        eventType == 'VISITOR_SUBMITTED' ||
+        eventType == 'VISITOR_REQUEST' ||
+        eventType == 'visitor_approval';
+
+    if (isGateStatusUpdate || isVisitorArrivalOrSubmitted) {
       final context = rootNavigatorKey.currentContext;
       if (context != null) {
-        try {
-          final visitId = message.data['visit_id']?.toString() ??
-              message.data['visitId']?.toString() ??
-              message.data['request_id']?.toString() ??
-              message.data['id']?.toString() ??
-              '';
-          final newStatus = eventType == 'VISITOR_APPROVED'
-              ? 'APPROVED'
-              : (eventType == 'VISITOR_REJECTED' ? 'REJECTED' : 'ACKNOWLEDGED');
-          final passCode = message.data['pass_code']?.toString();
+        if (isGateStatusUpdate) {
+          try {
+            final visitId = message.data['visit_id']?.toString() ??
+                message.data['visitId']?.toString() ??
+                message.data['request_id']?.toString() ??
+                message.data['id']?.toString() ??
+                '';
+            final newStatus = eventType == 'VISITOR_APPROVED'
+                ? 'APPROVED'
+                : (eventType == 'VISITOR_REJECTED' ? 'REJECTED' : 'ACKNOWLEDGED');
+            final passCode = message.data['pass_code']?.toString();
 
-          context.read<GuardGateBloc>().add(
-                UpdateGateVisitorStatus(
-                  visitId: visitId,
-                  newStatus: newStatus,
-                  passCode: passCode,
-                ),
-              );
-          // Also trigger feed reload so all lists sync cleanly
-          context.read<GuardGateBloc>().add(LoadExpectedInvites());
-        } catch (_) {}
+            context.read<GuardGateBloc>().add(
+                  UpdateGateVisitorStatus(
+                    visitId: visitId,
+                    newStatus: newStatus,
+                    passCode: passCode,
+                  ),
+                );
+            // Also trigger feed reload so all lists sync cleanly
+            context.read<GuardGateBloc>().add(LoadExpectedInvites());
+          } catch (_) {}
+        } else if (isVisitorArrivalOrSubmitted) {
+          try {
+            context.read<GuardGateBloc>().add(LoadExpectedInvites());
+          } catch (_) {}
+        }
 
         try {
           context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());

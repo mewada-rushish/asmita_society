@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../data/models/industrial_visit_model.dart';
 import '../data/repositories/industrial_visit_repository.dart';
 import 'industrial_visit_event.dart';
 import 'industrial_visit_state.dart';
@@ -73,18 +74,39 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
     DecideVisitEvent event,
     Emitter<IndustrialVisitState> emit,
   ) async {
-    emit(state.copyWith(status: IndustrialVisitBlocStatus.loading));
+    final normalizedAction = event.action.toUpperCase() == 'DENY' ? 'REJECT' : event.action.toUpperCase();
+
+    // Immediate optimistic update so card status changes with 0ms lag
+    final optimisticStatus = normalizedAction == 'APPROVE'
+        ? IndustrialVisitStatus.approved
+        : (normalizedAction == 'REJECT' ? IndustrialVisitStatus.rejected : null);
+
+    if (optimisticStatus != null) {
+      final optimisticVisits = state.visits.map((v) {
+        if (v.id == event.visitId) {
+          return v.copyWith(status: optimisticStatus);
+        }
+        return v;
+      }).toList();
+      emit(state.copyWith(
+        status: IndustrialVisitBlocStatus.loading,
+        visits: optimisticVisits,
+      ));
+    } else {
+      emit(state.copyWith(status: IndustrialVisitBlocStatus.loading));
+    }
+
     try {
       final res = await repository.handleVisitAction(
         event.visitId,
-        action: event.action,
+        action: normalizedAction,
         assignedUserId: event.assignedUserId,
         cabinId: event.cabinId,
         deskId: event.deskId,
         rejectionReason: event.rejectionReason,
       );
       final msg = res['message']?.toString() ?? 'Visit decided successfully';
-      
+
       // Refresh list after decision
       final updatedVisits = await repository.getVisits();
       emit(state.copyWith(
@@ -93,9 +115,11 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
         visits: updatedVisits,
       ));
     } catch (e) {
+      final refreshedVisits = await repository.getVisits().catchError((_) => state.visits);
       emit(state.copyWith(
         status: IndustrialVisitBlocStatus.error,
         errorMessage: _parseError(e),
+        visits: refreshedVisits,
       ));
     }
   }
@@ -104,6 +128,15 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
     AcknowledgeVisitEvent event,
     Emitter<IndustrialVisitState> emit,
   ) async {
+    // Immediate optimistic update
+    final optimisticVisits = state.visits.map((v) {
+      if (v.id == event.visitId) {
+        return v.copyWith(isAcknowledged: true);
+      }
+      return v;
+    }).toList();
+    emit(state.copyWith(visits: optimisticVisits));
+
     try {
       await repository.acknowledgeVisit(event.visitId);
       final updatedVisits = await repository.getVisits();
@@ -113,9 +146,11 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
         visits: updatedVisits,
       ));
     } catch (e) {
+      final refreshedVisits = await repository.getVisits().catchError((_) => state.visits);
       emit(state.copyWith(
         status: IndustrialVisitBlocStatus.error,
         errorMessage: _parseError(e),
+        visits: refreshedVisits,
       ));
     }
   }

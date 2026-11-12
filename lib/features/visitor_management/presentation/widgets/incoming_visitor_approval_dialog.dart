@@ -8,6 +8,10 @@ import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/di/injection_container.dart' as di;
 import 'package:asmita_society/features/visitor_management/data/repositories/industrial_visit_repository.dart';
+import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_bloc.dart';
+import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_event.dart';
+import 'package:asmita_society/main.dart' show rootNavigatorKey;
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Full-impact incoming visitor approval dialog (MyGate-style)
 /// Plays alert sound continuously until the user approves, rejects, or it times out.
@@ -149,6 +153,12 @@ class _IncomingVisitorApprovalDialogState
 
       if (mounted) {
         Navigator.of(context, rootNavigator: true).pop();
+        try {
+          final rootContext = rootNavigatorKey.currentContext;
+          if (rootContext != null && rootContext.mounted) {
+            rootContext.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+          }
+        } catch (_) {}
         AsmitaToast.show(
           context,
           message: action == 'APPROVE'
