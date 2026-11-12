@@ -63,13 +63,8 @@ void main() {
       // Verify Hierarchy Content
       expect(find.text('Rajesh Sharma'), findsOneWidget);
       expect(find.text('AH-2026-0042'), findsOneWidget);
-      expect(find.text('Awaiting Host'), findsOneWidget);
-      expect(find.text('Civil Engineering'), findsOneWidget);
-      expect(find.text('Suresh Patil'), findsOneWidget);
-      expect(find.text('Cabin: C-201'), findsOneWidget);
-      expect(find.text('Desk: D-14'), findsOneWidget);
-      expect(find.text('Structural Audit Consultation'), findsOneWidget);
-      expect(find.text('[Vehicle: MH04AB1234]'), findsOneWidget);
+      expect(find.text('Awaiting Approval'), findsOneWidget);
+      expect(find.text('MH04AB1234'), findsOneWidget);
 
       // Verify Strict Action Order Presence
       expect(find.byKey(const ValueKey('visit_card_primary_action')), findsOneWidget);

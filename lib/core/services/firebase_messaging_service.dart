@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:asmita_society/core/security/secure_storage_service.dart';
 import 'package:asmita_society/features/auth/data/repositories/auth_repository.dart';
 import 'package:asmita_society/core/services/incoming_visitor_service.dart';
@@ -572,49 +573,98 @@ class FirebaseMessagingService {
       }
     }
 
-    _localNotifications.show(
-      id: notifId,
-      title: title,
-      body: body,
-      payload: jsonEncode(message.data),
-      notificationDetails: NotificationDetails(
-        android: AndroidNotificationDetails(
-          channelId,
-          channelName,
-          importance: Importance.max,
-          priority: isDoorbellAlert ? Priority.max : Priority.high,
-          category: isDoorbellAlert ? AndroidNotificationCategory.call : AndroidNotificationCategory.event,
-          fullScreenIntent: isDoorbellAlert,
-          visibility: NotificationVisibility.public,
-          icon: '@mipmap/ic_launcher',
-          sound: RawResourceAndroidNotificationSound(soundName),
-          playSound: true,
-          actions: isDoorbellAlert
-              ? const [
-                  AndroidNotificationAction(
-                    'approve_action',
-                    'Approve',
-                    showsUserInterface: true,
-                    cancelNotification: true,
-                  ),
-                  AndroidNotificationAction(
-                    'reject_action',
-                    'Reject',
-                    showsUserInterface: true,
-                    cancelNotification: true,
-                  ),
-                ]
-              : null,
+    try {
+      await _localNotifications.show(
+        id: notifId,
+        title: title,
+        body: body,
+        payload: jsonEncode(message.data),
+        notificationDetails: NotificationDetails(
+          android: AndroidNotificationDetails(
+            channelId,
+            channelName,
+            importance: Importance.max,
+            priority: isDoorbellAlert ? Priority.max : Priority.high,
+            category: isDoorbellAlert ? AndroidNotificationCategory.call : AndroidNotificationCategory.event,
+            fullScreenIntent: isDoorbellAlert,
+            visibility: NotificationVisibility.public,
+            icon: '@mipmap/ic_launcher',
+            sound: RawResourceAndroidNotificationSound(soundName),
+            playSound: true,
+            actions: isDoorbellAlert
+                ? const [
+                    AndroidNotificationAction(
+                      'approve_action',
+                      'Approve',
+                      showsUserInterface: true,
+                      cancelNotification: true,
+                    ),
+                    AndroidNotificationAction(
+                      'reject_action',
+                      'Reject',
+                      showsUserInterface: true,
+                      cancelNotification: true,
+                    ),
+                  ]
+                : null,
+          ),
+          iOS: DarwinNotificationDetails(
+            sound: '$soundName.wav',
+            presentAlert: true,
+            presentSound: true,
+            presentBadge: true,
+            interruptionLevel: isDoorbellAlert ? InterruptionLevel.timeSensitive : InterruptionLevel.active,
+          ),
         ),
-        iOS: DarwinNotificationDetails(
-          sound: '$soundName.wav',
-          presentAlert: true,
-          presentSound: true,
-          presentBadge: true,
-          interruptionLevel: isDoorbellAlert ? InterruptionLevel.timeSensitive : InterruptionLevel.active,
-        ),
-      ),
-    );
+      );
+    } on PlatformException catch (e) {
+      // If custom sound cannot be resolved on device ROM, fallback to default sound to guarantee delivery
+      if (e.code == 'invalid_sound' || (e.message?.contains('could not be found') ?? false)) {
+        await _localNotifications.show(
+          id: notifId,
+          title: title,
+          body: body,
+          payload: jsonEncode(message.data),
+          notificationDetails: NotificationDetails(
+            android: AndroidNotificationDetails(
+              channelId,
+              channelName,
+              importance: Importance.max,
+              priority: isDoorbellAlert ? Priority.max : Priority.high,
+              category: isDoorbellAlert ? AndroidNotificationCategory.call : AndroidNotificationCategory.event,
+              fullScreenIntent: isDoorbellAlert,
+              visibility: NotificationVisibility.public,
+              icon: '@mipmap/ic_launcher',
+              playSound: true,
+              actions: isDoorbellAlert
+                  ? const [
+                      AndroidNotificationAction(
+                        'approve_action',
+                        'Approve',
+                        showsUserInterface: true,
+                        cancelNotification: true,
+                      ),
+                      AndroidNotificationAction(
+                        'reject_action',
+                        'Reject',
+                        showsUserInterface: true,
+                        cancelNotification: true,
+                      ),
+                    ]
+                  : null,
+            ),
+            iOS: DarwinNotificationDetails(
+              presentAlert: true,
+              presentSound: true,
+              presentBadge: true,
+              interruptionLevel: isDoorbellAlert ? InterruptionLevel.timeSensitive : InterruptionLevel.active,
+            ),
+          ),
+        );
+      } else {
+        rethrow;
+      }
+    }
   }
 
   void _handleMessageOpenedApp(RemoteMessage message) {

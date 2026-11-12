@@ -1938,7 +1938,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
 
   Widget _buildVisitItem(BuildContext context, IndustrialVisitModel visit) {
     final isPending = visit.isPending;
-    final isAck = _acknowledgedIds.contains(visit.id) || visit.isAcknowledged;
+    final isAck = _acknowledgedIds.contains(visit.id) || (visit.isAcknowledged == true);
     final expiryTime = visit.passCodeExpiresAt;
     final isExpired =
         visit.status == IndustrialVisitStatus.expired ||
