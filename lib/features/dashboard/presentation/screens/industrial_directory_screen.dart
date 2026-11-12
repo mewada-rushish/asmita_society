@@ -536,43 +536,6 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                           color: isDark ? Colors.white : AsmitaPalette.textDark,
                         ),
                       ),
-                      InkWell(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          showInviteTeamMemberSheet(context);
-                        },
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: AsmitaPalette.deepNavy.withValues(alpha: isDark ? 0.25 : 0.08),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: AsmitaPalette.deepNavy.withValues(alpha: 0.25),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.person_add_alt_1_rounded,
-                                size: 14,
-                                color: AsmitaPalette.deepNavy,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Invite Member',
-                                style: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? const Color(0xFF818CF8) : AsmitaPalette.deepNavy,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 14),
