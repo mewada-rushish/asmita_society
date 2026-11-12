@@ -1886,18 +1886,19 @@ class AsmitaVisitorCard extends StatelessWidget {
                   alignment: Alignment.center,
                   padding: EdgeInsets.symmetric(horizontal: actionCount == 3 ? 6 : 8),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
+                    gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF27347B),
-                        Color(0xFF1A2352),
-                      ],
+                      colors: isDark
+                          ? const [Color(0xFF4F6EF7), Color(0xFF3B5BDB)]
+                          : const [Color(0xFF27347B), Color(0xFF1A2352)],
                     ),
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF27347B).withValues(alpha: 0.28),
+                        color: isDark
+                            ? const Color(0xFF4F6EF7).withValues(alpha: 0.35)
+                            : const Color(0xFF27347B).withValues(alpha: 0.28),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),

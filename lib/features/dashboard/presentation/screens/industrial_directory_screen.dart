@@ -199,11 +199,16 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                   if (canDelegate) ...[
                     Container(
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          AsmitaPalette.deepNavy,
-                          Color(0xFF1B2D5A),
-                        ],
+                      gradient: LinearGradient(
+                        colors: isDark
+                            ? const [
+                                Color(0xFF1E2B45),
+                                Color(0xFF162033),
+                              ]
+                            : const [
+                                AsmitaPalette.deepNavy,
+                                Color(0xFF1B2D5A),
+                              ],
                       ),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
@@ -473,15 +478,15 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                                 width: 36,
                                 height: 36,
                                 decoration: BoxDecoration(
-                                  color: AsmitaPalette.deepNavy.withValues(alpha: isDark ? 0.25 : 0.10),
+                                  color: (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy).withValues(alpha: isDark ? 0.22 : 0.10),
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: AsmitaPalette.deepNavy.withValues(alpha: 0.2),
+                                    color: (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy).withValues(alpha: isDark ? 0.35 : 0.2),
                                   ),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.person_add_alt_1_rounded,
-                                  color: AsmitaPalette.deepNavy,
+                                  color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
                                   size: 20,
                                 ),
                               ),
@@ -514,9 +519,9 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                                   ],
                                 ),
                               ),
-                              const Icon(
+                              Icon(
                                 Icons.chevron_right_rounded,
-                                color: AsmitaPalette.deepNavy,
+                                color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
                                 size: 20,
                               ),
                             ],
@@ -546,11 +551,11 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                   const SizedBox(height: 14),
 
                   if (_isLoadingDepartments)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
                       child: Center(
                         child: AsmitaLoadingIndicator(
-                          color: AsmitaPalette.deepNavy,
+                          color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
                           size: 24,
                         ),
                       ),

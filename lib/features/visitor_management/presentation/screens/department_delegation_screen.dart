@@ -500,10 +500,14 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AsmitaPalette.deepNavy.withValues(alpha: isDark ? 0.2 : 0.08),
+                        color: isDark
+                            ? AsmitaPalette.deepNavyDark.withValues(alpha: 0.15)
+                            : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: AsmitaPalette.deepNavy.withValues(alpha: isDark ? 0.35 : 0.18),
+                          color: isDark
+                              ? AsmitaPalette.deepNavyDark.withValues(alpha: 0.35)
+                              : AsmitaPalette.deepNavy.withValues(alpha: 0.18),
                         ),
                       ),
                       child: Row(
@@ -512,17 +516,19 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: AsmitaPalette.deepNavy.withValues(alpha: 0.12),
+                              color: isDark
+                                  ? AsmitaPalette.deepNavyDark.withValues(alpha: 0.2)
+                                  : AsmitaPalette.deepNavy.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.sync_alt_rounded,
-                              color: AsmitaPalette.deepNavy,
+                              color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
                               size: 22,
                             ),
                           ),
                           const SizedBox(width: 12),
-                          const Expanded(
+                          Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -532,12 +538,17 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                     fontFamily: 'Montserrat',
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
+                                    color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
                                   ),
                                 ),
-                                SizedBox(height: 3),
+                                const SizedBox(height: 3),
                                 Text(
                                   'When delegated, your chosen colleague will receive live visitor alerts on your behalf. Deliveries, cabs, and history remain direct to you.',
-                                  style: TextStyle(fontSize: 12, height: 1.4, color: AsmitaPalette.textLight),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    height: 1.4,
+                                    color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                                  ),
                                 ),
                               ],
                             ),
@@ -552,10 +563,14 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.15 : 0.08),
+                          color: isDark
+                              ? const Color(0xFF059669).withValues(alpha: 0.18)
+                              : const Color(0xFF10B981).withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.35 : 0.25),
+                            color: isDark
+                                ? const Color(0xFF34D399).withValues(alpha: 0.35)
+                                : const Color(0xFF10B981).withValues(alpha: 0.25),
                           ),
                         ),
                         child: Column(
@@ -563,15 +578,19 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.assignment_ind_rounded, color: Color(0xFF059669), size: 18),
+                                Icon(
+                                  Icons.assignment_ind_rounded,
+                                  color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                                  size: 18,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Handling Approvals For (${_incomingDelegations.length})',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Montserrat',
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF065F46),
+                                    color: isDark ? const Color(0xFF34D399) : const Color(0xFF065F46),
                                   ),
                                 ),
                               ],
@@ -585,9 +604,10 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                 padding: const EdgeInsets.symmetric(vertical: 2),
                                 child: Text(
                                   '• $name ($role)',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
+                                    color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
                                   ),
                                 ),
                               );
@@ -607,7 +627,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                         border: Border.all(color: Theme.of(context).dividerColor),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
+                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),
@@ -619,12 +639,13 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Enable Out-of-Office Delegation',
                                   style: TextStyle(
                                     fontFamily: 'Montserrat',
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
+                                    color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
                                   ),
                                 ),
                                 const SizedBox(height: 3),
@@ -636,8 +657,8 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500,
                                     color: _isDelegationEnabled
-                                        ? AsmitaPalette.successGreen
-                                        : AsmitaPalette.textLight,
+                                        ? (isDark ? AsmitaPalette.successGreenDark : AsmitaPalette.successGreen)
+                                        : (isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight),
                                   ),
                                 ),
                               ],
@@ -645,7 +666,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                           ),
                           Switch.adaptive(
                             value: _isDelegationEnabled,
-                            activeTrackColor: AsmitaPalette.deepNavy,
+                            activeTrackColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
                             onChanged: (val) {
                               HapticFeedback.selectionClick();
                               _hasUserManuallyToggled = true;
@@ -666,7 +687,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                         padding: const EdgeInsets.only(left: 4, bottom: 8),
                         child: Row(
                           children: [
-                            const Expanded(
+                            Expanded(
                               child: Text(
                                 'SELECT DELEGATE STAFF MEMBER',
                                 style: TextStyle(
@@ -674,7 +695,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 0.8,
-                                  color: AsmitaPalette.textLight,
+                                  color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
                                 ),
                               ),
                             ),
@@ -711,10 +732,10 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                 child: Center(
                                   child: Text(
                                     'No candidates available under $_selectedCategory',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontFamily: 'Poppins',
                                       fontSize: 12,
-                                      color: AsmitaPalette.textLight,
+                                      color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
                                     ),
                                   ),
                                 ),
@@ -733,13 +754,13 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(
                                       color: isSelected
-                                          ? AsmitaPalette.deepNavy
+                                          ? (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy)
                                           : Theme.of(context).dividerColor,
                                       width: isSelected ? 1.5 : 1.0,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.02),
+                                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
                                         blurRadius: 6,
                                         offset: const Offset(0, 2),
                                       ),
@@ -757,14 +778,16 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                         children: [
                                           CircleAvatar(
                                             radius: 20,
-                                            backgroundColor: color.withValues(alpha: 0.14),
+                                            backgroundColor: isDark
+                                                ? AsmitaPalette.deepNavyDark.withValues(alpha: 0.22)
+                                                : color.withValues(alpha: 0.14),
                                             child: Text(
                                               (staff['name'] as String? ?? 'S')[0].toUpperCase(),
                                               style: TextStyle(
                                                 fontFamily: 'Montserrat',
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 15,
-                                                color: color,
+                                                color: isDark ? const Color(0xFF93C5FD) : color,
                                               ),
                                             ),
                                           ),
@@ -778,10 +801,11 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                                     Flexible(
                                                       child: Text(
                                                         staff['name'] as String? ?? 'Staff Member',
-                                                        style: const TextStyle(
+                                                        style: TextStyle(
                                                           fontFamily: 'Montserrat',
                                                           fontSize: 13,
                                                           fontWeight: FontWeight.w700,
+                                                          color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
                                                         ),
                                                         maxLines: 1,
                                                         overflow: TextOverflow.ellipsis,
@@ -792,8 +816,13 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                                       Container(
                                                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                                         decoration: BoxDecoration(
-                                                          color: color.withValues(alpha: 0.1),
+                                                          color: isDark
+                                                              ? const Color(0xFF1E293B)
+                                                              : color.withValues(alpha: 0.1),
                                                           borderRadius: BorderRadius.circular(6),
+                                                          border: isDark
+                                                              ? Border.all(color: const Color(0xFF334155))
+                                                              : null,
                                                         ),
                                                         child: Text(
                                                           staff['category'] as String,
@@ -801,7 +830,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                                             fontFamily: 'Montserrat',
                                                             fontSize: 9,
                                                             fontWeight: FontWeight.bold,
-                                                            color: color,
+                                                            color: isDark ? const Color(0xFF93C5FD) : color,
                                                           ),
                                                         ),
                                                       ),
@@ -811,9 +840,9 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                                 const SizedBox(height: 2),
                                                 Text(
                                                   staff['designation'] as String? ?? staff['role'] as String? ?? 'Department Staff',
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 11,
-                                                    color: AsmitaPalette.textLight,
+                                                    color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
                                                   ),
                                                 ),
                                               ],
@@ -827,8 +856,8 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                               shape: BoxShape.circle,
                                               border: Border.all(
                                                 color: isSelected
-                                                    ? AsmitaPalette.deepNavy
-                                                    : Theme.of(context).dividerColor,
+                                                    ? (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy)
+                                                    : (isDark ? const Color(0xFF475569) : Theme.of(context).dividerColor),
                                                 width: isSelected ? 6.5 : 1.5,
                                               ),
                                             ),
@@ -850,7 +879,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                         padding: const EdgeInsets.only(left: 4, bottom: 8),
                         child: Row(
                           children: [
-                            const Expanded(
+                            Expanded(
                               child: Text(
                                 'ACTIVE DELEGATION WINDOW',
                                 style: TextStyle(
@@ -858,7 +887,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 0.8,
-                                  color: AsmitaPalette.textLight,
+                                  color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
                                 ),
                               ),
                             ),
@@ -879,7 +908,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                             border: Border.all(color: Theme.of(context).dividerColor),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.02),
+                                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
                                 blurRadius: 6,
                                 offset: const Offset(0, 2),
                               ),
@@ -890,14 +919,16 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                                  color: isDark
+                                      ? AsmitaPalette.deepNavyDark.withValues(alpha: 0.18)
+                                      : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Icon(
                                   _isTillTurnOff
                                       ? Icons.all_inclusive_rounded
                                       : Icons.calendar_month_rounded,
-                                  color: AsmitaPalette.deepNavy,
+                                  color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
                                   size: 20,
                                 ),
                               ),
@@ -906,11 +937,11 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
+                                    Text(
                                       'Delegation Duration',
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: AsmitaPalette.textLight,
+                                        color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -919,19 +950,20 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                       _isTillTurnOff
                                           ? '${dateFormat.format(_startDate)}  →  Till I turn off'
                                           : '${dateFormat.format(_startDate)}  →  ${_endDate != null ? dateFormat.format(_endDate!) : "Till I turn off"}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'Montserrat',
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
+                                        color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              const Icon(
+                              Icon(
                                 Icons.edit_calendar_rounded,
                                 size: 18,
-                                color: AsmitaPalette.deepNavy,
+                                color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
                               ),
                             ],
                           ),
@@ -950,7 +982,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                         label: _isDelegationEnabled
                             ? 'Save & Activate Delegation'
                             : (_activeOutgoing != null ? 'Deactivate Delegation' : 'Save Preferences'),
-                        backgroundColor: AsmitaPalette.deepNavy,
+                        backgroundColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
                         foregroundColor: Colors.white,
                         borderRadius: 14,
                         textStyle: const TextStyle(
