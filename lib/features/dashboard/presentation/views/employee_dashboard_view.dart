@@ -16,6 +16,8 @@ import '../../../auth/bloc/auth_state.dart';
 import '../../../auth/data/models/user_model.dart';
 import '../../../services/presentation/widgets/asmita_facility_booking_wizard.dart';
 import '../../../services/data/models/amenity_model.dart';
+import '../../../visitor_management/bloc/visitor_bloc.dart';
+import '../../../visitor_management/bloc/visitor_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../../visitor_management/bloc/industrial_visit_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_state.dart';
@@ -138,6 +140,14 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
 
     if (!mounted) return;
     context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+    try {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AuthAuthenticated) {
+        context.read<VisitorBloc>().add(
+              LoadMyHistory(residentId: authState.user.userId, isRefresh: true),
+            );
+      }
+    } catch (_) {}
   }
 
   @override

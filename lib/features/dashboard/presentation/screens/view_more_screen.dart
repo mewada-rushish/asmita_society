@@ -17,6 +17,10 @@ import 'package:asmita_society/core/utils/property_role_resolver.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/visitor_management/presentation/screens/visitor_history_screen.dart';
+import 'package:asmita_society/features/visitor_management/bloc/visitor_bloc.dart';
+import 'package:asmita_society/features/visitor_management/bloc/visitor_event.dart';
+import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_bloc.dart';
+import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_event.dart';
 import 'package:asmita_society/features/community/presentation/attachments/create_poll_dialog.dart';
 
 /// A utility function to show the ViewMore content in a bottom sheet.
@@ -58,11 +62,23 @@ class ViewMoreScreen extends StatelessWidget {
     }
     // Dismiss ViewMoreSheet first so two sheets are not stacked
     final nav = Navigator.of(context);
+    final parentCtx = nav.context;
     nav.pop();
     await AsmitaPreApproveWizard.showAsModalSheet(
-      nav.context,
+      parentCtx,
       title: 'Pre-Approve Visitor',
     );
+    if (!parentCtx.mounted) return;
+    try {
+      parentCtx.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+    } catch (_) {}
+    try {
+      if (user != null) {
+        parentCtx.read<VisitorBloc>().add(
+              LoadMyHistory(residentId: user.userId, isRefresh: true),
+            );
+      }
+    } catch (_) {}
   }
 
   void _showSecurityModal(BuildContext context) {
