@@ -46,8 +46,11 @@ class GuardGateBloc extends Bloc<GuardGateEvent, GuardGateState> {
           if (log is Map<String, dynamic>) {
             final recordType = log['record_type']?.toString();
             // In case record_type is not present, we can guess it's a walk-in if it lacks invite-specific fields
-            if (recordType == 'WALK_IN' || (recordType == null && log['pre_approved_invite_id'] == null)) {
-              final status = log['status']?.toString().toUpperCase() ?? log['action']?.toString().toUpperCase();
+            if (recordType == 'WALK_IN' ||
+                (recordType == null && log['pre_approved_invite_id'] == null)) {
+              final status =
+                  log['status']?.toString().toUpperCase() ??
+                  log['action']?.toString().toUpperCase();
               if (status == 'PENDING' || status == 'APPROVED') {
                 final id = log['id']?.toString() ?? log.hashCode.toString();
                 uniqueExpected[id] = log;
