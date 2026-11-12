@@ -1447,7 +1447,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
             type: AsmitaToastType.success,
           );
           _clearFormSession();
-          Navigator.pop(context); // Or go to a success screen
+          final rootNav = Navigator.of(context, rootNavigator: true);
+          rootNav.pop(true);
         } else if (guardState.status == GuardGateStatus.error) {
           AsmitaToast.show(
             context,

@@ -551,13 +551,17 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
     );
   }
 
-  void _showNewVisitorModal(BuildContext context) {
-    AsmitaPreApproveWizard.showAsModalSheet(
-      context,
+  Future<void> _showNewVisitorModal(BuildContext modalContext) async {
+    await AsmitaPreApproveWizard.showAsModalSheet(
+      modalContext,
       isGuardMode: true,
       title: 'New Walk-in Visitor',
       subtitle: 'Record lobby guest entry details',
     );
+    if (!mounted) return;
+    context.read<GuardGateBloc>().add(LoadExpectedInvites());
+    context.read<GuardGateBloc>().add(LoadCheckedInVisitors());
+    context.read<GuardGateBloc>().add(LoadGuardHistory());
   }
 
   Widget _buildNewVisitorAction(BuildContext context) {
