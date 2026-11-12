@@ -30,9 +30,51 @@ class AsmitaPalette {
   static const Color textDarkModeMain = Color(0xFFF1F5F9); // Primary label (prevents glare/halation)
   static const Color textDarkModeMuted = Color(0xFF94A3B8); // Secondary label (accessible slate)
   static const Color textDarkModeTertiary = Color(0xFF64748B); // Tertiary subtle label
+  static const Color textDarkModeQuaternary = Color(0xFF475569); // Quaternary subtle hint
+  
+  // Vibrant Semantic System Tints tuned for Dark Mode (Apple HIG compliant contrast)
+  static const Color successGreenDark = Color(0xFF34D399); // Radiant Emerald (4.5:1+ contrast on dark)
+  static const Color actionRedDark = Color(0xFFF87171); // Radiant Coral Red
+  static const Color amberWarningDark = Color(0xFFFBBF24); // Radiant Gold Amber
   
   // Borders & Dividers
   static const Color borderGreyDark = Color(0xFF25334D); // Crisp subtle midnight-navy border
+
+  // HIG-aligned dynamic color resolvers
+  static Color primary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? deepNavyDark : deepNavy;
+
+  static Color textPrimary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? textDarkModeMain : textDark;
+
+  static Color textSecondary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? textDarkModeMuted : textLight;
+
+  static Color textTertiary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? textDarkModeTertiary : const Color(0xFF94A3B8);
+
+  static Color surface(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? surfaceDark : surfaceLight;
+
+  static Color elevatedSurface(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? surfaceElevatedDark : Colors.white;
+
+  static Color border(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? borderGreyDark : borderGrey;
+
+  static Color success(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? successGreenDark : successGreen;
+
+  static Color error(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? actionRedDark : actionRed;
+
+  static Color warning(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? amberWarningDark : amberWarning;
+
+  static Color subtleAccent(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? deepNavyDark.withValues(alpha: 0.18)
+          : deepNavy.withValues(alpha: 0.08);
 }
 
 class AsmitaTheme {
@@ -97,12 +139,73 @@ class AsmitaTheme {
       useMaterial3: true,
       scaffoldBackgroundColor: AsmitaPalette.systemBGDark,
       dividerColor: AsmitaPalette.borderGreyDark,
+      cardColor: AsmitaPalette.surfaceDark,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AsmitaPalette.systemBGDark,
+        foregroundColor: AsmitaPalette.textDarkModeMain,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AsmitaPalette.surfaceElevatedDark,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AsmitaPalette.borderGreyDark, width: 1.0),
+        ),
+        titleTextStyle: GoogleFonts.montserrat(
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+          color: AsmitaPalette.textDarkModeMain,
+        ),
+        contentTextStyle: GoogleFonts.poppins(
+          fontSize: 14,
+          color: AsmitaPalette.textDarkModeMuted,
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AsmitaPalette.surfaceElevatedDark,
+        modalBackgroundColor: AsmitaPalette.surfaceElevatedDark,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return Colors.white;
+          }
+          return const Color(0xFF94A3B8);
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AsmitaPalette.deepNavyDark;
+          }
+          return const Color(0xFF334155);
+        }),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return Colors.transparent;
+          }
+          return const Color(0xFF475569);
+        }),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: AsmitaPalette.surfaceElevatedDark,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: AsmitaPalette.borderGreyDark, width: 1.0),
+        ),
+        textStyle: GoogleFonts.poppins(
+          fontSize: 13,
+          color: AsmitaPalette.textDarkModeMain,
+        ),
+      ),
       colorScheme: const ColorScheme.dark(
         primary: AsmitaPalette.deepNavyDark,
         secondary: Color(0xFF5A75CD),
         secondaryContainer: Color(0xFF1E284A),
         onSecondaryContainer: Colors.white,
-        error: AsmitaPalette.actionRed,
+        error: AsmitaPalette.actionRedDark,
         surface: AsmitaPalette.surfaceDark,
         outline: AsmitaPalette.borderGreyDark,
       ),
@@ -241,3 +344,20 @@ extension ResponsiveContext on BuildContext {
   double responsiveFont(double baseFontSize) => AppResponsive.font(this, baseFontSize);
   double responsivePadding(double basePadding) => AppResponsive.padding(this, basePadding);
 }
+
+/// Convenience BuildContext extension for Apple HIG-aligned theme tokens.
+extension AsmitaThemeContext on BuildContext {
+  bool get isDarkMode => Theme.of(this).brightness == Brightness.dark;
+  Color get primaryColor => AsmitaPalette.primary(this);
+  Color get textPrimary => AsmitaPalette.textPrimary(this);
+  Color get textSecondary => AsmitaPalette.textSecondary(this);
+  Color get textTertiary => AsmitaPalette.textTertiary(this);
+  Color get surfaceColor => AsmitaPalette.surface(this);
+  Color get elevatedSurfaceColor => AsmitaPalette.elevatedSurface(this);
+  Color get borderColor => AsmitaPalette.border(this);
+  Color get subtleAccentColor => AsmitaPalette.subtleAccent(this);
+  Color get successColor => AsmitaPalette.success(this);
+  Color get errorColor => AsmitaPalette.error(this);
+  Color get warningColor => AsmitaPalette.warning(this);
+}
+
