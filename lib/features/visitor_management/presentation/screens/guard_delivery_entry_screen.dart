@@ -14,19 +14,19 @@ import '../../bloc/industrial_visit_state.dart';
 class GuardDeliveryEntryScreen extends StatefulWidget {
   final int gateId;
 
-  const GuardDeliveryEntryScreen({
-    super.key,
-    this.gateId = 1,
-  });
+  const GuardDeliveryEntryScreen({super.key, this.gateId = 1});
 
   @override
-  State<GuardDeliveryEntryScreen> createState() => _GuardDeliveryEntryScreenState();
+  State<GuardDeliveryEntryScreen> createState() =>
+      _GuardDeliveryEntryScreenState();
 }
 
 class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
   String _selectedCourier = 'Amazon';
-  final TextEditingController _customCourierController = TextEditingController();
-  final TextEditingController _recipientNameController = TextEditingController();
+  final TextEditingController _customCourierController =
+      TextEditingController();
+  final TextEditingController _recipientNameController =
+      TextEditingController();
   int? _selectedRecipientUserId;
 
   final List<String> _commonCouriers = [
@@ -75,13 +75,13 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
     }
 
     context.read<IndustrialVisitBloc>().add(
-          CreateDeliveryIntakeEvent(
-            deliveryCompany: courier,
-            recipientName: recipient,
-            recipientUserId: _selectedRecipientUserId,
-            gateId: widget.gateId,
-          ),
-        );
+      CreateDeliveryIntakeEvent(
+        deliveryCompany: courier,
+        recipientName: recipient,
+        recipientUserId: _selectedRecipientUserId,
+        gateId: widget.gateId,
+      ),
+    );
   }
 
   @override
@@ -94,9 +94,15 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
       appBar: AppBar(
         title: const Text(
           'Guard Delivery Intake',
-          style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        backgroundColor: isDark ? AsmitaPalette.surfaceDark : AsmitaPalette.deepNavy,
+        backgroundColor: isDark
+            ? AsmitaPalette.surfaceDark
+            : AsmitaPalette.deepNavy,
         foregroundColor: Colors.white,
       ),
       body: BlocConsumer<IndustrialVisitBloc, IndustrialVisitState>(
@@ -104,7 +110,9 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
           if (state.status == IndustrialVisitBlocStatus.actionSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.successMessage ?? 'Delivery intake logged successfully'),
+                content: Text(
+                  state.successMessage ?? 'Delivery intake logged successfully',
+                ),
                 backgroundColor: AsmitaPalette.successGreen,
               ),
             );
@@ -130,16 +138,25 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
                   decoration: BoxDecoration(
                     color: navColor.withValues(alpha: isDark ? 0.15 : 0.08),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: navColor.withValues(alpha: isDark ? 0.3 : 0.2)),
+                    border: Border.all(
+                      color: navColor.withValues(alpha: isDark ? 0.3 : 0.2),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.markunread_mailbox_outlined, color: navColor, size: 24),
+                      Icon(
+                        Icons.markunread_mailbox_outlined,
+                        color: navColor,
+                        size: 24,
+                      ),
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Text(
                           'Delivery Flow: Guard captures delivery details. Recipient will be alerted to collect at gate or allow in.',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
@@ -160,11 +177,16 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
                     return AsmitaSelectItem<String>(
                       value: c,
                       label: c,
-                      icon: c == 'Other' ? Icons.more_horiz_rounded : Icons.local_shipping_rounded,
-                      iconColor: (c == 'Swiggy' || c == 'Zomato') ? AsmitaPalette.actionRed : navColor,
+                      icon: c == 'Other'
+                          ? Icons.more_horiz_rounded
+                          : Icons.local_shipping_rounded,
+                      iconColor: (c == 'Swiggy' || c == 'Zomato')
+                          ? AsmitaPalette.actionRed
+                          : navColor,
                     );
                   }).toList(),
-                  onChanged: (val) => setState(() => _selectedCourier = val ?? 'Amazon'),
+                  onChanged: (val) =>
+                      setState(() => _selectedCourier = val ?? 'Amazon'),
                 ),
 
                 if (_selectedCourier == 'Other') ...[
@@ -174,7 +196,9 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
                     decoration: InputDecoration(
                       labelText: 'Specify Courier Name',
                       hintText: 'e.g. Shadowfax, Porter',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                 ],
@@ -187,12 +211,15 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
                   value: _selectedRecipientUserId,
                   prefixIcon: Icons.badge_outlined,
                   sheetTitle: 'Select Recipient Employee',
-                  sheetSubtitle: 'Choose executive or team lead receiving the package',
+                  sheetSubtitle:
+                      'Choose executive or team lead receiving the package',
                   items: _sampleRecipients.map((r) {
                     final name = r['name'] as String;
                     final parts = name.split(' (');
                     final mainName = parts[0];
-                    final dept = parts.length > 1 ? parts[1].replaceAll(')', '') : null;
+                    final dept = parts.length > 1
+                        ? parts[1].replaceAll(')', '')
+                        : null;
                     return AsmitaSelectItem<int>(
                       value: r['id'] as int,
                       label: mainName,
@@ -204,8 +231,11 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
                   onChanged: (val) {
                     setState(() {
                       _selectedRecipientUserId = val;
-                      final match = _sampleRecipients.firstWhere((e) => e['id'] == val);
-                      _recipientNameController.text = (match['name'] as String).split(' (')[0];
+                      final match = _sampleRecipients.firstWhere(
+                        (e) => e['id'] == val,
+                      );
+                      _recipientNameController.text = (match['name'] as String)
+                          .split(' (')[0];
                     });
                   },
                 ),
@@ -218,20 +248,26 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
                     labelText: 'Recipient Full Name',
                     hintText: 'Enter name of staff package is addressed to',
                     prefixIcon: Icon(Icons.person, color: navColor),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
 
                 ElevatedButton.icon(
-                  onPressed: state.status == IndustrialVisitBlocStatus.loading ? null : _submitDelivery,
+                  onPressed: state.status == IndustrialVisitBlocStatus.loading
+                      ? null
+                      : _submitDelivery,
                   icon: const Icon(Icons.send_rounded, color: Colors.white),
                   label: const Text('Log Delivery & Alert Recipient'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: btnColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ],
