@@ -16,10 +16,7 @@ import '../../data/models/industrial_visit_model.dart';
 class GuardPassCheckInScreen extends StatefulWidget {
   final int gateId;
 
-  const GuardPassCheckInScreen({
-    super.key,
-    this.gateId = 1,
-  });
+  const GuardPassCheckInScreen({super.key, this.gateId = 1});
 
   @override
   State<GuardPassCheckInScreen> createState() => _GuardPassCheckInScreenState();
@@ -41,7 +38,9 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
     final query = _passCodeController.text.trim().toUpperCase();
     if (query.isEmpty) return;
 
-    final found = visits.where((v) => v.passCode?.toUpperCase() == query).toList();
+    final found = visits
+        .where((v) => v.passCode?.toUpperCase() == query)
+        .toList();
     if (found.isNotEmpty) {
       setState(() {
         _matchedVisit = found.first;
@@ -57,9 +56,11 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isLockedOut
-              ? 'Security Lockout: 3 failed attempts. Terminal locked for 5 minutes.'
-              : 'Pass code not found or expired. Failed attempt $_failedAttempts/3.'),
+          content: Text(
+            _isLockedOut
+                ? 'Security Lockout: 3 failed attempts. Terminal locked for 5 minutes.'
+                : 'Pass code not found or expired. Failed attempt $_failedAttempts/3.',
+          ),
           backgroundColor: AsmitaPalette.actionRed,
         ),
       );
@@ -75,10 +76,18 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.gateId == 1 ? 'Gate 1 Pedestrian Pass Verification' : 'Gate 2 Parking Pass Verification',
-          style: const TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.bold),
+          widget.gateId == 1
+              ? 'Gate 1 Pedestrian Pass Verification'
+              : 'Gate 2 Parking Pass Verification',
+          style: const TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        backgroundColor: isDark ? AsmitaPalette.surfaceDark : AsmitaPalette.deepNavy,
+        backgroundColor: isDark
+            ? AsmitaPalette.surfaceDark
+            : AsmitaPalette.deepNavy,
         foregroundColor: Colors.white,
       ),
       body: BlocConsumer<IndustrialVisitBloc, IndustrialVisitState>(
@@ -111,12 +120,16 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
                   decoration: BoxDecoration(
                     color: navColor.withValues(alpha: isDark ? 0.15 : 0.08),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: navColor.withValues(alpha: isDark ? 0.3 : 0.2)),
+                    border: Border.all(
+                      color: navColor.withValues(alpha: isDark ? 0.3 : 0.2),
+                    ),
                   ),
                   child: Row(
                     children: [
                       Icon(
-                        widget.gateId == 1 ? Icons.directions_walk : Icons.directions_car,
+                        widget.gateId == 1
+                            ? Icons.directions_walk
+                            : Icons.directions_car,
                         color: navColor,
                         size: 24,
                       ),
@@ -126,7 +139,13 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
                           widget.gateId == 1
                               ? 'Active Terminal: Gate 1 (Pedestrians & Walk-ins Only)'
                               : 'Active Terminal: Gate 2 (Vehicles & Parking Only)',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.deepNavy),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isDark
+                                ? AsmitaPalette.textDarkModeMain
+                                : AsmitaPalette.deepNavy,
+                          ),
                         ),
                       ),
                     ],
@@ -145,20 +164,32 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
                         decoration: InputDecoration(
                           hintText: 'e.g. PASS-2026-0042',
                           labelText: 'Digital Pass Code',
-                          prefixIcon: Icon(Icons.qr_code_scanner, color: navColor),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          prefixIcon: Icon(
+                            Icons.qr_code_scanner,
+                            color: navColor,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                         onSubmitted: (_) => _searchPass(state.visits),
                       ),
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
-                      onPressed: _isLockedOut ? null : () => _searchPass(state.visits),
+                      onPressed: _isLockedOut
+                          ? null
+                          : () => _searchPass(state.visits),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: btnColor,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 16,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                       child: const Text('Verify'),
                     ),
@@ -182,7 +213,11 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
                         Expanded(
                           child: Text(
                             'Terminal locked out due to repeated invalid attempts. Please contact Admin or wait for lockout timer.',
-                            style: TextStyle(color: AsmitaPalette.actionRed, fontSize: 13, fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              color: AsmitaPalette.actionRed,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
@@ -205,32 +240,57 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
                           Row(
                             children: [
                               (_matchedVisit!.visitorPhotoUrl != null &&
-                                      _matchedVisit!.visitorPhotoUrl!.isNotEmpty)
+                                      _matchedVisit!
+                                          .visitorPhotoUrl!
+                                          .isNotEmpty)
                                   ? ClipRRect(
                                       borderRadius: BorderRadius.circular(28),
                                       child: CachedNetworkImage(
-                                        imageUrl: _matchedVisit!.visitorPhotoUrl!.startsWith('http')
+                                        imageUrl:
+                                            _matchedVisit!.visitorPhotoUrl!
+                                                .startsWith('http')
                                             ? _matchedVisit!.visitorPhotoUrl!
                                             : '${EnvConfig.baseUrl}${_matchedVisit!.visitorPhotoUrl}',
                                         width: 56,
                                         height: 56,
                                         fit: BoxFit.cover,
-                                        errorWidget: (context, url, error) => CircleAvatar(
-                                          radius: 28,
-                                          backgroundColor: navColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                                          child: Text(
-                                            _matchedVisit!.visitorName.isNotEmpty ? _matchedVisit!.visitorName[0] : 'V',
-                                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: navColor),
-                                          ),
-                                        ),
+                                        errorWidget: (context, url, error) =>
+                                            CircleAvatar(
+                                              radius: 28,
+                                              backgroundColor: navColor
+                                                  .withValues(
+                                                    alpha: isDark ? 0.2 : 0.1,
+                                                  ),
+                                              child: Text(
+                                                _matchedVisit!
+                                                        .visitorName
+                                                        .isNotEmpty
+                                                    ? _matchedVisit!
+                                                          .visitorName[0]
+                                                    : 'V',
+                                                style: TextStyle(
+                                                  fontSize: 22,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: navColor,
+                                                ),
+                                              ),
+                                            ),
                                       ),
                                     )
                                   : CircleAvatar(
                                       radius: 28,
-                                      backgroundColor: navColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                                      backgroundColor: navColor.withValues(
+                                        alpha: isDark ? 0.2 : 0.1,
+                                      ),
                                       child: Text(
-                                        _matchedVisit!.visitorName.isNotEmpty ? _matchedVisit!.visitorName[0] : 'V',
-                                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: navColor),
+                                        _matchedVisit!.visitorName.isNotEmpty
+                                            ? _matchedVisit!.visitorName[0]
+                                            : 'V',
+                                        style: TextStyle(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold,
+                                          color: navColor,
+                                        ),
                                       ),
                                     ),
                               const SizedBox(width: 14),
@@ -240,17 +300,27 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
                                   children: [
                                     Text(
                                       _matchedVisit!.visitorName,
-                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                     Text(
                                       'Pass: ${_matchedVisit!.passCode} • ${_matchedVisit!.requestNumber}',
-                                      style: const TextStyle(fontSize: 12, color: AsmitaPalette.textLight),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AsmitaPalette.textLight,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: _matchedVisit!.status.badgeColor.withValues(alpha: 0.12),
+                                        color: _matchedVisit!.status.badgeColor
+                                            .withValues(alpha: 0.12),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Text(
@@ -258,7 +328,8 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.bold,
-                                          color: _matchedVisit!.status.badgeColor,
+                                          color:
+                                              _matchedVisit!.status.badgeColor,
                                         ),
                                       ),
                                     ),
@@ -268,62 +339,96 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
                             ],
                           ),
                           const Divider(height: 24),
-                          _detailRow('Person to Meet', _matchedVisit!.hostName ?? 'Not Assigned'),
-                          _detailRow('Department', _matchedVisit!.departmentName ?? 'General Operations'),
-                          _detailRow('Arrival Mode', _matchedVisit!.arrivalMode),
+                          _detailRow(
+                            'Person to Meet',
+                            _matchedVisit!.hostName ?? 'Not Assigned',
+                          ),
+                          _detailRow(
+                            'Department',
+                            _matchedVisit!.departmentName ??
+                                'General Operations',
+                          ),
+                          _detailRow(
+                            'Arrival Mode',
+                            _matchedVisit!.arrivalMode,
+                          ),
                           if (_matchedVisit!.vehicleNumber != null)
-                            _detailRow('Vehicle Registration', _matchedVisit!.vehicleNumber!),
+                            _detailRow(
+                              'Vehicle Registration',
+                              _matchedVisit!.vehicleNumber!,
+                            ),
                           _detailRow(
                             'On-Site Verified',
-                            _matchedVisit!.verifiedOnSite ? 'Verified by Guard' : 'Not yet verified on site',
+                            _matchedVisit!.verifiedOnSite
+                                ? 'Verified by Guard'
+                                : 'Not yet verified on site',
                           ),
                           const SizedBox(height: 20),
 
                           // Action Buttons
                           Row(
                             children: [
-                              if (_matchedVisit!.status == IndustrialVisitStatus.approved)
+                              if (_matchedVisit!.status ==
+                                  IndustrialVisitStatus.approved)
                                 Expanded(
                                   child: ElevatedButton.icon(
                                     onPressed: () {
                                       context.read<IndustrialVisitBloc>().add(
-                                            CheckInPassEvent(
-                                              visitId: _matchedVisit!.id,
-                                              gateId: widget.gateId,
-                                              passCode: _matchedVisit!.passCode,
-                                            ),
-                                          );
+                                        CheckInPassEvent(
+                                          visitId: _matchedVisit!.id,
+                                          gateId: widget.gateId,
+                                          passCode: _matchedVisit!.passCode,
+                                        ),
+                                      );
                                       setState(() => _matchedVisit = null);
                                     },
-                                    icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-                                    label: const Text('Check In (Confirm On-Site)'),
+                                    icon: const Icon(
+                                      Icons.check_circle_outline,
+                                      color: Colors.white,
+                                    ),
+                                    label: const Text(
+                                      'Check In (Confirm On-Site)',
+                                    ),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: AsmitaPalette.successGreen,
+                                      backgroundColor:
+                                          AsmitaPalette.successGreen,
                                       foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              if (_matchedVisit!.status == IndustrialVisitStatus.checkedIn)
+                              if (_matchedVisit!.status ==
+                                  IndustrialVisitStatus.checkedIn)
                                 Expanded(
                                   child: ElevatedButton.icon(
                                     onPressed: () {
                                       context.read<IndustrialVisitBloc>().add(
-                                            CheckOutPassEvent(
-                                              visitId: _matchedVisit!.id,
-                                              gateId: widget.gateId,
-                                            ),
-                                          );
+                                        CheckOutPassEvent(
+                                          visitId: _matchedVisit!.id,
+                                          gateId: widget.gateId,
+                                        ),
+                                      );
                                       setState(() => _matchedVisit = null);
                                     },
-                                    icon: const Icon(Icons.logout, color: Colors.white),
+                                    icon: const Icon(
+                                      Icons.logout,
+                                      color: Colors.white,
+                                    ),
                                     label: const Text('Check Out (Exit Scan)'),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: btnColor,
                                       foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -352,7 +457,10 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
             flex: 2,
             child: Text(
               label,
-              style: const TextStyle(fontSize: 13, color: AsmitaPalette.textLight),
+              style: const TextStyle(
+                fontSize: 13,
+                color: AsmitaPalette.textLight,
+              ),
             ),
           ),
           const SizedBox(width: 8),
