@@ -5,6 +5,7 @@ import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'asmita_facility_booking_wizard.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import '../../bloc/amenities_bloc.dart';
 import '../../bloc/amenities_state.dart';
 import '../../data/models/amenity_model.dart';
@@ -24,30 +25,32 @@ class FacilityBookings extends StatelessWidget {
           content: AsmitaFacilityBookingWizard(initialAmenity: facility),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${facility.name} is currently unavailable.'),
-            behavior: SnackBarBehavior.floating,
-          ),
+        AsmitaToast.show(
+          context,
+          message: '${facility.name} is currently unavailable.',
+          type: AsmitaToastType.info,
         );
       }
     }
-    
+
     IconData getIconForFacility(String name) {
       final lower = name.toLowerCase();
       if (lower.contains('pool')) return Icons.pool_rounded;
       if (lower.contains('gym')) return Icons.fitness_center_rounded;
       if (lower.contains('yoga')) return Icons.self_improvement_rounded;
-      if (lower.contains('banquet') || lower.contains('hall')) return Icons.celebration_rounded;
+      if (lower.contains('banquet') || lower.contains('hall')) {
+        return Icons.celebration_rounded;
+      }
       return Icons.business_center_rounded;
     }
 
     return BlocBuilder<AmenitiesBloc, AmenitiesState>(
       builder: (context, state) {
-        if (state.status == AmenitiesStatus.loading && state.amenities.isEmpty) {
+        if (state.status == AmenitiesStatus.loading &&
+            state.amenities.isEmpty) {
           return _buildFacilitiesSkeleton(context);
         }
-        
+
         final amenities = state.amenities;
         final myBookings = state.myBookings;
 
@@ -65,7 +68,8 @@ class FacilityBookings extends StatelessWidget {
               ),
             ),
             SizedBox(height: 12),
-            if (displayAmenities.isEmpty && state.status != AmenitiesStatus.loading)
+            if (displayAmenities.isEmpty &&
+                state.status != AmenitiesStatus.loading)
               Text('No facilities available at the moment.'),
             if (displayAmenities.isNotEmpty)
               GridView.builder(
@@ -96,15 +100,26 @@ class FacilityBookings extends StatelessWidget {
                   onTap: () => _showAllFacilitiesSheet(context, amenities),
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           'View All Facilities',
-                          style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.primary, fontSize: 13, fontWeight: FontWeight.w600),
+                          style: textTheme.bodyLarge?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                        Icon(Icons.keyboard_arrow_down_rounded, color: Theme.of(context).colorScheme.primary, size: 18),
+                        Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 18,
+                        ),
                       ],
                     ),
                   ),
@@ -128,18 +143,25 @@ class FacilityBookings extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final booking = myBookings[index];
                   final status = booking.bookingStatus.toUpperCase();
-                  final isApproved = status.contains('CONFIRM') || status.contains('APPROV');
-                  final isRejected = status.contains('CANCEL') || status.contains('REJECT');
+                  final isApproved =
+                      status.contains('CONFIRM') || status.contains('APPROV');
+                  final isRejected =
+                      status.contains('CANCEL') || status.contains('REJECT');
                   final badgeColor = isApproved
                       ? AsmitaPalette.successGreen
-                      : (isRejected ? AsmitaPalette.actionRed : const Color(0xFFF59E0B));
+                      : (isRejected
+                            ? AsmitaPalette.actionRed
+                            : const Color(0xFFF59E0B));
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 10),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Theme.of(context).dividerColor, width: 1.2),
+                      border: Border.all(
+                        color: Theme.of(context).dividerColor,
+                        width: 1.2,
+                      ),
                     ),
                     padding: const EdgeInsets.all(14),
                     child: Row(
@@ -148,7 +170,9 @@ class FacilityBookings extends StatelessWidget {
                           width: 42,
                           height: 42,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
@@ -177,7 +201,9 @@ class FacilityBookings extends StatelessWidget {
                                     ? '${booking.bookingDate!.toLocal().toString().split(' ')[0]} • Status: ${booking.bookingStatus}'
                                     : 'Status: ${booking.bookingStatus}',
                                 style: textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context).textTheme.bodySmall?.color,
+                                  color: Theme.of(
+                                    context,
+                                  ).textTheme.bodySmall?.color,
                                   fontSize: 12,
                                 ),
                               ),
@@ -185,11 +211,16 @@ class FacilityBookings extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: badgeColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: badgeColor.withValues(alpha: 0.3)),
+                            border: Border.all(
+                              color: badgeColor.withValues(alpha: 0.3),
+                            ),
                           ),
                           child: Text(
                             booking.bookingStatus,
@@ -235,7 +266,10 @@ class FacilityBookings extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor,
+                    width: 1.5,
+                  ),
                 ),
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -256,18 +290,72 @@ class FacilityBookings extends StatelessWidget {
               );
             },
           ),
+          const SizedBox(height: 24),
+          AsmitaSkeleton.text(width: 110, height: 16),
+          const SizedBox(height: 12),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 2,
+            itemBuilder: (context, index) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor,
+                    width: 1.2,
+                  ),
+                ),
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      alignment: Alignment.center,
+                      child: AsmitaSkeleton.circle(size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AsmitaSkeleton.text(width: 110, height: 14),
+                          const SizedBox(height: 6),
+                          AsmitaSkeleton.text(width: 150, height: 12),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    AsmitaSkeleton.pill(width: 65, height: 22),
+                  ],
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
   }
 
-  void _showAllFacilitiesSheet(BuildContext context, List<AmenityModel> allFacilities) {
+  void _showAllFacilitiesSheet(
+    BuildContext context,
+    List<AmenityModel> allFacilities,
+  ) {
     IconData getIconForFacility(String name) {
       final lower = name.toLowerCase();
       if (lower.contains('pool')) return Icons.pool_rounded;
       if (lower.contains('gym')) return Icons.fitness_center_rounded;
       if (lower.contains('yoga')) return Icons.self_improvement_rounded;
-      if (lower.contains('banquet') || lower.contains('hall')) return Icons.celebration_rounded;
+      if (lower.contains('banquet') || lower.contains('hall')) {
+        return Icons.celebration_rounded;
+      }
       return Icons.business_center_rounded;
     }
 
@@ -295,9 +383,17 @@ class FacilityBookings extends StatelessWidget {
             onTap: () {
               if (isAvailable) {
                 Navigator.pop(context); // Close the bottom sheet first
-                AsmitaDialog.show(context: context, title: '${fac.name} Booking', content: AsmitaFacilityBookingWizard(initialAmenity: fac));
+                AsmitaDialog.show(
+                  context: context,
+                  title: '${fac.name} Booking',
+                  content: AsmitaFacilityBookingWizard(initialAmenity: fac),
+                );
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${fac.name} is currently unavailable.'), behavior: SnackBarBehavior.floating));
+                AsmitaToast.show(
+                  context,
+                  message: '${fac.name} is currently unavailable.',
+                  type: AsmitaToastType.info,
+                );
               }
             },
           );
@@ -346,7 +442,10 @@ class _ServiceCard extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: textTheme.titleLarge?.copyWith(fontSize: 13, fontWeight: FontWeight.w700),
+                  style: textTheme.titleLarge?.copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 SizedBox(height: 2),
                 Text(
@@ -354,7 +453,9 @@ class _ServiceCard extends StatelessWidget {
                   style: textTheme.bodyMedium?.copyWith(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: isAvailable ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyMedium?.color,
+                    color: isAvailable
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).textTheme.bodyMedium?.color,
                   ),
                 ),
               ],
