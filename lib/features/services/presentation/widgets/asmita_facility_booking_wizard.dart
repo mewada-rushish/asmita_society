@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
 import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -427,7 +428,13 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 14,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AsmitaPalette.textDarkModeMuted
+                            : AsmitaPalette.textLight,
+                      ),
                     ],
                   ),
                 ),
@@ -472,13 +479,30 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(facility['icon'] as IconData, color: isAvailable ? Theme.of(context).colorScheme.primary : Colors.grey, size: 28),
+                      Icon(
+                        facility['icon'] as IconData,
+                        color: isAvailable
+                            ? Theme.of(context).colorScheme.primary
+                            : (Theme.of(context).brightness == Brightness.dark
+                                ? AsmitaPalette.textDarkModeMuted
+                                : AsmitaPalette.textLight),
+                        size: 28,
+                      ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             facility['label'] as String,
-                            style: TextStyle(fontFamily: 'Montserrat', fontSize: 13, fontWeight: FontWeight.w700, color: isAvailable ? Theme.of(context).colorScheme.primary : Colors.grey),
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: isAvailable
+                                  ? Theme.of(context).colorScheme.primary
+                                  : (Theme.of(context).brightness == Brightness.dark
+                                      ? AsmitaPalette.textDarkModeMuted
+                                      : AsmitaPalette.textLight),
+                            ),
                           ),
                           SizedBox(height: 4),
                           Text(
@@ -925,7 +949,9 @@ class _AsmitaFacilityBookingWizardState extends State<AsmitaFacilityBookingWizar
                 label: Text(option, style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: isSelected ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.primary)),
                 selected: isSelected,
                 selectedColor: Theme.of(context).colorScheme.primary,
-                backgroundColor: Colors.grey.shade200,
+                backgroundColor: Theme.of(context).brightness == Brightness.dark
+                    ? AsmitaPalette.surfaceDark
+                    : Colors.grey.shade200,
                 onSelected: (selected) {
                   if (selected) {
                     setState(() {

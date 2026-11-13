@@ -608,7 +608,7 @@ class _BbpsBillPaymentsSheetState extends State<BbpsBillPaymentsSheet> {
                         Icon(
                           Icons.receipt_long_rounded,
                           size: 16,
-                          color: AsmitaPalette.deepNavy,
+                          color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
                         ),
                         const SizedBox(width: 8),
                         Text(

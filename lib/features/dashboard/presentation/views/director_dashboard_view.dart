@@ -892,7 +892,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AsmitaPalette.deepNavy,
+                          backgroundColor: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF2563EB)
+                              : AsmitaPalette.deepNavy,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
@@ -1766,14 +1768,14 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: AsmitaPalette.deepNavy.withValues(
-                                alpha: 0.08,
+                              color: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy).withValues(
+                                alpha: isDark ? 0.15 : 0.08,
                               ),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.people_alt_rounded,
-                              color: AsmitaPalette.deepNavy,
+                              color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
                               size: 18,
                             ),
                           ),
@@ -1783,16 +1785,18 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                              color: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy).withValues(
+                                alpha: isDark ? 0.15 : 0.1,
+                              ),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               '${waitingVisits.length} Waiting',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Montserrat',
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
-                                color: AsmitaPalette.deepNavy,
+                                color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
                               ),
                             ),
                           ),
@@ -1879,14 +1883,14 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: AsmitaPalette.deepNavy.withValues(
-                                alpha: 0.08,
+                              color: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy).withValues(
+                                alpha: isDark ? 0.15 : 0.08,
                               ),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.timer_outlined,
-                              color: AsmitaPalette.deepNavy,
+                              color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
                               size: 18,
                             ),
                           ),
@@ -1930,11 +1934,11 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                         alignment: Alignment.centerLeft,
                         child: Text(
                           waitingSinceDuration,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Montserrat',
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: AsmitaPalette.deepNavy,
+                            color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.deepNavy,
                           ),
                         ),
                       ),
@@ -2129,12 +2133,12 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                  color: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy).withValues(alpha: isDark ? 0.15 : 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.people_outline_rounded,
-                  color: AsmitaPalette.deepNavy,
+                  color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
                   size: 20,
                 ),
               ),
@@ -2241,7 +2245,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+              color: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy).withValues(alpha: isDark ? 0.15 : 0.1),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: Theme.of(context).dividerColor),
             ),
@@ -2250,10 +2254,10 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
               visit.visitorName.isNotEmpty
                   ? visit.visitorName[0].toUpperCase()
                   : 'V',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Montserrat',
                 fontWeight: FontWeight.w800,
-                color: AsmitaPalette.deepNavy,
+                color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
                 fontSize: 14,
               ),
             ),
@@ -2351,7 +2355,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AsmitaPalette.deepNavy,
+                        color: isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Text(
