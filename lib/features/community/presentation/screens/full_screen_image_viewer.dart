@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import 'package:asmita_society/features/community/data/models/chat_message_model.dart';
 import 'package:gal/gal.dart';
 import '../../../../core/di/injection_container.dart';
@@ -215,15 +215,8 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                               ),
                               if (_isDownloading)
                                 Padding(
-                                  padding: EdgeInsets.all(12.0),
-                                  child: SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: AsmitaLoadingIndicator(
-                                      color: Color(0xFF142E5C),
-                                      size: 20,
-                                    ),
-                                  ),
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: AsmitaSkeleton.circle(size: 20),
                                 )
                               else
                                 _buildFloatingAction(
@@ -288,15 +281,8 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
             ),
           if (_isDownloading && _selectedImageIds.isEmpty)
             Padding(
-              padding: EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: AsmitaLoadingIndicator(
-                  color: Theme.of(context).colorScheme.surface,
-                  size: 20,
-                ),
-              ),
+              padding: const EdgeInsets.all(16.0),
+              child: AsmitaSkeleton.circle(size: 20),
             )
           else if (_selectedImageIds.isEmpty)
             IconButton(
@@ -345,10 +331,11 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                         ? CachedNetworkImage(
                             imageUrl: imagePath,
                             fit: BoxFit.contain,
-                            placeholder: (context, url) => Center(
-                              child: AsmitaLoadingIndicator(
-                                color: Theme.of(context).colorScheme.surface,
-                                size: 28,
+                            placeholder: (context, url) => AsmitaSkeleton(
+                              child: Container(
+                                color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.1),
+                                width: double.infinity,
+                                height: double.infinity,
                               ),
                             ),
                             errorWidget: (context, url, error) => Center(

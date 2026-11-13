@@ -6,7 +6,7 @@ import '../../../../core/config/env_config.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/security/secure_storage_service.dart';
 import '../../../../core/widgets/asmita_toast.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 
 class AsmitaHotlineSheet extends StatefulWidget {
   final int societyId;
@@ -220,9 +220,9 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
 
         // 2. Tab Views
         if (_isLoading)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 36),
-            child: Center(child: AsmitaLoadingIndicator(size: 28)),
+          SizedBox(
+            height: 280,
+            child: _buildHotlineSkeleton(isDark),
           )
         else
           SizedBox(
@@ -436,6 +436,47 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHotlineSkeleton(bool isDark) {
+    return AsmitaSkeleton(
+      child: ListView.separated(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        itemCount: 3,
+        separatorBuilder: (_, _) => const SizedBox(height: 8),
+        itemBuilder: (context, idx) {
+          return Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              ),
+            ),
+            child: Row(
+              children: [
+                AsmitaSkeleton.circle(size: 36),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AsmitaSkeleton.text(width: 130, height: 13),
+                      const SizedBox(height: 4),
+                      AsmitaSkeleton.text(width: 80, height: 11),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                AsmitaSkeleton.pill(width: 55, height: 26),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

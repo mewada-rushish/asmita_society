@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_bottom_nav_bar.dart';
 import '../../../../core/widgets/asmita_text_field.dart';
@@ -528,12 +528,7 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                       builder: (context, state) {
                         if (state.status == DailyHelpStatus.loading &&
                             state.dailyHelpList.isEmpty) {
-                          return Center(
-                            child: AsmitaLoadingIndicator(
-                              color: Theme.of(context).colorScheme.primary,
-                              size: 28,
-                            ),
-                          );
+                          return _buildDailyHelpSkeleton(context);
                         } else if (state.status == DailyHelpStatus.error &&
                             state.dailyHelpList.isEmpty) {
                           return Center(
@@ -823,6 +818,47 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDailyHelpSkeleton(BuildContext context) {
+    return AsmitaSkeleton(
+      child: ListView.builder(
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 4, bottom: 24),
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 5,
+        itemBuilder: (context, index) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Theme.of(context).dividerColor, width: 1.2),
+            ),
+            child: Row(
+              children: [
+                AsmitaSkeleton.circle(size: 46),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AsmitaSkeleton.text(width: 140, height: 14),
+                      const SizedBox(height: 6),
+                      AsmitaSkeleton.text(width: 90, height: 12),
+                      const SizedBox(height: 6),
+                      AsmitaSkeleton.text(width: 120, height: 10),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                AsmitaSkeleton.circle(size: 38),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/design_system.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../visitor_management/bloc/guard_gate_bloc.dart';
@@ -76,9 +76,7 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
             child: BlocBuilder<GuardGateBloc, GuardGateState>(
               builder: (context, state) {
                 if (state.status == GuardGateStatus.loading && state.historyRecords.isEmpty) {
-                  return Center(
-                    child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.error, size: 28),
-                  );
+                  return _buildHistorySkeleton(context);
                 }
 
                 if (state.status == GuardGateStatus.error && state.historyRecords.isEmpty) {
@@ -328,6 +326,77 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHistorySkeleton(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16).copyWith(bottom: 180),
+        itemCount: 6,
+        physics: const NeverScrollableScrollPhysics(),
+        itemBuilder: (context, index) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.1),
+              ),
+            ),
+            child: Row(
+              children: [
+                AsmitaSkeleton.circle(size: 48),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AsmitaSkeleton.text(width: 130, height: 15, borderRadius: 4),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          AsmitaSkeleton.pill(width: 70, height: 20),
+                          const SizedBox(width: 8),
+                          AsmitaSkeleton.circle(size: 4),
+                          const SizedBox(width: 8),
+                          AsmitaSkeleton.text(width: 65, height: 12, borderRadius: 3),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AsmitaSkeleton.bone(width: 12, height: 12, borderRadius: 2),
+                        const SizedBox(width: 4),
+                        AsmitaSkeleton.text(width: 50, height: 12, borderRadius: 3),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AsmitaSkeleton.bone(width: 12, height: 12, borderRadius: 2),
+                        const SizedBox(width: 4),
+                        AsmitaSkeleton.text(width: 50, height: 12, borderRadius: 3),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

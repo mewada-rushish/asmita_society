@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/features/menu/bloc/society_bloc.dart';
@@ -70,12 +71,7 @@ class _DocumentsScreenBody extends StatelessWidget {
                 builder: (context, societyState) {
                   if (societyState is SocietyLoading ||
                       societyState is SocietyInitial) {
-                    return Center(
-                      child: AsmitaLoadingIndicator(
-                        color: Theme.of(context).colorScheme.primary,
-                        size: 28,
-                      ),
-                    );
+                    return _buildDocumentsSkeleton(context);
                   } else if (societyState is SocietyError) {
                     return Center(
                       child: Column(
@@ -172,6 +168,61 @@ class _DocumentsScreenBody extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDocumentsSkeleton(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        itemCount: 5,
+        physics: const NeverScrollableScrollPhysics(),
+        itemBuilder: (context, index) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? AsmitaPalette.borderGreyDark : const Color(0xFFE2E8F0),
+                width: 1.2,
+              ),
+            ),
+            child: Row(
+              children: [
+                // PDF Badge Icon bone
+                AsmitaSkeleton.bone(width: 48, height: 48, borderRadius: 12),
+                const SizedBox(width: 14),
+                // Title and Meta
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AsmitaSkeleton.text(width: 160, height: 15, borderRadius: 4),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          AsmitaSkeleton.circle(size: 13),
+                          const SizedBox(width: 4),
+                          AsmitaSkeleton.text(width: 110, height: 12, borderRadius: 3),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Actions
+                AsmitaSkeleton.pill(width: 54, height: 28),
+                const SizedBox(width: 8),
+                AsmitaSkeleton.circle(size: 28),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
