@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/design_system.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../bloc/guard_gate_bloc.dart';
 import '../../bloc/guard_gate_event.dart';
@@ -140,8 +140,19 @@ class _GuardQrScannerScreenState extends State<GuardQrScannerScreen> {
               ),
             ),
             if (_isProcessing)
-              const Center(
-                child: AsmitaLoadingIndicator(color: AsmitaPalette.actionRed, size: 28),
+              Center(
+                child: AsmitaSkeleton(
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: AsmitaSkeleton.circle(size: 32),
+                  ),
+                ),
               ),
           ],
         ),

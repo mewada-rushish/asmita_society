@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 
 /// Categories of camera failure for user-friendly error recovery.
 enum CameraErrorKind {
@@ -686,16 +687,7 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
                 color: Colors.white,
               ),
               child: _isTakingPicture
-                  ? Center(
-                      child: SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: AsmitaPalette.deepNavy,
-                        ),
-                      ),
-                    )
+                  ? Center(child: AsmitaSkeleton.circle(size: 24))
                   : Center(
                       child: Icon(
                         Icons.camera_alt_rounded,
@@ -780,24 +772,16 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
   }
 
   Widget _buildLoadingView() {
-    return const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircularProgressIndicator(
-            color: Colors.white,
-            strokeWidth: 2.5,
-          ),
-          SizedBox(height: 16),
-          Text(
-            'Starting Camera...',
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 13,
-              color: Colors.white,
-            ),
-          ),
-        ],
+    return Center(
+      child: AsmitaSkeleton(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AsmitaSkeleton.circle(size: 40),
+            const SizedBox(height: 16),
+            AsmitaSkeleton.text(width: 140, height: 14),
+          ],
+        ),
       ),
     );
   }

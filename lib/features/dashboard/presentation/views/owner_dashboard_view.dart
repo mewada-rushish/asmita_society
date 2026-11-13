@@ -7,7 +7,6 @@ import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/app_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/widgets/permission_gate.dart';
 import 'package:asmita_society/core/utils/property_role_resolver.dart';
@@ -906,10 +905,23 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
       builder: (context, state) {
         if (state.status == AmenitiesStatus.loading &&
             state.amenities.isEmpty) {
-          return Center(
-            child: AsmitaLoadingIndicator(
-              color: Theme.of(context).colorScheme.secondary,
-              size: 28,
+          return AsmitaSkeleton(
+            isLoading: true,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(
+                  4,
+                  (index) => Column(
+                    children: [
+                      AsmitaSkeleton.circle(size: 52),
+                      const SizedBox(height: 8),
+                      AsmitaSkeleton.text(width: 48, height: 11, borderRadius: 3),
+                    ],
+                  ),
+                ),
+              ),
             ),
           );
         }

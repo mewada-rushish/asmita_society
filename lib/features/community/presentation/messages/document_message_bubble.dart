@@ -4,7 +4,7 @@ import '../../../../core/network/dio_client.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 
 class DocumentMessageBubble extends StatefulWidget {
@@ -114,11 +114,7 @@ class _DocumentMessageBubbleState extends State<DocumentMessageBubble> {
         child: Row(
           children: [
             _isDownloading
-                ? SizedBox(
-                    width: 32,
-                    height: 32,
-                    child: AsmitaLoadingIndicator(color: widget.isMe ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.primary, size: 28),
-                  )
+                ? AsmitaSkeleton.circle(size: 32)
                 : Icon(fileIcon, color: iconColor, size: 32),
             SizedBox(width: 12),
             Expanded(

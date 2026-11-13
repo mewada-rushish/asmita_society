@@ -1200,69 +1200,158 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
   // 1. EXECUTIVE HERO CARD (Global AsmitaEmployeeCard)
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildDirectorSkeleton(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Hero Employee ID card bone
-          AsmitaSkeleton.bone(
-            width: double.infinity,
-            height: 200,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          const SizedBox(height: 18),
-          // 4 Action boxes bone
-          Row(
-            children: List.generate(
-              4,
-              (index) => Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: index < 3 ? 8.0 : 0),
-                  child: Column(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 1. Executive ID Hero Card Skeleton
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Row(
                     children: [
-                      AsmitaSkeleton.bone(
-                        width: 56,
-                        height: 56,
-                        borderRadius: BorderRadius.circular(16),
+                      AsmitaSkeleton.circle(size: 56),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AsmitaSkeleton.text(width: 140, height: 16, borderRadius: 4),
+                            const SizedBox(height: 6),
+                            AsmitaSkeleton.pill(width: 85, height: 20),
+                            const SizedBox(height: 6),
+                            AsmitaSkeleton.text(width: 110, height: 12, borderRadius: 3),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 6),
-                      AsmitaSkeleton.bone(
-                        width: 48,
-                        height: 12,
-                        borderRadius: BorderRadius.circular(4),
+                      AsmitaSkeleton.bone(width: 56, height: 56, borderRadius: 10),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Divider(color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15)),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      AsmitaSkeleton.pill(width: 110, height: 24),
+                      AsmitaSkeleton.pill(width: 75, height: 24),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // 2. 4 Quick Actions Grid
+            Row(
+              children: List.generate(
+                4,
+                (index) => Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(right: index < 3 ? 8.0 : 0),
+                    child: Column(
+                      children: [
+                        AsmitaSkeleton.bone(
+                          width: 56,
+                          height: 56,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        const SizedBox(height: 6),
+                        AsmitaSkeleton.text(
+                          width: 48,
+                          height: 11,
+                          borderRadius: 3,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // 3. 4 Operational KPI Stat Cards
+            Row(
+              children: List.generate(
+                4,
+                (index) => Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(right: index < 3 ? 8.0 : 0),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                        ),
                       ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AsmitaSkeleton.text(width: 32, height: 20, borderRadius: 4),
+                          const SizedBox(height: 6),
+                          AsmitaSkeleton.text(width: 48, height: 11, borderRadius: 3),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // 4. Waiting Queue Section
+            AsmitaSkeleton.text(width: 140, height: 16, borderRadius: 4),
+            const SizedBox(height: 12),
+            Column(
+              children: List.generate(
+                2,
+                (index) => Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      AsmitaSkeleton.circle(size: 44),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AsmitaSkeleton.text(width: 130, height: 15, borderRadius: 4),
+                            const SizedBox(height: 6),
+                            AsmitaSkeleton.pill(width: 80, height: 20),
+                          ],
+                        ),
+                      ),
+                      AsmitaSkeleton.bone(width: 68, height: 34, borderRadius: 8),
                     ],
                   ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 18),
-          // 4 KPI Cards bone
-          Row(
-            children: List.generate(
-              4,
-              (index) => Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: index < 3 ? 8.0 : 0),
-                  child: AsmitaSkeleton.bone(
-                    height: 80,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
-          // Waiting card bone
-          AsmitaSkeleton.bone(
-            width: double.infinity,
-            height: 140,
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

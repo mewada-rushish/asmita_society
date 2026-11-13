@@ -6,7 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/features/menu/bloc/family_bloc.dart';
 import 'package:asmita_society/features/menu/bloc/family_event.dart';
 import 'package:asmita_society/features/menu/bloc/family_state.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
@@ -96,7 +97,7 @@ class FamilyMembersScreen extends StatelessWidget {
               child: BlocBuilder<FamilyBloc, FamilyState>(
                 builder: (context, state) {
                   if (state is FamilyLoading) {
-                    return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+                    return _buildFamilySkeleton(context);
                   } else if (state is FamilyError) {
                     return Center(
                   child: Text('Error: ${state.message}', style: textTheme.bodyLarge?.copyWith(color: Colors.red)),
@@ -148,6 +149,48 @@ class FamilyMembersScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFamilySkeleton(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: GridView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.80,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+        ),
+        itemCount: 6,
+        itemBuilder: (context, index) {
+          return Container(
+            decoration: BoxDecoration(
+              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+              ),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AsmitaSkeleton.circle(size: 64),
+                const SizedBox(height: 12),
+                AsmitaSkeleton.text(width: 90, height: 15, borderRadius: 4),
+                const SizedBox(height: 6),
+                AsmitaSkeleton.pill(width: 65, height: 20),
+                const SizedBox(height: 6),
+                AsmitaSkeleton.text(width: 80, height: 12, borderRadius: 3),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -559,10 +602,12 @@ class FamilyMembersScreen extends StatelessWidget {
                           ? SizedBox(
                               width: 20,
                               height: 20,
-                              child: AsmitaLoadingIndicator(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  size: 20,
+                              child: Center(
+                                child: AsmitaSkeleton(
+                                  isLoading: true,
+                                  child: AsmitaSkeleton.circle(size: 16),
                                 ),
+                              ),
                             )
                           : Text(member == null ? 'Save Member' : 'Update Member', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.surface)),
                     ),

@@ -8,9 +8,7 @@ import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/widgets/app_button.dart';
-
-
-import '../../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_toast.dart';
@@ -639,12 +637,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
   Widget _buildExpectedList(GuardGateState state) {
     if ((state.status == GuardGateStatus.initial || state.isLoadingExpected) &&
         state.expectedInvites.isEmpty) {
-      return Center(
-        child: AsmitaLoadingIndicator(
-          color: Theme.of(context).colorScheme.primary,
-          size: 28,
-        ),
-      );
+      return _buildExpectedListSkeleton(context);
     }
 
     final today = DateTime.now();
@@ -808,11 +801,9 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                             width: 28,
                             height: 28,
                             child: Center(
-                              child: AsmitaLoadingIndicator(
-                                color: Theme.of(context).brightness == Brightness.dark
-                                    ? const Color(0xFF60A5FA)
-                                    : AsmitaPalette.deepNavy,
-                                size: 20,
+                              child: AsmitaSkeleton(
+                                isLoading: true,
+                                child: AsmitaSkeleton.circle(size: 20),
                               ),
                             ),
                           )
@@ -876,8 +867,11 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Container(
                   color: Colors.grey.shade100,
-                  child: const Center(
-                    child: AsmitaLoadingIndicator(size: 16),
+                  child: Center(
+                    child: AsmitaSkeleton(
+                      isLoading: true,
+                      child: AsmitaSkeleton.circle(size: 24),
+                    ),
                   ),
                 ),
                 errorWidget: (context, error, stackTrace) =>
@@ -1071,6 +1065,52 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildExpectedListSkeleton(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: Column(
+        children: List.generate(
+          4,
+          (index) => Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+              ),
+            ),
+            child: Row(
+              children: [
+                AsmitaSkeleton.circle(size: 48),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AsmitaSkeleton.text(width: 130, height: 15, borderRadius: 4),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          AsmitaSkeleton.pill(width: 65, height: 20),
+                          const SizedBox(width: 8),
+                          AsmitaSkeleton.pill(width: 75, height: 20),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                AsmitaSkeleton.bone(width: 70, height: 36, borderRadius: 10),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1656,8 +1696,11 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
                   width: 58,
                   height: 58,
                   color: isDark ? AsmitaPalette.surfaceDark : Colors.grey.shade200,
-                  child: const Center(
-                    child: AsmitaLoadingIndicator(size: 16),
+                  child: Center(
+                    child: AsmitaSkeleton(
+                      isLoading: true,
+                      child: AsmitaSkeleton.circle(size: 32),
+                    ),
                   ),
                 ),
                 errorWidget: (context, url, error) => Container(
