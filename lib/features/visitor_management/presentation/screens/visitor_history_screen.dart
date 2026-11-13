@@ -331,7 +331,9 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
     } else if (company.toLowerCase().contains('uber') ||
         category.toLowerCase().contains('cab')) {
       icon = Icons.directions_car_rounded;
-      brandColor = Colors.black;
+      brandColor = Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF94A3B8)
+          : Colors.black;
     }
 
     // Default title is name, but for Cab/Delivery it should be the company/purpose
@@ -1836,6 +1838,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
       ),
       child: StatefulBuilder(
         builder: (context, setModalState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
           int modalActiveCount = 0;
           if (tempStatus != null && tempStatus != 'ALL') modalActiveCount++;
           if (tempDatePreset != 'ALL' || tempStartDate != null || tempEndDate != null) modalActiveCount++;
@@ -1846,7 +1849,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
           if (tempSortOrder != 'NEWEST') modalActiveCount++;
 
           final statusOptions = [
-            {'key': 'ALL', 'label': 'All', 'icon': Icons.tune_rounded, 'color': AsmitaPalette.deepNavy},
+            {'key': 'ALL', 'label': 'All', 'icon': Icons.tune_rounded, 'color': isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy},
             {'key': 'PENDING', 'label': 'Pending', 'icon': Icons.schedule_rounded, 'color': AsmitaPalette.amberWarning},
             {'key': 'APPROVED', 'label': 'Approved', 'icon': Icons.check_circle_outline_rounded, 'color': AsmitaPalette.successGreen},
             {'key': 'CHECKED_IN', 'label': 'Inside HQ', 'icon': Icons.login_rounded, 'color': const Color(0xFF0D9488)},

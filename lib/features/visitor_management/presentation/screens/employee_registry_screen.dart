@@ -428,7 +428,9 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AsmitaPalette.deepNavy,
+                      backgroundColor: isDark
+                          ? const Color(0xFF2563EB)
+                          : AsmitaPalette.deepNavy,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(

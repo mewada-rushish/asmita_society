@@ -183,7 +183,7 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                             style: textTheme.bodyLarge?.copyWith(
                               fontSize: 14,
                               color: _selectedModalCategory == null
-                                  ? (Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black).withValues(alpha: 0.6)
+                                  ? Theme.of(context).hintColor
                                   : Theme.of(context).textTheme.bodyLarge?.color,
                             ),
                           ),

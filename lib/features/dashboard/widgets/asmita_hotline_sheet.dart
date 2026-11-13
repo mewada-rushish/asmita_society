@@ -402,14 +402,14 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
                 decoration: BoxDecoration(
                   color: isEmergency
                       ? const Color(0xFFDC2626)
-                      : AsmitaPalette.deepNavy,
+                      : (isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy),
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
                       color:
                           (isEmergency
                                   ? const Color(0xFFDC2626)
-                                  : AsmitaPalette.deepNavy)
+                                  : (isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy))
                               .withValues(alpha: 0.25),
                       blurRadius: 4,
                       offset: const Offset(0, 1.5),

@@ -68,13 +68,17 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navColor = isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy;
+    final btnColor = isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
           widget.gateId == 1 ? 'Gate 1 Pedestrian Pass Verification' : 'Gate 2 Parking Pass Verification',
           style: const TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: AsmitaPalette.deepNavy,
+        backgroundColor: isDark ? AsmitaPalette.surfaceDark : AsmitaPalette.deepNavy,
         foregroundColor: Colors.white,
       ),
       body: BlocConsumer<IndustrialVisitBloc, IndustrialVisitState>(
@@ -105,15 +109,15 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                    color: navColor.withValues(alpha: isDark ? 0.15 : 0.08),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AsmitaPalette.deepNavy.withValues(alpha: 0.2)),
+                    border: Border.all(color: navColor.withValues(alpha: isDark ? 0.3 : 0.2)),
                   ),
                   child: Row(
                     children: [
                       Icon(
                         widget.gateId == 1 ? Icons.directions_walk : Icons.directions_car,
-                        color: AsmitaPalette.deepNavy,
+                        color: navColor,
                         size: 24,
                       ),
                       const SizedBox(width: 12),
@@ -122,7 +126,7 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
                           widget.gateId == 1
                               ? 'Active Terminal: Gate 1 (Pedestrians & Walk-ins Only)'
                               : 'Active Terminal: Gate 2 (Vehicles & Parking Only)',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AsmitaPalette.deepNavy),
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.deepNavy),
                         ),
                       ),
                     ],
@@ -141,7 +145,7 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
                         decoration: InputDecoration(
                           hintText: 'e.g. PASS-2026-0042',
                           labelText: 'Digital Pass Code',
-                          prefixIcon: const Icon(Icons.qr_code_scanner, color: AsmitaPalette.deepNavy),
+                          prefixIcon: Icon(Icons.qr_code_scanner, color: navColor),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         onSubmitted: (_) => _searchPass(state.visits),
@@ -151,7 +155,7 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
                     ElevatedButton(
                       onPressed: _isLockedOut ? null : () => _searchPass(state.visits),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AsmitaPalette.deepNavy,
+                        backgroundColor: btnColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -213,20 +217,20 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
                                         fit: BoxFit.cover,
                                         errorWidget: (context, url, error) => CircleAvatar(
                                           radius: 28,
-                                          backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                                          backgroundColor: navColor.withValues(alpha: isDark ? 0.2 : 0.1),
                                           child: Text(
                                             _matchedVisit!.visitorName.isNotEmpty ? _matchedVisit!.visitorName[0] : 'V',
-                                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AsmitaPalette.deepNavy),
+                                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: navColor),
                                           ),
                                         ),
                                       ),
                                     )
                                   : CircleAvatar(
                                       radius: 28,
-                                      backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                                      backgroundColor: navColor.withValues(alpha: isDark ? 0.2 : 0.1),
                                       child: Text(
                                         _matchedVisit!.visitorName.isNotEmpty ? _matchedVisit!.visitorName[0] : 'V',
-                                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AsmitaPalette.deepNavy),
+                                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: navColor),
                                       ),
                                     ),
                               const SizedBox(width: 14),
@@ -316,7 +320,7 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
                                     icon: const Icon(Icons.logout, color: Colors.white),
                                     label: const Text('Check Out (Exit Scan)'),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: AsmitaPalette.deepNavy,
+                                      backgroundColor: btnColor,
                                       foregroundColor: Colors.white,
                                       padding: const EdgeInsets.symmetric(vertical: 14),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

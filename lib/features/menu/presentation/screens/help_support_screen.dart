@@ -329,8 +329,8 @@ class _HelpSupportContent extends StatelessWidget {
                     prefixIcon: Icons.category_outlined,
                     sheetTitle: 'Select Issue Category',
                     sheetSubtitle: 'Choose the area most relevant to your ticket',
-                    items: const [
-                      AsmitaSelectItem(
+                    items: [
+                      const AsmitaSelectItem(
                         value: 'Bug Report',
                         label: 'Bug Report',
                         subtitle: 'App glitch, crash, or unexpected behavior',
@@ -342,23 +342,25 @@ class _HelpSupportContent extends StatelessWidget {
                         label: 'Account Issue',
                         subtitle: 'Login, permissions, or profile details',
                         icon: Icons.person_outline_rounded,
-                        iconColor: AsmitaPalette.deepNavy,
+                        iconColor: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF60A5FA)
+                            : AsmitaPalette.deepNavy,
                       ),
-                      AsmitaSelectItem(
+                      const AsmitaSelectItem(
                         value: 'Feature Request',
                         label: 'Feature Request',
                         subtitle: 'Suggest a new feature or improvement',
                         icon: Icons.lightbulb_outline_rounded,
                         iconColor: Colors.amber,
                       ),
-                      AsmitaSelectItem(
+                      const AsmitaSelectItem(
                         value: 'Billing',
                         label: 'Billing',
                         subtitle: 'Maintenance dues, receipts, or payments',
                         icon: Icons.receipt_long_outlined,
                         iconColor: AsmitaPalette.successGreen,
                       ),
-                      AsmitaSelectItem(
+                      const AsmitaSelectItem(
                         value: 'Other',
                         label: 'Other',
                         subtitle: 'General inquiries or uncategorized support',
@@ -420,7 +422,12 @@ class _HelpSupportContent extends StatelessWidget {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AsmitaPalette.deepNavy, width: 1.5),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFF60A5FA)
+                                  : AsmitaPalette.deepNavy,
+                              width: 1.5,
+                            ),
                           ),
                         ),
                       ),
@@ -477,7 +484,12 @@ class _HelpSupportContent extends StatelessWidget {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AsmitaPalette.deepNavy, width: 1.5),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFF60A5FA)
+                                  : AsmitaPalette.deepNavy,
+                              width: 1.5,
+                            ),
                           ),
                         ),
                       ),
@@ -498,15 +510,19 @@ class _HelpSupportContent extends StatelessWidget {
                         if (context.mounted) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Ticket raised successfully'),
-                              backgroundColor: AsmitaPalette.deepNavy,
+                            SnackBar(
+                              content: const Text('Ticket raised successfully'),
+                              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFF2563EB)
+                                  : AsmitaPalette.deepNavy,
                             ),
                           );
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AsmitaPalette.deepNavy,
+                        backgroundColor: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF2563EB)
+                            : AsmitaPalette.deepNavy,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
@@ -800,7 +816,12 @@ class _TicketCarouselState extends State<TicketCarousel> {
                               const SizedBox(width: 8),
                               Text(
                                 AppDateFormatter.timeAgo(t.createdAt),
-                                style: widget.textTheme.bodySmall?.copyWith(fontSize: 12, color: Colors.grey[600]),
+                                style: widget.textTheme.bodySmall?.copyWith(
+                                  fontSize: 12,
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? AsmitaPalette.textDarkModeMuted
+                                      : AsmitaPalette.textLight,
+                                ),
                               ),
                             ],
                           ),

@@ -306,6 +306,10 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
   }
 
   Widget _buildGatePostSelector() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final gateChipSelectedColor = isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy;
+    final gateActionColor = isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(16),
@@ -352,7 +356,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                   ),
                   label: const Text('Gate 1 (Pedestrian)', overflow: TextOverflow.ellipsis),
                   selected: _selectedGateId == 1,
-                  selectedColor: AsmitaPalette.deepNavy,
+                  selectedColor: gateChipSelectedColor,
                   labelStyle: TextStyle(
                     color: _selectedGateId == 1 ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
@@ -373,7 +377,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                   ),
                   label: const Text('Gate 2 (Parking)', overflow: TextOverflow.ellipsis),
                   selected: _selectedGateId == 2,
-                  selectedColor: AsmitaPalette.deepNavy,
+                  selectedColor: gateChipSelectedColor,
                   labelStyle: TextStyle(
                     color: _selectedGateId == 2 ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
@@ -393,10 +397,10 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => GuardPassCheckInSheet.show(context, gateId: 1),
-                    icon: const Icon(Icons.qr_code_scanner, size: 16, color: AsmitaPalette.deepNavy),
-                    label: const Text('Verify Pass', style: TextStyle(fontSize: 12, color: AsmitaPalette.deepNavy)),
+                    icon: Icon(Icons.qr_code_scanner, size: 16, color: gateActionColor),
+                    label: Text('Verify Pass', style: TextStyle(fontSize: 12, color: gateActionColor)),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AsmitaPalette.deepNavy),
+                      side: BorderSide(color: gateActionColor),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),
@@ -412,10 +416,10 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                         ),
                       );
                     },
-                    icon: const Icon(Icons.local_shipping, size: 16, color: AsmitaPalette.deepNavy),
-                    label: const Text('Delivery Intake', style: TextStyle(fontSize: 12, color: AsmitaPalette.deepNavy)),
+                    icon: Icon(Icons.local_shipping, size: 16, color: gateActionColor),
+                    label: Text('Delivery Intake', style: TextStyle(fontSize: 12, color: gateActionColor)),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AsmitaPalette.deepNavy),
+                      side: BorderSide(color: gateActionColor),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),
@@ -461,7 +465,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
               icon: const Icon(Icons.qr_code, color: Colors.white, size: 18),
               label: const Text('Generate Vehicle Draft Slip (QR)'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AsmitaPalette.deepNavy,
+                backgroundColor: gateChipSelectedColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
@@ -612,7 +616,12 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                   ),
                   Text(
                     'Record details for unannounced guests',
-                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AsmitaPalette.textDarkModeMuted
+                          : AsmitaPalette.textLight,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
@@ -656,11 +665,15 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
         alignment: Alignment.center,
         child: Column(
           children: [
-            Icon(Icons.event_available, size: 48, color: Colors.grey.shade300),
+            Icon(Icons.event_available, size: 48, color: Theme.of(context).dividerColor),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'No expected visitors for today',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AsmitaPalette.textDarkModeMuted
+                    : AsmitaPalette.textLight,
+              ),
             ),
           ],
         ),
@@ -679,7 +692,7 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
           decoration: BoxDecoration(
             color: Theme.of(context).scaffoldBackgroundColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade300),
+            border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -746,28 +759,42 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                          color: (Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFF60A5FA)
+                                  : AsmitaPalette.deepNavy)
+                              .withValues(
+                            alpha: Theme.of(context).brightness == Brightness.dark ? 0.15 : 0.08,
+                          ),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: AsmitaPalette.deepNavy.withValues(alpha: 0.2),
+                            color: (Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF60A5FA)
+                                    : AsmitaPalette.deepNavy)
+                                .withValues(
+                              alpha: Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.2,
+                            ),
                           ),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.swap_horiz_rounded,
                               size: 13,
-                              color: AsmitaPalette.deepNavy,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFF60A5FA)
+                                  : AsmitaPalette.deepNavy,
                             ),
-                            SizedBox(width: 3),
+                            const SizedBox(width: 3),
                             Text(
                               'PTM',
                               style: TextStyle(
                                 fontFamily: 'Montserrat',
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: AsmitaPalette.deepNavy,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF60A5FA)
+                                    : AsmitaPalette.deepNavy,
                               ),
                             ),
                           ],
@@ -777,12 +804,14 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                     const SizedBox(width: 8),
                     state.isSubmitting &&
                             state.submittingVisitorId == (invite['id']?.toString() ?? '')
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 28,
                             height: 28,
                             child: Center(
                               child: AsmitaLoadingIndicator(
-                                color: AsmitaPalette.deepNavy,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF60A5FA)
+                                    : AsmitaPalette.deepNavy,
                                 size: 20,
                               ),
                             ),
@@ -1295,9 +1324,12 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
   }
 
   Widget _buildRow(String label, String value, {bool highlight = false}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       color: highlight
-          ? AsmitaPalette.deepNavy.withValues(alpha: 0.05)
+          ? (isDark
+              ? const Color(0xFF60A5FA).withValues(alpha: 0.12)
+              : AsmitaPalette.deepNavy.withValues(alpha: 0.05))
           : Colors.transparent,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
@@ -1314,7 +1346,7 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 10),
               height: 1,
-              color: Colors.grey.shade300,
+              color: Theme.of(context).dividerColor,
             ),
           ),
           Text(
@@ -1334,6 +1366,8 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navColor = isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy;
     final invite = widget.invite;
     final visitorName = (invite['visitor_name'] == null ||
             invite['visitor_name'].toString().isEmpty)
@@ -1368,7 +1402,7 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
                         'Contact: $phone',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1382,15 +1416,15 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
                   vertical: 3,
                 ),
                 decoration: BoxDecoration(
-                  color: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                  color: navColor.withValues(alpha: isDark ? 0.15 : 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   (invite['invite_type']?.toString() ?? 'Guest').toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: AsmitaPalette.deepNavy,
+                    color: navColor,
                   ),
                 ),
               ),
@@ -1405,7 +1439,7 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
           Container(
             clipBehavior: Clip.hardEdge,
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: Theme.of(context).dividerColor),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Column(
@@ -1446,14 +1480,14 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
             alignment: Alignment.centerRight,
             child: TextButton.icon(
               onPressed: _openReassignFromDialog,
-              icon: const Icon(Icons.swap_horiz_rounded, size: 15, color: AsmitaPalette.deepNavy),
-              label: const Text(
+              icon: Icon(Icons.swap_horiz_rounded, size: 15, color: navColor),
+              label: Text(
                 'Change Person to Meet (PTM)',
                 style: TextStyle(
                   fontFamily: 'Montserrat',
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
-                  color: AsmitaPalette.deepNavy,
+                  color: navColor,
                 ),
               ),
               style: TextButton.styleFrom(
@@ -1465,7 +1499,11 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
           const SizedBox(height: 8),
           Row(
             children: [
-              Icon(Icons.info_outline, size: 13, color: Colors.grey.shade500),
+              Icon(
+                Icons.info_outline,
+                size: 13,
+                color: isDark ? AsmitaPalette.textDarkModeMuted : Colors.grey.shade500,
+              ),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
@@ -1474,7 +1512,7 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
                       : 'Mandatory photo capture attaches to contact profile.',
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.grey.shade600,
+                    color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -1488,7 +1526,7 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
                 child: OutlinedButton(
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.grey.shade700,
+                    foregroundColor: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
@@ -1500,7 +1538,7 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
                 child: ElevatedButton(
                   onPressed: _handleConfirm,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AsmitaPalette.deepNavy,
+                    backgroundColor: isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -1523,14 +1561,17 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
   }
 
   Widget _buildPhotoSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navColor = isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy;
+
     if (_capturedImage != null) {
       return Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: AsmitaPalette.deepNavy.withValues(alpha: 0.05),
+          color: navColor.withValues(alpha: isDark ? 0.15 : 0.05),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: AsmitaPalette.deepNavy.withValues(alpha: 0.3),
+            color: navColor.withValues(alpha: isDark ? 0.35 : 0.3),
           ),
         ),
         child: Row(
@@ -1570,7 +1611,10 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
                   const SizedBox(height: 2),
                   Text(
                     'Stored permanently under this contact number.',
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                    ),
                   ),
                 ],
               ),
@@ -1580,7 +1624,7 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
               icon: const Icon(Icons.refresh, size: 14),
               label: const Text('Retake', style: TextStyle(fontSize: 11)),
               style: TextButton.styleFrom(
-                foregroundColor: AsmitaPalette.deepNavy,
+                foregroundColor: navColor,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
             ),
@@ -1611,7 +1655,7 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
                 placeholder: (context, url) => Container(
                   width: 58,
                   height: 58,
-                  color: Colors.grey.shade200,
+                  color: isDark ? AsmitaPalette.surfaceDark : Colors.grey.shade200,
                   child: const Center(
                     child: AsmitaLoadingIndicator(size: 16),
                   ),
@@ -1619,8 +1663,11 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
                 errorWidget: (context, url, error) => Container(
                   width: 58,
                   height: 58,
-                  color: Colors.grey.shade200,
-                  child: const Icon(Icons.person, color: Colors.grey),
+                  color: isDark ? AsmitaPalette.surfaceDark : Colors.grey.shade200,
+                  child: Icon(
+                    Icons.person,
+                    color: isDark ? AsmitaPalette.textDarkModeMuted : Colors.grey,
+                  ),
                 ),
               ),
             ),
@@ -1650,7 +1697,10 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
                   const SizedBox(height: 2),
                   Text(
                     'Matched by contact number from prior visits.',
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                    ),
                   ),
                 ],
               ),
@@ -1660,7 +1710,7 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
               icon: const Icon(Icons.camera_alt_outlined, size: 14),
               label: const Text('Update', style: TextStyle(fontSize: 11)),
               style: TextButton.styleFrom(
-                foregroundColor: AsmitaPalette.deepNavy,
+                foregroundColor: navColor,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
             ),
@@ -1728,7 +1778,7 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
                       'No prior image for this contact. Guard must take photo before entry.',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey.shade700,
+                        color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
                       ),
                     ),
                   ],
@@ -1744,7 +1794,7 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
               isLoading: _isCapturing,
               icon: Icons.camera_alt,
               label: _isCapturing ? 'Opening Camera...' : 'Take Visitor Photo Now',
-              backgroundColor: AsmitaPalette.deepNavy,
+              backgroundColor: isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy,
               foregroundColor: Colors.white,
               borderRadius: 8,
               height: 40,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/design_system.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_skeleton.dart';
 import '../../../core/widgets/asmita_toast.dart';
@@ -136,6 +137,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
       title: 'Select $title',
       child: StatefulBuilder(
         builder: (context, setModalState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
           List<T> filteredItems = List.from(items);
           return Padding(
             padding: EdgeInsets.only(
@@ -159,11 +161,11 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                           contentPadding: const EdgeInsets.symmetric(vertical: 12),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade200),
+                            borderSide: BorderSide(color: Theme.of(context).dividerColor),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade200),
+                            borderSide: BorderSide(color: Theme.of(context).dividerColor),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -181,10 +183,12 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                     ),
                   Flexible(
                     child: filteredItems.isEmpty
-                        ? const Center(
+                        ? Center(
                             child: Text(
                               'No options available',
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(
+                                color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                              ),
                             ),
                           )
                         : useGrid
@@ -209,10 +213,14 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                                     child: Container(
                                       alignment: Alignment.center,
                                       decoration: BoxDecoration(
-                                        color: isSelected ? const Color(0xFFE21F26).withValues(alpha: 0.1) : Colors.white,
+                                        color: isSelected
+                                            ? const Color(0xFFE21F26).withValues(alpha: isDark ? 0.2 : 0.1)
+                                            : (isDark ? AsmitaPalette.surfaceDark : Colors.white),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                          color: isSelected ? const Color(0xFFE21F26) : Colors.grey.shade300,
+                                          color: isSelected
+                                              ? const Color(0xFFE21F26)
+                                              : (isDark ? AsmitaPalette.borderGreyDark : Colors.grey.shade300),
                                           width: isSelected ? 2 : 1,
                                         ),
                                       ),
@@ -224,7 +232,9 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                                         style: TextStyle(
                                           fontFamily: 'Poppins',
                                           fontSize: 14,
-                                          color: isSelected ? const Color(0xFFE21F26) : Colors.black87,
+                                          color: isSelected
+                                              ? const Color(0xFFE21F26)
+                                              : (isDark ? AsmitaPalette.textDarkModeMain : Colors.black87),
                                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                                         ),
                                       ),
@@ -236,7 +246,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                                 shrinkWrap: true,
                                 physics: const BouncingScrollPhysics(),
                                 itemCount: filteredItems.length,
-                                separatorBuilder: (context, index) => const Divider(height: 1, color: Colors.black12),
+                                separatorBuilder: (context, index) => Divider(height: 1, color: Theme.of(context).dividerColor),
                                 itemBuilder: (context, index) {
                                   final item = filteredItems[index];
                                   final isSelected = item == currentValue;
@@ -247,7 +257,9 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15,
-                                        color: isSelected ? const Color(0xFFE21F26) : Colors.black87,
+                                        color: isSelected
+                                            ? const Color(0xFFE21F26)
+                                            : (isDark ? AsmitaPalette.textDarkModeMain : Colors.black87),
                                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                                       ),
                                     ),
@@ -282,6 +294,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
     bool isDisabled = false,
     bool showDivider = true,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         InkWell(
@@ -293,7 +306,9 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: isDisabled ? Colors.grey.shade300 : iconBackgroundColor,
+                    color: isDisabled
+                        ? (isDark ? AsmitaPalette.surfaceElevatedDark : Colors.grey.shade300)
+                        : iconBackgroundColor,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(icon, size: 18, color: Colors.white),
@@ -333,7 +348,13 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                     ),
                   ),
                 const SizedBox(width: 8),
-                Icon(Icons.chevron_right_rounded, color: isDisabled ? Colors.transparent : Colors.grey.shade300, size: 20),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: isDisabled
+                      ? Colors.transparent
+                      : (isDark ? AsmitaPalette.textDarkModeMuted : Colors.grey.shade300),
+                  size: 20,
+                ),
               ],
             ),
           ),
@@ -341,7 +362,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
         if (showDivider)
           Padding(
             padding: const EdgeInsets.only(left: 48.0),
-            child: Divider(height: 1, thickness: 1, color: Colors.grey.shade200),
+            child: Divider(height: 1, thickness: 1, color: Theme.of(context).dividerColor),
           ),
       ],
     );

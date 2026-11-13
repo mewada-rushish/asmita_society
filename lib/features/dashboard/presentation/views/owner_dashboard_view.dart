@@ -1,6 +1,7 @@
 import 'package:asmita_society/features/dashboard/widgets/bbps_bill_payments_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
 
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/app_refresh.dart';
@@ -315,12 +316,16 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                       style: textTheme.bodyMedium?.copyWith(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade600,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AsmitaPalette.textDarkModeMuted
+                            : AsmitaPalette.textLight,
                       ),
                     ),
                     Icon(
                       Icons.chevron_right_rounded,
-                      color: Colors.grey.shade600,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AsmitaPalette.textDarkModeMuted
+                          : AsmitaPalette.textLight,
                       size: 16,
                     ),
                   ],
@@ -833,12 +838,16 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                   style: textTheme.bodyMedium?.copyWith(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade600,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AsmitaPalette.textDarkModeMuted
+                        : AsmitaPalette.textLight,
                   ),
                 ),
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: Colors.grey.shade600,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AsmitaPalette.textDarkModeMuted
+                      : AsmitaPalette.textLight,
                   size: 16,
                 ),
               ],
@@ -978,7 +987,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
       decoration: BoxDecoration(
         color: Theme.of(context).dividerColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black12, width: 1),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 1),
       ),
       child: Center(
         child: Text(
@@ -1053,7 +1062,7 @@ class _OwnerDashboardViewState extends State<OwnerDashboardView> {
                     ),
                     child: Icon(
                       icon,
-                      color: iconColor ?? (Theme.of(context).brightness == Brightness.dark ? Colors.black : Colors.white),
+                      color: iconColor ?? (Theme.of(context).brightness == Brightness.dark ? AsmitaPalette.textDarkModeMain : Colors.white),
                       size: 24,
                     ),
                   ),

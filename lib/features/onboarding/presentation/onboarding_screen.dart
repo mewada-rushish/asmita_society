@@ -90,6 +90,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navColor = isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy;
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
     final topPadding = MediaQuery.paddingOf(context).top;
 
@@ -119,20 +121,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       vertical: 7,
                     ),
                     decoration: BoxDecoration(
-                      color: AsmitaPalette.deepNavy.withValues(alpha: 0.06),
+                      color: navColor.withValues(alpha: isDark ? 0.15 : 0.06),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: AsmitaPalette.deepNavy.withValues(alpha: 0.12),
+                        color: navColor.withValues(alpha: isDark ? 0.3 : 0.12),
                         width: 1,
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Skip',
                       style: TextStyle(
                         fontFamily: 'Montserrat',
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: AsmitaPalette.deepNavy,
+                        color: navColor,
                         letterSpacing: 0.3,
                       ),
                     ),
@@ -297,16 +299,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: AsmitaPalette.deepNavy.withValues(
-                              alpha: 0.15,
+                            color: navColor.withValues(
+                              alpha: isDark ? 0.35 : 0.15,
                             ),
                             width: 1.5,
                           ),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.arrow_back_ios_new_rounded,
                           size: 18,
-                          color: AsmitaPalette.deepNavy,
+                          color: navColor,
                         ),
                       ),
                     ),
@@ -331,11 +333,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       width: _currentPage == _slides.length - 1 ? 144 : 54,
                       clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
-                        color: AsmitaPalette.deepNavy,
+                        color: isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy,
                         borderRadius: BorderRadius.circular(27),
                         boxShadow: [
                           BoxShadow(
-                            color: AsmitaPalette.deepNavy.withValues(
+                            color: (isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy).withValues(
                               alpha: 0.3,
                             ),
                             blurRadius: 12,
@@ -393,6 +395,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildAnimatedDot(int index) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isActive = _currentPage == index;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -400,7 +403,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       height: 8,
       width: isActive ? 28 : 8,
       decoration: BoxDecoration(
-        color: isActive ? AsmitaPalette.deepNavy : const Color(0xFFCBD5E1),
+        color: isActive
+            ? (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
+            : (isDark ? AsmitaPalette.borderGreyDark : const Color(0xFFCBD5E1)),
         borderRadius: BorderRadius.circular(4),
       ),
     );

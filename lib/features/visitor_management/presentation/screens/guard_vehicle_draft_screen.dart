@@ -92,13 +92,17 @@ class _GuardVehicleDraftScreenState extends State<GuardVehicleDraftScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navColor = isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy;
+    final btnColor = isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Gate 2 Vehicle Slip Generator',
           style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: AsmitaPalette.deepNavy,
+        backgroundColor: isDark ? AsmitaPalette.surfaceDark : AsmitaPalette.deepNavy,
         foregroundColor: Colors.white,
       ),
       body: BlocConsumer<IndustrialVisitBloc, IndustrialVisitState>(
@@ -132,15 +136,15 @@ class _GuardVehicleDraftScreenState extends State<GuardVehicleDraftScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                    color: navColor.withValues(alpha: isDark ? 0.15 : 0.08),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AsmitaPalette.deepNavy.withValues(alpha: 0.2)),
+                    border: Border.all(color: navColor.withValues(alpha: isDark ? 0.3 : 0.2)),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.directions_car_filled_outlined, color: AsmitaPalette.deepNavy, size: 24),
-                      SizedBox(width: 12),
-                      Expanded(
+                      Icon(Icons.directions_car_filled_outlined, color: navColor, size: 24),
+                      const SizedBox(width: 12),
+                      const Expanded(
                         child: Text(
                           'Generate a single-use QR slip for the driver. Vehicle fields will be pre-filled and locked.',
                           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
@@ -152,13 +156,13 @@ class _GuardVehicleDraftScreenState extends State<GuardVehicleDraftScreen> {
                 const SizedBox(height: 20),
 
                 // Vehicle Type Selector
-                const Text(
+                Text(
                   'Vehicle Category',
                   style: TextStyle(
                     fontFamily: 'Montserrat',
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: AsmitaPalette.deepNavy,
+                    color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.deepNavy,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -176,12 +180,14 @@ class _GuardVehicleDraftScreenState extends State<GuardVehicleDraftScreen> {
                           onSelected: (selected) {
                             if (selected) setState(() => _selectedVehicleType = type);
                           },
-                          selectedColor: AsmitaPalette.deepNavy,
+                          selectedColor: btnColor,
                           labelStyle: TextStyle(
                             fontFamily: 'Montserrat',
                             fontSize: 12,
                             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                            color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                            color: isSelected
+                                ? Colors.white
+                                : (isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.deepNavy),
                           ),
                         ),
                       );
@@ -197,7 +203,7 @@ class _GuardVehicleDraftScreenState extends State<GuardVehicleDraftScreen> {
                   decoration: InputDecoration(
                     labelText: 'Vehicle Registration Plate',
                     hintText: 'e.g. MH04AB1234 or 22BH1234AA',
-                    prefixIcon: const Icon(Icons.pin, color: AsmitaPalette.deepNavy),
+                    prefixIcon: Icon(Icons.pin, color: navColor),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
@@ -210,7 +216,7 @@ class _GuardVehicleDraftScreenState extends State<GuardVehicleDraftScreen> {
                   decoration: InputDecoration(
                     labelText: 'Visitor / Driver Full Name',
                     hintText: 'Enter full name',
-                    prefixIcon: const Icon(Icons.person_outline, color: AsmitaPalette.deepNavy),
+                    prefixIcon: Icon(Icons.person_outline, color: navColor),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
@@ -221,7 +227,7 @@ class _GuardVehicleDraftScreenState extends State<GuardVehicleDraftScreen> {
                   icon: const Icon(Icons.qr_code, color: Colors.white),
                   label: const Text('Generate Vehicle Draft Slip'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AsmitaPalette.deepNavy,
+                    backgroundColor: btnColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -235,7 +241,7 @@ class _GuardVehicleDraftScreenState extends State<GuardVehicleDraftScreen> {
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
-                      side: const BorderSide(color: AsmitaPalette.deepNavy, width: 1.5),
+                      side: BorderSide(color: navColor, width: 1.5),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(20),
@@ -283,7 +289,7 @@ class _GuardVehicleDraftScreenState extends State<GuardVehicleDraftScreen> {
                           const SizedBox(height: 12),
                           Text(
                             'Draft Code: ${_activeDraft!['draft_code']}',
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AsmitaPalette.deepNavy),
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: navColor),
                           ),
                           const SizedBox(height: 6),
                           Text(
