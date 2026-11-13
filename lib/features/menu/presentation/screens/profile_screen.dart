@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
@@ -392,36 +391,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfileSkeleton(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AsmitaSkeleton(
       isLoading: true,
       child: Column(
         children: [
-          // Profile Header Skeleton
-          AsmitaSkeleton.circle(size: 96),
-          const SizedBox(height: 16),
-          AsmitaSkeleton.text(width: 150, height: 18, borderRadius: 4),
-          const SizedBox(height: 8),
-          AsmitaSkeleton.pill(width: 110, height: 24),
+          // 1. Profile Header Card Skeleton (Container with border & shadow)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                AsmitaSkeleton.circle(size: 80),
+                const SizedBox(height: 16),
+                AsmitaSkeleton.text(width: 150, height: 20, borderRadius: 4),
+                const SizedBox(height: 8),
+                AsmitaSkeleton.pill(width: 90, height: 24),
+              ],
+            ),
+          ),
           const SizedBox(height: 24),
 
-          // Details Section Skeleton
+          // 2. Details Section Card Skeleton (3 rows: Full Name, Email, Phone)
           Container(
             decoration: BoxDecoration(
-              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark
-                    ? AsmitaPalette.borderGreyDark
-                    : Colors.grey.withValues(alpha: 0.15),
-              ),
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
             ),
-            padding: const EdgeInsets.all(16),
             child: Column(
               children: List.generate(
-                4,
-                (index) => Padding(
-                  padding: EdgeInsets.only(bottom: index < 3 ? 16.0 : 0),
+                3,
+                (index) => Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: index < 2
+                        ? Border(
+                            bottom: BorderSide(
+                              color: Theme.of(context).dividerColor,
+                              width: 1,
+                            ),
+                          )
+                        : null,
+                  ),
                   child: Row(
                     children: [
                       AsmitaSkeleton.circle(size: 24),
@@ -431,13 +454,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             AsmitaSkeleton.text(
-                              width: 60,
+                              width: index == 0 ? 60 : (index == 1 ? 40 : 45),
                               height: 11,
                               borderRadius: 3,
                             ),
                             const SizedBox(height: 6),
                             AsmitaSkeleton.text(
-                              width: 140,
+                              width: index == 0 ? 140 : (index == 1 ? 180 : 120),
                               height: 14,
                               borderRadius: 4,
                             ),

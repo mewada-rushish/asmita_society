@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_select_field.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../bloc/industrial_visit_bloc.dart';
 import '../../bloc/industrial_visit_event.dart';
 import '../../bloc/industrial_visit_state.dart';
@@ -255,20 +256,17 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                ElevatedButton.icon(
+                AppButton(
                   onPressed: state.status == IndustrialVisitBlocStatus.loading
                       ? null
                       : _submitDelivery,
-                  icon: const Icon(Icons.send_rounded, color: Colors.white),
-                  label: const Text('Log Delivery & Alert Recipient'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: btnColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
+                  isLoading: state.status == IndustrialVisitBlocStatus.loading,
+                  icon: Icons.send_rounded,
+                  label: 'Log Delivery & Alert Recipient',
+                  backgroundColor: btnColor,
+                  foregroundColor: Colors.white,
+                  borderRadius: 10,
+                  height: 48,
                 ),
               ],
             ),

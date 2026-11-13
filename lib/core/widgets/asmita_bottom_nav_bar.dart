@@ -78,13 +78,17 @@ class AsmitaBottomNavBar extends StatelessWidget {
         color: isDark 
             ? Theme.of(context).colorScheme.surface.withValues(alpha: 0.65) 
             : Theme.of(context).colorScheme.primary,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        border: isDark ? Border.all(color: borderColor, width: 1.0) : null,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        border: isDark ? Border(
+          top: BorderSide(color: borderColor, width: 1.0),
+          left: BorderSide(color: borderColor, width: 1.0),
+          right: BorderSide(color: borderColor, width: 1.0),
+        ) : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 30,
-            offset: const Offset(0, -10),
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.10),
+            blurRadius: 12,
+            offset: const Offset(0, -3),
           ),
         ],
       ),
@@ -102,7 +106,7 @@ class AsmitaBottomNavBar extends StatelessWidget {
         color: Colors.transparent,
       ),
       child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         child: isDark 
           ? BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),

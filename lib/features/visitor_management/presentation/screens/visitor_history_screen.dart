@@ -2546,20 +2546,18 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
             child: BlocBuilder<VisitorBloc, VisitorState>(
               builder: (context, state) {
                 if (state is VisitorLoading) {
-                  return Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: List.generate(
-                        4,
-                        (index) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: AsmitaSkeleton.bone(
-                            width: double.infinity,
-                            height: 120,
-                            borderRadius: 16,
-                          ),
-                        ),
-                      ),
+                  return AsmitaSkeleton(
+                    isLoading: true,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 200),
+                      itemCount: 4,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, index) {
+                        return AsmitaSkeleton.visitorCard(
+                          showActions: false,
+                          margin: const EdgeInsets.only(bottom: 12),
+                        );
+                      },
                     ),
                   );
                 }

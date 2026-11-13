@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/features/menu/bloc/tenant_bloc.dart';
 import 'package:asmita_society/features/menu/bloc/tenant_event.dart';
 import 'package:asmita_society/features/menu/bloc/tenant_state.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
@@ -166,7 +165,6 @@ class TenantsScreen extends StatelessWidget {
   }
 
   Widget _buildTenantsSkeleton(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AsmitaSkeleton(
       isLoading: true,
       child: GridView.builder(
@@ -183,23 +181,32 @@ class TenantsScreen extends StatelessWidget {
           return Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
-              ),
+              border: Border.all(color: Theme.of(context).dividerColor, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             padding: const EdgeInsets.all(16),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Tenant avatar circle (matches radius: 32)
                 AsmitaSkeleton.circle(size: 64),
                 const SizedBox(height: 12),
-                AsmitaSkeleton.text(width: 90, height: 15, borderRadius: 4),
+                // Tenant Name
+                AsmitaSkeleton.text(width: 90, height: 16, borderRadius: 4),
                 const SizedBox(height: 6),
-                AsmitaSkeleton.pill(width: 70, height: 20),
-                const SizedBox(height: 6),
-                AsmitaSkeleton.text(width: 80, height: 12, borderRadius: 3),
+                // Relationship / Tenant Type
+                AsmitaSkeleton.text(width: 60, height: 13, borderRadius: 3),
+                const SizedBox(height: 8),
+                // Emergency/Status Badge pill
+                AsmitaSkeleton.bone(width: 70, height: 20, borderRadius: 6),
               ],
             ),
           );

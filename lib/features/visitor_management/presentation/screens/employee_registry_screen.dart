@@ -838,19 +838,7 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                   if (_isLoading)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Column(
-                        children: List.generate(
-                          4,
-                          (index) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: AsmitaSkeleton.bone(
-                              width: double.infinity,
-                              height: 140,
-                              borderRadius: 16,
-                            ),
-                          ),
-                        ),
-                      ),
+                      child: _buildEmployeeSkeletonList(context),
                     )
                   else if (filtered.isEmpty)
                     Padding(
@@ -1227,6 +1215,70 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEmployeeSkeletonList(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: Column(
+        children: List.generate(
+          4,
+          (index) => Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                AsmitaSkeleton.bone(width: 44, height: 44, borderRadius: 12),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          AsmitaSkeleton.text(width: 110, height: 14, borderRadius: 3),
+                          const SizedBox(width: 6),
+                          AsmitaSkeleton.pill(width: 55, height: 16),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      AsmitaSkeleton.text(width: 130, height: 12, borderRadius: 3),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          AsmitaSkeleton.bone(width: 60, height: 20, borderRadius: 6),
+                          const SizedBox(width: 6),
+                          AsmitaSkeleton.bone(width: 50, height: 20, borderRadius: 6),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AsmitaSkeleton.bone(width: 44, height: 28, borderRadius: 10),
+                    const SizedBox(width: 6),
+                    AsmitaSkeleton.bone(width: 44, height: 28, borderRadius: 10),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

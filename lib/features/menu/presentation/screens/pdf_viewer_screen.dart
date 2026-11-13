@@ -131,13 +131,10 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                               AsmitaSkeleton.text(width: 280, height: 14),
                               const SizedBox(height: 24),
                               Expanded(
-                                child: Container(
+                                child: AsmitaSkeleton.bone(
                                   width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.surface,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: theme.dividerColor),
-                                  ),
+                                  height: double.infinity,
+                                  borderRadius: 12,
                                 ),
                               ),
                             ],

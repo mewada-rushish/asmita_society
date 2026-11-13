@@ -17,8 +17,11 @@ void main() {
 
       for (final file in dartFiles) {
         final path = file.path.replaceAll('\\', '/');
-        // The ONLY allowed spinner is inside the pull-to-refresh widget, and the indicator class definition itself
-        if (path.contains('asmita_animated_refresh.dart') || path.contains('asmita_loading_indicator.dart')) {
+        // The ONLY allowed spinners are inside the pull-to-refresh widgets and CTA buttons
+        if (path.contains('asmita_animated_refresh.dart') ||
+            path.contains('app_refresh.dart') ||
+            path.contains('app_button.dart') ||
+            path.contains('asmita_loading_indicator.dart')) {
           continue;
         }
 

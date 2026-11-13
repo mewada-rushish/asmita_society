@@ -221,8 +221,8 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                       padding: EdgeInsets.only(
                         top:
                             MediaQuery.viewPaddingOf(context).top +
-                            72 +
-                            24, // Estimate header height
+                            62 +
+                            12, // Header height (reduced) + minimal gap
                       ),
                       sliver: AsmitaAnimatedRefresh(
                         onRefresh: () async {
@@ -1093,19 +1093,27 @@ class _GuardDashboardViewState extends State<GuardDashboardView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      AsmitaSkeleton.text(width: 130, height: 15, borderRadius: 4),
-                      const SizedBox(height: 8),
                       Row(
                         children: [
-                          AsmitaSkeleton.pill(width: 65, height: 20),
+                          AsmitaSkeleton.text(width: 110, height: 16, borderRadius: 4),
                           const SizedBox(width: 8),
-                          AsmitaSkeleton.pill(width: 75, height: 20),
+                          AsmitaSkeleton.bone(width: 52, height: 18, borderRadius: 4),
                         ],
                       ),
+                      const SizedBox(height: 8),
+                      AsmitaSkeleton.text(width: 140, height: 13, borderRadius: 3),
                     ],
                   ),
                 ),
-                AsmitaSkeleton.bone(width: 70, height: 36, borderRadius: 10),
+                const SizedBox(width: 8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AsmitaSkeleton.bone(width: 44, height: 26, borderRadius: 8),
+                    const SizedBox(width: 8),
+                    AsmitaSkeleton.circle(size: 28),
+                  ],
+                ),
               ],
             ),
           ),
@@ -1719,20 +1727,23 @@ class _PreApprovedCheckInDialogState extends State<_PreApprovedCheckInDialog> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
-                    children: [
+                  Row(
+                    children: const [
                       Icon(
                         Icons.verified,
                         size: 15,
                         color: AsmitaPalette.successGreen,
                       ),
                       SizedBox(width: 4),
-                      Text(
-                        'Photo on File (Verified)',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: AsmitaPalette.successGreen,
+                      Flexible(
+                        child: Text(
+                          'Photo on File (Verified)',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AsmitaPalette.successGreen,
+                          ),
                         ),
                       ),
                     ],

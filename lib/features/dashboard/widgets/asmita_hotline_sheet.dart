@@ -442,6 +442,7 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
 
   Widget _buildHotlineSkeleton(bool isDark) {
     return AsmitaSkeleton(
+      isLoading: true,
       child: ListView.separated(
         physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(vertical: 4),

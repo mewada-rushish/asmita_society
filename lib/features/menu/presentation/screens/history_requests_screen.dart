@@ -212,9 +212,11 @@ class HistoryRequestsScreen extends StatelessWidget {
 
   Widget _buildHistoryRequestsSkeleton(BuildContext context) {
     return AsmitaSkeleton(
+      isLoading: true,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: 5,
+        physics: const NeverScrollableScrollPhysics(),
         itemBuilder: (context, index) {
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
@@ -232,9 +234,9 @@ class HistoryRequestsScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            AsmitaSkeleton.text(width: double.infinity, height: 16),
+                            AsmitaSkeleton.text(width: 200, height: 16, borderRadius: 4),
                             const SizedBox(height: 4),
-                            AsmitaSkeleton.text(width: 140, height: 14),
+                            AsmitaSkeleton.text(width: 140, height: 14, borderRadius: 3),
                           ],
                         ),
                       ),
@@ -243,16 +245,9 @@ class HistoryRequestsScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  AsmitaSkeleton.text(width: 120, height: 12),
+                  AsmitaSkeleton.text(width: 120, height: 12, borderRadius: 3),
                   const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
+                  AsmitaSkeleton.bone(width: double.infinity, height: 40, borderRadius: 8),
                 ],
               ),
             ),

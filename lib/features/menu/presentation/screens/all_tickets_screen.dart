@@ -9,8 +9,8 @@ import 'package:asmita_society/core/network/dio_client.dart';
 import 'package:asmita_society/core/security/secure_storage_service.dart';
 import '../../bloc/support_event.dart';
 import '../../bloc/support_state.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import '../widgets/ticket_conversation_bottom_sheet.dart';
-import 'package:shimmer/shimmer.dart';
 
 class AllTicketsScreen extends StatelessWidget {
   const AllTicketsScreen({super.key});
@@ -217,62 +217,52 @@ class AllTicketsScreen extends StatelessWidget {
   }
 
   Widget _buildSkeletonList(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: 6,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: theme.dividerColor, width: 1.5),
-          ),
-          child: Shimmer.fromColors(
-            baseColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-            highlightColor: isDark ? Colors.grey[700]! : Colors.grey[100]!,
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: 6,
+        physics: const NeverScrollableScrollPhysics(),
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Row 1: Title + Status Pill
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      height: 18,
-                      width: 150,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    Container(
-                      height: 24,
-                      width: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
+                    AsmitaSkeleton.text(width: 150, height: 16, borderRadius: 4),
+                    AsmitaSkeleton.pill(width: 60, height: 24),
                   ],
                 ),
                 const SizedBox(height: 12),
-                Container(
-                  height: 14,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
+                // Row 2: Subtitle (Icon + message) + TimeAgo Text
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        AsmitaSkeleton.circle(size: 16),
+                        const SizedBox(width: 6),
+                        AsmitaSkeleton.text(width: 130, height: 13, borderRadius: 3),
+                      ],
+                    ),
+                    AsmitaSkeleton.text(width: 50, height: 12, borderRadius: 3),
+                  ],
                 ),
               ],
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
