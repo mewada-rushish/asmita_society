@@ -278,7 +278,9 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AsmitaPalette.deepNavy,
+                backgroundColor: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF2563EB)
+                    : AsmitaPalette.deepNavy,
                 foregroundColor: Colors.white,
               ),
               child: const Text('Add Task'),
@@ -327,6 +329,7 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
     List<IndustrialVisitModel> rawVisits, {
     required bool isLoading,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final visits = rawVisits.where((v) => v.isForToday).toList();
     final checkedInVisitors = visits
         .where((v) => v.status == IndustrialVisitStatus.checkedIn)
@@ -342,7 +345,7 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
         ),
         child: FloatingActionButton.extended(
           onPressed: () => _showAddTaskDialog(context),
-          backgroundColor: AsmitaPalette.deepNavy,
+          backgroundColor: isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy,
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_task),
           label: const Text('New Task', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -376,16 +379,16 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                            color: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy).withValues(alpha: isDark ? 0.15 : 0.08),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AsmitaPalette.deepNavy.withValues(alpha: 0.2)),
+                            border: Border.all(color: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy).withValues(alpha: 0.25)),
                           ),
                           child: Row(
                             children: [
                               Container(
                                 padding: const EdgeInsets.all(10),
-                                decoration: const BoxDecoration(
-                                  color: AsmitaPalette.deepNavy,
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy,
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(Icons.apartment, color: Colors.white, size: 24),
@@ -411,7 +414,7 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
                                 _showVisitorsList
                                     ? Icons.keyboard_arrow_up
                                     : Icons.keyboard_arrow_down,
-                                color: AsmitaPalette.deepNavy,
+                                color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
                               ),
                             ],
                           ),
@@ -463,13 +466,13 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
                                       children: [
                                         CircleAvatar(
                                           radius: 14,
-                                          backgroundColor: AsmitaPalette.deepNavy.withValues(alpha: 0.1),
+                                          backgroundColor: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy).withValues(alpha: isDark ? 0.2 : 0.1),
                                           child: Text(
                                             visitor.visitorName.isNotEmpty ? visitor.visitorName[0] : 'V',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 11,
                                               fontWeight: FontWeight.bold,
-                                              color: AsmitaPalette.deepNavy,
+                                              color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
                                             ),
                                           ),
                                         ),
@@ -607,6 +610,11 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
   }
 
   Widget _taskTile(BuildContext context, FacilityTaskItem task) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final displayColor = (task.priorityColor == AsmitaPalette.deepNavy)
+        ? (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
+        : task.priorityColor;
+
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 10),
@@ -632,12 +640,12 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-            color: task.priorityColor.withValues(alpha: 0.12),
+            color: displayColor.withValues(alpha: isDark ? 0.2 : 0.12),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
             task.priority,
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: task.priorityColor),
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: displayColor),
           ),
         ),
       ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
-
+import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
@@ -82,15 +82,16 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                 }
 
                 if (state.status == GuardGateStatus.error && state.historyRecords.isEmpty) {
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                        Icon(Icons.error_outline, size: 48, color: isDark ? AsmitaPalette.textDarkModeMuted : Colors.grey),
                         const SizedBox(height: 16),
                         Text(
                           state.errorMessage ?? 'Failed to load history',
-                          style: const TextStyle(color: Colors.grey),
+                          style: TextStyle(color: isDark ? AsmitaPalette.textDarkModeMuted : Colors.grey),
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
@@ -107,6 +108,7 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                 }
 
                 if (state.historyRecords.isEmpty) {
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
                   return CustomScrollView(
                     physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                     slivers: [
@@ -116,13 +118,13 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                           await Future.delayed(const Duration(seconds: 1));
                         },
                       ),
-                      const SliverFillRemaining(
+                      SliverFillRemaining(
                         child: Padding(
-                          padding: EdgeInsets.only(bottom: 100),
+                          padding: const EdgeInsets.only(bottom: 100),
                           child: Center(
                             child: Text(
                               'No visitor records found.',
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(color: isDark ? AsmitaPalette.textDarkModeMuted : Colors.grey),
                             ),
                           ),
                         ),
@@ -146,6 +148,7 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                         itemCount: state.historyRecords.length,
                         itemBuilder: (context, index) {
                           final item = state.historyRecords[index] as Map<String, dynamic>;
+                          final isDark = Theme.of(context).brightness == Brightness.dark;
                           
                           final isPreApproved = item['record_type'] == 'PRE_APPROVED';
                           final name = item['visitor_name'] ?? item['title'] ?? 'Unknown';
@@ -164,7 +167,7 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                           final exitTime = exitTimeStr != null ? _formatTime(dateStr, exitTimeStr) : '--:--';
 
                           IconData iconData = Icons.person;
-                          Color brandColor = Theme.of(context).colorScheme.primary;
+                          Color brandColor = isDark ? const Color(0xFF60A5FA) : Theme.of(context).colorScheme.primary;
 
                           if (category.toString().toUpperCase() == 'DELIVERY') {
                             iconData = Icons.local_shipping;
@@ -181,16 +184,20 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
+                              border: Border.all(
+                                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.1),
+                              ),
+                              boxShadow: isDark
+                                  ? []
+                                  : [
+                                      BoxShadow(
+                                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
                             ),
                             child: Row(
                               children: [
@@ -214,7 +221,7 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                                           fontFamily: 'Montserrat',
                                           fontSize: 15,
                                           fontWeight: FontWeight.w700,
-                                          color: Theme.of(context).colorScheme.primary,
+                                          color: isDark ? AsmitaPalette.textDarkModeMain : Theme.of(context).colorScheme.primary,
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -243,14 +250,18 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                                             ),
                                           ),
                                           const SizedBox(width: 8),
-                                          const Icon(Icons.circle, size: 4, color: Colors.grey),
+                                          Icon(
+                                            Icons.circle, 
+                                            size: 4, 
+                                            color: isDark ? AsmitaPalette.textDarkModeMuted : Colors.grey,
+                                          ),
                                           const SizedBox(width: 8),
                                           Text(
                                             date,
                                             style: TextStyle(
                                               fontFamily: 'Poppins',
                                               fontSize: 12,
-                                              color: Theme.of(context).textTheme.bodySmall?.color,
+                                              color: isDark ? AsmitaPalette.textDarkModeMuted : Theme.of(context).textTheme.bodySmall?.color,
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
@@ -265,7 +276,11 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(Icons.login, size: 12, color: Theme.of(context).colorScheme.primary),
+                                        Icon(
+                                          Icons.login, 
+                                          size: 12, 
+                                          color: isDark ? const Color(0xFF60A5FA) : Theme.of(context).colorScheme.primary,
+                                        ),
                                         const SizedBox(width: 4),
                                         Text(
                                           entryTime,
@@ -273,7 +288,7 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                                             fontFamily: 'Poppins',
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600,
-                                            color: Theme.of(context).colorScheme.primary,
+                                            color: isDark ? const Color(0xFF60A5FA) : Theme.of(context).colorScheme.primary,
                                           ),
                                         ),
                                       ],
@@ -282,7 +297,11 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(Icons.logout, size: 12, color: Theme.of(context).colorScheme.error),
+                                        Icon(
+                                          Icons.logout, 
+                                          size: 12, 
+                                          color: isDark ? const Color(0xFFF87171) : Theme.of(context).colorScheme.error,
+                                        ),
                                         const SizedBox(width: 4),
                                         Text(
                                           exitTime,
@@ -290,7 +309,7 @@ class _GuardHistoryScreenState extends State<GuardHistoryScreen> {
                                             fontFamily: 'Poppins',
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600,
-                                            color: Theme.of(context).colorScheme.error,
+                                            color: isDark ? const Color(0xFFF87171) : Theme.of(context).colorScheme.error,
                                           ),
                                         ),
                                       ],
