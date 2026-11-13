@@ -833,6 +833,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
   // 6. VISITOR CARD (Responsive, Overflow-Proof)
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildVisitCard(BuildContext context, IndustrialVisitModel visit) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final bool isPending = visit.isPending;
 
     Widget? bottomActions;
@@ -858,7 +859,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
             ),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: AsmitaPalette.deepNavy,
+            backgroundColor: isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -1006,7 +1007,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
           ElevatedButton(
             onPressed: onButtonTap,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AsmitaPalette.deepNavy,
+              backgroundColor: isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

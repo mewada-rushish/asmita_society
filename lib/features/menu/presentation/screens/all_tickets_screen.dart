@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
@@ -50,6 +51,7 @@ class AllTicketsScreen extends StatelessWidget {
 
   Widget _buildContent(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -75,9 +77,18 @@ class AllTicketsScreen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.inbox_rounded, size: 64, color: Colors.grey[400]),
+                    Icon(
+                      Icons.inbox_rounded,
+                      size: 64,
+                      color: isDark ? AsmitaPalette.textDarkModeMuted : Colors.grey[400],
+                    ),
                     const SizedBox(height: 16),
-                    Text('No tickets found', style: textTheme.titleMedium?.copyWith(color: Colors.grey[600])),
+                    Text(
+                      'No tickets found',
+                      style: textTheme.titleMedium?.copyWith(
+                        color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -188,7 +199,12 @@ class AllTicketsScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       AppDateFormatter.timeAgo(t.createdAt),
-                      style: textTheme.bodySmall?.copyWith(fontSize: 12, color: Colors.grey[600]),
+                      style: textTheme.bodySmall?.copyWith(
+                        fontSize: 12,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AsmitaPalette.textDarkModeMuted
+                            : AsmitaPalette.textLight,
+                      ),
                     ),
                   ],
                 ),
