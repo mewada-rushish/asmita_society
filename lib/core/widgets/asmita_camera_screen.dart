@@ -118,7 +118,8 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
     CameraErrorKind resolvedKind = kind ?? CameraErrorKind.generic;
     String title = customTitle ?? 'Camera Error';
     String message =
-        customMessage ?? 'An unexpected issue occurred while starting the camera.';
+        customMessage ??
+        'An unexpected issue occurred while starting the camera.';
 
     if (kind == null) {
       final lower = errStr.toLowerCase();
@@ -194,10 +195,15 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
       }
 
       _selectedCameraIndex = targetIndex;
-      await _initCameraController(_cameras[_selectedCameraIndex], retryCount: retryCount);
+      await _initCameraController(
+        _cameras[_selectedCameraIndex],
+        retryCount: retryCount,
+      );
     } catch (e) {
       if (retryCount == 0 && e.toString().contains('channel-error')) {
-        debugPrint('CameraX channel-error on first attempt. Retrying in 350ms...');
+        debugPrint(
+          'CameraX channel-error on first attempt. Retrying in 350ms...',
+        );
         await Future.delayed(const Duration(milliseconds: 350));
         if (mounted) {
           return _initCamera(retryCount: 1);
@@ -236,7 +242,9 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
       }
     } catch (e) {
       if (retryCount == 0 && e.toString().contains('channel-error')) {
-        debugPrint('CameraX channel-error during controller init. Retrying in 350ms...');
+        debugPrint(
+          'CameraX channel-error during controller init. Retrying in 350ms...',
+        );
         await Future.delayed(const Duration(milliseconds: 350));
         if (mounted) {
           return _initCameraController(cameraDescription, retryCount: 1);
@@ -257,7 +265,8 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
       );
       if (picked != null && mounted) {
         File fileToReturn = File(picked.path);
-        if (widget.preferredLensDirection == CameraLensDirection.front && _isMirrored) {
+        if (widget.preferredLensDirection == CameraLensDirection.front &&
+            _isMirrored) {
           fileToReturn = await _mirrorImageFile(fileToReturn);
         }
         if (!mounted) return;
@@ -362,10 +371,13 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
       canvas.drawImage(image, Offset.zero, Paint());
 
       final picture = recorder.endRecording();
-      final ui.Image flippedImage =
-          await picture.toImage(image.width, image.height);
-      final ByteData? byteData =
-          await flippedImage.toByteData(format: ui.ImageByteFormat.png);
+      final ui.Image flippedImage = await picture.toImage(
+        image.width,
+        image.height,
+      );
+      final ByteData? byteData = await flippedImage.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
       if (byteData == null) {
         return inputFile;
       }
@@ -373,7 +385,10 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
       final Uint8List flippedBytes = byteData.buffer.asUint8List();
       final extMatch = RegExp(r'\.[a-zA-Z0-9]+$').firstMatch(inputFile.path);
       final String mirroredPath = extMatch != null
-          ? inputFile.path.replaceAll(RegExp(r'\.[a-zA-Z0-9]+$'), '_mirrored.png')
+          ? inputFile.path.replaceAll(
+              RegExp(r'\.[a-zA-Z0-9]+$'),
+              '_mirrored.png',
+            )
           : '${inputFile.path}_mirrored.png';
       final File mirroredFile = File(mirroredPath);
       await mirroredFile.writeAsBytes(flippedBytes);
@@ -405,18 +420,15 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
                 _buildCapturedPreview()
               else if (_errorMessage != null)
                 _buildErrorView()
-              else if (_isInitializing || _controller == null || !_controller!.value.isInitialized)
+              else if (_isInitializing ||
+                  _controller == null ||
+                  !_controller!.value.isInitialized)
                 _buildLoadingView()
               else
                 _buildCameraView(),
 
               // Top Controls Header
-              Positioned(
-                top: 8,
-                left: 12,
-                right: 12,
-                child: _buildTopBar(),
-              ),
+              Positioned(top: 8, left: 12, right: 12, child: _buildTopBar()),
 
               // Bottom Action Controls Bar
               if (_errorMessage == null)
@@ -447,7 +459,11 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
               color: Colors.black.withValues(alpha: 0.45),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.close_rounded, color: Colors.white, size: 22),
+            child: const Icon(
+              Icons.close_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
           ),
         ),
         if (_capturedFile == null)
@@ -504,8 +520,8 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
                     _currentFlashMode == FlashMode.auto
                         ? Icons.flash_auto_rounded
                         : _currentFlashMode == FlashMode.always
-                            ? Icons.flash_on_rounded
-                            : Icons.flash_off_rounded,
+                        ? Icons.flash_on_rounded
+                        : Icons.flash_off_rounded,
                     color: _currentFlashMode != FlashMode.off
                         ? Colors.amber
                         : Colors.white,
@@ -572,7 +588,10 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
                   right: 0,
                   child: Center(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(12),
@@ -627,10 +646,7 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
       fit: StackFit.expand,
       children: [
         Center(
-          child: Image.file(
-            File(_capturedFile!.path),
-            fit: BoxFit.contain,
-          ),
+          child: Image.file(File(_capturedFile!.path), fit: BoxFit.contain),
         ),
         Positioned(
           top: 64,
@@ -646,7 +662,11 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.check_circle_rounded, color: Colors.greenAccent, size: 16),
+                  Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.greenAccent,
+                    size: 16,
+                  ),
                   SizedBox(width: 6),
                   Text(
                     'Photo Captured! Save or Retake',
@@ -826,7 +846,9 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
                     isPermission
                         ? Icons.security_rounded
                         : Icons.no_photography_rounded,
-                    color: isPermission ? Colors.amberAccent : AsmitaPalette.actionRed,
+                    color: isPermission
+                        ? Colors.amberAccent
+                        : AsmitaPalette.actionRed,
                     size: 32,
                   ),
                 ),
@@ -873,7 +895,9 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
                     }
                   },
                   icon: Icon(
-                    isPermission ? Icons.settings_rounded : Icons.refresh_rounded,
+                    isPermission
+                        ? Icons.settings_rounded
+                        : Icons.refresh_rounded,
                     color: Colors.white,
                     size: 18,
                   ),
@@ -904,8 +928,13 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: () => _fallbackWithImagePicker(ImageSource.camera),
-                    icon: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 18),
+                    onPressed: () =>
+                        _fallbackWithImagePicker(ImageSource.camera),
+                    icon: const Icon(
+                      Icons.camera_alt_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                     label: const Text(
                       'Take Photo with System Camera',
                       style: TextStyle(
@@ -916,7 +945,9 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                      side: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.3),
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -957,12 +988,17 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
                   },
                   borderRadius: BorderRadius.circular(8),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 4,
+                      horizontal: 8,
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          _showTechnicalDetails ? 'Hide technical details' : 'Show technical details',
+                          _showTechnicalDetails
+                              ? 'Hide technical details'
+                              : 'Show technical details',
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 11,
@@ -971,7 +1007,9 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
                         ),
                         const SizedBox(width: 4),
                         Icon(
-                          _showTechnicalDetails ? Icons.expand_less : Icons.expand_more,
+                          _showTechnicalDetails
+                              ? Icons.expand_less
+                              : Icons.expand_more,
                           size: 14,
                           color: Colors.white.withValues(alpha: 0.4),
                         ),
@@ -987,7 +1025,9 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.08),
+                      ),
                     ),
                     child: Text(
                       _rawErrorDetails!,

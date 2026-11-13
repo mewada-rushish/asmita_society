@@ -26,12 +26,13 @@ class GuardQrScannerScreen extends StatefulWidget {
 class _GuardQrScannerScreenState extends State<GuardQrScannerScreen> {
   bool _isProcessing = false;
   final TextEditingController _manualCodeController = TextEditingController();
-  late final MobileScannerController _scannerController = MobileScannerController(
-    detectionSpeed: DetectionSpeed.noDuplicates,
-    returnImage: false,
-    facing: CameraFacing.back,
-    autoStart: widget.isActive,
-  );
+  late final MobileScannerController _scannerController =
+      MobileScannerController(
+        detectionSpeed: DetectionSpeed.noDuplicates,
+        returnImage: false,
+        facing: CameraFacing.back,
+        autoStart: widget.isActive,
+      );
 
   @override
   void didUpdateWidget(GuardQrScannerScreen oldWidget) {
@@ -75,7 +76,7 @@ class _GuardQrScannerScreenState extends State<GuardQrScannerScreen> {
 
   void _onDetect(BarcodeCapture capture) {
     if (_isProcessing) return;
-    
+
     final List<Barcode> barcodes = capture.barcodes;
     if (barcodes.isNotEmpty) {
       final String code = barcodes.first.rawValue ?? '';
@@ -83,7 +84,7 @@ class _GuardQrScannerScreenState extends State<GuardQrScannerScreen> {
         setState(() {
           _isProcessing = true;
         });
-        
+
         // Pause scanner
         _scannerController.stop();
 
@@ -218,14 +219,21 @@ class _GuardQrScannerScreenState extends State<GuardQrScannerScreen> {
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         shadows: [
-                          Shadow(color: Colors.black54, blurRadius: 4, offset: Offset(0, 1)),
+                          Shadow(
+                            color: Colors.black54,
+                            blurRadius: 4,
+                            offset: Offset(0, 1),
+                          ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 12),
                     // Manual Check-in Code Field (fallback when scanner does not work)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.75),
                         borderRadius: BorderRadius.circular(16),
@@ -268,19 +276,25 @@ class _GuardQrScannerScreenState extends State<GuardQrScannerScreen> {
                                 ),
                                 border: InputBorder.none,
                                 isDense: true,
-                                contentPadding: EdgeInsets.symmetric(vertical: 8),
+                                contentPadding: EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
                               ),
                               onSubmitted: (val) => _handleManualSubmit(val),
                             ),
                           ),
                           const SizedBox(width: 8),
                           ElevatedButton(
-                            onPressed: () => _handleManualSubmit(_manualCodeController.text),
+                            onPressed: () =>
+                                _handleManualSubmit(_manualCodeController.text),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AsmitaPalette.actionRed,
                               foregroundColor: Colors.white,
                               elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
