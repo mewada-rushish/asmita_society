@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
-
+import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
@@ -50,6 +50,7 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
   }
 
   void _handleCheckOut(BuildContext context, Map<String, dynamic> item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final name = item['visitor_name'] ?? item['title'] ?? 'Unknown';
     AsmitaDialog.show(
       context: context,
@@ -59,13 +60,16 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
         style: TextStyle(
           fontFamily: 'Poppins',
           fontSize: 14,
-          color: Theme.of(context).colorScheme.primary,
+          color: isDark ? AsmitaPalette.textDarkModeMain : Theme.of(context).colorScheme.primary,
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          child: Text(
+            'Cancel',
+            style: TextStyle(color: isDark ? AsmitaPalette.textDarkModeMuted : Colors.grey),
+          ),
         ),
         ElevatedButton(
           onPressed: () {
@@ -126,15 +130,16 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                 }
 
                 if (state.status == GuardGateStatus.error && state.checkedInVisitors.isEmpty) {
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                        Icon(Icons.error_outline, size: 48, color: isDark ? AsmitaPalette.textDarkModeMuted : Colors.grey),
                         const SizedBox(height: 16),
                         Text(
                           state.errorMessage ?? 'Failed to load checked in visitors',
-                          style: const TextStyle(color: Colors.grey),
+                          style: TextStyle(color: isDark ? AsmitaPalette.textDarkModeMuted : Colors.grey),
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
@@ -151,6 +156,7 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                 }
 
                 if (state.checkedInVisitors.isEmpty) {
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
                   return CustomScrollView(
                     physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                     slivers: [
@@ -160,13 +166,13 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                           await Future.delayed(const Duration(seconds: 1));
                         },
                       ),
-                      const SliverFillRemaining(
+                      SliverFillRemaining(
                         child: Padding(
-                          padding: EdgeInsets.only(bottom: 100),
+                          padding: const EdgeInsets.only(bottom: 100),
                           child: Center(
                             child: Text(
                               'No active visitors inside.',
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(color: isDark ? AsmitaPalette.textDarkModeMuted : Colors.grey),
                             ),
                           ),
                         ),
@@ -190,6 +196,7 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                         itemCount: state.checkedInVisitors.length,
                         itemBuilder: (context, index) {
                           final item = state.checkedInVisitors[index] as Map<String, dynamic>;
+                          final isDark = Theme.of(context).brightness == Brightness.dark;
                           
                           final isPreApproved = item['record_type'] == 'PRE_APPROVED';
                           final name = item['visitor_name'] ?? item['title'] ?? 'Unknown';
@@ -205,7 +212,7 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                           final entryTime = _formatTime(dateStr, entryTimeStr);
 
                           IconData iconData = Icons.person;
-                          Color brandColor = Theme.of(context).colorScheme.primary;
+                          Color brandColor = isDark ? const Color(0xFF60A5FA) : Theme.of(context).colorScheme.primary;
 
                           if (category.toString().toUpperCase() == 'DELIVERY') {
                             iconData = Icons.local_shipping;
@@ -222,16 +229,20 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
+                              border: Border.all(
+                                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.1),
+                              ),
+                              boxShadow: isDark
+                                  ? []
+                                  : [
+                                      BoxShadow(
+                                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
                             ),
                             child: Row(
                               children: [
@@ -255,7 +266,7 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                                           fontFamily: 'Montserrat',
                                           fontSize: 15,
                                           fontWeight: FontWeight.w700,
-                                          color: Theme.of(context).colorScheme.primary,
+                                          color: isDark ? AsmitaPalette.textDarkModeMain : Theme.of(context).colorScheme.primary,
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -284,14 +295,18 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                                             ),
                                           ),
                                           const SizedBox(width: 8),
-                                          Icon(Icons.login, size: 12, color: Theme.of(context).colorScheme.primary),
+                                          Icon(
+                                            Icons.login, 
+                                            size: 12, 
+                                            color: isDark ? const Color(0xFF60A5FA) : Theme.of(context).colorScheme.primary,
+                                          ),
                                           const SizedBox(width: 4),
                                           Text(
                                             entryTime,
                                             style: TextStyle(
                                               fontFamily: 'Poppins',
                                               fontSize: 12,
-                                              color: Theme.of(context).textTheme.bodySmall?.color,
+                                              color: isDark ? AsmitaPalette.textDarkModeMuted : Theme.of(context).textTheme.bodySmall?.color,
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),

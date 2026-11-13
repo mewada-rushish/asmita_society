@@ -623,6 +623,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
     required String label,
     required bool isSelected,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: () {
         if (_selectedTabIndex != index) {
@@ -634,7 +635,9 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AsmitaPalette.deepNavy : Colors.transparent,
+          color: isSelected
+              ? (isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -1167,7 +1170,9 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                 style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AsmitaPalette.deepNavy,
+                backgroundColor: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF2563EB)
+                    : AsmitaPalette.deepNavy,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
