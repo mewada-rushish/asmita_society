@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/config/env_config.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_skeleton.dart';
 import 'package:flutter/services.dart';
@@ -1536,11 +1535,25 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               if (state is VisitorLoading || isGuardSubmitting)
                 Positioned.fill(
                   child: Container(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.8),
                     child: Center(
-                      child: AsmitaLoadingIndicator(
-                        color: AsmitaPalette.deepNavy,
-                        size: 28,
+                      child: AsmitaSkeleton(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Theme.of(context).dividerColor),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              AsmitaSkeleton.circle(size: 24),
+                              const SizedBox(width: 12),
+                              AsmitaSkeleton.text(width: 120, height: 14),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -4567,10 +4580,24 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: AsmitaLoadingIndicator(
-          color: AsmitaPalette.deepNavy,
-          size: 32,
+      builder: (_) => Center(
+        child: AsmitaSkeleton(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Theme.of(context).dividerColor),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AsmitaSkeleton.circle(size: 24),
+                const SizedBox(width: 12),
+                AsmitaSkeleton.text(width: 130, height: 14),
+              ],
+            ),
+          ),
         ),
       ),
     );

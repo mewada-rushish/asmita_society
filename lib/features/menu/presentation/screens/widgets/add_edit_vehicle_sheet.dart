@@ -9,7 +9,7 @@ import 'package:asmita_society/core/di/injection_container.dart';
 import 'package:asmita_society/features/menu/data/repositories/vehicles_repository.dart';
 import 'package:asmita_society/features/menu/bloc/vehicles_bloc.dart';
 import 'package:asmita_society/features/menu/bloc/vehicles_event.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/features/menu/data/models/vehicle_model.dart';
 
@@ -243,7 +243,16 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
           Text('PARKING SLOT (OPTIONAL)', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
           const SizedBox(height: 8),
           if (isLoadingSlots)
-            Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28))
+            const AsmitaSkeleton(
+              isLoading: true,
+              child: AsmitaSkeleton(
+                isLoading: true,
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                ),
+              ),
+            )
           else if (parkingSlots.isEmpty)
             const Text("No parking slots available")
           else
@@ -285,7 +294,16 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
               padding: const EdgeInsets.symmetric(vertical: 16),
               onPressed: _saveVehicle,
               child: isSaving 
-                  ? SizedBox(width: 20, height: 20, child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.surface, size: 20))
+                  ? SizedBox(
+                      width: 20, 
+                      height: 20, 
+                      child: Center(
+                        child: AsmitaSkeleton(
+                          isLoading: true,
+                          child: AsmitaSkeleton.circle(size: 16),
+                        ),
+                      ),
+                    )
                   : Text(widget.vehicle == null ? 'Save Vehicle' : 'Update Vehicle', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.surface)),
             ),
           ),

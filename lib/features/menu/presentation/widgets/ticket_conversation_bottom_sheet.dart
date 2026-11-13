@@ -8,6 +8,7 @@ import 'package:asmita_society/core/di/injection_container.dart' as di;
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 
 class TicketConversationBottomSheet extends StatefulWidget {
   final SupportTicketModel ticket;
@@ -198,7 +199,7 @@ class _TicketConversationBottomSheetState extends State<TicketConversationBottom
                   // Messages list
                   Expanded(
                     child: _isLoading 
-              ? const Center(child: CircularProgressIndicator())
+              ? _buildConversationSkeleton()
               : _error != null
                 ? Center(child: Text('Error: $_error'))
                 : _messages.isEmpty
@@ -376,7 +377,7 @@ class _TicketConversationBottomSheetState extends State<TicketConversationBottom
                   radius: 24,
                   backgroundColor: _isSending ? Colors.grey : Theme.of(context).colorScheme.primary,
                   child: _isSending 
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    ? AsmitaSkeleton.circle(size: 20)
                     : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
                 ),
               ),
@@ -384,6 +385,48 @@ class _TicketConversationBottomSheetState extends State<TicketConversationBottom
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildConversationSkeleton() {
+    return AsmitaSkeleton(
+      child: ListView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 4,
+        itemBuilder: (context, index) {
+          final isEven = index.isEven;
+          return Align(
+            alignment: isEven ? Alignment.centerLeft : Alignment.centerRight,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Theme.of(context).dividerColor),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AsmitaSkeleton.text(width: 80, height: 12),
+                      const SizedBox(width: 8),
+                      AsmitaSkeleton.text(width: 40, height: 10),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  AsmitaSkeleton.text(width: double.infinity, height: 14),
+                  const SizedBox(height: 4),
+                  AsmitaSkeleton.text(width: 120, height: 14),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

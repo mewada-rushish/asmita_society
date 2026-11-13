@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/design_system.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
 import '../../../../core/widgets/asmita_dialog.dart';
@@ -124,9 +124,7 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
               },
               builder: (context, state) {
                 if (state.status == GuardGateStatus.loading && state.checkedInVisitors.isEmpty) {
-                  return Center(
-                    child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.error, size: 28),
-                  );
+                  return _buildCheckedInSkeleton(context);
                 }
 
                 if (state.status == GuardGateStatus.error && state.checkedInVisitors.isEmpty) {
@@ -320,9 +318,9 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
                                         width: 48,
                                         height: 48,
                                         child: Center(
-                                          child: AsmitaLoadingIndicator(
-                                            color: Theme.of(context).colorScheme.error,
-                                            size: 20,
+                                          child: AsmitaSkeleton(
+                                            isLoading: true,
+                                            child: AsmitaSkeleton.circle(size: 24),
                                           ),
                                         ),
                                       )
@@ -343,6 +341,56 @@ class _GuardCheckedInScreenState extends State<GuardCheckedInScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCheckedInSkeleton(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16).copyWith(bottom: 180),
+        itemCount: 6,
+        physics: const NeverScrollableScrollPhysics(),
+        itemBuilder: (context, index) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.1),
+              ),
+            ),
+            child: Row(
+              children: [
+                AsmitaSkeleton.circle(size: 48),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AsmitaSkeleton.text(width: 140, height: 15, borderRadius: 4),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          AsmitaSkeleton.pill(width: 80, height: 20),
+                          const SizedBox(width: 8),
+                          AsmitaSkeleton.bone(width: 14, height: 14, borderRadius: 3),
+                          const SizedBox(width: 4),
+                          AsmitaSkeleton.text(width: 60, height: 12, borderRadius: 3),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                AsmitaSkeleton.circle(size: 36),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/utils/property_role_resolver.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_event.dart';
@@ -43,6 +44,10 @@ class MenuScreen extends StatelessWidget {
 
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
+        if (authState is AuthLoading || authState is AuthInitial) {
+          return _buildMenuSkeleton(context);
+        }
+
         String resolvedRole = userRole;
         final currentUser = authState is AuthAuthenticated ? authState.user : null;
         if (currentUser != null) {
@@ -498,10 +503,10 @@ class MenuScreen extends StatelessWidget {
                               ? SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Theme.of(context).colorScheme.surface,
+                                  child: Center(
+                                    child: AsmitaSkeleton(
+                                      isLoading: true,
+                                      child: AsmitaSkeleton.circle(size: 16),
                                     ),
                                   ),
                                 )
@@ -611,6 +616,150 @@ class MenuScreen extends StatelessWidget {
               color: isDestructive ? color.withValues(alpha: 0.5) : textTheme.bodyMedium?.color,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuSkeleton(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: const Text(
+          'Menu',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Montserrat',
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: AsmitaSkeleton(
+        isLoading: true,
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 12.0, bottom: 140.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Profile Card Skeleton
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                    width: 1.5,
+                  ),
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    AsmitaSkeleton.circle(size: 56),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AsmitaSkeleton.text(width: 140, height: 16, borderRadius: 4),
+                          const SizedBox(height: 8),
+                          AsmitaSkeleton.pill(width: 90, height: 20),
+                        ],
+                      ),
+                    ),
+                    AsmitaSkeleton.bone(width: 16, height: 16, borderRadius: 3),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Section 1 Skeleton
+              AsmitaSkeleton.text(width: 120, height: 14, borderRadius: 4),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                  ),
+                ),
+                child: Column(
+                  children: List.generate(
+                    4,
+                    (index) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        border: index < 3
+                            ? Border(
+                                bottom: BorderSide(
+                                  color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.1),
+                                ),
+                              )
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          AsmitaSkeleton.circle(size: 24),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: AsmitaSkeleton.text(width: 130, height: 14, borderRadius: 4),
+                          ),
+                          AsmitaSkeleton.bone(width: 14, height: 14, borderRadius: 3),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Section 2 Skeleton
+              AsmitaSkeleton.text(width: 100, height: 14, borderRadius: 4),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                  ),
+                ),
+                child: Column(
+                  children: List.generate(
+                    3,
+                    (index) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        border: index < 2
+                            ? Border(
+                                bottom: BorderSide(
+                                  color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.1),
+                                ),
+                              )
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          AsmitaSkeleton.circle(size: 24),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: AsmitaSkeleton.text(width: 120, height: 14, borderRadius: 4),
+                          ),
+                          AsmitaSkeleton.bone(width: 14, height: 14, borderRadius: 3),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
