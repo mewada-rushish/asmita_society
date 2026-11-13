@@ -11,6 +11,7 @@ import '../../../core/widgets/app_skeleton.dart';
 import '../../../core/widgets/asmita_toast.dart';
 import '../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../core/navigation/app_transitions.dart';
+import '../../../core/constants/design_system.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -321,6 +322,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       title: 'Select $title',
       child: StatefulBuilder(
         builder: (context, setModalState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final cardBg = isDark ? AsmitaPalette.surfaceDark : Colors.white;
+          final textPrimaryColor = isDark ? AsmitaPalette.textDarkModeMain : Colors.black87;
+          final textMutedColor = isDark ? AsmitaPalette.textDarkModeMuted : Colors.black38;
+          final borderColor = isDark ? AsmitaPalette.borderGreyDark : Colors.grey.shade300;
           List<T> filteredItems = List.from(items);
           return Padding(
             padding: EdgeInsets.only(
@@ -366,10 +372,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   const SizedBox(height: 12),
                   Flexible(
                     child: filteredItems.isEmpty
-                        ? const Center(
+                        ? Center(
                             child: Text(
                               'No matching results found',
-                              style: TextStyle(fontFamily: 'Poppins', color: Colors.black38),
+                              style: TextStyle(fontFamily: 'Poppins', color: textMutedColor),
                             ),
                           )
                         : useGrid
@@ -394,10 +400,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                     child: Container(
                                       alignment: Alignment.center,
                                       decoration: BoxDecoration(
-                                        color: isSelected ? const Color(0xFFE21F26).withValues(alpha: 0.1) : Colors.white,
+                                        color: isSelected ? const Color(0xFFE21F26).withValues(alpha: 0.1) : cardBg,
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                          color: isSelected ? const Color(0xFFE21F26) : Colors.grey.shade300,
+                                          color: isSelected ? const Color(0xFFE21F26) : borderColor,
                                           width: isSelected ? 2 : 1,
                                         ),
                                       ),
@@ -409,7 +415,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                         style: TextStyle(
                                           fontFamily: 'Poppins',
                                           fontSize: 14,
-                                          color: isSelected ? const Color(0xFFE21F26) : Colors.black87,
+                                          color: isSelected ? const Color(0xFFE21F26) : textPrimaryColor,
                                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                                         ),
                                       ),
@@ -421,7 +427,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 shrinkWrap: true,
                                 physics: const BouncingScrollPhysics(),
                                 itemCount: filteredItems.length,
-                                separatorBuilder: (context, index) => const Divider(height: 1, color: Colors.black12),
+                                separatorBuilder: (context, index) => Divider(height: 1, color: isDark ? AsmitaPalette.borderGreyDark : Colors.black12),
                                 itemBuilder: (context, index) {
                                   final item = filteredItems[index];
                                   final isSelected = item == currentValue;
@@ -432,7 +438,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15,
-                                        color: isSelected ? const Color(0xFFE21F26) : Colors.black87,
+                                        color: isSelected ? const Color(0xFFE21F26) : textPrimaryColor,
                                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                                       ),
                                     ),
@@ -460,6 +466,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.paddingOf(context).top;
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.primary,
@@ -530,11 +537,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   Container(
                     margin: const EdgeInsets.only(top: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8F8FB),
+                      color: isDark ? Theme.of(context).scaffoldBackgroundColor : const Color(0xFFF8F8FB),
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
+                          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
                           blurRadius: 24,
                           offset: const Offset(0, -8),
                         ),
@@ -611,6 +618,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   }
 
   Widget _buildSocietyDetailsForm(double bottomPadding) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       physics: const ClampingScrollPhysics(),
@@ -707,11 +715,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             ),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                   blurRadius: 14,
                   offset: const Offset(0, 4),
                 ),
@@ -918,7 +926,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 15,
-                                color: value != null ? Colors.black87 : Colors.black38,
+                                color: value != null
+                                    ? (Theme.of(context).brightness == Brightness.dark ? AsmitaPalette.textDarkModeMain : Colors.black87)
+                                    : (Theme.of(context).brightness == Brightness.dark ? AsmitaPalette.textDarkModeMuted : Colors.black38),
                                 fontWeight: isLocked ? FontWeight.w600 : FontWeight.normal,
                               ),
                             ),
@@ -928,18 +938,18 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
+                          color: Theme.of(context).brightness == Brightness.dark ? AsmitaPalette.borderGreyDark : Colors.grey.shade100,
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Icon(Icons.lock_rounded, color: Colors.grey.shade600, size: 16),
+                        child: Icon(Icons.lock_rounded, color: Theme.of(context).brightness == Brightness.dark ? AsmitaPalette.textDarkModeMuted : Colors.grey.shade600, size: 16),
                       )
                     else
-                      const Icon(Icons.chevron_right_rounded, color: Colors.black26, size: 20),
+                      Icon(Icons.chevron_right_rounded, color: Theme.of(context).brightness == Brightness.dark ? AsmitaPalette.textDarkModeMuted : Colors.black26, size: 20),
                   ],
                 ),
               ),
               if (showDivider)
-                const Divider(height: 1, thickness: 1, indent: 52, color: Color(0xFFF0F0F0)),
+                Divider(height: 1, thickness: 1, indent: 52, color: Theme.of(context).brightness == Brightness.dark ? AsmitaPalette.borderGreyDark : const Color(0xFFF0F0F0)),
             ],
           ),
         ),
@@ -1088,49 +1098,63 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: readOnly ? const Color(0xFFF5F6FA) : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                )
-              ],
-            ),
-            child: TextField(
-              controller: controller,
-              readOnly: readOnly,
-              keyboardType: keyboardType,
-              inputFormatters: inputFormatters,
-              maxLength: maxLength,
-              buildCounter: maxLength != null
-                  ? (_, {required currentLength, required isFocused, maxLength}) => null
-                  : null,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                color: readOnly ? Colors.black54 : Colors.black87,
-                fontSize: 15,
-                fontWeight: readOnly ? FontWeight.w500 : FontWeight.normal,
-              ),
-              decoration: InputDecoration(
-                hintText: hint,
-                hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),
-                prefixIcon: Icon(icon, color: const Color(0xFF27347B), size: 20),
-                suffixIcon: suffix,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
-                focusedBorder: OutlineInputBorder(
+          Builder(
+            builder: (context) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              final inputBg = readOnly
+                  ? (isDark ? AsmitaPalette.surfaceDark : const Color(0xFFF5F6FA))
+                  : (isDark ? AsmitaPalette.surfaceElevatedDark : Colors.white);
+              final textColor = readOnly
+                  ? (isDark ? AsmitaPalette.textDarkModeMuted : Colors.black54)
+                  : (isDark ? AsmitaPalette.textDarkModeMain : Colors.black87);
+              final hintColor = isDark ? AsmitaPalette.textDarkModeMuted : Colors.black38;
+              final borderStrokeColor = isDark ? AsmitaPalette.borderGreyDark : Colors.grey.shade200;
+
+              return Container(
+                decoration: BoxDecoration(
+                  color: inputBg,
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: readOnly
-                      ? BorderSide(color: Colors.grey.shade200)
-                      : const BorderSide(color: Color(0xFF27347B), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    )
+                  ],
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-              ),
-            ),
+                child: TextField(
+                  controller: controller,
+                  readOnly: readOnly,
+                  keyboardType: keyboardType,
+                  inputFormatters: inputFormatters,
+                  maxLength: maxLength,
+                  buildCounter: maxLength != null
+                      ? (_, {required currentLength, required isFocused, maxLength}) => null
+                      : null,
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    color: textColor,
+                    fontSize: 15,
+                    fontWeight: readOnly ? FontWeight.w500 : FontWeight.normal,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: TextStyle(color: hintColor, fontSize: 14),
+                    prefixIcon: Icon(icon, color: isDark ? AsmitaPalette.deepNavyDark : const Color(0xFF27347B), size: 20),
+                    suffixIcon: suffix,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderStrokeColor)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderStrokeColor)),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: readOnly
+                          ? BorderSide(color: borderStrokeColor)
+                          : BorderSide(color: isDark ? AsmitaPalette.deepNavyDark : const Color(0xFF27347B), width: 1.5),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
