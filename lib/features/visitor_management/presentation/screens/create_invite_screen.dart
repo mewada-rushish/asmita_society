@@ -254,6 +254,9 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryAccent = AsmitaPalette.primary(context);
+    final unselectedChipText = isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.deepNavy;
 
     return BlocListener<VisitorBloc, VisitorState>(
       listener: (context, state) {
@@ -333,12 +336,12 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                             onSelected: (selected) {
                               if (selected) setState(() => _selectedCompany = comp);
                             },
-                            selectedColor: AsmitaPalette.deepNavy,
+                            selectedColor: primaryAccent,
                             labelStyle: TextStyle(
                               fontFamily: 'Montserrat',
                               fontSize: 12,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                              color: isSelected ? Colors.white : unselectedChipText,
                             ),
                           ),
                         );
@@ -388,12 +391,12 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                             onSelected: (selected) {
                               if (selected) setState(() => _selectedCompany = provider);
                             },
-                            selectedColor: AsmitaPalette.deepNavy,
+                            selectedColor: primaryAccent,
                             labelStyle: TextStyle(
                               fontFamily: 'Montserrat',
                               fontSize: 12,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                              color: isSelected ? Colors.white : unselectedChipText,
                             ),
                           ),
                         );
@@ -523,12 +526,12 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
                             label: Text(p),
                             selected: isSelected,
                             checkmarkColor: Colors.white,
-                            selectedColor: AsmitaPalette.deepNavy,
+                            selectedColor: primaryAccent,
                             labelStyle: TextStyle(
                               fontFamily: 'Montserrat',
                               fontSize: 12,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected ? Colors.white : AsmitaPalette.deepNavy,
+                              color: isSelected ? Colors.white : unselectedChipText,
                             ),
                             onSelected: (selected) {
                               if (selected) {
