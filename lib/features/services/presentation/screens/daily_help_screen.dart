@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/asmita_loading_indicator.dart';
-import '../../../../core/widgets/asmita_bottom_sheet.dart'; 
-import '../../../../core/widgets/asmita_bottom_nav_bar.dart'; 
+import '../../../../core/widgets/asmita_bottom_sheet.dart';
+import '../../../../core/widgets/asmita_bottom_nav_bar.dart';
 import '../../../../core/widgets/asmita_text_field.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -32,23 +32,42 @@ class DailyHelpScreen extends StatefulWidget {
 class _DailyHelpScreenState extends State<DailyHelpScreen> {
   // Main sliding filter categories
   final List<String> _categories = [
-    'All', 'Maids', 'Drivers', 'Car Cleaners', 'Milkmen', 
-    'Electricians', 'Plumbers', 'Doctors', 'Tuition Teachers', 'Cooks', 'Nannies'
+    'All',
+    'Maids',
+    'Drivers',
+    'Car Cleaners',
+    'Milkmen',
+    'Electricians',
+    'Plumbers',
+    'Doctors',
+    'Tuition Teachers',
+    'Cooks',
+    'Nannies',
   ];
-  
+
   // Selection options with singular labels for user data input
   final List<String> _dropdownCategories = [
-    'Maid', 'Driver', 'Car Cleaner', 'Milkman', 
-    'Electrician', 'Plumber', 'Doctor', 'Tuition Teacher', 'Cook', 'Nanny'
+    'Maid',
+    'Driver',
+    'Car Cleaner',
+    'Milkman',
+    'Electrician',
+    'Plumber',
+    'Doctor',
+    'Tuition Teacher',
+    'Cook',
+    'Nanny',
   ];
 
   int _selectedCategoryIndex = 0;
-  String? _selectedModalCategory; 
-
+  String? _selectedModalCategory;
 
   // Helper method to map category names to precise clean utility icons
   IconData _getCategoryIcon(String category) {
-    final cleaned = category.toLowerCase().replaceAll('s', ''); // Standardize singular/plural
+    final cleaned = category.toLowerCase().replaceAll(
+      's',
+      '',
+    ); // Standardize singular/plural
     switch (cleaned) {
       case 'all':
         return Icons.grid_view_rounded;
@@ -77,7 +96,11 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
     }
   }
 
-  void _showCategoryPicker(BuildContext context, StateSetter setModalState, TextTheme textTheme) {
+  void _showCategoryPicker(
+    BuildContext context,
+    StateSetter setModalState,
+    TextTheme textTheme,
+  ) {
     showAsmitaBottomSheet(
       context: context,
       title: 'Select Category',
@@ -96,11 +119,17 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                 return Container(
                   margin: EdgeInsets.only(bottom: 4),
                   decoration: BoxDecoration(
-                    color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
+                    color: isSelected
+                        ? Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.1)
+                        : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ListTile(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     leading: Icon(
                       _getCategoryIcon(category),
                       color: Theme.of(context).colorScheme.primary,
@@ -110,12 +139,18 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                       category,
                       style: textTheme.bodyLarge?.copyWith(
                         fontSize: 14,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
                         color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                     trailing: isSelected
-                        ? Icon(Icons.check_circle_rounded, color: Theme.of(context).colorScheme.primary, size: 20)
+                        ? Icon(
+                            Icons.check_circle_rounded,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 20,
+                          )
                         : null,
                     onTap: () {
                       setModalState(() {
@@ -133,7 +168,11 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
     );
   }
 
-  void _showAddProviderModal(BuildContext context, TextTheme textTheme, double systemBottomPadding) {
+  void _showAddProviderModal(
+    BuildContext context,
+    TextTheme textTheme,
+    double systemBottomPadding,
+  ) {
     _selectedModalCategory = null;
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
@@ -150,29 +189,59 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Add a new daily help contact to your society directory.', style: textTheme.bodyMedium?.copyWith(fontSize: 13, height: 1.4)),
+                Text(
+                  'Add a new daily help contact to your society directory.',
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
                 SizedBox(height: 24),
-                AsmitaTextField(label: 'Full Name', hint: 'e.g., Raju Plumber', icon: Icons.person_outline_rounded, controller: nameController),
+                AsmitaTextField(
+                  label: 'Full Name',
+                  hint: 'e.g., Raju Plumber',
+                  icon: Icons.person_outline_rounded,
+                  controller: nameController,
+                ),
                 SizedBox(height: 16),
-                AsmitaTextField(label: 'Phone Number', hint: '10-digit mobile number', icon: Icons.phone_outlined, keyboardType: TextInputType.phone, controller: phoneController),
+                AsmitaTextField(
+                  label: 'Phone Number',
+                  hint: '10-digit mobile number',
+                  icon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                  controller: phoneController,
+                ),
                 SizedBox(height: 16),
 
-                Text('Category', style: textTheme.bodyMedium?.copyWith(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                Text(
+                  'Category',
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
                 SizedBox(height: 8),
 
                 GestureDetector(
-                  onTap: () => _showCategoryPicker(context, setModalState, textTheme),
+                  onTap: () =>
+                      _showCategoryPicker(context, setModalState, textTheme),
                   child: Container(
                     padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                     decoration: BoxDecoration(
                       color: Theme.of(context).scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Theme.of(context).dividerColor, width: 1.2),
+                      border: Border.all(
+                        color: Theme.of(context).dividerColor,
+                        width: 1.2,
+                      ),
                     ),
                     child: Row(
                       children: [
                         Icon(
-                          _selectedModalCategory == null ? Icons.category_outlined : _getCategoryIcon(_selectedModalCategory!),
+                          _selectedModalCategory == null
+                              ? Icons.category_outlined
+                              : _getCategoryIcon(_selectedModalCategory!),
                           color: Theme.of(context).textTheme.bodyMedium?.color,
                           size: 20,
                         ),
@@ -184,11 +253,16 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                               fontSize: 14,
                               color: _selectedModalCategory == null
                                   ? Theme.of(context).hintColor
-                                  : Theme.of(context).textTheme.bodyLarge?.color,
+                                  : Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.color,
                             ),
                           ),
                         ),
-                        Icon(Icons.keyboard_arrow_down_rounded, color: Theme.of(context).textTheme.bodyMedium?.color),
+                        Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                        ),
                       ],
                     ),
                   ),
@@ -196,14 +270,24 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
 
                 SizedBox(height: 32),
                 Padding(
-                  padding: EdgeInsets.only(bottom: systemBottomPadding > 0 ? systemBottomPadding : 16.0),
+                  padding: EdgeInsets.only(
+                    bottom: systemBottomPadding > 0
+                        ? systemBottomPadding
+                        : 16.0,
+                  ),
                   child: ElevatedButton(
                     onPressed: () {
                       final name = nameController.text.trim();
                       final phone = phoneController.text.trim();
-                      
-                      if (name.isEmpty || phone.isEmpty || _selectedModalCategory == null) {
-                        AsmitaToast.show(context, message: 'Please fill all fields', type: AsmitaToastType.error);
+
+                      if (name.isEmpty ||
+                          phone.isEmpty ||
+                          _selectedModalCategory == null) {
+                        AsmitaToast.show(
+                          context,
+                          message: 'Please fill all fields',
+                          type: AsmitaToastType.error,
+                        );
                         return;
                       }
 
@@ -212,19 +296,32 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                           name: name,
                           phone: phone,
                           role: _selectedModalCategory!,
-                        )
+                        ),
                       );
 
                       Navigator.pop(context);
-                      AsmitaToast.show(context, message: 'Contact added successfully.', type: AsmitaToastType.success);
+                      AsmitaToast.show(
+                        context,
+                        message: 'Contact added successfully.',
+                        type: AsmitaToastType.success,
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.primary,
                       minimumSize: const Size(double.infinity, 54),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                       elevation: 0,
                     ),
-                    child: Text('Add Contact', style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.w600, fontSize: 14)),
+                    child: Text(
+                      'Add Contact',
+                      style: textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.surface,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -247,20 +344,37 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.primary, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Theme.of(context).colorScheme.primary,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
           splashRadius: 24,
         ),
-        title: Text('Daily Help', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary, fontSize: 18)),
+        title: Text(
+          'Daily Help',
+          style: textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: Theme.of(context).colorScheme.primary,
+            fontSize: 18,
+          ),
+        ),
         centerTitle: false,
         actions: [
           IconButton(
-            icon: Icon(Icons.search_rounded, color: Theme.of(context).colorScheme.primary),
+            icon: Icon(
+              Icons.search_rounded,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             onPressed: widget.onNavigateToSearch,
             splashRadius: 24,
           ),
           IconButton(
-            icon: Icon(Icons.chat_bubble_outline_rounded, color: Theme.of(context).colorScheme.primary),
+            icon: Icon(
+              Icons.chat_bubble_outline_rounded,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             onPressed: widget.onNavigateToCommunity,
             splashRadius: 24,
           ),
@@ -285,7 +399,7 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
         },
       ),
       body: Column(
-        children: [          
+        children: [
           // Directory Content Area
           Expanded(
             child: Container(
@@ -306,11 +420,13 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                           padding: EdgeInsets.only(right: 8),
                           child: ChoiceChip(
                             // FIX: Disable the automated framework checkmark overlay on the avatar
-                            showCheckmark: false, 
+                            showCheckmark: false,
                             avatar: Icon(
-                              _getCategoryIcon(_categories[index]), 
-                              size: 14, 
-                              color: isSelected ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.primary,
+                              _getCategoryIcon(_categories[index]),
+                              size: 14,
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.surface
+                                  : Theme.of(context).colorScheme.primary,
                             ),
                             label: Text(_categories[index]),
                             selected: isSelected,
@@ -318,16 +434,31 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                               setState(() => _selectedCategoryIndex = index);
                             },
                             labelStyle: textTheme.bodyMedium?.copyWith(
-                              color: isSelected ? Theme.of(context).colorScheme.surface : Theme.of(context).textTheme.bodyLarge?.color,
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.surface
+                                  : Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.color,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
                               fontSize: 12,
                             ),
-                            backgroundColor: Theme.of(context).colorScheme.surface,
-                            selectedColor: Theme.of(context).colorScheme.primary,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.surface,
+                            selectedColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
                             padding: EdgeInsets.symmetric(horizontal: 4),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor, width: 1.2),
+                              side: BorderSide(
+                                color: isSelected
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context).dividerColor,
+                                width: 1.2,
+                              ),
                             ),
                           ),
                         );
@@ -335,71 +466,142 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                     ),
                   ),
                   SizedBox(height: 16),
-                  
+
                   // Action Header Block Matching Community View Style
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Available Staff", style: textTheme.titleLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                        Text(
+                          "Available Staff",
+                          style: textTheme.titleLarge?.copyWith(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                          ),
+                        ),
                         OutlinedButton.icon(
-                          onPressed: () => _showAddProviderModal(context, textTheme, systemBottomPadding),
-                          icon: Icon(Icons.add_rounded, size: 14, color: Theme.of(context).colorScheme.primary),
-                          label: Text("Add Contact", style: textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w700)),
+                          onPressed: () => _showAddProviderModal(
+                            context,
+                            textTheme,
+                            systemBottomPadding,
+                          ),
+                          icon: Icon(
+                            Icons.add_rounded,
+                            size: 14,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          label: Text(
+                            "Add Contact",
+                            style: textTheme.bodyLarge?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Theme.of(context).colorScheme.primary,
-                            side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.2),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
+                            side: BorderSide(
+                              color: Theme.of(context).colorScheme.primary,
+                              width: 1.2,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
                   SizedBox(height: 12),
-                  
+
                   // Providers Feed List View
                   Expanded(
                     child: BlocBuilder<DailyHelpBloc, DailyHelpState>(
                       builder: (context, state) {
-                          if (state.status == DailyHelpStatus.loading && state.dailyHelpList.isEmpty) {
-                            return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
-                          } else if (state.status == DailyHelpStatus.error && state.dailyHelpList.isEmpty) {
-                          return Center(child: Text("Error: ${state.errorMessage}", style: textTheme.bodyMedium));
+                        if (state.status == DailyHelpStatus.loading &&
+                            state.dailyHelpList.isEmpty) {
+                          return Center(
+                            child: AsmitaLoadingIndicator(
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 28,
+                            ),
+                          );
+                        } else if (state.status == DailyHelpStatus.error &&
+                            state.dailyHelpList.isEmpty) {
+                          return Center(
+                            child: Text(
+                              "Error: ${state.errorMessage}",
+                              style: textTheme.bodyMedium,
+                            ),
+                          );
                         }
 
-                        final filteredDirectory = _selectedCategoryIndex == 0 
-                            ? state.dailyHelpList 
-                            : state.dailyHelpList.where((item) => item.role.toLowerCase() == _dropdownCategories[_selectedCategoryIndex - 1].toLowerCase()).toList();
+                        final filteredDirectory = _selectedCategoryIndex == 0
+                            ? state.dailyHelpList
+                            : state.dailyHelpList
+                                  .where(
+                                    (item) =>
+                                        item.role.toLowerCase() ==
+                                        _dropdownCategories[_selectedCategoryIndex -
+                                                1]
+                                            .toLowerCase(),
+                                  )
+                                  .toList();
 
                         if (filteredDirectory.isEmpty) {
-                          return Center(child: Text("No helpers registered in this category.", style: textTheme.bodyMedium));
+                          return Center(
+                            child: Text(
+                              "No helpers registered in this category.",
+                              style: textTheme.bodyMedium,
+                            ),
+                          );
                         }
 
                         return CustomScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
+                          ),
                           slivers: [
                             AsmitaAnimatedRefresh(
                               onRefresh: () async {
-                                context.read<DailyHelpBloc>().add(const FetchDailyHelp());
-                                await Future.delayed(const Duration(milliseconds: 600));
+                                context.read<DailyHelpBloc>().add(
+                                  const FetchDailyHelp(),
+                                );
+                                await Future.delayed(
+                                  const Duration(milliseconds: 600),
+                                );
                               },
                             ),
                             SliverPadding(
-                              padding: EdgeInsets.only(left: 16, right: 16, top: 4, bottom: 24),
+                              padding: EdgeInsets.only(
+                                left: 16,
+                                right: 16,
+                                top: 4,
+                                bottom: 24,
+                              ),
                               sliver: SliverList(
-                                delegate: SliverChildBuilderDelegate(
-                                  (context, index) {
-                                    return _buildDirectoryCard(context, filteredDirectory[index]);
-                                  },
-                                  childCount: filteredDirectory.length,
-                                ),
+                                delegate: SliverChildBuilderDelegate((
+                                  context,
+                                  index,
+                                ) {
+                                  return _buildDirectoryCard(
+                                    context,
+                                    filteredDirectory[index],
+                                  );
+                                }, childCount: filteredDirectory.length),
                               ),
                             ),
                           ],
                         );
-                      }
+                      },
                     ),
                   ),
                 ],
@@ -421,7 +623,13 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Theme.of(context).dividerColor, width: 1.2),
         boxShadow: [
-          BoxShadow(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.015), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.015),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Row(
@@ -434,7 +642,11 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
               shape: BoxShape.circle,
               border: Border.all(color: Theme.of(context).dividerColor),
             ),
-            child: Icon(_getCategoryIcon(item.role), color: Theme.of(context).colorScheme.primary, size: 20),
+            child: Icon(
+              _getCategoryIcon(item.role),
+              color: Theme.of(context).colorScheme.primary,
+              size: 20,
+            ),
           ),
           SizedBox(width: 14),
           Expanded(
@@ -448,13 +660,22 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                         item.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: textTheme.titleLarge?.copyWith(fontSize: 14, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.bodyLarge?.color),
+                        style: textTheme.titleLarge?.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
                       ),
                     ),
-                    if (item.kycStatus == 'Approved' || item.kycStatus == 'Verified') ...[
+                    if (item.kycStatus == 'Approved' ||
+                        item.kycStatus == 'Verified') ...[
                       const SizedBox(width: 4),
-                      const Icon(Icons.verified_rounded, color: Colors.green, size: 14),
-                    ]
+                      const Icon(
+                        Icons.verified_rounded,
+                        color: Colors.green,
+                        size: 14,
+                      ),
+                    ],
                   ],
                 ),
                 SizedBox(height: 4),
@@ -462,17 +683,45 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                   children: [
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(6)),
-                      child: Text(item.role, style: textTheme.bodyMedium?.copyWith(fontSize: 9, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primary)),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        item.role,
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
                     ),
                     SizedBox(width: 10),
-                    Icon(Icons.star_rounded, color: Colors.amber.shade600, size: 14),
+                    Icon(
+                      Icons.star_rounded,
+                      color: Colors.amber.shade600,
+                      size: 14,
+                    ),
                     SizedBox(width: 2),
-                    Text('4.5', style: textTheme.bodyMedium?.copyWith(fontSize: 11, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                    Text(
+                      '4.5',
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
                   ],
                 ),
                 SizedBox(height: 6),
-                Text('Trusted by Management', style: textTheme.bodyMedium?.copyWith(fontSize: 10, color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w500)),
+                Text(
+                  'Trusted by Management',
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontSize: 10,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ],
             ),
           ),
@@ -481,33 +730,62 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
             children: [
               IconButton(
                 onPressed: () async {
-                    try {
-                      final readStatus = await flutter_contacts.FlutterContacts.permissions.request(flutter_contacts.PermissionType.read);
-                      final writeStatus = await flutter_contacts.FlutterContacts.permissions.request(flutter_contacts.PermissionType.write);
-                      if (readStatus == flutter_contacts.PermissionStatus.granted && writeStatus == flutter_contacts.PermissionStatus.granted) {
-                        final newContact = flutter_contacts.Contact(
+                  try {
+                    final readStatus = await flutter_contacts
+                        .FlutterContacts
+                        .permissions
+                        .request(flutter_contacts.PermissionType.read);
+                    final writeStatus = await flutter_contacts
+                        .FlutterContacts
+                        .permissions
+                        .request(flutter_contacts.PermissionType.write);
+                    if (readStatus ==
+                            flutter_contacts.PermissionStatus.granted &&
+                        writeStatus ==
+                            flutter_contacts.PermissionStatus.granted) {
+                      final newContact = flutter_contacts.Contact(
                         name: flutter_contacts.Name(first: item.name),
                         phones: [flutter_contacts.Phone(number: item.phone)],
                       );
                       await flutter_contacts.FlutterContacts.create(newContact);
                       if (context.mounted) {
-                        AsmitaToast.show(context, message: 'Contact saved to phone', type: AsmitaToastType.success);
+                        AsmitaToast.show(
+                          context,
+                          message: 'Contact saved to phone',
+                          type: AsmitaToastType.success,
+                        );
                       }
                     } else {
                       if (context.mounted) {
-                        AsmitaToast.show(context, message: 'Permission denied', type: AsmitaToastType.error);
+                        AsmitaToast.show(
+                          context,
+                          message: 'Permission denied',
+                          type: AsmitaToastType.error,
+                        );
                       }
                     }
                   } catch (e) {
                     if (context.mounted) {
-                      AsmitaToast.show(context, message: 'Could not save contact. Please try again.', type: AsmitaToastType.error);
+                      AsmitaToast.show(
+                        context,
+                        message: 'Could not save contact. Please try again.',
+                        type: AsmitaToastType.error,
+                      );
                     }
                   }
                 },
-                icon: Icon(Icons.person_add_rounded, color: Theme.of(context).colorScheme.primary, size: 18),
+                icon: Icon(
+                  Icons.person_add_rounded,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 18,
+                ),
                 style: IconButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.08),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   padding: EdgeInsets.all(10),
                 ),
               ),
@@ -519,19 +797,31 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                     await launchUrl(uri);
                   } else {
                     if (context.mounted) {
-                      AsmitaToast.show(context, message: 'Could not launch dialer', type: AsmitaToastType.error);
+                      AsmitaToast.show(
+                        context,
+                        message: 'Could not launch dialer',
+                        type: AsmitaToastType.error,
+                      );
                     }
                   }
                 },
-                icon: Icon(Icons.call_rounded, color: Theme.of(context).colorScheme.primary, size: 18),
+                icon: Icon(
+                  Icons.call_rounded,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 18,
+                ),
                 style: IconButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.08),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   padding: EdgeInsets.all(10),
                 ),
               ),
             ],
-          )
+          ),
         ],
       ),
     );
