@@ -153,8 +153,8 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
     }
   }
 
-  void _openDelegationScreen() {
-    Navigator.push(
+  Future<void> _openDelegationScreen() async {
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => const DepartmentDelegationScreen(
@@ -162,6 +162,9 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
         ),
       ),
     );
+    if (result == true && mounted) {
+      _loadDepartments(forceRefresh: true);
+    }
   }
 
   @override

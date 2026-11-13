@@ -127,6 +127,11 @@ class SecureStorageService {
     await _storage.write(key: key, value: value);
   }
 
+  /// Deletes a key from the secure keystore.
+  Future<void> delete({required String key}) async {
+    await _storage.delete(key: key);
+  }
+
   /// Retrieves or generates a 256-bit encryption key for Hive.
   Future<List<int>> getHiveKey() async {
     const key = 'hive_encryption_key';
