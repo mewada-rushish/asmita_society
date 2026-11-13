@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class AsmitaSubHeader extends StatelessWidget {
   final String title;
   final Widget? trailing;
@@ -16,7 +15,12 @@ class AsmitaSubHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 16.0, bottom: 8.0),
+      padding: const EdgeInsets.only(
+        left: 24.0,
+        right: 24.0,
+        top: 16.0,
+        bottom: 8.0,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -24,7 +28,11 @@ class AsmitaSubHeader extends StatelessWidget {
             onTap: onBackPressed ?? () => Navigator.pop(context),
             behavior: HitTestBehavior.opaque,
             child: Padding(
-              padding: const EdgeInsets.only(right: 12.0, top: 4.0, bottom: 4.0),
+              padding: const EdgeInsets.only(
+                right: 12.0,
+                top: 4.0,
+                bottom: 4.0,
+              ),
               child: Icon(
                 Icons.arrow_back_ios_new_rounded,
                 size: 18,

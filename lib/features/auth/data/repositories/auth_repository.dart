@@ -275,8 +275,8 @@ class AuthRepository {
     }
   }
 
-  /// Updates the FCM token for push notifications
-  Future<void> updateFcmToken(String fcmToken) async {
+  /// Updates or clears the FCM token for push notifications
+  Future<void> updateFcmToken(String? fcmToken) async {
     try {
       await dio.put(
         '${EnvConfig.baseUrl}/app-api/users/me/fcm-token',

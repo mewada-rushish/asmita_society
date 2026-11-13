@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:asmita_society/main.dart' show rootNavigatorKey;
 import 'package:asmita_society/features/visitor_management/data/repositories/industrial_visit_repository.dart';
+import 'package:asmita_society/core/security/secure_storage_service.dart';
 import 'package:asmita_society/core/di/injection_container.dart' as di;
 import 'package:asmita_society/features/visitor_management/presentation/screens/incoming_visitor_screen.dart';
 
@@ -154,7 +155,16 @@ class IncomingVisitorService {
 
   /// Called whenever a doorbell / visitor arrival notification arrives
   /// (foreground, background launch, or lock screen wake-up).
-  static void onIncomingCallReceived(Map<String, dynamic> rawData, {String? soundAsset}) {
+  static void onIncomingCallReceived(Map<String, dynamic> rawData, {String? soundAsset}) async {
+    // 0. Security Guard: Verify active authenticated session. If logged out, ignore incoming call completely!
+    try {
+      final sessionToken = await SecureStorageService().getToken();
+      if (sessionToken == null || sessionToken.isEmpty) {
+        debugPrint('[IncomingVisitorService] User is logged out. Dropping incoming visitor call.');
+        return;
+      }
+    } catch (_) {}
+
     final data = IncomingVisitorData.fromMap(rawData, soundAsset: soundAsset);
     debugPrint('[IncomingVisitorService] onIncomingCallReceived for visitId: ${data.visitId}, visitor: ${data.visitorName}');
 

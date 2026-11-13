@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../data/repositories/auth_repository.dart';
 import '../../../core/security/secure_storage_service.dart';
 import 'auth_event.dart';
@@ -221,12 +222,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     
-    // Attempt to inform the backend
+    // 1. Tell backend to nullify FCM token and record logout
+    try {
+      await authRepository.updateFcmToken(null);
+    } catch (_) {}
+
     final userId = await secureStorage.getUserId();
     final role = await secureStorage.getUserRole();
     await authRepository.logout(userId, null, role);
     
+    // 2. Invalidate local Firebase token so pending/in-flight pushes are dropped
+    try {
+      await FirebaseMessaging.instance.deleteToken();
+    } catch (_) {}
+
+    // 3. Clear stored credentials and cached token
     await secureStorage.clearSession();
+    await secureStorage.delete(key: 'fcm_token');
     emit(AuthUnauthenticated());
   }
 
