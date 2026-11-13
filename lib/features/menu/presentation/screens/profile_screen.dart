@@ -29,7 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _nameController = TextEditingController();
     _emailController = TextEditingController();
     _phoneController = TextEditingController();
-    
+
     // Initialize with current state if available
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
@@ -65,18 +65,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _saveProfile() {
-    if (_nameController.text.trim().isEmpty || _phoneController.text.trim().isEmpty) {
+    if (_nameController.text.trim().isEmpty ||
+        _phoneController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Name and Phone are required')),
       );
       return;
     }
 
-    context.read<AuthBloc>().add(AuthUpdateProfileRequested(
-      fullName: _nameController.text.trim(),
-      email: _emailController.text.trim(),
-      mobile: _phoneController.text.trim(),
-    ));
+    context.read<AuthBloc>().add(
+      AuthUpdateProfileRequested(
+        fullName: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        mobile: _phoneController.text.trim(),
+      ),
+    );
     setState(() {
       _isEditing = false;
     });
@@ -85,13 +88,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    
+
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
           _populateControllers(state.user);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile updated successfully'), backgroundColor: Colors.green),
+            const SnackBar(
+              content: Text('Profile updated successfully'),
+              backgroundColor: Colors.green,
+            ),
           );
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -120,7 +126,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: isLoading ? null : _toggleEdit,
                     behavior: HitTestBehavior.opaque,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2,
+                      ),
                       child: Icon(
                         _isEditing ? Icons.close_rounded : Icons.edit_outlined,
                         color: Theme.of(context).colorScheme.primary,
@@ -159,8 +168,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfileHeader(TextTheme textTheme, UserModel user) {
-    String initials = user.fullName.isNotEmpty 
-        ? user.fullName.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
+    String initials = user.fullName.isNotEmpty
+        ? user.fullName
+              .trim()
+              .split(' ')
+              .map((e) => e.isNotEmpty ? e[0] : '')
+              .take(2)
+              .join()
+              .toUpperCase()
         : 'U';
 
     return Container(
@@ -171,7 +186,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -182,15 +199,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
           CircleAvatar(
             radius: 40,
             backgroundColor: Theme.of(context).colorScheme.primary,
-            backgroundImage: user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty
+            backgroundImage:
+                user.profilePictureUrl != null &&
+                    user.profilePictureUrl!.isNotEmpty
                 ? NetworkImage(user.profilePictureUrl!)
                 : null,
-            child: user.profilePictureUrl == null || user.profilePictureUrl!.isEmpty
-                ? Text(initials, style: textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.surface, fontSize: 24))
+            child:
+                user.profilePictureUrl == null ||
+                    user.profilePictureUrl!.isEmpty
+                ? Text(
+                    initials,
+                    style: textTheme.titleLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.surface,
+                      fontSize: 24,
+                    ),
+                  )
                 : null,
           ),
           const SizedBox(height: 16),
-          Text(user.fullName, style: textTheme.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.w700)),
+          Text(
+            user.fullName,
+            style: textTheme.titleLarge?.copyWith(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -198,7 +231,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Text((user.systemRole ?? user.primaryRole).toUpperCase(), style: textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700)),
+            child: Text(
+              (user.systemRole ?? user.primaryRole).toUpperCase(),
+              style: textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
@@ -214,36 +253,79 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         children: [
-          _buildEditableRow(textTheme, Icons.person_rounded, 'Full Name', _nameController, true),
-          _buildEditableRow(textTheme, Icons.email_rounded, 'Email', _emailController, true),
-          _buildEditableRow(textTheme, Icons.phone_rounded, 'Phone', _phoneController, false),
+          _buildEditableRow(
+            textTheme,
+            Icons.person_rounded,
+            'Full Name',
+            _nameController,
+            true,
+          ),
+          _buildEditableRow(
+            textTheme,
+            Icons.email_rounded,
+            'Email',
+            _emailController,
+            true,
+          ),
+          _buildEditableRow(
+            textTheme,
+            Icons.phone_rounded,
+            'Phone',
+            _phoneController,
+            false,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildEditableRow(TextTheme textTheme, IconData icon, String label, TextEditingController controller, bool showBorder) {
+  Widget _buildEditableRow(
+    TextTheme textTheme,
+    IconData icon,
+    String label,
+    TextEditingController controller,
+    bool showBorder,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: showBorder ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1)) : null,
+        border: showBorder
+            ? Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).dividerColor,
+                  width: 1,
+                ),
+              )
+            : null,
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
+            child: Icon(
+              icon,
+              color: Theme.of(context).colorScheme.primary,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 12)),
+                Text(
+                  label,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                    fontSize: 12,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 if (_isEditing)
                   TextField(
@@ -253,10 +335,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       contentPadding: EdgeInsets.symmetric(vertical: 4),
                       border: InputBorder.none,
                     ),
-                    style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, fontSize: 14),
+                    style: textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
                   )
                 else
-                  Text(controller.text.isEmpty ? 'Not provided' : controller.text, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, fontSize: 14)),
+                  Text(
+                    controller.text.isEmpty ? 'Not provided' : controller.text,
+                    style: textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -264,7 +355,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-  
+
   Widget _buildSaveButton(TextTheme textTheme, bool isLoading) {
     return SizedBox(
       width: double.infinity,
@@ -273,7 +364,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: Theme.of(context).colorScheme.primary,
           padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           elevation: 0,
         ),
         child: isLoading
@@ -287,7 +380,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               )
-            : Text('Save Profile', style: textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.w600)),
+            : Text(
+                'Save Profile',
+                style: textTheme.titleMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.surface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
       ),
     );
   }
@@ -312,7 +411,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                color: isDark
+                    ? AsmitaPalette.borderGreyDark
+                    : Colors.grey.withValues(alpha: 0.15),
               ),
             ),
             padding: const EdgeInsets.all(16),
@@ -329,9 +430,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            AsmitaSkeleton.text(width: 60, height: 11, borderRadius: 3),
+                            AsmitaSkeleton.text(
+                              width: 60,
+                              height: 11,
+                              borderRadius: 3,
+                            ),
                             const SizedBox(height: 6),
-                            AsmitaSkeleton.text(width: 140, height: 14, borderRadius: 4),
+                            AsmitaSkeleton.text(
+                              width: 140,
+                              height: 14,
+                              borderRadius: 4,
+                            ),
                           ],
                         ),
                       ),
@@ -346,4 +455,3 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-
