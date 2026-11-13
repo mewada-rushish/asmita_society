@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
@@ -173,7 +172,6 @@ class _DocumentsScreenBody extends StatelessWidget {
   }
 
   Widget _buildDocumentsSkeleton(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AsmitaSkeleton(
       isLoading: true,
       child: ListView.builder(
@@ -185,10 +183,10 @@ class _DocumentsScreenBody extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isDark ? AsmitaPalette.borderGreyDark : const Color(0xFFE2E8F0),
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
                 width: 1.2,
               ),
             ),
@@ -215,7 +213,7 @@ class _DocumentsScreenBody extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Actions
+                // Actions (View pill + Download circle)
                 AsmitaSkeleton.pill(width: 54, height: 28),
                 const SizedBox(width: 8),
                 AsmitaSkeleton.circle(size: 28),

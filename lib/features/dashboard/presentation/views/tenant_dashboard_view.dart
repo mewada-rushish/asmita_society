@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 
+import 'package:asmita_society/features/community/bloc/community_post_event.dart';
+import 'package:asmita_society/features/services/bloc/amenities_event.dart';
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/app_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
@@ -165,12 +167,16 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                   padding: EdgeInsets.only(
                     top:
                         MediaQuery.viewPaddingOf(context).top +
-                        72 +
-                        24, // Estimate header height
+                        62 +
+                        12, // Header height (reduced) + minimal gap
                   ),
                   sliver: AppRefresh.sliver(
                     onRefresh: () async {
-                      await Future.delayed(const Duration(milliseconds: 1500));
+                      try {
+                        context.read<CommunityPostBloc>().add(LoadCommunityPosts());
+                        context.read<AmenitiesBloc>().add(const FetchAmenities());
+                      } catch (_) {}
+                      await Future.delayed(const Duration(milliseconds: 600));
                     },
                   ),
                 ),
@@ -792,27 +798,26 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
                     ),
                   );
                 }
-                return Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Row(
-                    children: List.generate(
-                      4,
-                      (index) => Padding(
-                        padding: const EdgeInsets.only(right: 14),
-                        child: Column(
-                          children: [
-                            AsmitaSkeleton.bone(
-                              width: 44,
-                              height: 44,
-                              borderRadius: BorderRadius.circular(22),
-                            ),
-                            const SizedBox(height: 6),
-                            AsmitaSkeleton.bone(
-                              width: 36,
-                              height: 10,
-                              borderRadius: BorderRadius.circular(3),
-                            ),
-                          ],
+                return AsmitaSkeleton(
+                  isLoading: true,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Row(
+                      children: List.generate(
+                        4,
+                        (index) => Padding(
+                          padding: const EdgeInsets.only(right: 14),
+                          child: Column(
+                            children: [
+                              AsmitaSkeleton.circle(size: 44),
+                              const SizedBox(height: 6),
+                              AsmitaSkeleton.text(
+                                width: 36,
+                                height: 10,
+                                borderRadius: 3,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -829,14 +834,12 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
   Widget _buildCommunityPostsModule(BuildContext context) {
     return BlocBuilder<CommunityPostBloc, CommunityPostState>(
       builder: (context, state) {
-        if (state.status == CommunityPostStatus.loading &&
-            state.posts.isEmpty) {
+        if (state.status == CommunityPostStatus.loading) {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: AsmitaSkeleton.bone(
-              width: double.infinity,
-              height: 180,
-              borderRadius: BorderRadius.circular(16),
+            child: AsmitaSkeleton(
+              isLoading: true,
+              child: AsmitaSkeleton.postCard(),
             ),
           );
         }
@@ -987,8 +990,7 @@ class _TenantDashboardViewState extends State<TenantDashboardView> {
   Widget _buildFrequentServices(BuildContext context) {
     return BlocBuilder<AmenitiesBloc, AmenitiesState>(
       builder: (context, state) {
-        if (state.status == AmenitiesStatus.loading &&
-            state.amenities.isEmpty) {
+        if (state.status == AmenitiesStatus.loading) {
           return AsmitaSkeleton(
             isLoading: true,
             child: Padding(

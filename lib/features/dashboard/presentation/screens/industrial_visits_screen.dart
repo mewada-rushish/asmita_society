@@ -1341,27 +1341,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                     state.status == IndustrialVisitBlocStatus.initial;
 
                 if (isInitialLoading) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: AsmitaSkeleton(
-                      isLoading: true,
-                      child: Column(
-                        children: List.generate(
-                          3,
-                          (index) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Container(
-                              height: 120,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
+                  return _buildIndustrialVisitsSkeleton(context);
                 }
 
                 // Filter visits to current day only (resets automatically at 00:00)
@@ -1560,6 +1540,84 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildIndustrialVisitsSkeleton(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 120),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 1. Search Box Skeleton
+            Container(
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF334155) : Theme.of(context).dividerColor,
+                  width: 1.2,
+                ),
+              ),
+              child: Row(
+                children: [
+                  AsmitaSkeleton.circle(size: 20),
+                  const SizedBox(width: 12),
+                  AsmitaSkeleton.text(width: 160, height: 13, borderRadius: 3),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // 2. 4 KPI Metrics Row
+            Row(
+              children: List.generate(
+                4,
+                (index) => Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(right: index < 3 ? 8.0 : 0),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          AsmitaSkeleton.circle(size: 20),
+                          const SizedBox(height: 6),
+                          AsmitaSkeleton.text(width: 28, height: 16, borderRadius: 3),
+                          const SizedBox(height: 4),
+                          AsmitaSkeleton.text(width: 44, height: 11, borderRadius: 3),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // 3. Visitor Cards
+            ...List.generate(
+              3,
+              (index) => AsmitaSkeleton.visitorCard(
+                showActions: true,
+                margin: const EdgeInsets.only(bottom: 12),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

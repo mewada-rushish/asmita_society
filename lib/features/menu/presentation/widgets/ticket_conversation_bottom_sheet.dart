@@ -9,6 +9,7 @@ import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
+import 'package:asmita_society/core/widgets/app_button.dart';
 
 class TicketConversationBottomSheet extends StatefulWidget {
   final SupportTicketModel ticket;
@@ -371,15 +372,15 @@ class _TicketConversationBottomSheetState extends State<TicketConversationBottom
                 ),
               ),
               const SizedBox(width: 12),
-              GestureDetector(
-                onTap: _isSending ? null : _sendMessage,
-                child: CircleAvatar(
-                  radius: 24,
-                  backgroundColor: _isSending ? Colors.grey : Theme.of(context).colorScheme.primary,
-                  child: _isSending 
-                    ? AsmitaSkeleton.circle(size: 20)
-                    : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                ),
+              AppButton(
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: _isSending ? Colors.grey : Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
+                onPressed: _isSending ? null : _sendMessage,
+                isLoading: _isSending,
+                icon: Icons.send_rounded,
               ),
             ],
             ),
@@ -391,6 +392,7 @@ class _TicketConversationBottomSheetState extends State<TicketConversationBottom
 
   Widget _buildConversationSkeleton() {
     return AsmitaSkeleton(
+      isLoading: true,
       child: ListView.builder(
         physics: const NeverScrollableScrollPhysics(),
         itemCount: 4,

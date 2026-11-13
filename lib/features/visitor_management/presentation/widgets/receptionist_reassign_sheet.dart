@@ -280,20 +280,43 @@ class _ReceptionistReassignSheetState extends State<ReceptionistReassignSheet> {
               // Employee List Section
               Expanded(
                 child: _isLoading
-                    ? Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: List.generate(
-                            3,
-                            (index) => Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: AsmitaSkeleton.bone(
-                                width: double.infinity,
-                                height: 56,
-                                borderRadius: 12,
+                    ? AsmitaSkeleton(
+                        isLoading: true,
+                        child: ListView.separated(
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: 4,
+                          separatorBuilder: (_, _) => const SizedBox(height: 6),
+                          itemBuilder: (context, idx) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.surface,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                ),
                               ),
-                            ),
-                          ),
+                              child: Row(
+                                children: [
+                                  AsmitaSkeleton.circle(size: 32),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        AsmitaSkeleton.text(width: 120, height: 13),
+                                        const SizedBox(height: 4),
+                                        AsmitaSkeleton.text(width: 150, height: 11),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  AsmitaSkeleton.circle(size: 18),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                       )
                     : _filteredEmployees.isEmpty

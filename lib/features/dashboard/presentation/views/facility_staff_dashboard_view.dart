@@ -557,54 +557,89 @@ class _FacilityStaffDashboardViewState extends State<FacilityStaffDashboardView>
   }
 
   Widget _buildFacilitySkeleton(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AsmitaSkeleton.bone(
-            width: double.infinity,
-            height: 90,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: AsmitaSkeleton.bone(
-                  height: 90,
-                  borderRadius: BorderRadius.circular(14),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 1. Building Occupancy Tracker Banner
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: AsmitaSkeleton.bone(
-                  height: 90,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          AsmitaSkeleton.bone(
-            width: 140,
-            height: 18,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          const SizedBox(height: 12),
-          ...List.generate(
-            4,
-            (index) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: AsmitaSkeleton.bone(
-                width: double.infinity,
-                height: 64,
-                borderRadius: BorderRadius.circular(10),
+              child: Row(
+                children: [
+                  AsmitaSkeleton.circle(size: 44),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AsmitaSkeleton.text(width: 170, height: 14, borderRadius: 4),
+                        const SizedBox(height: 6),
+                        AsmitaSkeleton.text(width: 130, height: 12, borderRadius: 3),
+                      ],
+                    ),
+                  ),
+                  AsmitaSkeleton.bone(width: 20, height: 20, borderRadius: 4),
+                ],
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 24),
+
+            // 2. Operations Work Queue Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                AsmitaSkeleton.text(width: 160, height: 16, borderRadius: 4),
+                AsmitaSkeleton.text(width: 70, height: 12, borderRadius: 3),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // 3. Task Cards
+            ...List.generate(
+              4,
+              (index) => Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    AsmitaSkeleton.circle(size: 22),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AsmitaSkeleton.text(width: 150, height: 13, borderRadius: 4),
+                          const SizedBox(height: 6),
+                          AsmitaSkeleton.text(width: 80, height: 11, borderRadius: 3),
+                        ],
+                      ),
+                    ),
+                    AsmitaSkeleton.bone(width: 48, height: 20, borderRadius: 4),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -755,129 +755,134 @@ class SettingsScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Section 1: Preferences
-            AsmitaSkeleton.text(width: 110, height: 14, borderRadius: 3),
-            const SizedBox(height: 10),
-            Container(
-              decoration: BoxDecoration(
-                color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
-                ),
-              ),
-              child: Column(
-                children: List.generate(
-                  3,
-                  (index) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      border: index < 2
-                          ? Border(
-                              bottom: BorderSide(
-                                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.1),
-                              ),
-                            )
-                          : null,
-                    ),
-                    child: Row(
-                      children: [
-                        AsmitaSkeleton.circle(size: 24),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: AsmitaSkeleton.text(width: 130, height: 14, borderRadius: 4),
-                        ),
-                        AsmitaSkeleton.pill(width: 44, height: 24),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+            // Section 1: Notifications & Alerts (5 rows: 2 toggles + 3 action rows)
+            _buildSectionTitle(context, Theme.of(context).textTheme, 'Notifications & Alerts'),
+            const SizedBox(height: 12),
+            _buildSettingsSkeletonCard(
+              context,
+              isDark: isDark,
+              rows: [
+                _buildToggleSkeletonRow(context, width: 140, showBorder: true),
+                _buildToggleSkeletonRow(context, width: 110, showBorder: true),
+                _buildActionSkeletonRow(context, titleWidth: 160, trailingWidth: 60, showBorder: true),
+                _buildActionSkeletonRow(context, titleWidth: 140, trailingWidth: 50, showBorder: true),
+                _buildActionSkeletonRow(context, titleWidth: 130, trailingWidth: 50, showBorder: false),
+              ],
             ),
             const SizedBox(height: 24),
 
-            // Section 2: Security
-            AsmitaSkeleton.text(width: 130, height: 14, borderRadius: 3),
-            const SizedBox(height: 10),
-            Container(
-              decoration: BoxDecoration(
-                color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
-                ),
-              ),
-              child: Column(
-                children: List.generate(
-                  2,
-                  (index) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      border: index < 1
-                          ? Border(
-                              bottom: BorderSide(
-                                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.1),
-                              ),
-                            )
-                          : null,
-                    ),
-                    child: Row(
-                      children: [
-                        AsmitaSkeleton.circle(size: 24),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: AsmitaSkeleton.text(width: 120, height: 14, borderRadius: 4),
-                        ),
-                        AsmitaSkeleton.pill(width: 44, height: 24),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+            // Section 2: Preferences (2 action rows)
+            _buildSectionTitle(context, Theme.of(context).textTheme, 'Preferences'),
+            const SizedBox(height: 12),
+            _buildSettingsSkeletonCard(
+              context,
+              isDark: isDark,
+              rows: [
+                _buildActionSkeletonRow(context, titleWidth: 100, trailingWidth: 55, showBorder: true),
+                _buildActionSkeletonRow(context, titleWidth: 90, trailingWidth: 45, showBorder: false),
+              ],
             ),
             const SizedBox(height: 24),
 
-            // Section 3: Account
-            AsmitaSkeleton.text(width: 90, height: 14, borderRadius: 3),
-            const SizedBox(height: 10),
-            Container(
-              decoration: BoxDecoration(
-                color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
-                ),
-              ),
-              child: Column(
-                children: List.generate(
-                  2,
-                  (index) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      border: index < 1
-                          ? Border(
-                              bottom: BorderSide(
-                                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.1),
-                              ),
-                            )
-                          : null,
-                    ),
-                    child: Row(
-                      children: [
-                        AsmitaSkeleton.circle(size: 24),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: AsmitaSkeleton.text(width: 110, height: 14, borderRadius: 4),
-                        ),
-                        AsmitaSkeleton.bone(width: 14, height: 14, borderRadius: 3),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+            // Section 3: Security (1 action row + 1 toggle)
+            _buildSectionTitle(context, Theme.of(context).textTheme, 'Security'),
+            const SizedBox(height: 12),
+            _buildSettingsSkeletonCard(
+              context,
+              isDark: isDark,
+              rows: [
+                _buildActionSkeletonRow(context, titleWidth: 130, trailingWidth: 0, showBorder: true),
+                _buildToggleSkeletonRow(context, width: 120, showBorder: false),
+              ],
             ),
+            const SizedBox(height: 24),
+
+            // Section 4: Legal & Compliance (2 action rows)
+            _buildSectionTitle(context, Theme.of(context).textTheme, 'Legal & Compliance'),
+            const SizedBox(height: 12),
+            _buildSettingsSkeletonCard(
+              context,
+              isDark: isDark,
+              rows: [
+                _buildActionSkeletonRow(context, titleWidth: 120, trailingWidth: 0, showBorder: true),
+                _buildActionSkeletonRow(context, titleWidth: 110, trailingWidth: 0, showBorder: false),
+              ],
+            ),
+            const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsSkeletonCard(
+    BuildContext context, {
+    required bool isDark,
+    required List<Widget> rows,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
+        ),
+      ),
+      child: Column(children: rows),
+    );
+  }
+
+  Widget _buildToggleSkeletonRow(
+    BuildContext context, {
+    required double width,
+    required bool showBorder,
+  }) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 56),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        border: showBorder
+            ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1))
+            : null,
+      ),
+      child: Row(
+        children: [
+          AsmitaSkeleton.circle(size: 24),
+          const SizedBox(width: 14),
+          AsmitaSkeleton.text(width: width, height: 14, borderRadius: 4),
+          const Spacer(),
+          AsmitaSkeleton.pill(width: 44, height: 26),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionSkeletonRow(
+    BuildContext context, {
+    required double titleWidth,
+    required double trailingWidth,
+    required bool showBorder,
+  }) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 56),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        border: showBorder
+            ? Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1))
+            : null,
+      ),
+      child: Row(
+        children: [
+          AsmitaSkeleton.circle(size: 24),
+          const SizedBox(width: 14),
+          AsmitaSkeleton.text(width: titleWidth, height: 14, borderRadius: 4),
+          const Spacer(),
+          if (trailingWidth > 0) ...[
+            AsmitaSkeleton.text(width: trailingWidth, height: 12, borderRadius: 3),
+            const SizedBox(width: 8),
+          ],
+          AsmitaSkeleton.bone(width: 14, height: 14, borderRadius: 3),
+        ],
       ),
     );
   }

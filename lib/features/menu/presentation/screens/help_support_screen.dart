@@ -10,8 +10,8 @@ import 'package:asmita_society/core/network/dio_client.dart';
 import 'package:asmita_society/core/security/secure_storage_service.dart';
 import 'package:asmita_society/features/menu/bloc/support_event.dart';
 import 'package:asmita_society/features/menu/bloc/support_state.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import '../widgets/ticket_conversation_bottom_sheet.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/asmita_select_field.dart';
 import 'package:asmita_society/features/menu/presentation/screens/all_tickets_screen.dart';
@@ -603,95 +603,62 @@ class _HelpSupportContent extends StatelessWidget {
   }
 
   Widget _buildSkeletonTickets(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 12),
-          child: Shimmer.fromColors(
-            baseColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-            highlightColor: isDark ? Colors.grey[700]! : Colors.grey[100]!,
-            child: Container(
-              width: 100,
-              height: 14,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(4),
-              ),
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 12),
+            child: AsmitaSkeleton.text(width: 120, height: 14, borderRadius: 3),
+          ),
+          Container(
+            height: 100,
+            margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ),
-        ),
-        ...List.generate(3, (index) => Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: theme.dividerColor, width: 1.5),
-          ),
-          child: Shimmer.fromColors(
-            baseColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-            highlightColor: isDark ? Colors.grey[700]! : Colors.grey[100]!,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      height: 18,
-                      width: 150,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    Container(
-                      height: 24,
-                      width: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
+                    AsmitaSkeleton.text(width: 140, height: 16, borderRadius: 4),
+                    AsmitaSkeleton.pill(width: 60, height: 24),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Container(
-                  height: 14,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  height: 14,
-                  width: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  height: 12,
-                  width: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        AsmitaSkeleton.circle(size: 14),
+                        const SizedBox(width: 6),
+                        AsmitaSkeleton.text(width: 130, height: 12, borderRadius: 3),
+                      ],
+                    ),
+                    AsmitaSkeleton.text(width: 50, height: 12, borderRadius: 3),
+                  ],
                 ),
               ],
             ),
           ),
-        )),
-        SizedBox(height: 24),
-      ],
+          const SizedBox(height: 24),
+        ],
+      ),
     );
   }
 }

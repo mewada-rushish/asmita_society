@@ -824,6 +824,7 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
 
   Widget _buildDailyHelpSkeleton(BuildContext context) {
     return AsmitaSkeleton(
+      isLoading: true,
       child: ListView.builder(
         padding: const EdgeInsets.only(left: 16, right: 16, top: 4, bottom: 24),
         physics: const NeverScrollableScrollPhysics(),
@@ -845,16 +846,31 @@ class _DailyHelpScreenState extends State<DailyHelpScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      AsmitaSkeleton.text(width: 140, height: 14),
+                      AsmitaSkeleton.text(width: 130, height: 14),
                       const SizedBox(height: 6),
-                      AsmitaSkeleton.text(width: 90, height: 12),
+                      Row(
+                        children: [
+                          AsmitaSkeleton.bone(width: 50, height: 18, borderRadius: 6),
+                          const SizedBox(width: 10),
+                          AsmitaSkeleton.circle(size: 14),
+                          const SizedBox(width: 4),
+                          AsmitaSkeleton.text(width: 20, height: 11),
+                        ],
+                      ),
                       const SizedBox(height: 6),
                       AsmitaSkeleton.text(width: 120, height: 10),
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                AsmitaSkeleton.circle(size: 38),
+                const SizedBox(width: 10),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AsmitaSkeleton.bone(width: 38, height: 38, borderRadius: 12),
+                    const SizedBox(width: 8),
+                    AsmitaSkeleton.bone(width: 38, height: 38, borderRadius: 12),
+                  ],
+                ),
               ],
             ),
           );

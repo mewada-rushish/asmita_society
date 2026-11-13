@@ -50,7 +50,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
     this.showBackButton = false,
     this.onBackPressed,
     this.backgroundColor,
-    this.bottomPadding = 12.0,
+    this.bottomPadding = 0.0,
     this.subtitleOverride,
     this.trailingActions,
     this.extraAction,
@@ -464,9 +464,9 @@ class AsmitaPrimaryHeader extends StatelessWidget {
         Widget headerContent = Container(
           padding: EdgeInsets.fromLTRB(
             16,
-            topPadding > 0 ? topPadding + 10 : 22,
+            topPadding > 0 ? topPadding + 6 : 18,
             16,
-            isCurved ? 16 : 14,
+            isCurved ? 10 : 10,
           ),
           decoration: BoxDecoration(
             color: isDark
@@ -474,12 +474,16 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                 : Theme.of(context).colorScheme.surface,
             borderRadius: isCurved
                 ? const BorderRadius.vertical(
-                    bottom: Radius.circular(24),
+                    bottom: Radius.circular(20),
                   )
                 : null,
             border: isCurved
                 ? (isDark
-                    ? Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.0)
+                    ? Border(
+                        bottom: BorderSide(color: Colors.white.withValues(alpha: 0.15), width: 1.0),
+                        left: BorderSide(color: Colors.white.withValues(alpha: 0.15), width: 1.0),
+                        right: BorderSide(color: Colors.white.withValues(alpha: 0.15), width: 1.0),
+                      )
                     : null)
                 : Border(
                     bottom: BorderSide(
@@ -489,9 +493,9 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                   ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.3 : (isCurved ? 0.06 : 0.06)),
-                blurRadius: isCurved ? 4 : 6,
-                offset: const Offset(0, 2),
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                blurRadius: isCurved ? 3 : 4,
+                offset: const Offset(0, 1),
               ),
             ],
           ),
@@ -751,7 +755,7 @@ class AsmitaPrimaryHeader extends StatelessWidget {
           headerContent = isCurved
               ? ClipRRect(
                   borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(24),
+                    bottom: Radius.circular(20),
                   ),
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),

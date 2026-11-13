@@ -903,6 +903,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
   Widget _buildDepartmentListSkeleton() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return AsmitaSkeleton(
+      isLoading: true,
       child: Column(
         children: List.generate(4, (index) => Padding(
           padding: const EdgeInsets.only(bottom: 10),
@@ -918,14 +919,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
             ),
             child: Row(
               children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+                AsmitaSkeleton.bone(width: 42, height: 42, borderRadius: 12),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -1263,6 +1257,7 @@ class _DepartmentEmployeesSheetState extends State<_DepartmentEmployeesSheet> {
 
   Widget _buildStaffListSkeleton(BuildContext context, bool isDark) {
     return AsmitaSkeleton(
+      isLoading: true,
       child: ListView.separated(
         physics: const NeverScrollableScrollPhysics(),
         itemCount: 5,

@@ -192,8 +192,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         }
       },
       builder: (context, state) {
-        final isLoading = state.status == IndustrialVisitBlocStatus.loading &&
-            state.visits.isEmpty;
+        final isLoading = state.status == IndustrialVisitBlocStatus.loading;
 
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -311,71 +310,68 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
             ),
             const SizedBox(height: 16),
 
-            // 3. Tab bar skeleton
-            Container(
-              height: 44,
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: isDark ? AsmitaPalette.surfaceDark : Colors.grey.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: List.generate(
-                  3,
-                  (index) => Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: AsmitaSkeleton.bone(
-                        height: 36,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
+            // 3. Operational KPI Metrics (2x2 Grid)
+            Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: _buildMetricTileSkeleton(isDark)),
+                    const SizedBox(width: 10),
+                    Expanded(child: _buildMetricTileSkeleton(isDark)),
+                  ],
                 ),
-              ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(child: _buildMetricTileSkeleton(isDark)),
+                    const SizedBox(width: 10),
+                    Expanded(child: _buildMetricTileSkeleton(isDark)),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
 
             // 4. Visitor Card skeletons
             ...List.generate(
-              3,
-              (index) => Container(
+              2,
+              (index) => AsmitaSkeleton.visitorCard(
+                showActions: true,
                 margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    AsmitaSkeleton.circle(size: 48),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AsmitaSkeleton.text(width: 130, height: 15, borderRadius: 4),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              AsmitaSkeleton.pill(width: 75, height: 20),
-                              const SizedBox(width: 8),
-                              AsmitaSkeleton.text(width: 60, height: 12, borderRadius: 3),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    AsmitaSkeleton.pill(width: 70, height: 26),
-                  ],
-                ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMetricTileSkeleton(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1.1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              AsmitaSkeleton.bone(width: 31, height: 31, borderRadius: BorderRadius.circular(10)),
+              AsmitaSkeleton.text(width: 28, height: 21, borderRadius: 4),
+            ],
+          ),
+          const SizedBox(height: 10),
+          AsmitaSkeleton.text(width: 65, height: 13, borderRadius: 3),
+          const SizedBox(height: 4),
+          AsmitaSkeleton.text(width: 90, height: 11, borderRadius: 3),
+        ],
       ),
     );
   }

@@ -9,7 +9,6 @@ import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
 
 import 'package:asmita_society/features/menu/data/models/vehicle_model.dart';
@@ -145,7 +144,6 @@ class VehiclesScreen extends StatelessWidget {
   }
 
   Widget _buildVehiclesSkeleton(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AsmitaSkeleton(
       isLoading: true,
       child: GridView.builder(
@@ -161,23 +159,40 @@ class VehiclesScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           return Container(
             decoration: BoxDecoration(
-              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
-              ),
+              border: Border.all(color: Theme.of(context).dividerColor, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                AsmitaSkeleton.circle(size: 64),
+                const Spacer(),
+                // Vehicle avatar icon circle
+                AsmitaSkeleton.circle(size: 76),
                 const SizedBox(height: 12),
-                AsmitaSkeleton.pill(width: 100, height: 24),
-                const SizedBox(height: 8),
-                AsmitaSkeleton.text(width: 80, height: 13, borderRadius: 3),
+                // Vehicle make/model text line
+                AsmitaSkeleton.text(width: 90, height: 16, borderRadius: 4),
                 const SizedBox(height: 6),
-                AsmitaSkeleton.pill(width: 65, height: 18),
+                // License plate badge pill
+                AsmitaSkeleton.bone(width: 100, height: 26, borderRadius: 6),
+                const Spacer(),
+                // Parking slot indicator with small icon and text
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    AsmitaSkeleton.circle(size: 14),
+                    const SizedBox(width: 4),
+                    AsmitaSkeleton.text(width: 50, height: 12, borderRadius: 3),
+                  ],
+                ),
               ],
             ),
           );

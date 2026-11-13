@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../../bloc/industrial_visit_bloc.dart';
 import '../../bloc/industrial_visit_event.dart';
 import '../../bloc/industrial_visit_state.dart';
@@ -254,6 +255,8 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
                                         width: 56,
                                         height: 56,
                                         fit: BoxFit.cover,
+                                        placeholder: (context, url) =>
+                                            AsmitaSkeleton.circle(size: 56),
                                         errorWidget: (context, url, error) =>
                                             CircleAvatar(
                                               radius: 28,

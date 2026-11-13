@@ -9,14 +9,14 @@ import 'package:asmita_society/features/visitor_management/bloc/guard_gate_event
 import 'package:asmita_society/features/visitor_management/bloc/guard_gate_state.dart';
 import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_bloc.dart';
 import 'package:asmita_society/features/visitor_management/data/repositories/industrial_visit_repository.dart';
-import 'package:asmita_society/features/visitor_management/presentation/screens/guard_pass_check_in_screen.dart';
+import 'package:asmita_society/features/visitor_management/presentation/widgets/guard_pass_check_in_sheet.dart';
 import 'package:asmita_society/features/visitor_management/presentation/screens/guard_delivery_entry_screen.dart';
 import 'package:asmita_society/features/visitor_management/presentation/screens/guard_vehicle_draft_screen.dart';
 import 'package:asmita_society/features/visitor_management/presentation/widgets/manual_override_dialog.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/auth/data/models/user_model.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 
 class MockGuardGateBloc extends Mock implements GuardGateBloc {}
 class MockIndustrialVisitRepository extends Mock implements IndustrialVisitRepository {}
@@ -118,7 +118,7 @@ void main() {
       expect(find.text('Security Guard'), findsOneWidget);
 
       // Tap history
-      await tester.tap(find.byIcon(Icons.history));
+      await tester.tap(find.byIcon(Icons.history_rounded));
       expect(historyTapped, isTrue);
 
       // Gate assignment
@@ -177,7 +177,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.byType(GuardPassCheckInScreen), findsOneWidget);
+      expect(find.byType(GuardPassCheckInSheet), findsOneWidget);
     });
 
     testWidgets('navigates to GuardDeliveryEntryScreen when Delivery Intake is tapped', (tester) async {
@@ -226,16 +226,16 @@ void main() {
       expect(find.byType(GuardVehicleDraftScreen), findsOneWidget);
     });
 
-    testWidgets('validates pass code length and shows error toast when code < 6 digits', (tester) async {
+    testWidgets('validates pass code length and shows error toast when code is empty', (tester) async {
       setMobileScreen(tester);
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pump();
 
-      await tester.enterText(find.byType(TextField).first, '123');
+      await tester.enterText(find.byType(TextField).first, '');
       await tester.tap(find.byIcon(Icons.search));
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
 
-      expect(find.text('Please enter a 6-digit access code'), findsOneWidget);
+      expect(find.text('Please enter access code or pass number'), findsOneWidget);
     });
 
     testWidgets('triggers onNavigateToScanner when scanner button is tapped', (tester) async {
@@ -257,7 +257,7 @@ void main() {
 
       await tester.enterText(find.byType(TextField).first, '654321');
       await tester.tap(find.byIcon(Icons.search));
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
 
       verify(() => mockGateBloc.add(const SearchInviteByCode('654321'))).called(1);
     });
@@ -273,6 +273,7 @@ void main() {
         'invite_type': 'Guest',
         'tower_name': 'Tower A',
         'flat_number': '101',
+        'photo_url': 'https://example.com/ramesh.jpg',
       };
 
       when(() => mockGateBloc.state).thenReturn(
@@ -289,15 +290,18 @@ void main() {
       );
 
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 600));
 
       expect(find.text('Verify Visitor'), findsOneWidget);
       expect(find.text('Ramesh Kumar'), findsOneWidget);
       expect(find.text('Tower A - 101'), findsOneWidget);
       expect(find.text('Confirm Check-in'), findsOneWidget);
 
+      await tester.drag(find.byType(SingleChildScrollView).last, const Offset(0, -300), warnIfMissed: false);
+      await tester.pump(const Duration(milliseconds: 200));
+
       await tester.tap(find.text('Confirm Check-in'));
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
 
       verify(() => mockGateBloc.add(const CheckInPreApprovedVisitor('101', isPreApproved: true))).called(1);
     });
@@ -313,6 +317,7 @@ void main() {
         'valid_from': DateTime.now().subtract(const Duration(hours: 1)).toIso8601String(),
         'valid_to': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
         'status': 'APPROVED',
+        'photo_url': 'https://example.com/devendra.jpg',
       };
 
       when(() => mockGateBloc.state).thenReturn(
@@ -339,8 +344,9 @@ void main() {
       expect(find.text('Confirm Check-in'), findsOneWidget);
 
       // Confirm check in
+      await tester.ensureVisible(find.text('Confirm Check-in'));
       await tester.tap(find.text('Confirm Check-in'));
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
 
       verify(() => mockGateBloc.add(const CheckInPreApprovedVisitor('55', isPreApproved: true))).called(1);
     });
@@ -358,7 +364,7 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pump();
 
-      expect(find.byType(AsmitaLoadingIndicator), findsWidgets);
+      expect(find.byType(AsmitaSkeleton), findsWidgets);
     });
 
     testWidgets('shows error toast when state has errorMessage', (tester) async {

@@ -12,7 +12,7 @@ import 'package:asmita_society/features/community/presentation/composer/chat_com
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/auth/data/models/user_model.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 
 class MockAuthBloc extends Mock implements AuthBloc {}
 class MockCommunityBloc extends Mock implements CommunityBloc {}
@@ -107,12 +107,12 @@ void main() {
   }
 
   group('CommunityScreen Production Widget Tests', () {
-    testWidgets('renders AsmitaLoadingIndicator when community state is loading', (tester) async {
+    testWidgets('renders AsmitaSkeleton when community state is loading', (tester) async {
       setMobileScreen(tester);
       await tester.pumpWidget(buildTestableWidget(initialState: CommunityLoading()));
       await tester.pump();
 
-      expect(find.byType(AsmitaLoadingIndicator), findsOneWidget);
+      expect(find.byType(AsmitaSkeleton), findsWidgets);
     });
 
     testWidgets('renders error view with retry button on CommunityError', (tester) async {

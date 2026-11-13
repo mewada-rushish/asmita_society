@@ -7,7 +7,7 @@ import '../../../../core/constants/design_system.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/security/secure_storage_service.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
-import 'package:shimmer/shimmer.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_bottom_nav_bar.dart';
 import '../../../../core/widgets/asmita_toast.dart';
@@ -527,7 +527,7 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
             subtitleOverride: 'Bill Payments (BBPS)',
             showBackButton: true,
             allowPropertySwitching: false,
-            bottomPadding: 12.0,
+            bottomPadding: 0.0,
             onSearchPressed: widget.onNavigateToSearch,
             onChatPressed: widget.onNavigateToCommunity,
           ),
@@ -1060,75 +1060,50 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
   }
 
   Widget _buildSkeletalCategoryGrid(bool isDark) {
-    final baseColor = isDark ? Colors.grey[800]! : const Color(0xFFE2E8F0);
-    final highlightColor = isDark ? Colors.grey[700]! : const Color(0xFFF8FAFC);
-
-    return GridView.builder(
-      padding: EdgeInsets.zero,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: 8,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-        mainAxisExtent: 68,
-      ),
-      itemBuilder: (context, index) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: GridView.builder(
+        padding: EdgeInsets.zero,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 8,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+          mainAxisExtent: 68,
+        ),
+        itemBuilder: (context, index) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              ),
             ),
-          ),
-          child: Shimmer.fromColors(
-            baseColor: baseColor,
-            highlightColor: highlightColor,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
+                AsmitaSkeleton.bone(width: 34, height: 34, borderRadius: 8),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        height: 12,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
+                      AsmitaSkeleton.text(width: double.infinity, height: 12),
                       const SizedBox(height: 6),
-                      Container(
-                        height: 9,
-                        width: 60,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
+                      AsmitaSkeleton.text(width: 60, height: 9),
                     ],
                   ),
                 ),
               ],
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

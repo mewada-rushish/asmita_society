@@ -10,6 +10,7 @@ import 'package:asmita_society/features/menu/data/repositories/vehicles_reposito
 import 'package:asmita_society/features/menu/bloc/vehicles_bloc.dart';
 import 'package:asmita_society/features/menu/bloc/vehicles_event.dart';
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
+import 'package:asmita_society/core/widgets/app_button.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/features/menu/data/models/vehicle_model.dart';
 
@@ -243,13 +244,21 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
           Text('PARKING SLOT (OPTIONAL)', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
           const SizedBox(height: 8),
           if (isLoadingSlots)
-            const AsmitaSkeleton(
+            AsmitaSkeleton(
               isLoading: true,
-              child: AsmitaSkeleton(
-                isLoading: true,
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 48,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AsmitaSkeleton.text(width: 140, height: 14),
+                    AsmitaSkeleton.bone(width: 14, height: 14, borderRadius: 3),
+                  ],
                 ),
               ),
             )
@@ -286,25 +295,18 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
           ),
           ),
           const SizedBox(height: 24),
-          SizedBox(
+          AppButton(
             width: double.infinity,
-            child: CupertinoButton(
-              color: Theme.of(context).colorScheme.primary,
-              borderRadius: BorderRadius.circular(12),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              onPressed: _saveVehicle,
-              child: isSaving 
-                  ? SizedBox(
-                      width: 20, 
-                      height: 20, 
-                      child: Center(
-                        child: AsmitaSkeleton(
-                          isLoading: true,
-                          child: AsmitaSkeleton.circle(size: 16),
-                        ),
-                      ),
-                    )
-                  : Text(widget.vehicle == null ? 'Save Vehicle' : 'Update Vehicle', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.surface)),
+            height: 50,
+            borderRadius: 12,
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.surface,
+            onPressed: isSaving ? null : _saveVehicle,
+            isLoading: isSaving,
+            label: widget.vehicle == null ? 'Save Vehicle' : 'Update Vehicle',
+            textStyle: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.surface,
             ),
           ),
         ],

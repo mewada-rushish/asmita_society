@@ -1104,9 +1104,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         }
       },
       builder: (context, state) {
-        final isLoading =
-            state.status == IndustrialVisitBlocStatus.loading &&
-            state.visits.isEmpty;
+        final isLoading = state.status == IndustrialVisitBlocStatus.loading;
 
         return _buildScaffold(context, state.visits, isLoading: isLoading);
       },
@@ -1320,33 +1318,8 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
             Column(
               children: List.generate(
                 2,
-                (index) => Container(
+                (index) => AsmitaSkeleton.visitorCard(
                   margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      AsmitaSkeleton.circle(size: 44),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            AsmitaSkeleton.text(width: 130, height: 15, borderRadius: 4),
-                            const SizedBox(height: 6),
-                            AsmitaSkeleton.pill(width: 80, height: 20),
-                          ],
-                        ),
-                      ),
-                      AsmitaSkeleton.bone(width: 68, height: 34, borderRadius: 8),
-                    ],
-                  ),
                 ),
               ),
             ),

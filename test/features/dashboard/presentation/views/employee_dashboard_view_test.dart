@@ -9,18 +9,26 @@ import 'package:asmita_society/features/visitor_management/bloc/industrial_visit
 import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_event.dart';
 import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_state.dart';
 import 'package:asmita_society/features/visitor_management/presentation/widgets/delivery_action_sheet.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
+import 'package:asmita_society/features/auth/bloc/auth_event.dart';
+import 'package:asmita_society/features/auth/bloc/auth_state.dart';
+import 'package:asmita_society/features/auth/data/models/user_model.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 
 class MockIndustrialVisitBloc extends Mock implements IndustrialVisitBloc {}
+class MockAuthBloc extends Mock implements AuthBloc {}
 
 void main() {
   late MockIndustrialVisitBloc mockVisitBloc;
   late StreamController<IndustrialVisitState> visitStateController;
+  late MockAuthBloc mockAuthBloc;
+  late StreamController<AuthState> authStateController;
 
   setUpAll(() {
     registerFallbackValue(const LoadIndustrialVisits());
     registerFallbackValue(const DecideVisitEvent(visitId: 1, action: 'APPROVE'));
     registerFallbackValue(const AcknowledgeVisitEvent(1));
+    registerFallbackValue(const AuthRefreshProfileRequested());
   });
 
   setUp(() {
@@ -30,10 +38,28 @@ void main() {
     when(() => mockVisitBloc.state).thenReturn(const IndustrialVisitState());
     when(() => mockVisitBloc.close()).thenAnswer((_) async {});
     when(() => mockVisitBloc.add(any())).thenReturn(null);
+
+    mockAuthBloc = MockAuthBloc();
+    authStateController = StreamController<AuthState>.broadcast();
+    when(() => mockAuthBloc.stream).thenAnswer((_) => authStateController.stream);
+    when(() => mockAuthBloc.state).thenReturn(
+      AuthAuthenticated(
+        sessionRole: 'employee',
+        user: UserModel(
+          userId: 10,
+          fullName: 'Rushish Mewada',
+          primaryRole: 'employee',
+          accountType: 'app',
+        ),
+      ),
+    );
+    when(() => mockAuthBloc.close()).thenAnswer((_) async {});
+    when(() => mockAuthBloc.add(any())).thenReturn(null);
   });
 
   tearDown(() async {
     await visitStateController.close();
+    await authStateController.close();
   });
 
   Widget buildTestableWidget({
@@ -46,18 +72,24 @@ void main() {
     Function(int, String)? onDecideVisit,
     Function(int)? onAcknowledgeVisit,
   }) {
-    return BlocProvider<IndustrialVisitBloc>.value(
-      value: mockVisitBloc,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<IndustrialVisitBloc>.value(value: mockVisitBloc),
+        BlocProvider<AuthBloc>.value(value: mockAuthBloc),
+      ],
       child: MaterialApp(
-        home: EmployeeDashboardView(
-          employeeName: employeeName,
-          departmentName: departmentName,
-          cabinNumber: cabinNumber,
-          deskNumber: deskNumber,
-          visits: visits,
-          onOpenDelegation: onOpenDelegation ?? () {},
-          onDecideVisit: onDecideVisit,
-          onAcknowledgeVisit: onAcknowledgeVisit,
+        home: MediaQuery(
+          data: const MediaQueryData(size: Size(800, 1200)),
+          child: EmployeeDashboardView(
+            employeeName: employeeName,
+            departmentName: departmentName,
+            cabinNumber: cabinNumber,
+            deskNumber: deskNumber,
+            visits: visits,
+            onOpenDelegation: onOpenDelegation ?? () {},
+            onDecideVisit: onDecideVisit,
+            onAcknowledgeVisit: onAcknowledgeVisit,
+          ),
         ),
       ),
     );
@@ -65,7 +97,6 @@ void main() {
 
   group('EmployeeDashboardView Production Widget Tests', () {
     testWidgets('renders profile card, location badges, and delegation button', (tester) async {
-      bool delegationTapped = false;
       await tester.pumpWidget(
         buildTestableWidget(
           employeeName: 'Rahul Verma',
@@ -73,7 +104,6 @@ void main() {
           cabinNumber: '201',
           deskNumber: '5',
           visits: const [],
-          onOpenDelegation: () => delegationTapped = true,
         ),
       );
       await tester.pump();
@@ -84,24 +114,28 @@ void main() {
       expect(find.text('5'), findsOneWidget);
       expect(find.text('0'), findsWidgets);
       expect(find.text('All Caught Up!'), findsOneWidget);
-
-      await tester.tap(find.text('Delegate'));
-      expect(delegationTapped, isTrue);
+      expect(find.text('Pre-Approve'), findsOneWidget);
     });
 
     testWidgets('renders pending visitor cards and triggers action callbacks', (tester) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       int? decidedId;
       String? decidedAction;
       int? acknowledgedId;
 
       final testVisits = [
-        const IndustrialVisitModel(
+        IndustrialVisitModel(
           id: 42,
           requestNumber: 'AH-REQ-42',
           propertyId: 114,
           visitorName: 'Sanjay Gupta',
           status: IndustrialVisitStatus.awaitingHost,
           purpose: 'Vendor Discussion',
+          createdAt: DateTime.now(),
         ),
       ];
 
@@ -119,15 +153,14 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('1 Action Needed'), findsOneWidget);
       expect(find.text('Sanjay Gupta'), findsOneWidget);
-      expect(find.text('Vendor Discussion • AH-REQ-42'), findsOneWidget);
-      expect(find.text('Acknowledge'), findsOneWidget);
-      expect(find.text('Reject'), findsOneWidget);
+      expect(find.text('AH-REQ-42'), findsOneWidget);
+      expect(find.text('Ack'), findsOneWidget);
+      expect(find.text('Deny'), findsOneWidget);
       expect(find.text('Approve'), findsOneWidget);
 
-      // Tap Acknowledge
-      await tester.tap(find.text('Acknowledge'));
+      // Tap Ack
+      await tester.tap(find.text('Ack'));
       expect(acknowledgedId, equals(42));
 
       // Tap Approve
@@ -135,17 +168,22 @@ void main() {
       expect(decidedId, equals(42));
       expect(decidedAction, equals('APPROVE'));
 
-      // Tap Reject
-      await tester.tap(find.text('Reject'));
+      // Tap Deny
+      await tester.tap(find.text('Deny'));
       expect(decidedAction, equals('REJECT'));
     });
 
     testWidgets('renders delivery package and opens DeliveryActionSheet', (tester) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       int? decidedId;
       String? decidedAction;
 
       final testDelivery = [
-        const IndustrialVisitModel(
+        IndustrialVisitModel(
           id: 99,
           requestNumber: 'DEL-99',
           propertyId: 114,
@@ -153,6 +191,7 @@ void main() {
           status: IndustrialVisitStatus.awaitingHost,
           isDelivery: true,
           deliveryCompany: 'BlueDart',
+          createdAt: DateTime.now(),
         ),
       ];
 
@@ -188,13 +227,19 @@ void main() {
     });
 
     testWidgets('dispatches bloc events directly when callbacks are not supplied', (tester) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       final testVisits = [
-        const IndustrialVisitModel(
+        IndustrialVisitModel(
           id: 77,
           requestNumber: 'AH-REQ-77',
           propertyId: 114,
           visitorName: 'Priya Sen',
           status: IndustrialVisitStatus.awaitingHost,
+          createdAt: DateTime.now(),
         ),
       ];
 
@@ -216,14 +261,14 @@ void main() {
 
       verify(() => mockVisitBloc.add(const DecideVisitEvent(visitId: 77, action: 'APPROVE'))).called(1);
 
-      // Tap Acknowledge - should dispatch AcknowledgeVisitEvent to bloc
-      await tester.tap(find.text('Acknowledge'));
+      // Tap Ack - should dispatch AcknowledgeVisitEvent to bloc
+      await tester.tap(find.text('Ack'));
       await tester.pump();
 
       verify(() => mockVisitBloc.add(const AcknowledgeVisitEvent(77))).called(1);
     });
 
-    testWidgets('shows loading indicator during initial empty load', (tester) async {
+    testWidgets('shows skeleton during initial empty load', (tester) async {
       when(() => mockVisitBloc.state).thenReturn(
         const IndustrialVisitState(
           status: IndustrialVisitBlocStatus.loading,
@@ -234,7 +279,7 @@ void main() {
       await tester.pumpWidget(buildTestableWidget());
       await tester.pump();
 
-      expect(find.byType(AsmitaLoadingIndicator), findsOneWidget);
+      expect(find.byType(AsmitaSkeleton), findsWidgets);
     });
 
     testWidgets('shows success and error toasts on state changes', (tester) async {

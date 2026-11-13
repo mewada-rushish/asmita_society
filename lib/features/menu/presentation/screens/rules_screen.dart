@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
@@ -178,7 +177,6 @@ class _RulesScreenBody extends StatelessWidget {
   }
 
   Widget _buildRulesSkeleton(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AsmitaSkeleton(
       isLoading: true,
       child: ListView.builder(
@@ -190,11 +188,16 @@ class _RulesScreenBody extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
-              ),
+              border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,7 +211,7 @@ class _RulesScreenBody extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 AsmitaSkeleton.text(width: double.infinity, height: 13, borderRadius: 3),
                 const SizedBox(height: 6),
                 AsmitaSkeleton.text(width: 200, height: 13, borderRadius: 3),

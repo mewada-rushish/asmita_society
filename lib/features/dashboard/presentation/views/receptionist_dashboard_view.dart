@@ -178,9 +178,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
         }
       },
       builder: (context, state) {
-        final isLoading =
-            state.status == IndustrialVisitBlocStatus.loading &&
-            state.visits.isEmpty;
+        final isLoading = state.status == IndustrialVisitBlocStatus.loading;
 
         return _buildScaffold(context, state.visits, isLoading: isLoading);
       },
@@ -559,15 +557,13 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
   }
 
   Widget _buildReceptionistListSkeleton(BuildContext context) {
-    return Column(
-      children: List.generate(
-        3,
-        (index) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: AsmitaSkeleton.bone(
-            width: double.infinity,
-            height: 140,
-            borderRadius: BorderRadius.circular(16),
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: Column(
+        children: List.generate(
+          3,
+          (index) => AsmitaSkeleton.visitorCard(
+            margin: const EdgeInsets.only(bottom: 12),
           ),
         ),
       ),

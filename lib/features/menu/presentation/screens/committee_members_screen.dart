@@ -245,6 +245,7 @@ class CommitteeMembersScreen extends StatelessWidget {
 
   Widget _buildCommitteeSkeleton(BuildContext context) {
     return AsmitaSkeleton(
+      isLoading: true,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: GridView.builder(
@@ -262,6 +263,13 @@ class CommitteeMembersScreen extends StatelessWidget {
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
@@ -271,11 +279,11 @@ class CommitteeMembersScreen extends StatelessWidget {
                       children: [
                         AsmitaSkeleton.circle(size: 56),
                         const SizedBox(height: 12),
-                        AsmitaSkeleton.text(width: 80, height: 14),
+                        AsmitaSkeleton.text(width: 85, height: 14, borderRadius: 4),
                         const SizedBox(height: 6),
-                        AsmitaSkeleton.text(width: 50, height: 12),
+                        AsmitaSkeleton.text(width: 60, height: 12, borderRadius: 3),
                         const SizedBox(height: 6),
-                        AsmitaSkeleton.text(width: 65, height: 10),
+                        AsmitaSkeleton.text(width: 75, height: 10, borderRadius: 3),
                       ],
                     ),
                   ),
@@ -293,8 +301,9 @@ class CommitteeMembersScreen extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        AsmitaSkeleton.circle(size: 20),
-                        AsmitaSkeleton.circle(size: 20),
+                        AsmitaSkeleton.circle(size: 22),
+                        Container(width: 1, height: 20, color: Theme.of(context).dividerColor),
+                        AsmitaSkeleton.circle(size: 22),
                       ],
                     ),
                   ),

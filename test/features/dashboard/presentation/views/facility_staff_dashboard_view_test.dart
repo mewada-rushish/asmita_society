@@ -8,16 +8,26 @@ import 'package:asmita_society/features/visitor_management/data/models/industria
 import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_bloc.dart';
 import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_event.dart';
 import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_state.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/app_refresh.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
+import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
+import 'package:asmita_society/features/auth/bloc/auth_event.dart';
+import 'package:asmita_society/features/auth/bloc/auth_state.dart';
+import 'package:asmita_society/features/auth/data/models/user_model.dart';
 
 class MockIndustrialVisitBloc extends Mock implements IndustrialVisitBloc {}
+class MockAuthBloc extends Mock implements AuthBloc {}
+class FakeAuthEvent extends Fake implements AuthEvent {}
 
 void main() {
   late MockIndustrialVisitBloc mockVisitBloc;
   late StreamController<IndustrialVisitState> visitStateController;
+  late MockAuthBloc mockAuthBloc;
+  late StreamController<AuthState> authStateController;
 
   setUpAll(() {
     registerFallbackValue(const LoadIndustrialVisits());
+    registerFallbackValue(FakeAuthEvent());
   });
 
   setUp(() {
@@ -27,10 +37,28 @@ void main() {
     when(() => mockVisitBloc.state).thenReturn(const IndustrialVisitState());
     when(() => mockVisitBloc.close()).thenAnswer((_) async {});
     when(() => mockVisitBloc.add(any())).thenReturn(null);
+
+    mockAuthBloc = MockAuthBloc();
+    authStateController = StreamController<AuthState>.broadcast();
+    when(() => mockAuthBloc.stream).thenAnswer((_) => authStateController.stream);
+    when(() => mockAuthBloc.state).thenReturn(
+      AuthAuthenticated(
+        sessionRole: 'facility_staff',
+        user: UserModel(
+          userId: 10,
+          fullName: 'Facility Manager',
+          primaryRole: 'facility_staff',
+          accountType: 'app',
+        ),
+      ),
+    );
+    when(() => mockAuthBloc.close()).thenAnswer((_) async {});
+    when(() => mockAuthBloc.add(any())).thenReturn(null);
   });
 
   tearDown(() async {
     await visitStateController.close();
+    await authStateController.close();
   });
 
   Widget buildTestableWidget({
@@ -38,8 +66,11 @@ void main() {
     VoidCallback? onRefresh,
     ValueChanged<FacilityTaskItem>? onTaskToggled,
   }) {
-    return BlocProvider<IndustrialVisitBloc>.value(
-      value: mockVisitBloc,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<IndustrialVisitBloc>.value(value: mockVisitBloc),
+        BlocProvider<AuthBloc>.value(value: mockAuthBloc),
+      ],
       child: MaterialApp(
         home: FacilityStaffDashboardView(
           visits: visits,
@@ -199,8 +230,8 @@ void main() {
       );
       await tester.pump();
 
-      await tester.tap(find.byIcon(Icons.refresh));
-      await tester.pump();
+      await tester.fling(find.byType(AppRefresh), const Offset(0, 300), 1000);
+      await tester.pumpAndSettle();
 
       expect(refreshed, isTrue);
     });
@@ -217,7 +248,7 @@ void main() {
       await tester.pumpWidget(buildTestableWidget());
       await tester.pump();
 
-      expect(find.byType(AsmitaLoadingIndicator), findsOneWidget);
+      expect(find.byType(AsmitaSkeleton), findsWidgets);
 
       // Success toast
       when(() => mockVisitBloc.state).thenReturn(

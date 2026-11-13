@@ -241,26 +241,65 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
     );
   }
 
+  Widget _buildSearchSkeleton() {
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Column(
+          children: List.generate(3, (index) {
+            if (_selectedModule == 'Gate Records') {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: AsmitaSkeleton.visitorCard(showActions: false),
+              );
+            }
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Theme.of(context).dividerColor),
+              ),
+              child: Row(
+                children: [
+                  AsmitaSkeleton.circle(size: 40),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AsmitaSkeleton.text(width: 130, height: 14),
+                        const SizedBox(height: 6),
+                        AsmitaSkeleton.text(width: 170, height: 11),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            AsmitaSkeleton.bone(width: 58, height: 18, borderRadius: 6),
+                            const SizedBox(width: 8),
+                            AsmitaSkeleton.bone(width: 72, height: 18, borderRadius: 6),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  AsmitaSkeleton.bone(width: 34, height: 34, borderRadius: 8),
+                ],
+              ),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSearchResults() {
     return BlocBuilder<SearchBloc, SearchState>(
       builder: (context, state) {
         if (state is SearchLoading) {
-          return Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: List.generate(
-                4,
-                (index) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: AsmitaSkeleton.bone(
-                    width: double.infinity,
-                    height: 72,
-                    borderRadius: 12,
-                  ),
-                ),
-              ),
-            ),
-          );
+          return _buildSearchSkeleton();
         }
 
         if (state is SearchError) {
