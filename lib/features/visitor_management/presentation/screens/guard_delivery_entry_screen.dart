@@ -86,13 +86,17 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navColor = isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy;
+    final btnColor = isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Guard Delivery Intake',
           style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: AsmitaPalette.deepNavy,
+        backgroundColor: isDark ? AsmitaPalette.surfaceDark : AsmitaPalette.deepNavy,
         foregroundColor: Colors.white,
       ),
       body: BlocConsumer<IndustrialVisitBloc, IndustrialVisitState>(
@@ -124,15 +128,15 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+                    color: navColor.withValues(alpha: isDark ? 0.15 : 0.08),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AsmitaPalette.deepNavy.withValues(alpha: 0.2)),
+                    border: Border.all(color: navColor.withValues(alpha: isDark ? 0.3 : 0.2)),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.markunread_mailbox_outlined, color: AsmitaPalette.deepNavy, size: 24),
-                      SizedBox(width: 12),
-                      Expanded(
+                      Icon(Icons.markunread_mailbox_outlined, color: navColor, size: 24),
+                      const SizedBox(width: 12),
+                      const Expanded(
                         child: Text(
                           'Delivery Flow: Guard captures delivery details. Recipient will be alerted to collect at gate or allow in.',
                           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
@@ -157,7 +161,7 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
                       value: c,
                       label: c,
                       icon: c == 'Other' ? Icons.more_horiz_rounded : Icons.local_shipping_rounded,
-                      iconColor: (c == 'Swiggy' || c == 'Zomato') ? AsmitaPalette.actionRed : AsmitaPalette.deepNavy,
+                      iconColor: (c == 'Swiggy' || c == 'Zomato') ? AsmitaPalette.actionRed : navColor,
                     );
                   }).toList(),
                   onChanged: (val) => setState(() => _selectedCourier = val ?? 'Amazon'),
@@ -194,7 +198,7 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
                       label: mainName,
                       subtitle: dept,
                       icon: Icons.person_outline_rounded,
-                      iconColor: AsmitaPalette.deepNavy,
+                      iconColor: navColor,
                     );
                   }).toList(),
                   onChanged: (val) {
@@ -213,7 +217,7 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
                   decoration: InputDecoration(
                     labelText: 'Recipient Full Name',
                     hintText: 'Enter name of staff package is addressed to',
-                    prefixIcon: const Icon(Icons.person, color: AsmitaPalette.deepNavy),
+                    prefixIcon: Icon(Icons.person, color: navColor),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
@@ -224,7 +228,7 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
                   icon: const Icon(Icons.send_rounded, color: Colors.white),
                   label: const Text('Log Delivery & Alert Recipient'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AsmitaPalette.deepNavy,
+                    backgroundColor: btnColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

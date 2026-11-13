@@ -982,7 +982,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AsmitaPalette.deepNavy,
+                            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF2563EB)
+                                : AsmitaPalette.deepNavy,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -1051,7 +1053,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AsmitaPalette.deepNavy,
+                    backgroundColor: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF2563EB)
+                        : AsmitaPalette.deepNavy,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -1285,7 +1289,9 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
         child: FloatingActionButton.extended(
           heroTag: null,
           onPressed: () => _showPreApproveModal(context),
-          backgroundColor: AsmitaPalette.deepNavy,
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF2563EB)
+              : AsmitaPalette.deepNavy,
           foregroundColor: Colors.white,
           elevation: 3,
           icon: const Icon(Icons.add_rounded, size: 20),
@@ -1778,7 +1784,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
         break;
       default:
         filterLabel = _selectedFilter;
-        filterColor = AsmitaPalette.deepNavy;
+        filterColor = isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy;
         filterIcon = Icons.filter_alt_rounded;
     }
 
@@ -1843,13 +1849,13 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: const Text(
+            child: Text(
               'Show All',
               style: TextStyle(
                 fontFamily: 'Montserrat',
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: AsmitaPalette.deepNavy,
+                color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
               ),
             ),
           ),
@@ -1859,6 +1865,8 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navColor = isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy;
     String emptyTitle = 'No Visitors Found';
     String emptySubtitle =
         'There are no visitor records matching your filter criteria.';
@@ -1889,10 +1897,10 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: AsmitaPalette.deepNavy.withValues(alpha: 0.08),
+              color: navColor.withValues(alpha: isDark ? 0.15 : 0.08),
               shape: BoxShape.circle,
             ),
-            child: Icon(emptyIcon, size: 42, color: AsmitaPalette.deepNavy),
+            child: Icon(emptyIcon, size: 42, color: navColor),
           ),
           const SizedBox(height: 14),
           Text(
