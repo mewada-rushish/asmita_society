@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/constants/design_system.dart';
 import '../../../core/widgets/asmita_toast.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/navigation/app_transitions.dart';
@@ -56,6 +57,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.paddingOf(context).top;
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inputTextColor = isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark;
+    final dividerColor = isDark ? AsmitaPalette.borderGreyDark : Colors.grey.shade300;
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.primary,
@@ -181,14 +185,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                       Text(
                                         '+91',
                                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                          color: Colors.black87,
+                                          color: inputTextColor,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
                                       const SizedBox(width: 4),
-                                      const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.black87, size: 20),
+                                      Icon(Icons.keyboard_arrow_down_rounded, color: inputTextColor, size: 20),
                                       const SizedBox(width: 16),
-                                      Container(height: 24, width: 1, color: Colors.grey.shade300),
+                                      Container(height: 24, width: 1, color: dividerColor),
                                     ],
                                   ),
                                 ),
@@ -205,7 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         LengthLimitingTextInputFormatter(10),
                                       ],
                                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        color: Colors.black87,
+                                        color: inputTextColor,
                                       ),
                                       decoration: const InputDecoration(
                                         border: InputBorder.none,

@@ -379,6 +379,7 @@ class _ChatComposerState extends State<ChatComposer>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return BlocBuilder<CommunityBloc, CommunityState>(
       builder: (context, state) {
         return Column(
@@ -685,7 +686,7 @@ class _ChatComposerState extends State<ChatComposer>
               sizeFactor: _emojiAnim,
               alignment: Alignment.topCenter,
               child: Container(
-                color: Colors.white,
+                color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
                 child: RepaintBoundary(
                   child: SizedBox(
                     height: 250,
@@ -697,15 +698,15 @@ class _ChatComposerState extends State<ChatComposer>
                                 showBackspaceButton: false,
                                 showSearchViewButton: false,
                               ),
-                              categoryViewConfig: const CategoryViewConfig(
-                                backgroundColor: Colors.white,
-                                iconColor: AsmitaPalette.textLight,
-                                iconColorSelected: AsmitaPalette.deepNavy,
-                                indicatorColor: AsmitaPalette.deepNavy,
-                                dividerColor: Colors.black12,
+                              categoryViewConfig: CategoryViewConfig(
+                                backgroundColor: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                                iconColor: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                                iconColorSelected: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
+                                indicatorColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
+                                dividerColor: isDark ? AsmitaPalette.borderGreyDark : Colors.black12,
                               ),
                               emojiViewConfig: EmojiViewConfig(
-                                backgroundColor: Colors.white,
+                                backgroundColor: isDark ? AsmitaPalette.surfaceDark : Colors.white,
                                 columns: 7,
                                 emojiSizeMax:
                                     28 *
