@@ -2,7 +2,7 @@ import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import 'package:asmita_society/core/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_nav_bar.dart';
@@ -87,7 +87,7 @@ class CommitteeMembersScreen extends StatelessWidget {
               child: BlocBuilder<SocietyBloc, SocietyState>(
                 builder: (context, societyState) {
                   if (societyState is SocietyLoading || societyState is SocietyInitial) {
-                    return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+                    return _buildCommitteeSkeleton(context);
                   } else if (societyState is SocietyError) {
                     return Center(child: Text('Error: ${societyState.message}', style: TextStyle(color: Colors.red)));
                   } else if (societyState is SocietyLoaded) {
@@ -241,5 +241,69 @@ class CommitteeMembersScreen extends StatelessWidget {
     } catch (e) {
       debugPrint('Could not launch $urlString: $e');
     }
+  }
+
+  Widget _buildCommitteeSkeleton(BuildContext context) {
+    return AsmitaSkeleton(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: GridView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: 6,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            mainAxisExtent: 205,
+          ),
+          itemBuilder: (context, index) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
+              ),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: Column(
+                      children: [
+                        AsmitaSkeleton.circle(size: 56),
+                        const SizedBox(height: 12),
+                        AsmitaSkeleton.text(width: 80, height: 14),
+                        const SizedBox(height: 6),
+                        AsmitaSkeleton.text(width: 50, height: 12),
+                        const SizedBox(height: 6),
+                        AsmitaSkeleton.text(width: 65, height: 10),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(18),
+                        bottomRight: Radius.circular(18),
+                      ),
+                      border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        AsmitaSkeleton.circle(size: 20),
+                        AsmitaSkeleton.circle(size: 20),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 }

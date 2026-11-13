@@ -2,7 +2,7 @@ import 'package:asmita_society/features/menu/bloc/preferences_bloc.dart';
 import 'package:asmita_society/features/menu/bloc/preferences_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:flutter/cupertino.dart';
@@ -184,7 +184,7 @@ class SettingsScreen extends ConsumerWidget {
               ],
             );
           },
-                loading: () => Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28)),
+                loading: () => _buildSettingsSkeleton(context),
                 error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
               ),
             ),
@@ -398,7 +398,16 @@ class SettingsScreen extends ConsumerWidget {
                       },
                       style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
                       child: isLoading 
-                        ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Theme.of(context).colorScheme.surface, strokeWidth: 2))
+                        ? SizedBox(
+                            width: 20, 
+                            height: 20, 
+                            child: Center(
+                              child: AsmitaSkeleton(
+                                isLoading: true,
+                                child: AsmitaSkeleton.circle(size: 16),
+                              ),
+                            ),
+                          )
                         : Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
                     ),
                   ],
@@ -714,7 +723,16 @@ class SettingsScreen extends ConsumerWidget {
                       },
                       style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
                       child: isLoading 
-                        ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Theme.of(context).colorScheme.surface, strokeWidth: 2))
+                        ? SizedBox(
+                            width: 20, 
+                            height: 20, 
+                            child: Center(
+                              child: AsmitaSkeleton(
+                                isLoading: true,
+                                child: AsmitaSkeleton.circle(size: 16),
+                              ),
+                            ),
+                          )
                         : Text('Save', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
                     ),
                   ],
@@ -723,6 +741,143 @@ class SettingsScreen extends ConsumerWidget {
             ),
           );
         }
+      ),
+    );
+  }
+
+  Widget _buildSettingsSkeleton(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Section 1: Preferences
+            AsmitaSkeleton.text(width: 110, height: 14, borderRadius: 3),
+            const SizedBox(height: 10),
+            Container(
+              decoration: BoxDecoration(
+                color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                ),
+              ),
+              child: Column(
+                children: List.generate(
+                  3,
+                  (index) => Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      border: index < 2
+                          ? Border(
+                              bottom: BorderSide(
+                                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.1),
+                              ),
+                            )
+                          : null,
+                    ),
+                    child: Row(
+                      children: [
+                        AsmitaSkeleton.circle(size: 24),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: AsmitaSkeleton.text(width: 130, height: 14, borderRadius: 4),
+                        ),
+                        AsmitaSkeleton.pill(width: 44, height: 24),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Section 2: Security
+            AsmitaSkeleton.text(width: 130, height: 14, borderRadius: 3),
+            const SizedBox(height: 10),
+            Container(
+              decoration: BoxDecoration(
+                color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                ),
+              ),
+              child: Column(
+                children: List.generate(
+                  2,
+                  (index) => Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      border: index < 1
+                          ? Border(
+                              bottom: BorderSide(
+                                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.1),
+                              ),
+                            )
+                          : null,
+                    ),
+                    child: Row(
+                      children: [
+                        AsmitaSkeleton.circle(size: 24),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: AsmitaSkeleton.text(width: 120, height: 14, borderRadius: 4),
+                        ),
+                        AsmitaSkeleton.pill(width: 44, height: 24),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Section 3: Account
+            AsmitaSkeleton.text(width: 90, height: 14, borderRadius: 3),
+            const SizedBox(height: 10),
+            Container(
+              decoration: BoxDecoration(
+                color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                ),
+              ),
+              child: Column(
+                children: List.generate(
+                  2,
+                  (index) => Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      border: index < 1
+                          ? Border(
+                              bottom: BorderSide(
+                                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.1),
+                              ),
+                            )
+                          : null,
+                    ),
+                    child: Row(
+                      children: [
+                        AsmitaSkeleton.circle(size: 24),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: AsmitaSkeleton.text(width: 110, height: 14, borderRadius: 4),
+                        ),
+                        AsmitaSkeleton.bone(width: 14, height: 14, borderRadius: 3),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

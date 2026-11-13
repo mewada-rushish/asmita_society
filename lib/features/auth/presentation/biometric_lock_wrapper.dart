@@ -4,6 +4,7 @@ import 'package:asmita_society/features/menu/bloc/preferences_bloc.dart';
 import 'package:asmita_society/features/menu/bloc/preferences_state.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 
 class BiometricLockWrapper extends StatefulWidget {
   final Widget child;
@@ -121,7 +122,7 @@ class _BiometricLockWrapperState extends State<BiometricLockWrapper> {
                   ),
                   const SizedBox(height: 48),
                   if (_isAuthenticating)
-                    const CircularProgressIndicator()
+                    AsmitaSkeleton.circle(size: 36)
                   else
                     ElevatedButton.icon(
                       onPressed: _authenticate,

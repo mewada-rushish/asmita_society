@@ -228,66 +228,154 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
   }
 
   Widget _buildEmployeeSkeleton(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 180),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Hero Employee ID card bone
-          AsmitaSkeleton.bone(
-            width: double.infinity,
-            height: 200,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          const SizedBox(height: 14),
-          // 4 Action boxes bone
-          Row(
-            children: List.generate(
-              4,
-              (index) => Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: index < 3 ? 8.0 : 0),
-                  child: Column(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 180),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 1. Employee ID Hero Card Skeleton
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Row(
                     children: [
-                      AsmitaSkeleton.bone(
-                        width: 56,
-                        height: 56,
-                        borderRadius: BorderRadius.circular(16),
+                      AsmitaSkeleton.circle(size: 56),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AsmitaSkeleton.text(width: 140, height: 16, borderRadius: 4),
+                            const SizedBox(height: 6),
+                            AsmitaSkeleton.pill(width: 85, height: 20),
+                            const SizedBox(height: 6),
+                            AsmitaSkeleton.text(width: 110, height: 12, borderRadius: 3),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 6),
-                      AsmitaSkeleton.bone(
-                        width: 48,
-                        height: 12,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+                      AsmitaSkeleton.bone(width: 56, height: 56, borderRadius: 10),
                     ],
+                  ),
+                  const SizedBox(height: 14),
+                  Divider(color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15)),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      AsmitaSkeleton.pill(width: 100, height: 24),
+                      AsmitaSkeleton.pill(width: 70, height: 24),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // 2. 4 Quick Actions Grid
+            Row(
+              children: List.generate(
+                4,
+                (index) => Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(right: index < 3 ? 8.0 : 0),
+                    child: Column(
+                      children: [
+                        AsmitaSkeleton.bone(
+                          width: 56,
+                          height: 56,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        const SizedBox(height: 6),
+                        AsmitaSkeleton.text(
+                          width: 48,
+                          height: 11,
+                          borderRadius: 3,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          // Tab bar bone
-          AsmitaSkeleton.bone(
-            width: double.infinity,
-            height: 44,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          const SizedBox(height: 16),
-          // Visitor Card skeletons
-          ...List.generate(
-            3,
-            (index) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: AsmitaSkeleton.bone(
-                width: double.infinity,
-                height: 150,
-                borderRadius: BorderRadius.circular(16),
+            const SizedBox(height: 16),
+
+            // 3. Tab bar skeleton
+            Container(
+              height: 44,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: isDark ? AsmitaPalette.surfaceDark : Colors.grey.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: List.generate(
+                  3,
+                  (index) => Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: AsmitaSkeleton.bone(
+                        height: 36,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+
+            // 4. Visitor Card skeletons
+            ...List.generate(
+              3,
+              (index) => Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    AsmitaSkeleton.circle(size: 48),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AsmitaSkeleton.text(width: 130, height: 15, borderRadius: 4),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              AsmitaSkeleton.pill(width: 75, height: 20),
+                              const SizedBox(width: 8),
+                              AsmitaSkeleton.text(width: 60, height: 12, borderRadius: 3),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    AsmitaSkeleton.pill(width: 70, height: 26),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

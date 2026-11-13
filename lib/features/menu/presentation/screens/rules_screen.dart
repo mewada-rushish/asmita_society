@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/features/menu/bloc/society_bloc.dart';
@@ -61,7 +62,7 @@ class _RulesScreenBody extends StatelessWidget {
               child: BlocBuilder<SocietyBloc, SocietyState>(
                 builder: (context, societyState) {
                   if (societyState is SocietyLoading || societyState is SocietyInitial) {
-                    return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+                    return _buildRulesSkeleton(context);
                   } else if (societyState is SocietyError) {
                     return Center(
                       child: Column(
@@ -172,6 +173,49 @@ class _RulesScreenBody extends StatelessWidget {
             style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodyMedium?.color, height: 1.5),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRulesSkeleton(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: 5,
+        physics: const NeverScrollableScrollPhysics(),
+        itemBuilder: (context, index) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    AsmitaSkeleton.bone(width: 40, height: 40, borderRadius: 10),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: AsmitaSkeleton.text(width: 160, height: 16, borderRadius: 4),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                AsmitaSkeleton.text(width: double.infinity, height: 13, borderRadius: 3),
+                const SizedBox(height: 6),
+                AsmitaSkeleton.text(width: 200, height: 13, borderRadius: 3),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
