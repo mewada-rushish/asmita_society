@@ -81,4 +81,55 @@ class AsmitaSkeleton extends StatelessWidget {
       ),
     );
   }
+
+  /// Circular bone for avatars, icon placeholders, buttons
+  static Widget circle({
+    required double size,
+    EdgeInsetsGeometry? margin,
+  }) {
+    return Container(
+      width: size,
+      height: size,
+      margin: margin,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+      ),
+    );
+  }
+
+  /// Text bar bone for typography placeholders
+  static Widget text({
+    double? width,
+    required double height,
+    double borderRadius = 4.0,
+    EdgeInsetsGeometry? margin,
+  }) {
+    return Container(
+      width: width,
+      height: height,
+      margin: margin,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(borderRadius),
+      ),
+    );
+  }
+
+  /// Pill badge bone for tags, categories, and status chips
+  static Widget pill({
+    required double width,
+    required double height,
+    EdgeInsetsGeometry? margin,
+  }) {
+    return Container(
+      width: width,
+      height: height,
+      margin: margin,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(height / 2),
+      ),
+    );
+  }
 }

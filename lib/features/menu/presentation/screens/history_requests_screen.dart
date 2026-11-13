@@ -5,7 +5,7 @@ import '../../bloc/historyrequest_bloc.dart';
 import '../../bloc/historyrequest_event.dart';
 import '../../bloc/historyrequest_state.dart';
 import '../../data/models/history_request_model.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/features/menu/data/repositories/history_request_repository.dart';
 import 'package:asmita_society/core/network/dio_client.dart';
 import 'package:asmita_society/core/security/secure_storage_service.dart';
@@ -55,7 +55,7 @@ class HistoryRequestsScreen extends StatelessWidget {
       body: BlocBuilder<HistoryRequestBloc, HistoryRequestState>(
         builder: (context, state) {
           if (state is HistoryRequestLoading) {
-            return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+            return _buildHistoryRequestsSkeleton(context);
           } else if (state is HistoryRequestError) {
             return Center(child: Text('Error: ${state.message}', style: textTheme.bodyLarge?.copyWith(color: Colors.red)));
           } else if (state is HistoryRequestLoaded) {
@@ -207,6 +207,58 @@ class HistoryRequestsScreen extends StatelessWidget {
           },
         );
       }
+    );
+  }
+
+  Widget _buildHistoryRequestsSkeleton(BuildContext context) {
+    return AsmitaSkeleton(
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: 5,
+        itemBuilder: (context, index) {
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AsmitaSkeleton.text(width: double.infinity, height: 16),
+                            const SizedBox(height: 4),
+                            AsmitaSkeleton.text(width: 140, height: 14),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      AsmitaSkeleton.pill(width: 65, height: 22),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  AsmitaSkeleton.text(width: 120, height: 12),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

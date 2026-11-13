@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'asmita_facility_booking_wizard.dart';
 import 'package:asmita_society/core/widgets/asmita_dialog.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
@@ -45,7 +45,7 @@ class FacilityBookings extends StatelessWidget {
     return BlocBuilder<AmenitiesBloc, AmenitiesState>(
       builder: (context, state) {
         if (state.status == AmenitiesStatus.loading && state.amenities.isEmpty) {
-          return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+          return _buildFacilitiesSkeleton(context);
         }
         
         final amenities = state.amenities;
@@ -210,6 +210,54 @@ class FacilityBookings extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildFacilitiesSkeleton(BuildContext context) {
+    return AsmitaSkeleton(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AsmitaSkeleton.text(width: 130, height: 16),
+          const SizedBox(height: 12),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1.35,
+            ),
+            itemCount: 4,
+            itemBuilder: (context, index) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AsmitaSkeleton.circle(size: 24),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AsmitaSkeleton.text(width: 80, height: 13),
+                        const SizedBox(height: 4),
+                        AsmitaSkeleton.text(width: 50, height: 11),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/community_bloc.dart';
 import '../../bloc/community_event.dart';
@@ -93,9 +93,24 @@ class _ContactPickerBottomSheetState extends State<ContactPickerBottomSheet> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return SizedBox(
-        height: 200,
-        child: Center(
-          child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28),
+        height: 280,
+        child: AsmitaSkeleton(
+          child: ListView.separated(
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 4,
+            separatorBuilder: (context, index) => Divider(color: Theme.of(context).dividerColor, height: 1),
+            itemBuilder: (context, index) {
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: AsmitaSkeleton.circle(size: 40),
+                title: AsmitaSkeleton.text(width: 140, height: 14),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: AsmitaSkeleton.text(width: 100, height: 12),
+                ),
+              );
+            },
+          ),
         ),
       );
     }

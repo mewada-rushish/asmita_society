@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/features/community/data/models/chat_message_model.dart';
 import '../widgets/swipe_to_reply.dart';
 import 'text_message_bubble.dart';
@@ -255,14 +255,7 @@ class MessageBubbleFactory extends StatelessWidget {
                                     size: 12,
                                   )
                                 else if (messageId.startsWith('temp_'))
-                                  SizedBox(
-                                    height: 12,
-                                    width: 12,
-                                    child: AsmitaLoadingIndicator(
-                                        color: Theme.of(context).colorScheme.primary,
-                                        size: 12,
-                                    ),
-                                  )
+                                  AsmitaSkeleton.circle(size: 12)
                                 else
                                   Icon(
                                     Icons.done_all_rounded,

@@ -5,7 +5,7 @@ import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/utils/property_role_resolver.dart';
 import '../../../../core/widgets/asmita_animated_refresh.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
@@ -554,15 +554,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                   const SizedBox(height: 14),
 
                   if (_isLoadingDepartments)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Center(
-                        child: AsmitaLoadingIndicator(
-                          color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
-                          size: 24,
-                        ),
-                      ),
-                    )
+                    _buildDepartmentListSkeleton()
                   else if (_dynamicDepartments.isNotEmpty)
                     ..._dynamicDepartments.map((dept) {
                       final name = (dept['department_name'] ?? dept['name'] ?? 'Department').toString();
@@ -907,6 +899,53 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
       ),
     );
   }
+
+  Widget _buildDepartmentListSkeleton() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AsmitaSkeleton(
+      child: Column(
+        children: List.generate(4, (index) => Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark ? const Color(0xFF334155) : Theme.of(context).dividerColor,
+                width: 1.2,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AsmitaSkeleton.text(width: 160, height: 14),
+                      const SizedBox(height: 6),
+                      AsmitaSkeleton.text(width: 100, height: 12),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                AsmitaSkeleton.circle(size: 16),
+              ],
+            ),
+          ),
+        )),
+      ),
+    );
+  }
 }
 
 class _DepartmentEmployeesSheet extends StatefulWidget {
@@ -1070,12 +1109,7 @@ class _DepartmentEmployeesSheetState extends State<_DepartmentEmployeesSheet> {
           const SizedBox(height: 14),
           Expanded(
             child: _isLoading
-                ? const Center(
-                    child: AsmitaLoadingIndicator(
-                      color: AsmitaPalette.deepNavy,
-                      size: 28,
-                    ),
-                  )
+                ? _buildStaffListSkeleton(context, isDark)
                 : displayed.isEmpty
                     ? Center(
                         child: Text(
@@ -1223,6 +1257,46 @@ class _DepartmentEmployeesSheetState extends State<_DepartmentEmployeesSheet> {
                       ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStaffListSkeleton(BuildContext context, bool isDark) {
+    return AsmitaSkeleton(
+      child: ListView.separated(
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 5,
+        separatorBuilder: (_, _) => const SizedBox(height: 8),
+        itemBuilder: (context, index) {
+          return Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
+              ),
+            ),
+            child: Row(
+              children: [
+                AsmitaSkeleton.circle(size: 40),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AsmitaSkeleton.text(width: 130, height: 14),
+                      const SizedBox(height: 6),
+                      AsmitaSkeleton.text(width: 90, height: 11),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                AsmitaSkeleton.pill(width: 50, height: 22),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

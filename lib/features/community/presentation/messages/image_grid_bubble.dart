@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/security/secure_storage_service.dart';
-import '../../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../../core/widgets/app_skeleton.dart';
 import '../../data/models/chat_message_model.dart';
 import '../../bloc/community_bloc.dart';
 import '../../bloc/community_event.dart';
@@ -262,16 +262,7 @@ class ImageGridBubble extends StatelessWidget {
                                   if (displayMessages.first.id.startsWith(
                                     'temp_',
                                   ))
-                                    SizedBox(
-                                      height: 10,
-                                      width: 10,
-                                      child: AsmitaLoadingIndicator(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.surface,
-                                        size: 10,
-                                      ),
-                                    )
+                                    AsmitaSkeleton.circle(size: 10)
                                   else
                                     Icon(
                                       Icons.done_all_rounded,

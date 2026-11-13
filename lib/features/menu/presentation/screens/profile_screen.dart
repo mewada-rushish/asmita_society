@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
@@ -128,8 +129,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
-                if (isLoading)
-                  const LinearProgressIndicator(),
                 Expanded(
                   child: AsmitaPullToRefresh(
                     onRefresh: () async {
@@ -138,7 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                     padding: const EdgeInsets.all(16),
                     child: user == null
-                        ? const Center(child: Text('Failed to load profile data.'))
+                        ? _buildProfileSkeleton(context)
                         : Column(
                             children: [
                               _buildProfileHeader(textTheme, user),
@@ -278,8 +277,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
           elevation: 0,
         ),
         child: isLoading
-            ? SizedBox(height: 20, width: 20, child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.surface, size: 20))
+            ? SizedBox(
+                height: 20,
+                width: 20,
+                child: Center(
+                  child: AsmitaSkeleton(
+                    isLoading: true,
+                    child: AsmitaSkeleton.circle(size: 16),
+                  ),
+                ),
+              )
             : Text('Save Profile', style: textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.w600)),
+      ),
+    );
+  }
+
+  Widget _buildProfileSkeleton(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: Column(
+        children: [
+          // Profile Header Skeleton
+          AsmitaSkeleton.circle(size: 96),
+          const SizedBox(height: 16),
+          AsmitaSkeleton.text(width: 150, height: 18, borderRadius: 4),
+          const SizedBox(height: 8),
+          AsmitaSkeleton.pill(width: 110, height: 24),
+          const SizedBox(height: 24),
+
+          // Details Section Skeleton
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+              ),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: List.generate(
+                4,
+                (index) => Padding(
+                  padding: EdgeInsets.only(bottom: index < 3 ? 16.0 : 0),
+                  child: Row(
+                    children: [
+                      AsmitaSkeleton.circle(size: 24),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AsmitaSkeleton.text(width: 60, height: 11, borderRadius: 3),
+                            const SizedBox(height: 6),
+                            AsmitaSkeleton.text(width: 140, height: 14, borderRadius: 4),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
