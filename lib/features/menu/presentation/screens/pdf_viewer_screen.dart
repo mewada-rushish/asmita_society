@@ -5,7 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 
 class PdfViewerScreen extends StatefulWidget {
@@ -114,20 +114,35 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
                   if (_errorMessage == null)
                     WebViewWidget(controller: _webViewController),
                   if (_isLoading)
-                    Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          AsmitaLoadingIndicator(
-                            color: theme.colorScheme.primary,
-                            size: 36,
+                    Positioned.fill(
+                      child: Container(
+                        color: theme.scaffoldBackgroundColor,
+                        padding: const EdgeInsets.all(24),
+                        child: AsmitaSkeleton(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              AsmitaSkeleton.text(width: 220, height: 20),
+                              const SizedBox(height: 16),
+                              AsmitaSkeleton.text(width: double.infinity, height: 14),
+                              const SizedBox(height: 8),
+                              AsmitaSkeleton.text(width: double.infinity, height: 14),
+                              const SizedBox(height: 8),
+                              AsmitaSkeleton.text(width: 280, height: 14),
+                              const SizedBox(height: 24),
+                              Expanded(
+                                child: Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.surface,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: theme.dividerColor),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Rendering document...',
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   if (_errorMessage != null)

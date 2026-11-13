@@ -5,7 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/features/menu/bloc/pets_bloc.dart';
 import 'package:asmita_society/features/menu/bloc/pets_event.dart';
 import 'package:asmita_society/features/menu/bloc/pets_state.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/constants/design_system.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
@@ -90,7 +91,7 @@ class PetsScreen extends StatelessWidget {
               child: BlocBuilder<PetsBloc, PetsState>(
                 builder: (context, state) {
                   if (state is PetsLoading) {
-                    return Center(child: AsmitaLoadingIndicator(color: Theme.of(context).colorScheme.primary, size: 28));
+                    return _buildPetsSkeleton(context);
                   } else if (state is PetsError) {
                     return Center(child: Text('Error: ${state.message}', style: textTheme.bodyLarge?.copyWith(color: Colors.red)));
                   } else if (state is PetsLoaded) {
@@ -140,6 +141,48 @@ class PetsScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPetsSkeleton(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: GridView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.80,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+        ),
+        itemCount: 6,
+        itemBuilder: (context, index) {
+          return Container(
+            decoration: BoxDecoration(
+              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+              ),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AsmitaSkeleton.circle(size: 64),
+                const SizedBox(height: 12),
+                AsmitaSkeleton.text(width: 80, height: 15, borderRadius: 4),
+                const SizedBox(height: 6),
+                AsmitaSkeleton.pill(width: 65, height: 20),
+                const SizedBox(height: 6),
+                AsmitaSkeleton.pill(width: 55, height: 18),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -461,14 +504,7 @@ class PetsScreen extends StatelessWidget {
                         }
                       },
                       child: isLoading 
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: AsmitaLoadingIndicator(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  size: 20,
-                                ),
-                            )
+                          ? AsmitaSkeleton.circle(size: 20)
                           : Text(pet == null ? 'Save Pet' : 'Update Pet', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.surface)),
                     ),
                   ),

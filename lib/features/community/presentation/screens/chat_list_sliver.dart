@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/widgets/asmita_loading_indicator.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../../data/models/chat_message_model.dart';
 import '../messages/message_bubble_factory.dart';
 import '../messages/image_grid_bubble.dart';
@@ -86,14 +86,25 @@ class ChatListSliver extends StatelessWidget {
         itemBuilder: (context, index) {
           if (index == groupedMessages.length) {
             return Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(
-                child: SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: AsmitaLoadingIndicator(
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 24,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: AsmitaSkeleton(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Theme.of(context).dividerColor),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AsmitaSkeleton.circle(size: 24),
+                        const SizedBox(width: 10),
+                        AsmitaSkeleton.text(width: 110, height: 14),
+                      ],
+                    ),
                   ),
                 ),
               ),
