@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
+import 'package:asmita_society/core/widgets/app_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import '../../bloc/support_bloc.dart';
 import '../../data/repositories/support_repository.dart';
@@ -94,19 +95,28 @@ class AllTicketsScreen extends StatelessWidget {
               );
             }
             
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<SupportBloc>().add(const LoadSupport());
-              },
-              child: ListView.separated(
-                padding: const EdgeInsets.all(16),
-                itemCount: tickets.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final t = tickets[index];
-                  return _buildTicketCard(context, t, textTheme);
-                },
+            return CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
               ),
+              slivers: [
+                AppRefresh.sliver(
+                  onRefresh: () async {
+                    context.read<SupportBloc>().add(const LoadSupport());
+                  },
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: SliverList.separated(
+                    itemCount: tickets.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final t = tickets[index];
+                      return _buildTicketCard(context, t, textTheme);
+                    },
+                  ),
+                ),
+              ],
             );
           }
           return const SizedBox.shrink();

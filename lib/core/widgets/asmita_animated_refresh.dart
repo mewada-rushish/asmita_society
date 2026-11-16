@@ -1,11 +1,8 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../constants/design_system.dart';
-import 'asmita_loading_indicator.dart';
 
-/// A premium, globally reusable animated pull-to-refresh sliver.
-/// Utilizes native Cupertino physics with haptic feedback and custom branded visuals.
+/// Centralized native pull-to-refresh sliver for AsmitA Society.
+/// Matches the standard iOS/Cupertino activity spinner used in Visitor History and Passes.
 class AsmitaAnimatedRefresh extends StatefulWidget {
   final Future<void> Function() onRefresh;
   final Color? color;
@@ -21,95 +18,12 @@ class AsmitaAnimatedRefresh extends StatefulWidget {
 }
 
 class _AsmitaAnimatedRefreshState extends State<AsmitaAnimatedRefresh> {
-  bool _hasArmedHapticFired = false;
-  bool _isClosing = false;
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final primaryBrandColor = widget.color ?? (isDark ? const Color(0xFFEF4444) : AsmitaPalette.actionRed);
-
     return CupertinoSliverRefreshControl(
       onRefresh: () async {
-        HapticFeedback.mediumImpact();
-        try {
-          await widget.onRefresh();
-        } finally {
-          if (mounted) {
-            setState(() {
-              _isClosing = true;
-            });
-          }
-        }
-      },
-      refreshTriggerPullDistance: 70.0,
-      refreshIndicatorExtent: 56.0,
-      builder: (context, refreshState, pulledExtent, refreshTriggerPullDistance, refreshIndicatorExtent) {
-        final double percentageComplete = (pulledExtent / refreshTriggerPullDistance).clamp(0.0, 1.0);
-
-        // Reset closing flag when user starts dragging again or goes completely inactive
-        if (refreshState == RefreshIndicatorMode.inactive || (refreshState == RefreshIndicatorMode.drag && pulledExtent <= 0.0)) {
-          _isClosing = false;
-        }
-
-        // Fire single light haptic feedback once threshold is armed
-        if (refreshState == RefreshIndicatorMode.armed && !_hasArmedHapticFired) {
-          _hasArmedHapticFired = true;
-          HapticFeedback.selectionClick();
-        } else if (refreshState == RefreshIndicatorMode.drag || refreshState == RefreshIndicatorMode.inactive) {
-          _hasArmedHapticFired = false;
-        }
-
-        final isRefreshing = refreshState == RefreshIndicatorMode.armed || refreshState == RefreshIndicatorMode.refresh;
-        final isDone = refreshState == RefreshIndicatorMode.done || refreshState == RefreshIndicatorMode.inactive;
-
-        // When closing or done, completely hide so it NEVER flashes during bounce-back or scroll settle.
-        // Also require at least 25% pull distance before showing pulling indicator.
-        if (_isClosing || isDone || isRefreshing == false && (refreshState != RefreshIndicatorMode.drag || percentageComplete < 0.25)) {
-          return const SizedBox.shrink();
-        }
-
-        return Center(
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
-            padding: const EdgeInsets.all(7.0),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // 1. Pulling State: Spins and scales proportionally with user gesture
-                if (!isRefreshing)
-                  Transform.rotate(
-                    angle: percentageComplete * 6.283185307179586,
-                    child: Opacity(
-                      opacity: (percentageComplete * 1.3).clamp(0.2, 1.0),
-                      child: SizedBox(
-                        width: 22 * (0.65 + (0.35 * percentageComplete)),
-                        height: 22 * (0.65 + (0.35 * percentageComplete)),
-                        child: CircularProgressIndicator(
-                          value: percentageComplete,
-                          strokeWidth: 2.2,
-                          strokeCap: StrokeCap.round,
-                          valueColor: AlwaysStoppedAnimation<Color>(primaryBrandColor),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                // 2. Armed & Refreshing State: Continuous spinning branded preloader
-                if (isRefreshing)
-                  AsmitaLoadingIndicator(
-                    color: primaryBrandColor,
-                    size: 24,
-                  ),
-              ],
-            ),
-          ),
-        );
+        HapticFeedback.lightImpact();
+        await widget.onRefresh();
       },
     );
   }

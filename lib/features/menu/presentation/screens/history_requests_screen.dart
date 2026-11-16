@@ -5,6 +5,7 @@ import '../../bloc/historyrequest_bloc.dart';
 import '../../bloc/historyrequest_event.dart';
 import '../../bloc/historyrequest_state.dart';
 import '../../data/models/history_request_model.dart';
+import 'package:asmita_society/core/widgets/app_refresh.dart';
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/features/menu/data/repositories/history_request_repository.dart';
 import 'package:asmita_society/core/network/dio_client.dart';
@@ -64,18 +65,27 @@ class HistoryRequestsScreen extends StatelessWidget {
               return const Center(child: Text('No access requests found.'));
             }
 
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<HistoryRequestBloc>().add(const LoadHistoryRequest());
-              },
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: requests.length,
-                itemBuilder: (context, index) {
-                  final req = requests[index];
-                  return _buildRequestCard(context, textTheme, req);
-                },
+            return CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
               ),
+              slivers: [
+                AppRefresh.sliver(
+                  onRefresh: () async {
+                    context.read<HistoryRequestBloc>().add(const LoadHistoryRequest());
+                  },
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: SliverList.builder(
+                    itemCount: requests.length,
+                    itemBuilder: (context, index) {
+                      final req = requests[index];
+                      return _buildRequestCard(context, textTheme, req);
+                    },
+                  ),
+                ),
+              ],
             );
           }
           return const SizedBox.shrink();

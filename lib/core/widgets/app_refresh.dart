@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../constants/design_system.dart';
 
 /// Centralized, standard pull-to-refresh wrapper for AsmitA Society.
 ///
@@ -82,11 +80,6 @@ class _AppRefreshState extends State<AppRefresh> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final effectiveColor = widget.color ?? AsmitaPalette.deepNavy;
-    final effectiveBg = widget.backgroundColor ??
-        (isDark ? const Color(0xFF1E293B) : Colors.white);
-
     if (widget.isSliver) {
       return CupertinoSliverRefreshControl(
         onRefresh: _handleRefresh,
@@ -97,19 +90,18 @@ class _AppRefreshState extends State<AppRefresh> {
         ? Padding(padding: widget.padding!, child: widget.child!)
         : widget.child!;
 
-    return RefreshIndicator.adaptive(
-      onRefresh: _handleRefresh,
-      color: effectiveColor,
-      backgroundColor: effectiveBg,
-      displacement: widget.displacement,
-      edgeOffset: widget.edgeOffset,
-      notificationPredicate: widget.notificationPredicate ?? defaultScrollNotificationPredicate,
-      child: body is ScrollView
-          ? body
-          : SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: body,
-            ),
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
+      slivers: [
+        CupertinoSliverRefreshControl(
+          onRefresh: _handleRefresh,
+        ),
+        SliverToBoxAdapter(
+          child: body,
+        ),
+      ],
     );
   }
 }
