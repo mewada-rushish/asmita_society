@@ -400,9 +400,13 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
       if (!PropertyRoleResolver.canDelegate(currentUser)) {
         if (mounted) {
+          final normalizedRole = PropertyRoleResolver.normalizeRole(currentUser?.primaryRole);
+          final errorMsg = normalizedRole == 'receptionist'
+              ? 'Gate receptionists handle perimeter intake and cannot delegate approvals.'
+              : 'Your current role or profile permissions do not have visitor delegation authority.';
           AsmitaToast.show(
             context,
-            message: 'Gate receptionists handle perimeter intake and cannot delegate approvals.',
+            message: errorMsg,
             type: AsmitaToastType.error,
           );
         }
