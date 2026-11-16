@@ -421,7 +421,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         if (mounted) {
           AsmitaToast.show(
             context,
-            message: 'Visitor delegation has been deactivated. Approvals will route directly to you.',
+            message: 'Delegation deactivated.',
             type: AsmitaToastType.success,
           );
           Navigator.pop(context, true);
@@ -443,15 +443,19 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
       final delegate = _candidates.firstWhere(
         (s) => s['id'] == _selectedDelegateId,
-        orElse: () => {'name': 'Selected Colleague'},
+        orElse: () => {'name': 'Colleague'},
       );
 
-      final msg = 'Approvals sent to ${delegate['name']}.';
+      final msg = 'Delegated to ${delegate['name']}.';
 
       if (mounted) {
+        final serverMsg = response.data?['message']?.toString();
+        final shortMsg = (serverMsg != null && serverMsg.length <= 30)
+            ? serverMsg
+            : msg;
         AsmitaToast.show(
           context,
-          message: response.data?['message'] ?? msg,
+          message: shortMsg,
           type: AsmitaToastType.success,
         );
         Navigator.pop(context, true);
