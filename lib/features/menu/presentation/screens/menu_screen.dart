@@ -274,38 +274,23 @@ class MenuScreen extends StatelessWidget {
                 initials = parts[0][0].toUpperCase();
               }
 
+              final userDesig = user.designation.trim();
+              final displayRole = userDesig.isNotEmpty
+                  ? userDesig
+                  : (user.primaryRole.isNotEmpty ? user.primaryRole : userRole);
+
               if (isGuard) {
-                roleText = 'Gate 1 • SECURITY CONTROL';
+                roleText = 'SECURITY CONTROL';
               } else if (isIndustrial) {
-                if (user.flatMappings.isNotEmpty) {
-                  final flat = user.flatMappings.first;
-                  final tower = flat.towerName.isNotEmpty ? '${flat.towerName} • ' : '';
-                  if (normalized == 'director') {
-                    roleText = 'Executive Suite $tower${flat.flatNumber} • DIRECTOR';
-                  } else if (normalized == 'receptionist') {
-                    roleText = 'Front Desk $tower${flat.flatNumber} • RECEPTIONIST';
-                  } else if (normalized == 'facility') {
-                    roleText = 'Logistics Dock $tower${flat.flatNumber} • FACILITY';
-                  } else {
-                    roleText = 'Workplace $tower${flat.flatNumber} • ${userRole.toUpperCase()}';
-                  }
-                } else {
-                  if (normalized == 'director') {
-                    roleText = 'Executive HQ • DIRECTOR';
-                  } else if (normalized == 'receptionist') {
-                    roleText = 'Visitor Front Desk • RECEPTIONIST';
-                  } else if (normalized == 'facility') {
-                    roleText = 'Facility & Logistics • FACILITY';
-                  } else {
-                    roleText = 'Corporate Desk • ${userRole.toUpperCase()}';
-                  }
-                }
+                roleText = displayRole.toUpperCase();
               } else {
                 // Residential
                 if (user.flatMappings.isNotEmpty) {
                   final flat = user.flatMappings.first;
                   final tower = flat.towerName.isNotEmpty ? '${flat.towerName}-' : '';
-                  roleText = 'Flat $tower${flat.flatNumber} • ${userRole.toUpperCase()}';
+                  roleText = 'Flat $tower${flat.flatNumber} • ${displayRole.toUpperCase()}';
+                } else {
+                  roleText = displayRole.toUpperCase();
                 }
               }
             }
