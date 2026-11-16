@@ -166,7 +166,7 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet> {
   }
 
   List<Map<String, dynamic>> _getAvailableHotlineCategories() {
-    return _tabs.map((tab) {
+    return _tabs.map<Map<String, dynamic>>((tab) {
       final items = _filterHotlines(tab);
       IconData icon;
       switch (tab) {
@@ -184,7 +184,7 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet> {
           icon = Icons.grid_view_rounded;
           break;
       }
-      return {
+      return <String, dynamic>{
         'label': tab,
         'count': items.length,
         'icon': icon,
@@ -194,8 +194,8 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet> {
 
   Widget _buildCategoryDropdown(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final categories = _getAvailableHotlineCategories();
-    final currentItem = categories.firstWhere(
+    final List<Map<String, dynamic>> categories = _getAvailableHotlineCategories();
+    final Map<String, dynamic> currentItem = categories.firstWhere(
       (c) => c['label'] == _selectedCategory,
       orElse: () => categories.first,
     );
