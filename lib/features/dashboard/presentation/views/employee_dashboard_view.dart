@@ -93,11 +93,11 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         } catch (_) {}
       });
 
-      // Periodic auto-sync so newly arrived walk-ins & decisions reflect automatically
+      // Periodic background sync so newly arrived walk-ins & decisions reflect silently without flashes
       _autoSyncTimer = Timer.periodic(const Duration(seconds: 15), (_) {
         if (mounted) {
           try {
-            context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+            context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits(isSilent: true));
           } catch (_) {}
         }
       });

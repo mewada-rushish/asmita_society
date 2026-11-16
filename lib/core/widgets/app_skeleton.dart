@@ -42,7 +42,7 @@ class AsmitaSkeleton extends StatelessWidget {
     return Semantics(
       label: 'Loading content',
       child: ExcludeSemantics(
-        child: Skeletonizer(
+        child: Skeletonizer.zone(
           enabled: true,
           ignoreContainers: ignoreContainers,
           effect: prefersReducedMotion
