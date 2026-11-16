@@ -148,24 +148,31 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
       queryParams['societyId'] = propertyId;
 
       // 1 & 2: Fetch both delegation status and colleague candidates concurrently
-      final statusFuture = dio.get(
-        EnvConfig.employeeDelegationStatus,
-        queryParameters: {'property_id': propertyId},
-      );
-      final colleaguesFuture = dio.get(
-        EnvConfig.employeeDelegationColleagues,
-        queryParameters: queryParams.isNotEmpty ? queryParams : null,
-      );
+      final statusFuture = dio
+          .get(
+            EnvConfig.employeeDelegationStatus,
+            queryParameters: {'property_id': propertyId},
+          )
+          .then<Response<dynamic>?>((res) => res)
+          .catchError((err) {
+            debugPrint('[Delegation] Note: status endpoint error: $err');
+            return null;
+          });
+
+      final colleaguesFuture = dio
+          .get(
+            EnvConfig.employeeDelegationColleagues,
+            queryParameters: queryParams.isNotEmpty ? queryParams : null,
+          )
+          .then<Response<dynamic>?>((res) => res)
+          .catchError((err) {
+            debugPrint('[Delegation] Note: colleagues endpoint error: $err');
+            return null;
+          });
 
       final results = await Future.wait([
-        statusFuture.then((res) => res).catchError((err) {
-          debugPrint('[Delegation] Note: status endpoint error: $err');
-          return null;
-        }),
-        colleaguesFuture.then((res) => res).catchError((err) {
-          debugPrint('[Delegation] Note: colleagues endpoint error: $err');
-          return null;
-        }),
+        statusFuture,
+        colleaguesFuture,
       ]);
 
       final statusRes = results[0];
