@@ -213,7 +213,6 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
       title: 'Floor Support & Security Hotline',
       child: AsmitaHotlineSheet(
         societyId: societyId,
-        onOpenSecurityCommand: () => _showSecurityModal(context),
       ),
     );
   }
