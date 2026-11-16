@@ -42,8 +42,8 @@ class _AsmitaAnimatedRefreshState extends State<AsmitaAnimatedRefresh> {
           }
         }
       },
-      refreshTriggerPullDistance: 70.0,
-      refreshIndicatorExtent: 52.0,
+      refreshTriggerPullDistance: 80.0,
+      refreshIndicatorExtent: 54.0,
       builder: (
         BuildContext context,
         RefreshIndicatorMode refreshState,
@@ -71,41 +71,61 @@ class _AsmitaAnimatedRefreshState extends State<AsmitaAnimatedRefresh> {
         final isDone = refreshState == RefreshIndicatorMode.done ||
             refreshState == RefreshIndicatorMode.inactive;
 
-        if (_isClosing || isDone || (!isRefreshing && percentageComplete < 0.2)) {
+        if (_isClosing || isDone || (!isRefreshing && percentageComplete < 0.15)) {
           return const SizedBox.shrink();
         }
 
+        const double circleDiameter = 36.0;
+        final double topOffset = (pulledExtent - circleDiameter) / 2.0;
+
         return Center(
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 6.0),
-            padding: const EdgeInsets.all(6.0),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: SizedBox(
-              width: 22,
-              height: 22,
-              child: isRefreshing
-                  ? CircularProgressIndicator(
-                      strokeWidth: 2.4,
-                      strokeCap: StrokeCap.round,
-                      valueColor: AlwaysStoppedAnimation<Color>(radialColor),
-                    )
-                  : CircularProgressIndicator(
-                      value: percentageComplete,
-                      strokeWidth: 2.4,
-                      strokeCap: StrokeCap.round,
-                      valueColor: AlwaysStoppedAnimation<Color>(radialColor),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                top: topOffset > 8.0 ? topOffset : 8.0,
+                left: 0.0,
+                right: 0.0,
+                child: Center(
+                  child: Opacity(
+                    opacity: isRefreshing ? 1.0 : (percentageComplete * 1.25).clamp(0.0, 1.0),
+                    child: Transform.scale(
+                      scale: isRefreshing ? 1.0 : (0.7 + (0.3 * percentageComplete)).clamp(0.7, 1.0),
+                      child: Container(
+                        padding: const EdgeInsets.all(7.0),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.09),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: isRefreshing
+                              ? CircularProgressIndicator(
+                                  strokeWidth: 2.4,
+                                  strokeCap: StrokeCap.round,
+                                  valueColor: AlwaysStoppedAnimation<Color>(radialColor),
+                                )
+                              : CircularProgressIndicator(
+                                  value: percentageComplete,
+                                  strokeWidth: 2.4,
+                                  strokeCap: StrokeCap.round,
+                                  valueColor: AlwaysStoppedAnimation<Color>(radialColor),
+                                ),
+                        ),
+                      ),
                     ),
-            ),
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       },
