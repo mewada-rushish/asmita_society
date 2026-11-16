@@ -913,9 +913,18 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
               color: isDark ? const Color(0xFF1E293B) : Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : Theme.of(context).dividerColor,
+                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
                 width: 1.2,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.35)
+                      : const Color(0xFF0F172A).withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: Row(
               children: [
@@ -1269,8 +1278,18 @@ class _DepartmentEmployeesSheetState extends State<_DepartmentEmployeesSheet> {
               color: isDark ? const Color(0xFF1E293B) : Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
+                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                width: 1.2,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.35)
+                      : const Color(0xFF0F172A).withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: Row(
               children: [

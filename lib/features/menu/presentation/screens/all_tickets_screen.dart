@@ -231,6 +231,13 @@ class AllTicketsScreen extends StatelessWidget {
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

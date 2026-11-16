@@ -456,7 +456,17 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                width: 1.2,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.35)
+                      : const Color(0xFF0F172A).withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: Row(
               children: [
