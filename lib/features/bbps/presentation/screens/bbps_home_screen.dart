@@ -1081,7 +1081,17 @@ class _BbpsHomeScreenState extends State<BbpsHomeScreen> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                width: 1.2,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.18)
+                      : Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1.5),
+                ),
+              ],
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
