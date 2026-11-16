@@ -11,7 +11,9 @@ import 'package:asmita_society/features/auth/data/models/user_model.dart';
 import 'package:asmita_society/core/utils/property_role_resolver.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final void Function(int)? onNavigateToTab;
+
+  const ProfileScreen({super.key, this.onNavigateToTab});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
