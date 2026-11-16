@@ -188,6 +188,43 @@ class UserModel {
     return 'Administration';
   }
 
+  String get floorWing {
+    final fw = roleDetails?['floor_wing']?.toString();
+    if (fw != null && fw.trim().isNotEmpty) return fw.trim();
+    final fl = roleDetails?['floor']?.toString() ??
+        roleDetails?['floor_number']?.toString();
+    if (fl != null && fl.trim().isNotEmpty) {
+      final s = fl.trim().toLowerCase().replaceAll('floor', '').trim();
+      final suffix = s == '1' ? 'st' : (s == '2' ? 'nd' : (s == '3' ? 'rd' : 'th'));
+      return '$s$suffix Floor';
+    }
+    return 'Main HQ';
+  }
+
+  String get extensionNumber =>
+      roleDetails?['extension']?.toString() ??
+      roleDetails?['ext']?.toString() ??
+      '';
+
+  String get reportsToName =>
+      roleDetails?['reports_to_name']?.toString() ??
+      roleDetails?['manager_name']?.toString() ??
+      '';
+
+  String get reportsToDesignation =>
+      roleDetails?['reports_to_designation']?.toString() ??
+      roleDetails?['manager_designation']?.toString() ??
+      '';
+
+  String get delegatedToName =>
+      roleDetails?['delegated_to_name']?.toString() ??
+      roleDetails?['delegatee_name']?.toString() ??
+      '';
+
+  String get delegatedToDesignation =>
+      roleDetails?['delegated_to_designation']?.toString() ??
+      '';
+
   bool get canManageVisitors => hasPermission('canManageVisitors');
   bool get canManageServiceBookings => hasPermission('canManageServiceBookings');
   bool get canManagePayments => hasPermission('canManagePayments');
