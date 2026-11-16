@@ -48,7 +48,7 @@ class EmployeeDashboardView extends StatefulWidget {
   final bool isActive;
   final bool? canDelegate;
   final List<IndustrialVisitModel>? visits;
-  final Future<void> Function()? onOpenDelegation;
+  final FutureOr<void> Function()? onOpenDelegation;
   final Function(int visitId, String action)? onDecideVisit;
   final Function(int visitId)? onAcknowledgeVisit;
   final ValueChanged<int>? onNavigateToTab;
