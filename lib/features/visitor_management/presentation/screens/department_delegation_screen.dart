@@ -367,7 +367,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         final idx = entry.key;
         final m = Map<String, dynamic>.from(entry.value as Map);
         m['id'] = m['user_id'] ?? m['id'];
-        m['avatarColor'] = _avatarColors[idx % _avatarColors.length];
+        m['avatarColorValue'] = _avatarColors[idx % _avatarColors.length].toARGB32();
 
         // Determine role and designation
         final desig = m['designation']?.toString() ?? m['role']?.toString() ?? 'Colleague';
@@ -859,7 +859,8 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                             return Column(
                               children: filtered.map((staff) {
                                 final isSelected = _selectedDelegateId == staff['id'];
-                                final color = staff['avatarColor'] as Color? ?? AsmitaPalette.deepNavy;
+                                final colorVal = staff['avatarColorValue'] as int?;
+                                final color = colorVal != null ? Color(colorVal) : AsmitaPalette.deepNavy;
 
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 10),

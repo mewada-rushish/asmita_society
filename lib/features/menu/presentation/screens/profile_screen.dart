@@ -103,7 +103,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           }
         }
 
-        final isIndustrial = user != null && PropertyRoleResolver.isIndustrialContext(user);
+        final isIndustrial =
+            user != null && PropertyRoleResolver.isIndustrialContext(user);
 
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -134,16 +135,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Expanded(
                   child: AppRefresh(
                     onRefresh: () async {
-                      context.read<AuthBloc>().add(AuthRefreshProfileRequested());
+                      context.read<AuthBloc>().add(
+                        AuthRefreshProfileRequested(),
+                      );
                       await Future.delayed(const Duration(milliseconds: 700));
                     },
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     child: user == null
                         ? _buildProfileSkeleton(context)
                         : Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              _buildProfileHeader(textTheme, user, isIndustrial),
+                              _buildProfileHeader(
+                                textTheme,
+                                user,
+                                isIndustrial,
+                              ),
                               const SizedBox(height: 16),
                               _buildContactDetailsSection(textTheme, user),
                               const SizedBox(height: 16),
@@ -170,7 +180,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileHeader(TextTheme textTheme, UserModel user, bool isIndustrial) {
+  Widget _buildProfileHeader(
+    TextTheme textTheme,
+    UserModel user,
+    bool isIndustrial,
+  ) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -184,8 +198,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               .toUpperCase()
         : 'U';
 
-    final rolePower = user.rolePower ?? 50;
-    final roleTitle = user.designation.isNotEmpty ? user.designation : user.primaryRole;
+    final roleTitle = user.designation.isNotEmpty
+        ? user.designation
+        : user.primaryRole;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
@@ -195,7 +210,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         border: Border.all(color: theme.dividerColor, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.2 : 0.03),
+            color: theme.colorScheme.onSurface.withValues(
+              alpha: isDark ? 0.2 : 0.03,
+            ),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -243,12 +260,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             runSpacing: 6,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                  color: isDark
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                    color: isDark
+                        ? const Color(0xFF334155)
+                        : const Color(0xFFCBD5E1),
                   ),
                 ),
                 child: Text(
@@ -263,7 +287,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF10B981).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -317,7 +344,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         border: Border.all(color: theme.dividerColor, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.2 : 0.03),
+            color: theme.colorScheme.onSurface.withValues(
+              alpha: isDark ? 0.2 : 0.03,
+            ),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -414,7 +443,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         border: Border.all(color: theme.dividerColor, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.2 : 0.03),
+            color: theme.colorScheme.onSurface.withValues(
+              alpha: isDark ? 0.2 : 0.03,
+            ),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -449,7 +480,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: Icons.supervisor_account_rounded,
             label: 'Reporting To',
             value: reportsTo.isNotEmpty
-                ? (reportsDesig.isNotEmpty ? '$reportsTo ($reportsDesig)' : reportsTo)
+                ? (reportsDesig.isNotEmpty
+                      ? '$reportsTo ($reportsDesig)'
+                      : reportsTo)
                 : 'Direct to Executive Management',
             showBorder: true,
           ),
@@ -457,7 +490,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: Icons.swap_horiz_rounded,
             label: 'Delegated To',
             value: delegatedTo.isNotEmpty
-                ? (delegatedDesig.isNotEmpty ? '$delegatedTo ($delegatedDesig)' : delegatedTo)
+                ? (delegatedDesig.isNotEmpty
+                      ? '$delegatedTo ($delegatedDesig)'
+                      : delegatedTo)
                 : 'Direct (No Active Delegation)',
             showBorder: true,
           ),
@@ -484,7 +519,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         border: Border.all(color: theme.dividerColor, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.2 : 0.03),
+            color: theme.colorScheme.onSurface.withValues(
+              alpha: isDark ? 0.2 : 0.03,
+            ),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -554,12 +591,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         border: showBorder
-            ? Border(
-                bottom: BorderSide(
-                  color: theme.dividerColor,
-                  width: 1,
-                ),
-              )
+            ? Border(bottom: BorderSide(color: theme.dividerColor, width: 1))
             : null,
       ),
       child: Row(
@@ -570,11 +602,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: theme.colorScheme.primary.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              icon,
-              color: theme.colorScheme.primary,
-              size: 18,
-            ),
+            child: Icon(icon, color: theme.colorScheme.primary, size: 18),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -715,7 +743,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               border: Border.all(color: theme.dividerColor, width: 1.5),
               boxShadow: [
                 BoxShadow(
-                  color: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.2 : 0.03),
+                  color: theme.colorScheme.onSurface.withValues(
+                    alpha: isDark ? 0.2 : 0.03,
+                  ),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -754,9 +784,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            AsmitaSkeleton.text(width: 80, height: 10, borderRadius: 3),
+                            AsmitaSkeleton.text(
+                              width: 80,
+                              height: 10,
+                              borderRadius: 3,
+                            ),
                             const SizedBox(height: 6),
-                            AsmitaSkeleton.text(width: 140, height: 14, borderRadius: 4),
+                            AsmitaSkeleton.text(
+                              width: 140,
+                              height: 14,
+                              borderRadius: 4,
+                            ),
                           ],
                         ),
                       ),
@@ -789,9 +827,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            AsmitaSkeleton.text(width: 60, height: 10, borderRadius: 3),
+                            AsmitaSkeleton.text(
+                              width: 60,
+                              height: 10,
+                              borderRadius: 3,
+                            ),
                             const SizedBox(height: 6),
-                            AsmitaSkeleton.text(width: 160, height: 14, borderRadius: 4),
+                            AsmitaSkeleton.text(
+                              width: 160,
+                              height: 14,
+                              borderRadius: 4,
+                            ),
                           ],
                         ),
                       ),

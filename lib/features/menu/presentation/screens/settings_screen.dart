@@ -398,14 +398,12 @@ class SettingsScreen extends ConsumerWidget {
                       },
                       style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
                       child: isLoading 
-                        ? SizedBox(
-                            width: 20, 
-                            height: 20, 
-                            child: Center(
-                              child: AsmitaSkeleton(
-                                isLoading: true,
-                                child: AsmitaSkeleton.circle(size: 16),
-                              ),
+                        ? const SizedBox(
+                            width: 18, 
+                            height: 18, 
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
                         : Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
@@ -723,14 +721,12 @@ class SettingsScreen extends ConsumerWidget {
                       },
                       style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
                       child: isLoading 
-                        ? SizedBox(
-                            width: 20, 
-                            height: 20, 
-                            child: Center(
-                              child: AsmitaSkeleton(
-                                isLoading: true,
-                                child: AsmitaSkeleton.circle(size: 16),
-                              ),
+                        ? const SizedBox(
+                            width: 18, 
+                            height: 18, 
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
                         : Text('Save', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
