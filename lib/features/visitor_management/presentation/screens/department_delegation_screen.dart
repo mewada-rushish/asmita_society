@@ -1129,14 +1129,14 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
   List<Map<String, dynamic>> _getAvailableStaffCategories() {
     final List<Map<String, dynamic>> categories = [
-      {
+      <String, dynamic>{
         'label': 'All',
         'count': _candidates.length,
         'icon': Icons.grid_view_rounded,
       },
     ];
     if (_candidates.any((c) => c['category'] == 'HOD' || c['is_hod'] == true)) {
-      categories.add({
+      categories.add(<String, dynamic>{
         'label': 'HOD',
         'count': _candidates.where((c) => c['category'] == 'HOD' || c['is_hod'] == true).length,
         'icon': Icons.badge_outlined,
@@ -1144,7 +1144,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
     }
     if (_candidates.any((c) =>
         c['category'] == 'Receptionist' || c['category'] == 'Floor Receptionist')) {
-      categories.add({
+      categories.add(<String, dynamic>{
         'label': 'Receptionist',
         'count': _candidates
             .where((c) =>
@@ -1155,21 +1155,21 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
       });
     }
     if (_candidates.any((c) => c['category'] == 'Team Lead')) {
-      categories.add({
+      categories.add(<String, dynamic>{
         'label': 'Team Lead',
         'count': _candidates.where((c) => c['category'] == 'Team Lead').length,
         'icon': Icons.supervisor_account_outlined,
       });
     }
     if (_candidates.any((c) => c['category'] == 'Team Member')) {
-      categories.add({
+      categories.add(<String, dynamic>{
         'label': 'Team Member',
         'count': _candidates.where((c) => c['category'] == 'Team Member').length,
         'icon': Icons.person_outline_rounded,
       });
     }
     if (_candidates.any((c) => c['category'] == 'Intern')) {
-      categories.add({
+      categories.add(<String, dynamic>{
         'label': 'Intern',
         'count': _candidates.where((c) => c['category'] == 'Intern').length,
         'icon': Icons.school_outlined,
@@ -1180,8 +1180,8 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
   Widget _buildStaffCategoryDropdown(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final categories = _getAvailableStaffCategories();
-    final currentItem = categories.firstWhere(
+    final List<Map<String, dynamic>> categories = _getAvailableStaffCategories();
+    final Map<String, dynamic> currentItem = categories.firstWhere(
       (c) => c['label'] == _selectedCategory,
       orElse: () => categories.first,
     );
