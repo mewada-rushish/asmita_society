@@ -321,6 +321,18 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
             isActive: user?.isActive ?? true,
             canDelegate: canDelegate,
             onNavigateToTab: (index) => setState(() => _currentIndex = index),
+            onOpenDelegationWithState: (isDelegated) async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => DepartmentDelegationScreen(
+                    departmentId: user?.departmentId,
+                    departmentName: user?.departmentName,
+                    initialIsDelegationEnabled: isDelegated,
+                  ),
+                ),
+              );
+            },
             onOpenDelegation: () async {
               await Navigator.push(
                 context,
