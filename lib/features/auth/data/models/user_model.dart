@@ -101,11 +101,11 @@ class UserModel {
   String get cabinCode {
     final c = roleDetails?['cabin_code']?.toString() ??
         roleDetails?['cabin']?.toString();
-    if (c != null && c.trim().isNotEmpty) return c.trim();
+    if (c != null && c.trim().isNotEmpty) return c.trim().toUpperCase();
     if (flatMappings.isNotEmpty) {
       final num = flatMappings.first.flatNumber.trim();
       if (num.contains('-C') || num.contains('CAB') || num.contains('-c') || num.startsWith('C-') || num.startsWith('c-')) {
-        return num;
+        return num.toUpperCase();
       }
     }
     return '';
@@ -118,13 +118,13 @@ class UserModel {
         roleDetails?['workstation_code']?.toString() ??
         roleDetails?['seat_code']?.toString() ??
         roleDetails?['desk']?.toString();
-    if (d != null && d.trim().isNotEmpty) return d.trim();
+    if (d != null && d.trim().isNotEmpty) return d.trim().toUpperCase();
 
     // Check mapped unit / flat number
     if (flatMappings.isNotEmpty) {
       final num = flatMappings.first.flatNumber.trim();
       if (!num.contains('-C') && !num.startsWith('C-') && !num.startsWith('c-') && !num.contains('CAB')) {
-        return num;
+        return num.toUpperCase();
       }
       // If unit is a cabin with seat specifier (e.g., C-201-S1 or CAB-01-D1), extract seat code
       final seatMatch = RegExp(r'[-_](S\d+|D\d+|SEAT\d+|DSK\d+)$', caseSensitive: false).firstMatch(num);
@@ -140,7 +140,7 @@ class UserModel {
       if (seatMatch != null) {
         return seatMatch.group(1)!.toUpperCase();
       }
-      return cabin;
+      return cabin.toUpperCase();
     }
 
     return '';
