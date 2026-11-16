@@ -2446,102 +2446,6 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
             onBackPressed: widget.onBack,
           ),
 
-          // Content section header above all cards with Filter Option
-          BlocBuilder<VisitorBloc, VisitorState>(
-            builder: (context, state) {
-              final rawHistory = state is VisitorHistoryLoaded
-                  ? state.history
-                  : <VisitorHistoryItem>[];
-              final filteredCount = _applyClientFilters(rawHistory).length;
-
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          _activeFilterCount > 0 ? 'Filtered Visitors' : 'All Visitors',
-                          style: TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '$filteredCount',
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    InkWell(
-                      onTap: _showFilterModal,
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.25),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.tune_rounded,
-                              size: 15,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              _activeFilterCount > 0
-                                  ? 'Filter ($_activeFilterCount)'
-                                  : 'Filter',
-                              style: const TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-
-          // Active horizontal filter chips bar
-          _buildActiveFiltersBar(context),
-
           Expanded(
             child: BlocBuilder<VisitorBloc, VisitorState>(
               builder: (context, state) {
@@ -2605,6 +2509,7 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                     ? state.history
                     : <VisitorHistoryItem>[];
                 final historyList = _applyClientFilters(rawHistory);
+                final filteredCount = historyList.length;
 
                 return CustomScrollView(
                   physics: const AlwaysScrollableScrollPhysics(
@@ -2620,6 +2525,96 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
                         _loadHistory(isRefresh: true);
                         await future;
                       },
+                    ),
+                    SliverToBoxAdapter(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      _activeFilterCount > 0 ? 'Filtered Visitors' : 'All Visitors',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        '$filteredCount',
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: Theme.of(context).colorScheme.primary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                InkWell(
+                                  onTap: _showFilterModal,
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 7,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).colorScheme.primary,
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.25),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.tune_rounded,
+                                          size: 15,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          _activeFilterCount > 0
+                                              ? 'Filter ($_activeFilterCount)'
+                                              : 'Filter',
+                                          style: const TextStyle(
+                                            fontFamily: 'Montserrat',
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          _buildActiveFiltersBar(context),
+                        ],
+                      ),
                     ),
                     if (historyList.isEmpty)
                       SliverFillRemaining(
