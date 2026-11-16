@@ -1170,7 +1170,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
 
                         // 2. Quick Actions Grid (Square boxes matching employee style)
                         _buildQuickActionsGrid(context),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 18),
 
                         // 3. Operational KPI Overview Metrics (4 interactive cards: Total, Pending, Approved, Inside)
                         _buildMetricsOverview(

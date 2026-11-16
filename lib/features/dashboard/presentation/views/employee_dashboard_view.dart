@@ -493,7 +493,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
 
           // 2. Quick Action Grid (Square Icon Boxes: Pre-approve, Delegate, Meeting Rooms, Bill payments)
           _buildQuickActionsGrid(context),
-          const SizedBox(height: 10),
+          const SizedBox(height: 18),
 
           // 3. Operational KPI Overview Metrics (4 interactive cards)
           _buildMetricsOverview(
@@ -561,7 +561,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
     ];
 
     return Padding(
-      padding: const EdgeInsets.only(top: 4, bottom: 0),
+      padding: const EdgeInsets.only(top: 4, bottom: 4),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final count = actions.length;
