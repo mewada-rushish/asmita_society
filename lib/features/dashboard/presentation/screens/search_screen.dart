@@ -261,6 +261,13 @@ class _AsmitaSearchScreenState extends State<AsmitaSearchScreen> {
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: Theme.of(context).dividerColor),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
