@@ -137,32 +137,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       context.read<AuthBloc>().add(AuthRefreshProfileRequested());
                       await Future.delayed(const Duration(milliseconds: 700));
                     },
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: user == null
                         ? _buildProfileSkeleton(context)
-                        : SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(
-                              parent: BouncingScrollPhysics(),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _buildProfileHeader(textTheme, user, isIndustrial),
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildProfileHeader(textTheme, user, isIndustrial),
+                              const SizedBox(height: 16),
+                              _buildContactDetailsSection(textTheme, user),
+                              const SizedBox(height: 16),
+                              if (isIndustrial) ...[
+                                _buildWorkplaceSeatingCard(textTheme, user),
                                 const SizedBox(height: 16),
-                                if (isIndustrial) ...[
-                                  _buildWorkplaceSeatingCard(textTheme, user),
-                                  const SizedBox(height: 16),
-                                  _buildReportingDelegationCard(textTheme, user),
-                                  const SizedBox(height: 16),
-                                ],
-                                _buildContactDetailsSection(textTheme, user),
-                                if (_isEditing) ...[
-                                  const SizedBox(height: 24),
-                                  _buildSaveButton(textTheme, isLoading),
-                                ],
-                                const SizedBox(height: 24),
+                                _buildReportingDelegationCard(textTheme, user),
+                                const SizedBox(height: 16),
                               ],
-                            ),
+                              if (_isEditing) ...[
+                                const SizedBox(height: 8),
+                                _buildSaveButton(textTheme, isLoading),
+                              ],
+                              const SizedBox(height: 32),
+                            ],
                           ),
                   ),
                 ),
@@ -257,7 +253,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: Text(
                   isIndustrial
-                      ? '${roleTitle.toUpperCase()} (SCORE: $rolePower)'
+                      ? roleTitle.toUpperCase()
                       : (user.systemRole ?? user.primaryRole).toUpperCase(),
                   style: textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.primary,
