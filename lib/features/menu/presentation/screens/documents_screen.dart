@@ -16,7 +16,9 @@ import 'package:asmita_society/core/security/secure_storage_service.dart';
 import 'package:asmita_society/core/di/injection_container.dart' as di;
 
 class DocumentsScreen extends StatelessWidget {
-  const DocumentsScreen({super.key});
+  final String title;
+
+  const DocumentsScreen({super.key, this.title = 'Important Documents'});
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +39,7 @@ class DocumentsScreen extends StatelessWidget {
           return BlocProvider<SocietyBloc>(
             create: (_) =>
                 SocietyBloc(repository: repo)..add(const LoadSocietyData()),
-            child: const _DocumentsScreenBody(),
+            child: _DocumentsScreenBody(title: title),
           );
         }
 
@@ -46,14 +48,16 @@ class DocumentsScreen extends StatelessWidget {
           ctx.read<SocietyBloc>().add(const LoadSocietyData());
         }
 
-        return const _DocumentsScreenBody();
+        return _DocumentsScreenBody(title: title);
       },
     );
   }
 }
 
 class _DocumentsScreenBody extends StatelessWidget {
-  const _DocumentsScreenBody();
+  final String title;
+
+  const _DocumentsScreenBody({this.title = 'Important Documents'});
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +68,7 @@ class _DocumentsScreenBody extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            const AsmitaSubHeader(title: 'Important Documents'),
+            AsmitaSubHeader(title: title),
             Expanded(
               child: BlocBuilder<SocietyBloc, SocietyState>(
                 builder: (context, societyState) {

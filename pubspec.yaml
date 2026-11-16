@@ -57,6 +57,7 @@ dependencies:
   app_links: ^7.2.2
   webview_flutter: ^4.14.1
   skeletonizer: ^3.0.0
+  flutter_pdfview: ^1.4.5
 dev_dependencies:
   flutter_test:
     sdk: flutter

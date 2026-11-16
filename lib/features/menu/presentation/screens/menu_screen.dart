@@ -543,7 +543,7 @@ class MenuScreen extends StatelessWidget {
           case 'Policies & Documents':
           case 'Policies & Corporate Documents':
           case 'Company Policies':
-            screen = const DocumentsScreen();
+            screen = DocumentsScreen(title: title);
             break;
           case 'Family Members':
             screen = FamilyMembersScreen(onNavigateToTab: onNavigateToTab);
