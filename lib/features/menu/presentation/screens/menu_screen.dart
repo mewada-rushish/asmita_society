@@ -14,6 +14,7 @@ import 'package:asmita_society/features/visitor_management/presentation/screens/
 import 'package:asmita_society/features/visitor_management/presentation/widgets/invite_team_member_sheet.dart';
 import 'package:asmita_society/features/dashboard/presentation/screens/industrial_directory_screen.dart';
 
+import 'package:hive_flutter/hive_flutter.dart';
 import 'committee_members_screen.dart';
 import 'documents_screen.dart';
 import 'family_members_screen.dart';
@@ -564,9 +565,19 @@ class MenuScreen extends StatelessWidget {
           case 'Department Delegation':
             final authState = context.read<AuthBloc>().state;
             final user = authState is AuthAuthenticated ? authState.user : null;
+            bool? isInitiallyActive;
+            try {
+              if (Hive.isBoxOpen('app_cache')) {
+                final cached = Hive.box('app_cache').get('active_delegation_cache');
+                if (cached is Map) {
+                  isInitiallyActive = cached['is_enabled'] == true;
+                }
+              }
+            } catch (_) {}
             screen = DepartmentDelegationScreen(
               departmentId: user?.departmentId,
               departmentName: user?.departmentName ?? 'General HQ',
+              initialIsDelegationEnabled: isInitiallyActive,
             );
             break;
           case 'Invite Team':

@@ -17,6 +17,7 @@ import '../../../../core/widgets/app_refresh.dart';
 import '../../../../core/widgets/asmita_sub_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/utils/property_role_resolver.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 /// Dedicated Settings Screen for Department Delegation:
 /// - Department Head / Director / Executive out-of-office visitor approval delegation
@@ -65,13 +66,66 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
   Map<String, dynamic>? _activeOutgoing;
   List<Map<String, dynamic>> _incomingDelegations = [];
 
+  static const String _cacheKey = 'active_delegation_cache';
+
   @override
   void initState() {
     super.initState();
     if (widget.initialIsDelegationEnabled != null) {
       _isDelegationEnabled = widget.initialIsDelegationEnabled!;
     }
+    _restoreCachedDelegationState();
     _fetchCandidateDelegates();
+  }
+
+  void _restoreCachedDelegationState() {
+    try {
+      if (Hive.isBoxOpen('app_cache')) {
+        final box = Hive.box('app_cache');
+        final cached = box.get(_cacheKey);
+        if (cached is Map) {
+          final m = Map<String, dynamic>.from(cached);
+          final isEnabled = m['is_enabled'] == true;
+          _isDelegationEnabled = isEnabled;
+          _selectedDelegateId = m['delegate_user_id'] as int?;
+          _isTillTurnOff = m['is_till_turn_off'] ?? true;
+          if (m['start_date'] != null) {
+            _startDate = DateTime.tryParse(m['start_date'].toString()) ?? _startDate;
+          }
+          if (m['end_date'] != null) {
+            _endDate = DateTime.tryParse(m['end_date'].toString());
+          }
+          if (m['active_outgoing'] is Map) {
+            _activeOutgoing = Map<String, dynamic>.from(m['active_outgoing'] as Map);
+          }
+          _isLoadingStatus = false;
+        }
+      }
+    } catch (e) {
+      debugPrint('[Delegation] Note: Error restoring cached delegation: $e');
+    }
+  }
+
+  void _persistDelegationState({
+    required bool isEnabled,
+    Map<String, dynamic>? activeOutgoing,
+    int? delegateUserId,
+  }) {
+    try {
+      if (Hive.isBoxOpen('app_cache')) {
+        final box = Hive.box('app_cache');
+        box.put(_cacheKey, {
+          'is_enabled': isEnabled,
+          'delegate_user_id': delegateUserId ?? _selectedDelegateId,
+          'is_till_turn_off': _isTillTurnOff,
+          'start_date': _startDate.toIso8601String(),
+          'end_date': _endDate?.toIso8601String(),
+          'active_outgoing': activeOutgoing ?? _activeOutgoing,
+        });
+      }
+    } catch (e) {
+      debugPrint('[Delegation] Note: Error saving delegation cache: $e');
+    }
   }
 
   Future<void> _fetchCandidateDelegates({bool isSilent = false}) async {
@@ -196,8 +250,14 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
             if (_activeOutgoing!['end_date'] != null) {
               _endDate = DateTime.tryParse(_activeOutgoing!['end_date'].toString());
             }
+            _persistDelegationState(
+              isEnabled: true,
+              activeOutgoing: _activeOutgoing,
+              delegateUserId: _selectedDelegateId,
+            );
           } else if (!_hasUserManuallyToggled) {
             _isDelegationEnabled = false;
+            _persistDelegationState(isEnabled: false);
           }
         }
       }
@@ -449,6 +509,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
           EnvConfig.employeeDelegation,
           queryParameters: {'property_id': propertyId},
         );
+        _persistDelegationState(isEnabled: false);
         if (mounted) {
           AsmitaToast.show(
             context,
@@ -475,6 +536,17 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
       final delegate = _candidates.firstWhere(
         (s) => s['id'] == _selectedDelegateId,
         orElse: () => {'name': 'Colleague'},
+      );
+
+      _persistDelegationState(
+        isEnabled: true,
+        activeOutgoing: {
+          'delegate_user_id': _selectedDelegateId,
+          'start_date': _startDate.toIso8601String(),
+          'end_date': _isTillTurnOff ? null : _endDate?.toIso8601String(),
+          'delegate': delegate,
+        },
+        delegateUserId: _selectedDelegateId,
       );
 
       final msg = 'Delegated to ${delegate['name']}.';
@@ -706,31 +778,18 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                               ],
                             ),
                           ),
-                          _isLoadingStatus
-                              ? Shimmer.fromColors(
-                                  baseColor: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                                  highlightColor: isDark ? const Color(0xFF475569) : const Color(0xFFF1F5F9),
-                                  child: Container(
-                                    width: 44,
-                                    height: 24,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                )
-                              : Switch.adaptive(
-                                  value: _isDelegationEnabled,
-                                  activeTrackColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
-                                  onChanged: (val) {
-                                    HapticFeedback.selectionClick();
-                                    _hasUserManuallyToggled = true;
-                                    setState(() => _isDelegationEnabled = val);
-                                    if (val && _candidates.isEmpty && !_isLoadingStaff) {
-                                      _fetchCandidateDelegates(isSilent: false);
-                                    }
-                                  },
-                                ),
+                          Switch.adaptive(
+                            value: _isDelegationEnabled,
+                            activeTrackColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
+                            onChanged: (val) {
+                              HapticFeedback.selectionClick();
+                              _hasUserManuallyToggled = true;
+                              setState(() => _isDelegationEnabled = val);
+                              if (val && _candidates.isEmpty && !_isLoadingStaff) {
+                                _fetchCandidateDelegates(isSilent: false);
+                              }
+                            },
+                          ),
                         ],
                       ),
                     ),
