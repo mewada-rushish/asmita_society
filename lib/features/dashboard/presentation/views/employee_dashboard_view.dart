@@ -48,7 +48,7 @@ class EmployeeDashboardView extends StatefulWidget {
   final bool isActive;
   final bool? canDelegate;
   final List<IndustrialVisitModel>? visits;
-  final VoidCallback onOpenDelegation;
+  final Future<void> Function()? onOpenDelegation;
   final Function(int visitId, String action)? onDecideVisit;
   final Function(int visitId)? onAcknowledgeVisit;
   final ValueChanged<int>? onNavigateToTab;
@@ -63,7 +63,7 @@ class EmployeeDashboardView extends StatefulWidget {
     this.isActive = true,
     this.canDelegate,
     this.visits,
-    required this.onOpenDelegation,
+    this.onOpenDelegation,
     this.onDecideVisit,
     this.onAcknowledgeVisit,
     this.onNavigateToTab,
@@ -125,6 +125,13 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         }
       }
     } catch (_) {}
+  }
+
+  void _openDelegationScreen() async {
+    if (widget.onOpenDelegation != null) {
+      await widget.onOpenDelegation!();
+    }
+    _fetchDelegationStatus();
   }
 
   @override
@@ -462,31 +469,35 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
 
           // Active Delegation Status Banner (if active)
           if (_activeDelegateName != null) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+            InkWell(
+              onTap: _openDelegationScreen,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+                  ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.sync_alt_rounded, color: Color(0xFF2563EB), size: 18),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Visitor approvals currently delegated to $_activeDelegateName. Deliveries & cabs alert you directly.',
-                      style: const TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF1E3A8A),
+                child: Row(
+                  children: [
+                    const Icon(Icons.sync_alt_rounded, color: Color(0xFF2563EB), size: 18),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Visitor approvals currently delegated to $_activeDelegateName. Deliveries & cabs alert you directly.',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF1E3A8A),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 12),
