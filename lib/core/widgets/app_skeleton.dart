@@ -207,45 +207,36 @@ class AsmitaSkeleton extends StatelessWidget {
     );
   }
 
-  /// SAP Fiori iOS Community Post / Notice Card Skeleton
+  /// SAP Fiori iOS Community Post / Notice Card Skeleton (mirrors [CommunityPostItem])
   static Widget postCard({
     EdgeInsetsGeometry? margin = const EdgeInsets.only(bottom: 14),
   }) {
     return card(
       margin: margin,
-      child: Column(
+      borderRadius: 16,
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              circle(size: 38),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          bone(width: 38, height: 38, borderRadius: 10),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     text(width: 130, height: 14, borderRadius: 4),
-                    const SizedBox(height: 6),
-                    text(width: 80, height: 11, borderRadius: 3),
+                    text(width: 60, height: 11, borderRadius: 3),
                   ],
                 ),
-              ),
-              pill(width: 70, height: 22),
-            ],
-          ),
-          const SizedBox(height: 14),
-          text(width: double.infinity, height: 15, borderRadius: 4),
-          const SizedBox(height: 8),
-          text(width: 240, height: 13, borderRadius: 4),
-          const SizedBox(height: 6),
-          text(width: 160, height: 13, borderRadius: 4),
-          const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              pill(width: 80, height: 24),
-              bone(width: 60, height: 20, borderRadius: 6),
-            ],
+                const SizedBox(height: 10),
+                text(width: double.infinity, height: 13, borderRadius: 3),
+                const SizedBox(height: 6),
+                text(width: 180, height: 13, borderRadius: 3),
+              ],
+            ),
           ),
         ],
       ),
