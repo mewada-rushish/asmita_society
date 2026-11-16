@@ -26,11 +26,13 @@ import '../../../../core/utils/property_role_resolver.dart';
 class DepartmentDelegationScreen extends StatefulWidget {
   final int? departmentId;
   final String? departmentName;
+  final bool? initialIsDelegationEnabled;
 
   const DepartmentDelegationScreen({
     super.key,
     this.departmentId,
     this.departmentName,
+    this.initialIsDelegationEnabled,
   });
 
   @override
@@ -39,6 +41,7 @@ class DepartmentDelegationScreen extends StatefulWidget {
 
 class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen> {
   bool _isDelegationEnabled = false;
+  bool _isLoadingStatus = true;
   bool _hasUserManuallyToggled = false;
   int? _selectedDelegateId;
   bool _isTillTurnOff = true;
@@ -65,12 +68,18 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
   @override
   void initState() {
     super.initState();
+    if (widget.initialIsDelegationEnabled != null) {
+      _isDelegationEnabled = widget.initialIsDelegationEnabled!;
+    }
     _fetchCandidateDelegates();
   }
 
   Future<void> _fetchCandidateDelegates({bool isSilent = false}) async {
     if (!isSilent) {
-      setState(() => _isLoadingStaff = true);
+      setState(() {
+        _isLoadingStaff = true;
+        _isLoadingStatus = true;
+      });
     }
     try {
       final dio = AsmitaDioClient(SecureStorageService()).dio;
@@ -91,6 +100,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         if (mounted) {
           setState(() {
             _isLoadingStaff = false;
+            _isLoadingStatus = false;
             _candidates = [];
             _isDelegationEnabled = false;
           });
@@ -126,60 +136,69 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
       final propertyId = currentUser?.societyId ?? 115;
 
-      // 1. Fetch current user delegation status
-      try {
-        final statusRes = await dio.get(
-          EnvConfig.employeeDelegationStatus,
-          queryParameters: {'property_id': propertyId},
-        );
-        if (statusRes.statusCode == 200 && statusRes.data['success'] == true) {
-          final dData = statusRes.data['data'] as Map<String, dynamic>?;
-          if (dData != null) {
-            _activeOutgoing = dData['outgoingDelegation'] as Map<String, dynamic>?;
-            _incomingDelegations = (dData['incomingDelegations'] as List? ?? [])
-                .map((x) => Map<String, dynamic>.from(x as Map))
-                .toList();
-            if (_activeOutgoing != null) {
-              _isDelegationEnabled = true;
-              _selectedDelegateId = _activeOutgoing!['delegate_user_id'] as int?;
-              _isTillTurnOff = _activeOutgoing!['end_date'] == null;
-              if (_activeOutgoing!['start_date'] != null) {
-                _startDate = DateTime.tryParse(_activeOutgoing!['start_date'].toString()) ?? DateTime.now();
-              }
-              if (_activeOutgoing!['end_date'] != null) {
-                _endDate = DateTime.tryParse(_activeOutgoing!['end_date'].toString());
-              }
-            } else if (!_hasUserManuallyToggled) {
-              _isDelegationEnabled = false;
+      // Prepare colleague query parameters
+      final queryParams = <String, dynamic>{};
+      if (currentUserId != null) {
+        queryParams['userId'] = currentUserId;
+      }
+      if (widget.departmentId != null) {
+        queryParams['department_id'] = widget.departmentId;
+      }
+      queryParams['property_id'] = propertyId;
+      queryParams['societyId'] = propertyId;
+
+      // 1 & 2: Fetch both delegation status and colleague candidates concurrently
+      final statusFuture = dio.get(
+        EnvConfig.employeeDelegationStatus,
+        queryParameters: {'property_id': propertyId},
+      );
+      final colleaguesFuture = dio.get(
+        EnvConfig.employeeDelegationColleagues,
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
+
+      final results = await Future.wait([
+        statusFuture.then((res) => res).catchError((err) {
+          debugPrint('[Delegation] Note: status endpoint error: $err');
+          return null;
+        }),
+        colleaguesFuture.then((res) => res).catchError((err) {
+          debugPrint('[Delegation] Note: colleagues endpoint error: $err');
+          return null;
+        }),
+      ]);
+
+      final statusRes = results[0];
+      final colleagueRes = results[1];
+
+      // Process Status
+      if (statusRes != null && statusRes.statusCode == 200 && statusRes.data['success'] == true) {
+        final dData = statusRes.data['data'] as Map<String, dynamic>?;
+        if (dData != null) {
+          _activeOutgoing = dData['outgoingDelegation'] as Map<String, dynamic>?;
+          _incomingDelegations = (dData['incomingDelegations'] as List? ?? [])
+              .map((x) => Map<String, dynamic>.from(x as Map))
+              .toList();
+          if (_activeOutgoing != null) {
+            _isDelegationEnabled = true;
+            _selectedDelegateId = _activeOutgoing!['delegate_user_id'] as int?;
+            _isTillTurnOff = _activeOutgoing!['end_date'] == null;
+            if (_activeOutgoing!['start_date'] != null) {
+              _startDate = DateTime.tryParse(_activeOutgoing!['start_date'].toString()) ?? DateTime.now();
             }
+            if (_activeOutgoing!['end_date'] != null) {
+              _endDate = DateTime.tryParse(_activeOutgoing!['end_date'].toString());
+            }
+          } else if (!_hasUserManuallyToggled) {
+            _isDelegationEnabled = false;
           }
         }
-      } catch (stErr) {
-        debugPrint('[Delegation] Note: status endpoint fallback: $stErr');
       }
 
-      // 2. Fetch eligible colleagues for personal delegation
+      // Process Colleagues
       List<dynamic> rawList = [];
-      try {
-        final queryParams = <String, dynamic>{};
-        if (currentUserId != null) {
-          queryParams['userId'] = currentUserId;
-        }
-        if (widget.departmentId != null) {
-          queryParams['department_id'] = widget.departmentId;
-        }
-        queryParams['property_id'] = propertyId;
-        queryParams['societyId'] = propertyId;
-
-        final response = await dio.get(
-          EnvConfig.employeeDelegationColleagues,
-          queryParameters: queryParams.isNotEmpty ? queryParams : null,
-        );
-        if (response.statusCode == 200 && response.data['success'] == true) {
-          rawList = response.data['data'] as List? ?? [];
-        }
-      } catch (colleagueErr) {
-        debugPrint('[Delegation] Note: colleagues endpoint error, falling back: $colleagueErr');
+      if (colleagueRes != null && colleagueRes.statusCode == 200 && colleagueRes.data['success'] == true) {
+        rawList = colleagueRes.data['data'] as List? ?? [];
       }
 
       // If colleagues list is empty, query the candidateDelegates endpoint
@@ -324,7 +343,12 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
     } catch (e) {
       debugPrint('[Delegation] Error fetching candidate delegates: $e');
     } finally {
-      if (mounted) setState(() => _isLoadingStaff = false);
+      if (mounted) {
+        setState(() {
+          _isLoadingStaff = false;
+          _isLoadingStatus = false;
+        });
+      }
     }
   }
 
@@ -657,15 +681,19 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                 ),
                                 const SizedBox(height: 3),
                                 Text(
-                                  _isDelegationEnabled
-                                      ? 'Delegation is currently ACTIVE'
-                                      : 'Delegation is turned OFF',
+                                  _isLoadingStatus
+                                      ? 'Checking delegation status...'
+                                      : (_isDelegationEnabled
+                                          ? 'Delegation is currently ACTIVE'
+                                          : 'Delegation is turned OFF'),
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500,
-                                    color: _isDelegationEnabled
-                                        ? (isDark ? AsmitaPalette.successGreenDark : AsmitaPalette.successGreen)
-                                        : (isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight),
+                                    color: _isLoadingStatus
+                                        ? (isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight)
+                                        : (_isDelegationEnabled
+                                            ? (isDark ? AsmitaPalette.successGreenDark : AsmitaPalette.successGreen)
+                                            : (isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight)),
                                   ),
                                 ),
                               ],
@@ -688,7 +716,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                     ),
                     const SizedBox(height: 20),
 
-                    if (_isDelegationEnabled) ...[
+                    if (_isDelegationEnabled || (_isLoadingStatus && _candidates.isEmpty)) ...[
                       // Section Header: Select Delegate & BBPS-style Category Dropdown
                       Padding(
                         padding: const EdgeInsets.only(left: 4, bottom: 8),

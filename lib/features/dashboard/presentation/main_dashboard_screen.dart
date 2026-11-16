@@ -290,12 +290,13 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
                 _currentIndex = 1; // Switches to Visits & Passes tab
               });
             },
-            onOpenDelegation: () {
-              Navigator.of(context).push(
+            onOpenDelegation: () async {
+              await Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => DepartmentDelegationScreen(
                     departmentId: directorUser?.departmentId ?? 1,
                     departmentName: directorUser?.departmentName ?? 'Executive Suite',
+                    initialIsDelegationEnabled: true,
                   ),
                 ),
               );
@@ -320,8 +321,8 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
             isActive: user?.isActive ?? true,
             canDelegate: canDelegate,
             onNavigateToTab: (index) => setState(() => _currentIndex = index),
-            onOpenDelegation: () {
-              Navigator.push(
+            onOpenDelegation: () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => DepartmentDelegationScreen(
