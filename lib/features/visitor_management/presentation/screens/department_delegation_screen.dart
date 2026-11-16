@@ -706,18 +706,31 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                               ],
                             ),
                           ),
-                          Switch.adaptive(
-                            value: _isDelegationEnabled,
-                            activeTrackColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
-                            onChanged: (val) {
-                              HapticFeedback.selectionClick();
-                              _hasUserManuallyToggled = true;
-                              setState(() => _isDelegationEnabled = val);
-                              if (val && _candidates.isEmpty && !_isLoadingStaff) {
-                                _fetchCandidateDelegates(isSilent: false);
-                              }
-                            },
-                          ),
+                          _isLoadingStatus
+                              ? Shimmer.fromColors(
+                                  baseColor: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                                  highlightColor: isDark ? const Color(0xFF475569) : const Color(0xFFF1F5F9),
+                                  child: Container(
+                                    width: 44,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                )
+                              : Switch.adaptive(
+                                  value: _isDelegationEnabled,
+                                  activeTrackColor: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
+                                  onChanged: (val) {
+                                    HapticFeedback.selectionClick();
+                                    _hasUserManuallyToggled = true;
+                                    setState(() => _isDelegationEnabled = val);
+                                    if (val && _candidates.isEmpty && !_isLoadingStaff) {
+                                      _fetchCandidateDelegates(isSilent: false);
+                                    }
+                                  },
+                                ),
                         ],
                       ),
                     ),
