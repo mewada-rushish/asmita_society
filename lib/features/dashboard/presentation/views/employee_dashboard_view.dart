@@ -49,7 +49,6 @@ class EmployeeDashboardView extends StatefulWidget {
   final bool? canDelegate;
   final List<IndustrialVisitModel>? visits;
   final FutureOr<void> Function()? onOpenDelegation;
-  final Function(bool isDelegated)? onOpenDelegationWithState;
   final Function(int visitId, String action)? onDecideVisit;
   final Function(int visitId)? onAcknowledgeVisit;
   final ValueChanged<int>? onNavigateToTab;
@@ -65,7 +64,6 @@ class EmployeeDashboardView extends StatefulWidget {
     this.canDelegate,
     this.visits,
     this.onOpenDelegation,
-    this.onOpenDelegationWithState,
     this.onDecideVisit,
     this.onAcknowledgeVisit,
     this.onNavigateToTab,
@@ -130,9 +128,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
   }
 
   void _openDelegationScreen() async {
-    if (widget.onOpenDelegationWithState != null) {
-      widget.onOpenDelegationWithState!(_activeDelegateName != null);
-    } else if (widget.onOpenDelegation != null) {
+    if (widget.onOpenDelegation != null) {
       await widget.onOpenDelegation!();
     }
     _fetchDelegationStatus();
