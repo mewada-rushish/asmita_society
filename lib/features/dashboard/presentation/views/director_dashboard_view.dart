@@ -21,6 +21,7 @@ import '../../../auth/bloc/auth_event.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
 import '../../widgets/bbps_bill_payments_sheet.dart';
 import '../../widgets/asmita_hotline_sheet.dart';
+import '../../../visitor_management/presentation/screens/employee_gate_attendance_scanner_screen.dart';
 import '../../../visitor_management/bloc/visitor_bloc.dart';
 import '../../../visitor_management/bloc/visitor_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
@@ -1456,9 +1457,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         onTap: () => _openMeetingRoomReservation(context),
       ),
       _QuickActionItemData(
-        label: 'Security',
-        icon: Icons.shield_rounded,
-        onTap: () => _showSecurityModal(context),
+        label: 'QR Scanner',
+        icon: Icons.qr_code_scanner_rounded,
+        onTap: () => _openQrScanner(context),
       ),
       _QuickActionItemData(
         label: 'Pay Bills',
@@ -2461,10 +2462,19 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
 
   // FUNCTIONAL MODAL: ISSUE VIP PASS (Integrated into Pre-Approve Wizard toggle)
 
+  void _openQrScanner(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const EmployeeGateAttendanceScannerScreen(),
+      ),
+    );
+  }
+
   // =========================================================================
   // FUNCTIONAL MODAL: SECURITY COMMAND
   // =========================================================================
-  void _showSecurityModal(BuildContext context) {
+  void showSecurityModal(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     UserModel? user;
     try {

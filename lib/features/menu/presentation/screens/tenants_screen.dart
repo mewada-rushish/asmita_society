@@ -688,14 +688,12 @@ class TenantsScreen extends StatelessWidget {
                         }
                       },
                       child: isLoading 
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: Center(
-                                child: AsmitaSkeleton(
-                                  isLoading: true,
-                                  child: AsmitaSkeleton.circle(size: 16),
-                                ),
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
                           : Text(member == null ? 'Save Tenant' : 'Update Tenant', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.surface)),

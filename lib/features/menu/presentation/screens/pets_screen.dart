@@ -512,7 +512,14 @@ class PetsScreen extends StatelessWidget {
                         }
                       },
                       child: isLoading 
-                          ? AsmitaSkeleton.circle(size: 20)
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
                           : Text(pet == null ? 'Save Pet' : 'Update Pet', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.surface)),
                     ),
                   ),

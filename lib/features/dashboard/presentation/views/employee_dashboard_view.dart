@@ -30,6 +30,7 @@ import '../../../../core/security/secure_storage_service.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
 import '../../widgets/bbps_bill_payments_sheet.dart';
 import '../../widgets/asmita_hotline_sheet.dart';
+import '../../../visitor_management/presentation/screens/employee_gate_attendance_scanner_screen.dart';
 export '../../widgets/bbps_bill_payments_sheet.dart';
 
 /// Team Lead & HOD Role Dashboard:
@@ -561,9 +562,9 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         onTap: () => _openMeetingRoomReservation(context),
       ),
       _QuickActionItemData(
-        label: 'Security',
-        icon: Icons.shield_rounded,
-        onTap: () => _showSecurityModal(context),
+        label: 'QR Scanner',
+        icon: Icons.qr_code_scanner_rounded,
+        onTap: () => _openQrScanner(context),
       ),
       _QuickActionItemData(
         label: 'Pay Bills',
@@ -690,6 +691,15 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
           description: 'High-Speed Smart AV & Video Conferencing Room',
           capacity: 20,
         ),
+      ),
+    );
+  }
+
+  void _openQrScanner(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const EmployeeGateAttendanceScannerScreen(),
       ),
     );
   }
