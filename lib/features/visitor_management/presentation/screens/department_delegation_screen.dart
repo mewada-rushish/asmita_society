@@ -259,20 +259,19 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
           return false;
         }
 
-        // Director (power 500)
+        // Director (power 500) can delegate to any colleague
         if (userPower >= 500) {
           return true;
         }
 
-        // Department matching
-        final userDept = (currentUser?.roleDetails?['department'] ?? currentUser?.roleDetails?['department_name'] ?? '').toString().toLowerCase();
-        final candDept = (m['department'] ?? (m['role_details'] is Map ? m['role_details']['department'] : '')).toString().toLowerCase();
-        if (userDept.isNotEmpty && candDept.isNotEmpty && (userDept == candDept || userDept.contains(candDept) || candDept.contains(userDept))) {
-          return true;
-        }
+        // 5. Department Isolation Rule: Non-directors MUST delegate strictly within their own department
+        final userDept = (currentUser?.roleDetails?['department'] ?? currentUser?.roleDetails?['department_name'] ?? '').toString().toLowerCase().trim();
+        final candDept = (m['department'] ?? (m['role_details'] is Map ? m['role_details']['department'] : '')).toString().toLowerCase().trim();
 
-        if (reportsTo != null && currentUserId != null && reportsTo.toString() != currentUserId.toString()) {
-          return false;
+        if (userDept.isNotEmpty) {
+          if (candDept.isEmpty || (!userDept.contains(candDept) && !candDept.contains(userDept))) {
+            return false;
+          }
         }
 
         return true;
