@@ -200,6 +200,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
             children: [
               AsmitaPrimaryHeader(
                 allowPropertySwitching: false,
+                onHotlinePressed: () => _showSecurityModal(context),
                 onSearchPressed: () {
                   setState(() {
                     _showSearchBar = !_showSearchBar;
