@@ -82,17 +82,16 @@ class _AllNoticesScreenState extends State<AllNoticesScreen> {
             child: BlocBuilder<CommunityPostBloc, CommunityPostState>(
               builder: (context, state) {
                 if (state.status == CommunityPostStatus.loading) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    child: Column(
-                      children: List.generate(
-                        4,
-                        (index) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: AsmitaSkeleton.bone(
-                            width: double.infinity,
-                            height: 120,
-                            borderRadius: 16,
+                  return AsmitaSkeleton(
+                    isLoading: true,
+                    child: SingleChildScrollView(
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      child: Column(
+                        children: List.generate(
+                          3,
+                          (index) => AsmitaSkeleton.postCard(
+                            margin: const EdgeInsets.only(bottom: 12),
                           ),
                         ),
                       ),

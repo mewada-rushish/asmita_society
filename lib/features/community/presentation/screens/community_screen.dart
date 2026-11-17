@@ -113,22 +113,63 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     )
                   else if (state is CommunityLoading ||
                       state is CommunityInitial)
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      sliver: SliverList.list(
-                        children: List.generate(
-                          6,
-                          (index) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Align(
-                              alignment: index.isEven
-                                  ? Alignment.centerLeft
-                                  : Alignment.centerRight,
-                              child: AsmitaSkeleton.bone(
-                                width: index.isEven ? 220 : 180,
-                                height: 52,
-                                borderRadius: 16,
-                              ),
+                    SliverToBoxAdapter(
+                      child: AsmitaSkeleton(
+                        isLoading: true,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Column(
+                            children: List.generate(
+                              6,
+                              (index) {
+                                final isMe = index.isOdd;
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: Align(
+                                    alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        if (!isMe) ...[
+                                          AsmitaSkeleton.circle(size: 28),
+                                          const SizedBox(width: 8),
+                                        ],
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context).colorScheme.surface,
+                                            borderRadius: BorderRadius.circular(16),
+                                            border: Border.all(
+                                              color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+                                            ),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                                            children: [
+                                              if (!isMe) ...[
+                                                AsmitaSkeleton.text(width: 70, height: 11, borderRadius: 3),
+                                                const SizedBox(height: 6),
+                                              ],
+                                              AsmitaSkeleton.text(
+                                                width: index % 3 == 0 ? 180 : (index % 3 == 1 ? 130 : 210),
+                                                height: 14,
+                                                borderRadius: 3,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              AsmitaSkeleton.text(width: 44, height: 9, borderRadius: 2),
+                                            ],
+                                          ),
+                                        ),
+                                        if (isMe) ...[
+                                          const SizedBox(width: 8),
+                                          AsmitaSkeleton.circle(size: 28),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         ),

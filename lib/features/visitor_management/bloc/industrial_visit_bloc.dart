@@ -28,7 +28,9 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
     LoadIndustrialVisits event,
     Emitter<IndustrialVisitState> emit,
   ) async {
-    emit(state.copyWith(status: IndustrialVisitBlocStatus.loading));
+    if (!event.isSilent && state.visits.isEmpty) {
+      emit(state.copyWith(status: IndustrialVisitBlocStatus.loading));
+    }
     try {
       final visits = await repository.getVisits(
         status: event.status,

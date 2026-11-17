@@ -23,6 +23,7 @@ import '../../visitor_management/presentation/screens/guard_qr_scanner_screen.da
 import '../../visitor_management/presentation/screens/department_delegation_screen.dart';
 import 'package:asmita_society/features/services/presentation/screens/daily_help_screen.dart';
 import 'screens/search_screen.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/property_role_resolver.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
@@ -290,12 +291,13 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
                 _currentIndex = 1; // Switches to Visits & Passes tab
               });
             },
-            onOpenDelegation: () {
-              Navigator.of(context).push(
+            onOpenDelegation: () async {
+              await Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => DepartmentDelegationScreen(
                     departmentId: directorUser?.departmentId ?? 1,
                     departmentName: directorUser?.departmentName ?? 'Executive Suite',
+                    initialIsDelegationEnabled: true,
                   ),
                 ),
               );
@@ -320,13 +322,23 @@ class _MainDashboardScreenState extends State<MainDashboardScreen> {
             isActive: user?.isActive ?? true,
             canDelegate: canDelegate,
             onNavigateToTab: (index) => setState(() => _currentIndex = index),
-            onOpenDelegation: () {
-              Navigator.push(
+            onOpenDelegation: () async {
+              bool? isInitiallyActive;
+              try {
+                if (Hive.isBoxOpen('app_cache')) {
+                  final cached = Hive.box('app_cache').get('active_delegation_cache');
+                  if (cached is Map) {
+                    isInitiallyActive = cached['is_enabled'] == true;
+                  }
+                }
+              } catch (_) {}
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => DepartmentDelegationScreen(
                     departmentId: user?.departmentId,
                     departmentName: user?.departmentName,
+                    initialIsDelegationEnabled: isInitiallyActive,
                   ),
                 ),
               );
