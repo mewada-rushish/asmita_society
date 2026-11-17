@@ -101,11 +101,11 @@ class UserModel {
   String get cabinCode {
     final c = roleDetails?['cabin_code']?.toString() ??
         roleDetails?['cabin']?.toString();
-    if (c != null && c.trim().isNotEmpty) return c.trim();
+    if (c != null && c.trim().isNotEmpty) return c.trim().toUpperCase();
     if (flatMappings.isNotEmpty) {
       final num = flatMappings.first.flatNumber.trim();
       if (num.contains('-C') || num.contains('CAB') || num.contains('-c') || num.startsWith('C-') || num.startsWith('c-')) {
-        return num;
+        return num.toUpperCase();
       }
     }
     return '';
@@ -118,13 +118,13 @@ class UserModel {
         roleDetails?['workstation_code']?.toString() ??
         roleDetails?['seat_code']?.toString() ??
         roleDetails?['desk']?.toString();
-    if (d != null && d.trim().isNotEmpty) return d.trim();
+    if (d != null && d.trim().isNotEmpty) return d.trim().toUpperCase();
 
     // Check mapped unit / flat number
     if (flatMappings.isNotEmpty) {
       final num = flatMappings.first.flatNumber.trim();
       if (!num.contains('-C') && !num.startsWith('C-') && !num.startsWith('c-') && !num.contains('CAB')) {
-        return num;
+        return num.toUpperCase();
       }
       // If unit is a cabin with seat specifier (e.g., C-201-S1 or CAB-01-D1), extract seat code
       final seatMatch = RegExp(r'[-_](S\d+|D\d+|SEAT\d+|DSK\d+)$', caseSensitive: false).firstMatch(num);
@@ -140,7 +140,7 @@ class UserModel {
       if (seatMatch != null) {
         return seatMatch.group(1)!.toUpperCase();
       }
-      return cabin;
+      return cabin.toUpperCase();
     }
 
     return '';
@@ -187,6 +187,43 @@ class UserModel {
     }
     return 'Administration';
   }
+
+  String get floorWing {
+    final fw = roleDetails?['floor_wing']?.toString();
+    if (fw != null && fw.trim().isNotEmpty) return fw.trim();
+    final fl = roleDetails?['floor']?.toString() ??
+        roleDetails?['floor_number']?.toString();
+    if (fl != null && fl.trim().isNotEmpty) {
+      final s = fl.trim().toLowerCase().replaceAll('floor', '').trim();
+      final suffix = s == '1' ? 'st' : (s == '2' ? 'nd' : (s == '3' ? 'rd' : 'th'));
+      return '$s$suffix Floor';
+    }
+    return 'Main HQ';
+  }
+
+  String get extensionNumber =>
+      roleDetails?['extension']?.toString() ??
+      roleDetails?['ext']?.toString() ??
+      '';
+
+  String get reportsToName =>
+      roleDetails?['reports_to_name']?.toString() ??
+      roleDetails?['manager_name']?.toString() ??
+      '';
+
+  String get reportsToDesignation =>
+      roleDetails?['reports_to_designation']?.toString() ??
+      roleDetails?['manager_designation']?.toString() ??
+      '';
+
+  String get delegatedToName =>
+      roleDetails?['delegated_to_name']?.toString() ??
+      roleDetails?['delegatee_name']?.toString() ??
+      '';
+
+  String get delegatedToDesignation =>
+      roleDetails?['delegated_to_designation']?.toString() ??
+      '';
 
   bool get canManageVisitors => hasPermission('canManageVisitors');
   bool get canManageServiceBookings => hasPermission('canManageServiceBookings');

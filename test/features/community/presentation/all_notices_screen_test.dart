@@ -11,7 +11,7 @@ import 'package:asmita_society/features/community/data/models/community_post_mod
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/auth/data/models/user_model.dart';
-import 'package:asmita_society/core/widgets/asmita_loading_indicator.dart';
+import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:asmita_society/l10n/app_localizations.dart';
 
@@ -115,7 +115,7 @@ void main() {
   }
 
   group('AllNoticesScreen Production Widget Tests', () {
-    testWidgets('renders AsmitaLoadingIndicator when status is loading', (tester) async {
+    testWidgets('renders AsmitaSkeleton when status is loading', (tester) async {
       setMobileScreen(tester);
       when(() => mockCommunityPostBloc.state).thenReturn(
         const CommunityPostState(status: CommunityPostStatus.loading, posts: []),
@@ -124,7 +124,7 @@ void main() {
       await tester.pumpWidget(buildTestableWidget());
       await tester.pump();
 
-      expect(find.byType(AsmitaLoadingIndicator), findsOneWidget);
+      expect(find.byType(AsmitaSkeleton), findsWidgets);
     });
 
     testWidgets('renders error text when status is error', (tester) async {

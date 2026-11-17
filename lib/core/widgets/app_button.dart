@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../constants/design_system.dart';
-import 'app_skeleton.dart';
 
 /// Centralized, async-aware button wrapper for AsmitA Society.
 ///
@@ -140,7 +139,14 @@ class _AppButtonState extends State<AppButton> {
         break;
     }
 
-    final spinner = AsmitaSkeleton.circle(size: 18);
+    final spinner = SizedBox(
+      width: 18,
+      height: 18,
+      child: CircularProgressIndicator(
+        strokeWidth: 2.2,
+        valueColor: AlwaysStoppedAnimation<Color>(fg),
+      ),
+    );
 
     Widget content;
     if (widget.child != null) {

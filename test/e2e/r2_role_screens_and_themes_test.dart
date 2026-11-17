@@ -101,7 +101,7 @@ void main() {
       expect(find.text('Inside'), findsOneWidget);
       expect(find.text('Pre-Approve'), findsOneWidget);
       expect(find.text('Meetings'), findsOneWidget);
-      expect(find.text('Security'), findsOneWidget);
+      expect(find.text('QR Scanner'), findsOneWidget);
       expect(find.text('Pay Bills'), findsOneWidget);
     });
 
@@ -140,7 +140,7 @@ void main() {
       expect(find.text('Vendor Neha Verma'), findsOneWidget);
       expect(find.text('Pre-Approve'), findsOneWidget);
       expect(find.text('Meetings'), findsOneWidget);
-      expect(find.text('Security'), findsOneWidget);
+      expect(find.text('QR Scanner'), findsOneWidget);
       expect(find.text('Pay Bills'), findsOneWidget);
     });
 

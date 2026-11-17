@@ -21,6 +21,7 @@ import '../../../auth/bloc/auth_event.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
 import '../../widgets/bbps_bill_payments_sheet.dart';
 import '../../widgets/asmita_hotline_sheet.dart';
+import '../../../visitor_management/presentation/screens/employee_gate_attendance_scanner_screen.dart';
 import '../../../visitor_management/bloc/visitor_bloc.dart';
 import '../../../visitor_management/bloc/visitor_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
@@ -98,11 +99,11 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         } catch (_) {}
       });
 
-      // Periodic auto-sync so newly arrived walk-ins & decisions reflect automatically
+      // Periodic background sync so newly arrived walk-ins & decisions reflect silently without flashes
       _autoSyncTimer = Timer.periodic(const Duration(seconds: 15), (_) {
         if (mounted) {
           try {
-            context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+            context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits(isSilent: true));
           } catch (_) {}
         }
       });
@@ -213,7 +214,6 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
       title: 'Floor Support & Security Hotline',
       child: AsmitaHotlineSheet(
         societyId: societyId,
-        onOpenSecurityCommand: () => _showSecurityModal(context),
       ),
     );
   }
@@ -1104,9 +1104,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         }
       },
       builder: (context, state) {
-        final isLoading =
-            state.status == IndustrialVisitBlocStatus.loading &&
-            state.visits.isEmpty;
+        final isLoading = state.status == IndustrialVisitBlocStatus.loading;
 
         return _buildScaffold(context, state.visits, isLoading: isLoading);
       },
@@ -1172,7 +1170,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
 
                         // 2. Quick Actions Grid (Square boxes matching employee style)
                         _buildQuickActionsGrid(context),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 18),
 
                         // 3. Operational KPI Overview Metrics (4 interactive cards: Total, Pending, Approved, Inside)
                         _buildMetricsOverview(
@@ -1216,8 +1214,18 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                 color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                  color: isDark ? AsmitaPalette.borderGreyDark : const Color(0xFFE2E8F0),
+                  width: 1.2,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.35)
+                        : const Color(0xFF0F172A).withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
@@ -1296,8 +1304,18 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                         color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                          color: isDark ? AsmitaPalette.borderGreyDark : const Color(0xFFE2E8F0),
+                          width: 1.2,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isDark
+                                ? Colors.black.withValues(alpha: 0.35)
+                                : const Color(0xFF0F172A).withValues(alpha: 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1320,33 +1338,8 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
             Column(
               children: List.generate(
                 2,
-                (index) => Container(
+                (index) => AsmitaSkeleton.visitorCard(
                   margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      AsmitaSkeleton.circle(size: 44),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            AsmitaSkeleton.text(width: 130, height: 15, borderRadius: 4),
-                            const SizedBox(height: 6),
-                            AsmitaSkeleton.pill(width: 80, height: 20),
-                          ],
-                        ),
-                      ),
-                      AsmitaSkeleton.bone(width: 68, height: 34, borderRadius: 8),
-                    ],
-                  ),
                 ),
               ),
             ),
@@ -1464,9 +1457,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         onTap: () => _openMeetingRoomReservation(context),
       ),
       _QuickActionItemData(
-        label: 'Security',
-        icon: Icons.shield_rounded,
-        onTap: () => _showSecurityModal(context),
+        label: 'QR Scanner',
+        icon: Icons.qr_code_scanner_rounded,
+        onTap: () => _openQrScanner(context),
       ),
       _QuickActionItemData(
         label: 'Pay Bills',
@@ -2469,10 +2462,19 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
 
   // FUNCTIONAL MODAL: ISSUE VIP PASS (Integrated into Pre-Approve Wizard toggle)
 
+  void _openQrScanner(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const EmployeeGateAttendanceScannerScreen(),
+      ),
+    );
+  }
+
   // =========================================================================
   // FUNCTIONAL MODAL: SECURITY COMMAND
   // =========================================================================
-  void _showSecurityModal(BuildContext context) {
+  void showSecurityModal(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     UserModel? user;
     try {

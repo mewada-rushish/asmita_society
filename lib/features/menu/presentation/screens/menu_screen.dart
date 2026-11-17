@@ -14,6 +14,7 @@ import 'package:asmita_society/features/visitor_management/presentation/screens/
 import 'package:asmita_society/features/visitor_management/presentation/widgets/invite_team_member_sheet.dart';
 import 'package:asmita_society/features/dashboard/presentation/screens/industrial_directory_screen.dart';
 
+import 'package:hive_flutter/hive_flutter.dart';
 import 'committee_members_screen.dart';
 import 'documents_screen.dart';
 import 'family_members_screen.dart';
@@ -273,38 +274,23 @@ class MenuScreen extends StatelessWidget {
                 initials = parts[0][0].toUpperCase();
               }
 
+              final userDesig = user.designation.trim();
+              final displayRole = userDesig.isNotEmpty
+                  ? userDesig
+                  : (user.primaryRole.isNotEmpty ? user.primaryRole : userRole);
+
               if (isGuard) {
-                roleText = 'Gate 1 • SECURITY CONTROL';
+                roleText = 'SECURITY CONTROL';
               } else if (isIndustrial) {
-                if (user.flatMappings.isNotEmpty) {
-                  final flat = user.flatMappings.first;
-                  final tower = flat.towerName.isNotEmpty ? '${flat.towerName} • ' : '';
-                  if (normalized == 'director') {
-                    roleText = 'Executive Suite $tower${flat.flatNumber} • DIRECTOR';
-                  } else if (normalized == 'receptionist') {
-                    roleText = 'Front Desk $tower${flat.flatNumber} • RECEPTIONIST';
-                  } else if (normalized == 'facility') {
-                    roleText = 'Logistics Dock $tower${flat.flatNumber} • FACILITY';
-                  } else {
-                    roleText = 'Workplace $tower${flat.flatNumber} • ${userRole.toUpperCase()}';
-                  }
-                } else {
-                  if (normalized == 'director') {
-                    roleText = 'Executive HQ • DIRECTOR';
-                  } else if (normalized == 'receptionist') {
-                    roleText = 'Visitor Front Desk • RECEPTIONIST';
-                  } else if (normalized == 'facility') {
-                    roleText = 'Facility & Logistics • FACILITY';
-                  } else {
-                    roleText = 'Corporate Desk • ${userRole.toUpperCase()}';
-                  }
-                }
+                roleText = displayRole.toUpperCase();
               } else {
                 // Residential
                 if (user.flatMappings.isNotEmpty) {
                   final flat = user.flatMappings.first;
                   final tower = flat.towerName.isNotEmpty ? '${flat.towerName}-' : '';
-                  roleText = 'Flat $tower${flat.flatNumber} • ${userRole.toUpperCase()}';
+                  roleText = 'Flat $tower${flat.flatNumber} • ${displayRole.toUpperCase()}';
+                } else {
+                  roleText = displayRole.toUpperCase();
                 }
               }
             }
@@ -500,14 +486,12 @@ class MenuScreen extends StatelessWidget {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                           child: isLoggingOut
-                              ? SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: Center(
-                                    child: AsmitaSkeleton(
-                                      isLoading: true,
-                                      child: AsmitaSkeleton.circle(size: 16),
-                                    ),
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                   ),
                                 )
                               : Text(
@@ -543,7 +527,7 @@ class MenuScreen extends StatelessWidget {
           case 'Policies & Documents':
           case 'Policies & Corporate Documents':
           case 'Company Policies':
-            screen = const DocumentsScreen();
+            screen = DocumentsScreen(title: title);
             break;
           case 'Family Members':
             screen = FamilyMembersScreen(onNavigateToTab: onNavigateToTab);
@@ -564,9 +548,19 @@ class MenuScreen extends StatelessWidget {
           case 'Department Delegation':
             final authState = context.read<AuthBloc>().state;
             final user = authState is AuthAuthenticated ? authState.user : null;
+            bool? isInitiallyActive;
+            try {
+              if (Hive.isBoxOpen('app_cache')) {
+                final cached = Hive.box('app_cache').get('active_delegation_cache');
+                if (cached is Map) {
+                  isInitiallyActive = cached['is_enabled'] == true;
+                }
+              }
+            } catch (_) {}
             screen = DepartmentDelegationScreen(
               departmentId: user?.departmentId,
               departmentName: user?.departmentName ?? 'General HQ',
+              initialIsDelegationEnabled: isInitiallyActive,
             );
             break;
           case 'Invite Team':
@@ -622,7 +616,6 @@ class MenuScreen extends StatelessWidget {
   }
 
   Widget _buildMenuSkeleton(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -650,12 +643,19 @@ class MenuScreen extends StatelessWidget {
               // Profile Card Skeleton
               Container(
                 decoration: BoxDecoration(
-                  color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                    color: Theme.of(context).dividerColor,
                     width: 1.5,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -678,16 +678,24 @@ class MenuScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // Section 1 Skeleton
+              // Section 1: Property / Management (4 items)
               AsmitaSkeleton.text(width: 120, height: 14, borderRadius: 4),
               const SizedBox(height: 12),
               Container(
                 decoration: BoxDecoration(
-                  color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                    color: Theme.of(context).dividerColor,
+                    width: 1.5,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: List.generate(
@@ -698,7 +706,7 @@ class MenuScreen extends StatelessWidget {
                         border: index < 3
                             ? Border(
                                 bottom: BorderSide(
-                                  color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.1),
+                                  color: Theme.of(context).dividerColor,
                                 ),
                               )
                             : null,
@@ -719,16 +727,24 @@ class MenuScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // Section 2 Skeleton
+              // Section 2: Society Info (3 items)
               AsmitaSkeleton.text(width: 100, height: 14, borderRadius: 4),
               const SizedBox(height: 12),
               Container(
                 decoration: BoxDecoration(
-                  color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                    color: Theme.of(context).dividerColor,
+                    width: 1.5,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: List.generate(
@@ -739,7 +755,7 @@ class MenuScreen extends StatelessWidget {
                         border: index < 2
                             ? Border(
                                 bottom: BorderSide(
-                                  color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.1),
+                                  color: Theme.of(context).dividerColor,
                                 ),
                               )
                             : null,

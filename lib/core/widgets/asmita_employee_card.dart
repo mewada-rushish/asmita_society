@@ -30,8 +30,8 @@ class AsmitaEmployeeCard extends StatelessWidget {
     final cleanName = name.trim().isEmpty ? 'Employee' : name.trim();
     final cleanDesignation = designation?.trim();
     final cleanDept = _cleanValue(departmentName, fallback: 'Department');
-    final cleanCabin = _cleanValue(cabinNumber, fallback: 'N/A');
-    final cleanDesk = _cleanValue(deskNumber, fallback: 'N/A');
+    final cleanCabin = _cleanValue(cabinNumber, fallback: 'N/A').toUpperCase();
+    final cleanDesk = _cleanValue(deskNumber, fallback: 'N/A').toUpperCase();
 
     final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
     final borderColor = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);

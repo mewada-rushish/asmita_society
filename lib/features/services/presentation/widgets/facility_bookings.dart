@@ -246,6 +246,7 @@ class FacilityBookings extends StatelessWidget {
 
   Widget _buildFacilitiesSkeleton(BuildContext context) {
     return AsmitaSkeleton(
+      isLoading: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
