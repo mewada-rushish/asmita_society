@@ -64,110 +64,107 @@ class PermissionManagerService {
     bool force = false,
   }) async {
     if (_isShowingDialog) return;
-
-    if (!Platform.isAndroid) {
-      if (directToSettingsOnIOS || Platform.isIOS) {
-        await openAppSettings();
-      } else if (force && context.mounted) {
-        _isShowingDialog = true;
-        await showModalBottomSheet(
-          context: context,
-          backgroundColor: Colors.transparent,
-          builder: (ctx) {
-            final isDark = Theme.of(ctx).brightness == Brightness.dark;
-            return Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(24),
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Icon(
-                    Icons.layers_rounded,
-                    size: 40,
-                    color: AsmitaPalette.deepNavy,
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'Background Overlay & Alert',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : AsmitaPalette.deepNavy,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Floating visitor arrival alerts and battery exemptions are active on mobile devices.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 13,
-                      color: isDark
-                          ? const Color(0xFF94A3B8)
-                          : Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AsmitaPalette.deepNavy,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'OK',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ).whenComplete(() {
-          _isShowingDialog = false;
-        });
-      }
-      return;
-    }
-
-    // Check if dismissed before
-    if (!force) {
-      if (_hasDismissedThisSession) return;
-      try {
-        final storage = SecureStorageService();
-        final dismissed = await storage.read(key: _dismissedPrefKey);
-        if (dismissed == 'true') {
-          return;
-        }
-      } catch (_) {}
-    }
-
-    bool overlayGranted = false;
-    bool batteryGranted = false;
-    try {
-      overlayGranted = await isOverlayPermissionGranted();
-      batteryGranted = await isBatteryOptimizationIgnored();
-    } catch (_) {}
-
-    if (!force && overlayGranted && batteryGranted) return;
-    if (!context.mounted) return;
-
     _isShowingDialog = true;
+
     try {
+      if (!Platform.isAndroid) {
+        if (directToSettingsOnIOS || Platform.isIOS) {
+          await openAppSettings();
+        } else if (force && context.mounted) {
+          await showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.transparent,
+            builder: (ctx) {
+              final isDark = Theme.of(ctx).brightness == Brightness.dark;
+              return Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Icon(
+                      Icons.layers_rounded,
+                      size: 40,
+                      color: AsmitaPalette.deepNavy,
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Background Overlay & Alert',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : AsmitaPalette.deepNavy,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Floating visitor arrival alerts and battery exemptions are active on mobile devices.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 13,
+                        color: isDark
+                            ? const Color(0xFF94A3B8)
+                            : Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AsmitaPalette.deepNavy,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'OK',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        }
+        return;
+      }
+
+      // Check if dismissed before
+      if (!force) {
+        if (_hasDismissedThisSession) return;
+        try {
+          final storage = SecureStorageService();
+          final dismissed = await storage.read(key: _dismissedPrefKey);
+          if (dismissed == 'true') {
+            return;
+          }
+        } catch (_) {}
+      }
+
+      bool overlayGranted = false;
+      bool batteryGranted = false;
+      try {
+        overlayGranted = await isOverlayPermissionGranted();
+        batteryGranted = await isBatteryOptimizationIgnored();
+      } catch (_) {}
+
+      if (!force && overlayGranted && batteryGranted) return;
+      if (!context.mounted) return;
+
       await showModalBottomSheet(
         context: context,
         isScrollControlled: true,
