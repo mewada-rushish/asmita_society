@@ -142,6 +142,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         flat: event.flat,
         role: event.role,
         profilePicture: event.profilePicture,
+        inviteToken: event.inviteToken,
+        otp: event.otp,
       );
       
       // Save token if available (e.g. for pre-approved users)
