@@ -10,6 +10,8 @@ class InviteTokenInfo extends Equatable {
   final String? departmentName;
   final String? recipientPhone;
   final String? recipientName;
+  final String? recipientEmail;
+  final String? recipientGender;
 
   const InviteTokenInfo({
     required this.success,
@@ -20,6 +22,8 @@ class InviteTokenInfo extends Equatable {
     this.departmentName,
     this.recipientPhone,
     this.recipientName,
+    this.recipientEmail,
+    this.recipientGender,
   });
 
   factory InviteTokenInfo.fromJson(Map<String, dynamic> json) {
@@ -40,6 +44,8 @@ class InviteTokenInfo extends Equatable {
     final phoneStr = json['recipient_phone']?.toString().trim();
     final nameStr = json['recipient_name']?.toString().trim();
     final deptNameStr = json['department_name']?.toString().trim();
+    final emailStr = json['recipient_email']?.toString().trim();
+    final genderStr = json['recipient_gender']?.toString().trim();
 
     return InviteTokenInfo(
       success: json['success'] == true,
@@ -50,6 +56,8 @@ class InviteTokenInfo extends Equatable {
       departmentName: (deptNameStr != null && deptNameStr.isNotEmpty) ? deptNameStr : null,
       recipientPhone: (phoneStr != null && phoneStr.isNotEmpty) ? phoneStr : null,
       recipientName: (nameStr != null && nameStr.isNotEmpty) ? nameStr : null,
+      recipientEmail: (emailStr != null && emailStr.isNotEmpty) ? emailStr : null,
+      recipientGender: (genderStr != null && genderStr.isNotEmpty) ? genderStr : null,
     );
   }
 
@@ -63,6 +71,8 @@ class InviteTokenInfo extends Equatable {
       if (departmentName != null) 'department_name': departmentName,
       if (recipientPhone != null) 'recipient_phone': recipientPhone,
       if (recipientName != null) 'recipient_name': recipientName,
+      if (recipientEmail != null) 'recipient_email': recipientEmail,
+      if (recipientGender != null) 'recipient_gender': recipientGender,
     };
   }
 
@@ -75,6 +85,8 @@ class InviteTokenInfo extends Equatable {
     String? departmentName,
     String? recipientPhone,
     String? recipientName,
+    String? recipientEmail,
+    String? recipientGender,
   }) {
     return InviteTokenInfo(
       success: success ?? this.success,
@@ -85,6 +97,8 @@ class InviteTokenInfo extends Equatable {
       departmentName: departmentName ?? this.departmentName,
       recipientPhone: recipientPhone ?? this.recipientPhone,
       recipientName: recipientName ?? this.recipientName,
+      recipientEmail: recipientEmail ?? this.recipientEmail,
+      recipientGender: recipientGender ?? this.recipientGender,
     );
   }
 
@@ -98,5 +112,7 @@ class InviteTokenInfo extends Equatable {
         departmentName,
         recipientPhone,
         recipientName,
+        recipientEmail,
+        recipientGender,
       ];
 }
