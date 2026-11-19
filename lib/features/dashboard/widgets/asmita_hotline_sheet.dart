@@ -8,6 +8,18 @@ import '../../../../core/security/secure_storage_service.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/app_skeleton.dart';
 
+class _HotlineCategoryItem {
+  final String label;
+  final int count;
+  final IconData icon;
+
+  const _HotlineCategoryItem({
+    required this.label,
+    required this.count,
+    required this.icon,
+  });
+}
+
 class AsmitaHotlineSheet extends StatefulWidget {
   final int societyId;
   final VoidCallback? onOpenSecurityCommand;
@@ -165,8 +177,8 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet> {
     return Icons.phone_in_talk_rounded;
   }
 
-  List<Map<String, dynamic>> _getAvailableHotlineCategories() {
-    return _tabs.map<Map<String, dynamic>>((tab) {
+  List<_HotlineCategoryItem> _getAvailableHotlineCategories() {
+    return _tabs.map<_HotlineCategoryItem>((tab) {
       final items = _filterHotlines(tab);
       IconData icon;
       switch (tab) {
@@ -184,20 +196,22 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet> {
           icon = Icons.grid_view_rounded;
           break;
       }
-      return <String, dynamic>{
-        'label': tab,
-        'count': items.length,
-        'icon': icon,
-      };
+      return _HotlineCategoryItem(
+        label: tab,
+        count: items.length,
+        icon: icon,
+      );
     }).toList();
   }
 
   Widget _buildCategoryDropdown(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final List<Map<String, dynamic>> categories = _getAvailableHotlineCategories();
-    final Map<String, dynamic> currentItem = categories.firstWhere(
-      (c) => c['label'] == _selectedCategory,
-      orElse: () => categories.first,
+    final List<_HotlineCategoryItem> categories = _getAvailableHotlineCategories();
+    final _HotlineCategoryItem currentItem = categories.firstWhere(
+      (c) => c.label == _selectedCategory,
+      orElse: () => categories.isNotEmpty
+          ? categories.first
+          : const _HotlineCategoryItem(label: 'All', count: 0, icon: Icons.grid_view_rounded),
     );
 
     return PopupMenuButton<String>(
@@ -220,9 +234,9 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet> {
       },
       itemBuilder: (BuildContext context) {
         return categories.map((item) {
-          final label = item['label'] as String;
-          final count = item['count'] as int;
-          final icon = item['icon'] as IconData;
+          final label = item.label;
+          final count = item.count;
+          final icon = item.icon;
           final isSelected = label == _selectedCategory;
           return PopupMenuItem<String>(
             value: label,
@@ -285,13 +299,13 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              currentItem['icon'] as IconData,
+              currentItem.icon,
               size: 13,
               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
             ),
             const SizedBox(width: 5),
             Text(
-              '${currentItem['label']} (${currentItem['count']})',
+              '${currentItem.label} (${currentItem.count})',
               style: TextStyle(
                 fontFamily: 'Montserrat',
                 fontSize: 11.5,
