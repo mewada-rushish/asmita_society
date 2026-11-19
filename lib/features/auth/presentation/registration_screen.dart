@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -382,6 +383,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     final otpController = TextEditingController();
     int countdown = 30;
     bool isResending = false;
+    Timer? timer;
 
     showModalBottomSheet(
       context: context,
@@ -390,6 +392,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
+            timer ??= Timer.periodic(const Duration(seconds: 1), (t) {
+              if (countdown > 0) {
+                setSheetState(() => countdown--);
+              } else {
+                t.cancel();
+              }
+            });
+
             final isDark = Theme.of(context).brightness == Brightness.dark;
             final bg = isDark ? AsmitaPalette.surfaceDark : Colors.white;
             final textMain = isDark ? AsmitaPalette.textDarkModeMain : Colors.black87;
@@ -491,6 +501,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       ),
                       onChanged: (val) {
                         if (val.length == 6) {
+                          timer?.cancel();
                           Navigator.pop(sheetContext);
                           this.context.read<AuthBloc>().add(AuthRegisterRequested(
                             mobile: mobile,
@@ -515,7 +526,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Resend OTP in ${countdown}s',
+                        countdown > 0 ? 'Resend OTP in ${countdown}s' : 'Didn\'t receive code?',
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 12,
@@ -529,12 +540,30 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 setSheetState(() => isResending = true);
                                 try {
                                   await _authRepo.initiateLogin(mobile);
+                                  timer?.cancel();
                                   setSheetState(() {
                                     countdown = 30;
                                     isResending = false;
                                   });
-                                } catch (_) {
+                                  timer = Timer.periodic(const Duration(seconds: 1), (t) {
+                                    if (countdown > 0) {
+                                      setSheetState(() => countdown--);
+                                    } else {
+                                      t.cancel();
+                                    }
+                                  });
+                                  AsmitaToast.show(
+                                    sheetContext,
+                                    message: 'New OTP dispatched to +91 $mobile',
+                                    type: AsmitaToastType.success,
+                                  );
+                                } catch (e) {
                                   setSheetState(() => isResending = false);
+                                  AsmitaToast.show(
+                                    sheetContext,
+                                    message: 'Failed to resend: ${e.toString().replaceAll("Exception: ", "")}',
+                                    type: AsmitaToastType.error,
+                                  );
                                 }
                               },
                         child: Text(
@@ -560,6 +589,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         );
                         return;
                       }
+                      timer?.cancel();
                       Navigator.pop(sheetContext);
                       this.context.read<AuthBloc>().add(AuthRegisterRequested(
                         mobile: mobile,
@@ -599,7 +629,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           },
         );
       },
-    );
+    ).whenComplete(() {
+      timer?.cancel();
+    });
   }
 
   void _showSearchableBottomSheet<T>({
