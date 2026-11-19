@@ -158,6 +158,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   Future<void> _fetchSocieties() async {
     setState(() => _isLoadingProperties = true);
     final data = await _propertyRepo.getSocieties();
+    if (!mounted) return;
     setState(() {
       _societies = data;
       _isLoadingProperties = false;
@@ -166,6 +167,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (!mounted) return;
     if (image != null) {
       setState(() {
         _profileImage = File(image.path);
@@ -185,6 +187,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       _isLoadingProperties = true;
     });
     final data = await _propertyRepo.getTowers(society.id);
+    if (!mounted) return;
     setState(() {
       _towers = data;
       _isLoadingProperties = false;
@@ -201,6 +204,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       _isLoadingProperties = true;
     });
     final data = await _propertyRepo.getFloors(tower.id);
+    if (!mounted) return;
     setState(() {
       _floors = data;
       _isLoadingProperties = false;
@@ -215,6 +219,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       _isLoadingProperties = true;
     });
     final data = await _propertyRepo.getFlats(floor.id);
+    if (!mounted) return;
     setState(() {
       _flats = data;
       _isLoadingProperties = false;
@@ -349,9 +354,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     try {
       await _authRepo.initiateLogin(mobile);
-      if (mounted) Navigator.pop(context); // Close loading dialog
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
     } catch (e) {
-      if (mounted) Navigator.pop(context);
+      if (!mounted) return;
+      Navigator.pop(context);
       AsmitaToast.show(
         context,
         message: 'Unable to send verification OTP: ${e.toString().replaceAll("Exception: ", "")}',
@@ -540,6 +547,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 setSheetState(() => isResending = true);
                                 try {
                                   await _authRepo.initiateLogin(mobile);
+                                  if (!sheetContext.mounted) return;
                                   timer?.cancel();
                                   setSheetState(() {
                                     countdown = 30;
@@ -558,6 +566,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                     type: AsmitaToastType.success,
                                   );
                                 } catch (e) {
+                                  if (!sheetContext.mounted) return;
                                   setSheetState(() => isResending = false);
                                   AsmitaToast.show(
                                     sheetContext,
