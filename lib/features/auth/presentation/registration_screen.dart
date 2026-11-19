@@ -308,7 +308,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       return;
     }
 
-    if (widget.inviteToken != null && widget.inviteToken!.isNotEmpty) {
+    final bool isFromInvite = (widget.inviteToken != null && widget.inviteToken!.isNotEmpty) || _isInviteLocked;
+
+    if (isFromInvite) {
       _promptInviteOtpVerification(
         mobile: mobile,
         name: name,
@@ -347,11 +349,23 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     try {
       await _authRepo.initiateLogin(mobile);
       if (mounted) Navigator.pop(context); // Close loading dialog
-    } catch (_) {
+    } catch (e) {
       if (mounted) Navigator.pop(context);
+      AsmitaToast.show(
+        context,
+        message: 'Unable to send verification OTP: ${e.toString().replaceAll("Exception: ", "")}',
+        type: AsmitaToastType.error,
+      );
+      return;
     }
 
     if (!mounted) return;
+
+    AsmitaToast.show(
+      context,
+      message: 'OTP sent to +91 $mobile. Please enter code to verify.',
+      type: AsmitaToastType.success,
+    );
 
     _showInviteOtpSheet(
       mobile: mobile,
