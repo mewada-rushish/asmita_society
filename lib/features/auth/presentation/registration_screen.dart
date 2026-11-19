@@ -814,13 +814,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               message: 'Registration complete! Welcome to AsmitA.',
               type: AsmitaToastType.success,
             );
-            Navigator.pushAndRemoveUntil(
-              context,
-              AsmitaPageTransitions.adaptiveRoute(
-                builder: (_) => MainDashboardScreen(userRole: state.sessionRole),
-              ),
-              (route) => false,
-            );
+            if (Navigator.canPop(context)) {
+              Navigator.popUntil(context, (route) => route.isFirst);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                AsmitaPageTransitions.adaptiveRoute(
+                  builder: (_) => MainDashboardScreen(userRole: state.sessionRole),
+                ),
+              );
+            }
           } else if (state is AuthError) {
             AsmitaToast.show(
               context,

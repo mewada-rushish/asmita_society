@@ -90,13 +90,16 @@ class _OtpScreenState extends State<OtpScreen> {
               type: AsmitaToastType.success,
             );
             final normalizedRole = PropertyRoleResolver.normalizeRole(state.sessionRole);
-            Navigator.pushAndRemoveUntil(
-              context,
-              AsmitaPageTransitions.adaptiveRoute(
-                builder: (_) => MainDashboardScreen(userRole: normalizedRole),
-              ),
-              (route) => false,
-            );
+            if (Navigator.canPop(context)) {
+              Navigator.popUntil(context, (route) => route.isFirst);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                AsmitaPageTransitions.adaptiveRoute(
+                  builder: (_) => MainDashboardScreen(userRole: normalizedRole),
+                ),
+              );
+            }
           } else if (state is AuthRegistrationRequired) {
             Navigator.pushReplacement(
               context,

@@ -11,6 +11,14 @@ class PermissionManagerService {
       'asmita_gate_permissions_dismissed_v1';
   static bool _isShowingDialog = false;
   static bool _hasDismissedThisSession = false;
+  static bool _hasPromptedThisSession = false;
+
+  /// Resets session-level flags (e.g. on user logout)
+  static void resetSession() {
+    _isShowingDialog = false;
+    _hasDismissedThisSession = false;
+    _hasPromptedThisSession = false;
+  }
 
   /// Checks whether "Display over other apps" (SYSTEM_ALERT_WINDOW) is granted.
   static Future<bool> isOverlayPermissionGranted() async {
@@ -63,12 +71,19 @@ class PermissionManagerService {
     bool directToSettingsOnIOS = false,
     bool force = false,
   }) async {
+    // If dialog is currently visible, never open a concurrent instance
     if (_isShowingDialog) return;
+
+    // Automatic check (non-forced): prompt at most once per app session
+    if (!force) {
+      if (_hasPromptedThisSession || _hasDismissedThisSession) return;
+    }
+
     _isShowingDialog = true;
 
     try {
       if (!Platform.isAndroid) {
-        if (directToSettingsOnIOS || Platform.isIOS) {
+        if (directToSettingsOnIOS || (force && Platform.isIOS)) {
           await openAppSettings();
         } else if (force && context.mounted) {
           await showModalBottomSheet(
@@ -150,6 +165,7 @@ class PermissionManagerService {
           final storage = SecureStorageService();
           final dismissed = await storage.read(key: _dismissedPrefKey);
           if (dismissed == 'true') {
+            _hasDismissedThisSession = true;
             return;
           }
         } catch (_) {}
@@ -165,6 +181,18 @@ class PermissionManagerService {
       if (!force && overlayGranted && batteryGranted) return;
       if (!context.mounted) return;
 
+      if (!force) {
+        _hasPromptedThisSession = true;
+      }
+
+      Future<void> saveDismissal() async {
+        _hasDismissedThisSession = true;
+        try {
+          final storage = SecureStorageService();
+          await storage.write(key: _dismissedPrefKey, value: 'true');
+        } catch (_) {}
+      }
+
       await showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -172,15 +200,12 @@ class PermissionManagerService {
         builder: (ctx) => _InstantGateApprovalBottomSheet(
           initialOverlay: overlayGranted,
           initialBattery: batteryGranted,
-          onDismissSaved: () async {
-            _hasDismissedThisSession = true;
-            try {
-              final storage = SecureStorageService();
-              await storage.write(key: _dismissedPrefKey, value: 'true');
-            } catch (_) {}
-          },
+          onDismissSaved: saveDismissal,
         ),
       );
+
+      // Persist dismissal regardless of dismiss mechanism (drag-down, back gesture, barrier tap, Done button)
+      await saveDismissal();
     } finally {
       _isShowingDialog = false;
     }
