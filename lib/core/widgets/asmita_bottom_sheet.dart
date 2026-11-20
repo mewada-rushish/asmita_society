@@ -101,10 +101,10 @@ class AsmitaBottomSheet extends StatelessWidget {
         children: [
           // White Header with Shadow
           Container(
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+            padding: const EdgeInsets.fromLTRB(20, 10, 16, 14),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               boxShadow: [
                 BoxShadow(
                   color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.03),
@@ -113,17 +113,14 @@ class AsmitaBottomSheet extends StatelessWidget {
                 ),
               ],
             ),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Center(
                   child: Container(
-                    width: 40,
-                    height: 5,
+                    width: 38,
+                    height: 4,
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(10),
@@ -131,42 +128,78 @@ class AsmitaBottomSheet extends StatelessWidget {
                   ),
                 ),
                 if (customHeader != null) ...[
-                  const SizedBox(height: 16),
-                  customHeader!,
-                ] else ...[
-                  if (title.isNotEmpty || subtitle != null) const SizedBox(height: 24),
-                  if (title.isNotEmpty)
-                    Text(
-                      title,
-                      textAlign: subtitle != null ? TextAlign.left : TextAlign.center,
-                      style: textTheme.titleLarge?.copyWith(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
-                        letterSpacing: -0.5,
+                  const SizedBox(height: 12),
+                  Stack(
+                    children: [
+                      customHeader!,
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: IconButton(
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(),
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            size: 22,
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                          splashRadius: 20,
+                        ),
                       ),
-                    ),
-                  if (subtitle != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        subtitle!,
-                        textAlign: TextAlign.left,
-                        style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                      ),
-                    ),
-                ],
-              ],
-            ),
-                Positioned(
-                  top: -8,
-                  right: -12,
-                  child: IconButton(
-                    icon: Icon(Icons.close_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 24),
-                    onPressed: () => Navigator.pop(context),
-                    splashRadius: 20,
+                    ],
                   ),
-                ),
+                ] else if (title.isNotEmpty || subtitle != null) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: subtitle != null ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (title.isNotEmpty)
+                              Text(
+                                title,
+                                textAlign: subtitle != null ? TextAlign.left : TextAlign.center,
+                                style: textTheme.titleLarge?.copyWith(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                            if (subtitle != null) ...[
+                              const SizedBox(height: 3),
+                              Text(
+                                subtitle!,
+                                textAlign: TextAlign.left,
+                                style: textTheme.bodyMedium?.copyWith(
+                                  fontSize: 13,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        padding: const EdgeInsets.all(4),
+                        constraints: const BoxConstraints(),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          size: 22,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                        splashRadius: 20,
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
