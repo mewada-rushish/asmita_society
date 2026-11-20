@@ -14,6 +14,9 @@ import '../../../auth/bloc/auth_state.dart';
 import '../../../dashboard/widgets/asmita_pre_approve_wizard.dart';
 import '../../../visitor_management/presentation/screens/department_delegation_screen.dart';
 import '../../../visitor_management/presentation/widgets/invite_team_member_sheet.dart';
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/security/secure_storage_service.dart';
+import '../../../../core/config/env_config.dart';
 
 class IndustrialDirectoryScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -26,6 +29,7 @@ class IndustrialDirectoryScreen extends StatefulWidget {
 
 class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
   bool _isDelegationActive = false;
+  String? _activeDelegateName;
   List<Map<String, dynamic>> _dynamicDepartments = [];
   bool _isLoadingDepartments = true;
   List<Map<String, dynamic>> _dynamicHotlines = [];
@@ -33,8 +37,37 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
   @override
   void initState() {
     super.initState();
+    _fetchDelegationStatus();
     _loadDepartments();
     _loadHotlines();
+  }
+
+  Future<void> _fetchDelegationStatus() async {
+    try {
+      final dio = AsmitaDioClient(SecureStorageService()).dio;
+      final societyId = _resolveSocietyId();
+      final res = await dio.get(
+        EnvConfig.employeeDelegationStatus,
+        queryParameters: societyId != null ? {'property_id': societyId} : null,
+      );
+      if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
+        final dData = res.data['data'] as Map<String, dynamic>?;
+        final outgoing = (dData?['outgoingDelegation'] ?? dData?['activeOutgoing']) as Map<String, dynamic>?;
+        if (mounted) {
+          setState(() {
+            _isDelegationActive = outgoing != null;
+            if (outgoing != null) {
+              final delegate = outgoing['delegate'] as Map<String, dynamic>?;
+              _activeDelegateName = delegate?['name'] as String? ??
+                  delegate?['full_name'] as String? ??
+                  outgoing['delegate_name']?.toString();
+            } else {
+              _activeDelegateName = null;
+            }
+          });
+        }
+      }
+    } catch (_) {}
   }
 
   int? _resolveSocietyId() {
@@ -154,16 +187,53 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
   }
 
   Future<void> _openDelegationScreen() async {
+    final authState = context.read<AuthBloc>().state;
+    final user = authState is AuthAuthenticated ? authState.user : null;
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const DepartmentDelegationScreen(
-          departmentName: 'General HQ',
+        builder: (context) => DepartmentDelegationScreen(
+          departmentId: user?.departmentId,
+          departmentName: user?.departmentName ?? 'Department',
+          initialIsDelegationEnabled: _isDelegationActive,
         ),
       ),
     );
-    if (result == true && mounted) {
-      _loadDepartments(forceRefresh: true);
+    if (mounted) {
+      await _fetchDelegationStatus();
+      if (result == true) {
+        _loadDepartments(forceRefresh: true);
+      }
+    }
+  }
+
+  Future<void> _deactivateDelegation(bool previous) async {
+    setState(() => _isDelegationActive = false);
+    try {
+      final dio = AsmitaDioClient(SecureStorageService()).dio;
+      final societyId = _resolveSocietyId();
+      await dio.delete(
+        EnvConfig.employeeDelegation,
+        queryParameters: societyId != null ? {'property_id': societyId} : null,
+      );
+      if (!mounted) return;
+      setState(() {
+        _isDelegationActive = false;
+        _activeDelegateName = null;
+      });
+      AsmitaToast.show(
+        context,
+        message: 'Delegation Deactivated: You receive direct notifications',
+        type: AsmitaToastType.info,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isDelegationActive = previous);
+      AsmitaToast.show(
+        context,
+        message: 'Failed to deactivate delegation',
+        type: AsmitaToastType.error,
+      );
     }
   }
 
@@ -189,6 +259,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
             child: AsmitaPullToRefresh(
               onRefresh: () async {
                 await Future.wait([
+                  _fetchDelegationStatus(),
                   _loadDepartments(forceRefresh: true),
                   _loadHotlines(forceRefresh: true),
                 ]);
@@ -282,7 +353,9 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                                         Flexible(
                                           child: Text(
                                             _isDelegationActive
-                                                ? 'Active • Routing to department'
+                                                ? (_activeDelegateName != null
+                                                    ? 'Active • Routing to $_activeDelegateName'
+                                                    : 'Active • Routing to department')
                                                 : 'Tap to configure team routing',
                                             style: TextStyle(
                                               fontFamily: 'Poppins',
@@ -323,15 +396,13 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                                   activeThumbColor: Colors.white,
                                   activeTrackColor: const Color(0xFFD97706),
                                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  onChanged: (val) {
-                                    setState(() => _isDelegationActive = val);
-                                    AsmitaToast.show(
-                                      context,
-                                      message: val
-                                          ? 'Delegation Active: Approvals routed to department team'
-                                          : 'Delegation Deactivated: You receive direct notifications',
-                                      type: val ? AsmitaToastType.success : AsmitaToastType.info,
-                                    );
+                                  onChanged: (val) async {
+                                    HapticFeedback.selectionClick();
+                                    if (!val) {
+                                      await _deactivateDelegation(_isDelegationActive);
+                                    } else {
+                                      await _openDelegationScreen();
+                                    }
                                   },
                                 ),
                               ),
