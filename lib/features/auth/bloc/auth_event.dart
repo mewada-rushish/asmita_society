@@ -47,6 +47,8 @@ class AuthRegisterRequested extends AuthEvent {
   final String flat;
   final String role;
   final File? profilePicture;
+  final String? inviteToken;
+  final String? otp;
 
   const AuthRegisterRequested({
     required this.mobile,
@@ -59,10 +61,25 @@ class AuthRegisterRequested extends AuthEvent {
     required this.flat,
     required this.role,
     this.profilePicture,
+    this.inviteToken,
+    this.otp,
   });
 
   @override
-  List<Object?> get props => [mobile, fullName, email, gender, society, tower, floor, flat, role, profilePicture];
+  List<Object?> get props => [
+        mobile,
+        fullName,
+        email,
+        gender,
+        society,
+        tower,
+        floor,
+        flat,
+        role,
+        profilePicture,
+        inviteToken,
+        otp,
+      ];
 }
 
 class AuthUpdateProfileRequested extends AuthEvent {

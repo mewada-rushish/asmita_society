@@ -7,9 +7,18 @@ import 'package:asmita_society/core/constants/design_system.dart';
 /// Centralized service to manage Android overlay and battery optimization permissions
 /// for MyGate-style instant incoming visitor approval alerts.
 class PermissionManagerService {
-  static const String _dismissedPrefKey = 'asmita_gate_permissions_dismissed_v1';
+  static const String _dismissedPrefKey =
+      'asmita_gate_permissions_dismissed_v1';
   static bool _isShowingDialog = false;
   static bool _hasDismissedThisSession = false;
+  static bool _hasPromptedThisSession = false;
+
+  /// Resets session-level flags (e.g. on user logout)
+  static void resetSession() {
+    _isShowingDialog = false;
+    _hasDismissedThisSession = false;
+    _hasPromptedThisSession = false;
+  }
 
   /// Checks whether "Display over other apps" (SYSTEM_ALERT_WINDOW) is granted.
   static Future<bool> isOverlayPermissionGranted() async {
@@ -62,95 +71,128 @@ class PermissionManagerService {
     bool directToSettingsOnIOS = false,
     bool force = false,
   }) async {
+    // If dialog is currently visible, never open a concurrent instance
     if (_isShowingDialog) return;
 
-    if (!Platform.isAndroid) {
-      if (directToSettingsOnIOS || Platform.isIOS) {
-        await openAppSettings();
-      } else if (force && context.mounted) {
-        _isShowingDialog = true;
-        await showModalBottomSheet(
-          context: context,
-          backgroundColor: Colors.transparent,
-          builder: (ctx) {
-            final isDark = Theme.of(ctx).brightness == Brightness.dark;
-            return Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Icon(Icons.layers_rounded, size: 40, color: AsmitaPalette.deepNavy),
-                  const SizedBox(height: 14),
-                  Text(
-                    'Background Overlay & Alert',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : AsmitaPalette.deepNavy,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Floating visitor arrival alerts and battery exemptions are active on mobile devices.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 13,
-                      color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AsmitaPalette.deepNavy,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('OK', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
-                ],
-              ),
-            );
-          },
-        ).whenComplete(() {
-          _isShowingDialog = false;
-        });
-      }
-      return;
-    }
-
-    // Check if dismissed before
+    // Automatic check (non-forced): prompt at most once per app session
     if (!force) {
-      if (_hasDismissedThisSession) return;
-      try {
-        final storage = SecureStorageService();
-        final dismissed = await storage.read(key: _dismissedPrefKey);
-        if (dismissed == 'true') {
-          return;
-        }
-      } catch (_) {}
+      if (_hasPromptedThisSession || _hasDismissedThisSession) return;
     }
-
-    bool overlayGranted = false;
-    bool batteryGranted = false;
-    try {
-      overlayGranted = await isOverlayPermissionGranted();
-      batteryGranted = await isBatteryOptimizationIgnored();
-    } catch (_) {}
-
-    if (!force && overlayGranted && batteryGranted) return;
-    if (!context.mounted) return;
 
     _isShowingDialog = true;
+
     try {
+      if (!Platform.isAndroid) {
+        if (directToSettingsOnIOS || (force && Platform.isIOS)) {
+          await openAppSettings();
+        } else if (force && context.mounted) {
+          await showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.transparent,
+            builder: (ctx) {
+              final isDark = Theme.of(ctx).brightness == Brightness.dark;
+              return Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Icon(
+                      Icons.layers_rounded,
+                      size: 40,
+                      color: AsmitaPalette.deepNavy,
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Background Overlay & Alert',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : AsmitaPalette.deepNavy,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Floating visitor arrival alerts and battery exemptions are active on mobile devices.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 13,
+                        color: isDark
+                            ? const Color(0xFF94A3B8)
+                            : Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AsmitaPalette.deepNavy,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'OK',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        }
+        return;
+      }
+
+      // Check if dismissed before
+      if (!force) {
+        if (_hasDismissedThisSession) return;
+        try {
+          final storage = SecureStorageService();
+          final dismissed = await storage.read(key: _dismissedPrefKey);
+          if (dismissed == 'true') {
+            _hasDismissedThisSession = true;
+            return;
+          }
+        } catch (_) {}
+      }
+
+      bool overlayGranted = false;
+      bool batteryGranted = false;
+      try {
+        overlayGranted = await isOverlayPermissionGranted();
+        batteryGranted = await isBatteryOptimizationIgnored();
+      } catch (_) {}
+
+      if (!force && overlayGranted && batteryGranted) return;
+      if (!context.mounted) return;
+
+      if (!force) {
+        _hasPromptedThisSession = true;
+      }
+
+      Future<void> saveDismissal() async {
+        _hasDismissedThisSession = true;
+        try {
+          final storage = SecureStorageService();
+          await storage.write(key: _dismissedPrefKey, value: 'true');
+        } catch (_) {}
+      }
+
       await showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -158,15 +200,12 @@ class PermissionManagerService {
         builder: (ctx) => _InstantGateApprovalBottomSheet(
           initialOverlay: overlayGranted,
           initialBattery: batteryGranted,
-          onDismissSaved: () async {
-            _hasDismissedThisSession = true;
-            try {
-              final storage = SecureStorageService();
-              await storage.write(key: _dismissedPrefKey, value: 'true');
-            } catch (_) {}
-          },
+          onDismissSaved: saveDismissal,
         ),
       );
+
+      // Persist dismissal regardless of dismiss mechanism (drag-down, back gesture, barrier tap, Done button)
+      await saveDismissal();
     } finally {
       _isShowingDialog = false;
     }
@@ -185,10 +224,12 @@ class _InstantGateApprovalBottomSheet extends StatefulWidget {
   });
 
   @override
-  State<_InstantGateApprovalBottomSheet> createState() => _InstantGateApprovalBottomSheetState();
+  State<_InstantGateApprovalBottomSheet> createState() =>
+      _InstantGateApprovalBottomSheetState();
 }
 
-class _InstantGateApprovalBottomSheetState extends State<_InstantGateApprovalBottomSheet>
+class _InstantGateApprovalBottomSheetState
+    extends State<_InstantGateApprovalBottomSheet>
     with WidgetsBindingObserver {
   late bool _overlayGranted;
   late bool _batteryGranted;
@@ -217,8 +258,10 @@ class _InstantGateApprovalBottomSheetState extends State<_InstantGateApprovalBot
 
   Future<void> _refreshPermissions() async {
     try {
-      final overlay = await PermissionManagerService.isOverlayPermissionGranted();
-      final battery = await PermissionManagerService.isBatteryOptimizationIgnored();
+      final overlay =
+          await PermissionManagerService.isOverlayPermissionGranted();
+      final battery =
+          await PermissionManagerService.isBatteryOptimizationIgnored();
       if (mounted) {
         setState(() {
           _overlayGranted = overlay;
@@ -260,11 +303,14 @@ class _InstantGateApprovalBottomSheetState extends State<_InstantGateApprovalBot
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: (allActive ? Colors.green : AsmitaPalette.actionRed).withValues(alpha: 0.12),
+                  color: (allActive ? Colors.green : AsmitaPalette.actionRed)
+                      .withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  allActive ? Icons.check_circle_outline_rounded : Icons.phonelink_ring_rounded,
+                  allActive
+                      ? Icons.check_circle_outline_rounded
+                      : Icons.phonelink_ring_rounded,
                   color: allActive ? Colors.green : AsmitaPalette.actionRed,
                   size: 26,
                 ),
@@ -275,7 +321,9 @@ class _InstantGateApprovalBottomSheetState extends State<_InstantGateApprovalBot
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      allActive ? 'Alerts Fully Configured' : 'Instant Gate Approvals',
+                      allActive
+                          ? 'Alerts Fully Configured'
+                          : 'Instant Gate Approvals',
                       style: TextStyle(
                         fontFamily: 'Montserrat',
                         fontSize: 16,
@@ -291,7 +339,9 @@ class _InstantGateApprovalBottomSheetState extends State<_InstantGateApprovalBot
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 12,
-                        color: isDark ? const Color(0xFF94A3B8) : AsmitaPalette.textDark,
+                        color: isDark
+                            ? const Color(0xFF94A3B8)
+                            : AsmitaPalette.textDark,
                       ),
                     ),
                   ],
@@ -329,7 +379,8 @@ class _InstantGateApprovalBottomSheetState extends State<_InstantGateApprovalBot
             context: context,
             icon: Icons.battery_charging_full_rounded,
             title: 'Unrestricted Battery Access',
-            subtitle: 'Prevents phone from delaying gate alerts when screen is locked.',
+            subtitle:
+                'Prevents phone from delaying gate alerts when screen is locked.',
             isGranted: _batteryGranted,
             isDark: isDark,
             onTap: () async {
@@ -395,8 +446,12 @@ class _InstantGateApprovalBottomSheetState extends State<_InstantGateApprovalBot
     required VoidCallback onTap,
   }) {
     final bgColor = isGranted
-        ? (isDark ? const Color(0xFF065F46).withValues(alpha: 0.25) : Colors.green.shade50)
-        : (isDark ? const Color(0xFF334155).withValues(alpha: 0.4) : Colors.grey.shade50);
+        ? (isDark
+              ? const Color(0xFF065F46).withValues(alpha: 0.25)
+              : Colors.green.shade50)
+        : (isDark
+              ? const Color(0xFF334155).withValues(alpha: 0.4)
+              : Colors.grey.shade50);
 
     final borderColor = isGranted
         ? (isDark ? const Color(0xFF059669) : Colors.green.shade200)
@@ -414,7 +469,9 @@ class _InstantGateApprovalBottomSheetState extends State<_InstantGateApprovalBot
           Icon(
             icon,
             size: 24,
-            color: isGranted ? Colors.green : (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy),
+            color: isGranted
+                ? Colors.green
+                : (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -436,7 +493,9 @@ class _InstantGateApprovalBottomSheetState extends State<_InstantGateApprovalBot
                   style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 11,
-                    color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : Colors.grey.shade600,
                   ),
                 ),
               ],
@@ -449,7 +508,10 @@ class _InstantGateApprovalBottomSheetState extends State<_InstantGateApprovalBot
             TextButton(
               onPressed: onTap,
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),

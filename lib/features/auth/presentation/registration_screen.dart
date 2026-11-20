@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -132,6 +133,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         if (info.recipientName != null && info.recipientName!.isNotEmpty) {
           _nameController.text = info.recipientName!;
         }
+        if (info.recipientEmail != null && info.recipientEmail!.isNotEmpty) {
+          _emailController.text = info.recipientEmail!;
+        }
+        if (info.recipientGender != null && info.recipientGender!.isNotEmpty) {
+          _selectedGender = info.recipientGender!;
+        }
       });
     } catch (e) {
       if (!mounted) return;
@@ -151,6 +158,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   Future<void> _fetchSocieties() async {
     setState(() => _isLoadingProperties = true);
     final data = await _propertyRepo.getSocieties();
+    if (!mounted) return;
     setState(() {
       _societies = data;
       _isLoadingProperties = false;
@@ -159,6 +167,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (!mounted) return;
     if (image != null) {
       setState(() {
         _profileImage = File(image.path);
@@ -178,6 +187,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       _isLoadingProperties = true;
     });
     final data = await _propertyRepo.getTowers(society.id);
+    if (!mounted) return;
     setState(() {
       _towers = data;
       _isLoadingProperties = false;
@@ -194,6 +204,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       _isLoadingProperties = true;
     });
     final data = await _propertyRepo.getFloors(tower.id);
+    if (!mounted) return;
     setState(() {
       _floors = data;
       _isLoadingProperties = false;
@@ -208,6 +219,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       _isLoadingProperties = true;
     });
     final data = await _propertyRepo.getFlats(floor.id);
+    if (!mounted) return;
     setState(() {
       _flats = data;
       _isLoadingProperties = false;
@@ -293,6 +305,26 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       return;
     }
 
+    if (_isInviteLocked && _profileImage == null) {
+      AsmitaToast.show(
+        context,
+        message: 'Please upload your profile photo to complete registration.',
+        type: AsmitaToastType.info,
+      );
+      return;
+    }
+
+    final bool isFromInvite = (widget.inviteToken != null && widget.inviteToken!.isNotEmpty) || _isInviteLocked;
+
+    if (isFromInvite) {
+      _promptInviteOtpVerification(
+        mobile: mobile,
+        name: name,
+        email: email,
+      );
+      return;
+    }
+
     context.read<AuthBloc>().add(AuthRegisterRequested(
       mobile: mobile,
       fullName: name,
@@ -305,6 +337,310 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       role: _selectedRole?.toLowerCase() ?? 'resident',
       profilePicture: _profileImage,
     ));
+  }
+
+  Future<void> _promptInviteOtpVerification({
+    required String mobile,
+    required String name,
+    required String email,
+  }) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: Color(0xFFE21F26)),
+      ),
+    );
+
+    try {
+      await _authRepo.initiateLogin(mobile);
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      AsmitaToast.show(
+        context,
+        message: 'Unable to send verification OTP: ${e.toString().replaceAll("Exception: ", "")}',
+        type: AsmitaToastType.error,
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
+    AsmitaToast.show(
+      context,
+      message: 'OTP sent to +91 $mobile. Please enter code to verify.',
+      type: AsmitaToastType.success,
+    );
+
+    _showInviteOtpSheet(
+      mobile: mobile,
+      name: name,
+      email: email,
+    );
+  }
+
+  void _showInviteOtpSheet({
+    required String mobile,
+    required String name,
+    required String email,
+  }) {
+    final otpController = TextEditingController();
+    int countdown = 30;
+    bool isResending = false;
+    Timer? timer;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            timer ??= Timer.periodic(const Duration(seconds: 1), (t) {
+              if (countdown > 0) {
+                setSheetState(() => countdown--);
+              } else {
+                t.cancel();
+              }
+            });
+
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            final bg = isDark ? AsmitaPalette.surfaceDark : Colors.white;
+            final textMain = isDark ? AsmitaPalette.textDarkModeMain : Colors.black87;
+            final textMuted = isDark ? AsmitaPalette.textDarkModeMuted : Colors.black54;
+
+            return Container(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 24,
+                bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+              ),
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE21F26).withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.shield_outlined, color: Color(0xFFE21F26), size: 24),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Verify Identity',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 18,
+                                color: textMain,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Enter code sent to +91 $mobile',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 13,
+                                color: textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? AsmitaPalette.surfaceElevatedDark : const Color(0xFFF5F6FA),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.shade200),
+                    ),
+                    child: TextField(
+                      controller: otpController,
+                      autofocus: true,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      maxLength: 6,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+                      style: const TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 12,
+                      ),
+                      decoration: const InputDecoration(
+                        hintText: '------',
+                        hintStyle: TextStyle(
+                          letterSpacing: 12,
+                          color: Colors.black26,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      onChanged: (val) {
+                        if (val.length == 6) {
+                          timer?.cancel();
+                          Navigator.pop(sheetContext);
+                          this.context.read<AuthBloc>().add(AuthRegisterRequested(
+                            mobile: mobile,
+                            fullName: name,
+                            email: email,
+                            gender: _selectedGender!,
+                            society: _selectedSociety?.id.toString() ?? '',
+                            tower: _selectedTower?.id.toString() ?? '',
+                            floor: _selectedFloor?.id.toString() ?? '',
+                            flat: _selectedFlat?.id.toString() ?? '',
+                            role: _selectedRole?.toLowerCase() ?? 'resident',
+                            profilePicture: _profileImage,
+                            inviteToken: widget.inviteToken,
+                            otp: val.trim(),
+                          ));
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        countdown > 0 ? 'Resend OTP in ${countdown}s' : 'Didn\'t receive code?',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          color: textMuted,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: isResending || countdown > 0
+                            ? null
+                            : () async {
+                                setSheetState(() => isResending = true);
+                                try {
+                                  await _authRepo.initiateLogin(mobile);
+                                  if (!sheetContext.mounted) return;
+                                  timer?.cancel();
+                                  setSheetState(() {
+                                    countdown = 30;
+                                    isResending = false;
+                                  });
+                                  timer = Timer.periodic(const Duration(seconds: 1), (t) {
+                                    if (countdown > 0) {
+                                      setSheetState(() => countdown--);
+                                    } else {
+                                      t.cancel();
+                                    }
+                                  });
+                                  AsmitaToast.show(
+                                    sheetContext,
+                                    message: 'New OTP dispatched to +91 $mobile',
+                                    type: AsmitaToastType.success,
+                                  );
+                                } catch (e) {
+                                  if (!sheetContext.mounted) return;
+                                  setSheetState(() => isResending = false);
+                                  AsmitaToast.show(
+                                    sheetContext,
+                                    message: 'Failed to resend: ${e.toString().replaceAll("Exception: ", "")}',
+                                    type: AsmitaToastType.error,
+                                  );
+                                }
+                              },
+                        child: Text(
+                          'Resend',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.w700,
+                            color: countdown == 0 ? const Color(0xFFE21F26) : Colors.grey,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      final enteredOtp = otpController.text.trim();
+                      if (enteredOtp.length != 6) {
+                        AsmitaToast.show(
+                          context,
+                          message: 'Please enter a valid 6-digit OTP.',
+                          type: AsmitaToastType.error,
+                        );
+                        return;
+                      }
+                      timer?.cancel();
+                      Navigator.pop(sheetContext);
+                      this.context.read<AuthBloc>().add(AuthRegisterRequested(
+                        mobile: mobile,
+                        fullName: name,
+                        email: email,
+                        gender: _selectedGender!,
+                        society: _selectedSociety?.id.toString() ?? '',
+                        tower: _selectedTower?.id.toString() ?? '',
+                        floor: _selectedFloor?.id.toString() ?? '',
+                        flat: _selectedFlat?.id.toString() ?? '',
+                        role: _selectedRole?.toLowerCase() ?? 'resident',
+                        profilePicture: _profileImage,
+                        inviteToken: widget.inviteToken,
+                        otp: enteredOtp,
+                      ));
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE21F26),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      'Verify & Activate',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    ).whenComplete(() {
+      timer?.cancel();
+    });
   }
 
   void _showSearchableBottomSheet<T>({
@@ -478,13 +814,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               message: 'Registration complete! Welcome to AsmitA.',
               type: AsmitaToastType.success,
             );
-            Navigator.pushAndRemoveUntil(
-              context,
-              AsmitaPageTransitions.adaptiveRoute(
-                builder: (_) => MainDashboardScreen(userRole: state.sessionRole),
-              ),
-              (route) => false,
-            );
+            if (Navigator.canPop(context)) {
+              Navigator.popUntil(context, (route) => route.isFirst);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                AsmitaPageTransitions.adaptiveRoute(
+                  builder: (_) => MainDashboardScreen(userRole: state.sessionRole),
+                ),
+              );
+            }
           } else if (state is AuthError) {
             AsmitaToast.show(
               context,
@@ -1012,7 +1351,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           ),
         ),
         const SizedBox(height: 32),
-          _buildTextField('Full Name', Icons.person_outline_rounded, 'Enter full name', _nameController),
+          _buildTextField(
+            'Full Name',
+            Icons.person_outline_rounded,
+            'Enter full name',
+            _nameController,
+            readOnly: _isInviteLocked && _nameController.text.isNotEmpty,
+          ),
           _buildTextField(
             'Mobile Number',
             Icons.phone_outlined,
@@ -1023,7 +1368,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             maxLength: 10,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           ),
-          _buildTextField('Email Address', Icons.email_outlined, 'name@example.com', _emailController, keyboardType: TextInputType.emailAddress),
+          _buildTextField(
+            'Email Address',
+            Icons.email_outlined,
+            'name@example.com',
+            _emailController,
+            keyboardType: TextInputType.emailAddress,
+            readOnly: _isInviteLocked && _emailController.text.isNotEmpty,
+          ),
           _buildSearchableDropdownField<String>(
             label: 'Gender',
             icon: Icons.person_outline_rounded,
@@ -1034,6 +1386,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             useGrid: true,
             gridCrossAxisCount: 3,
             gridChildAspectRatio: 2.5,
+            readOnly: _isInviteLocked && _selectedGender != null,
             onChanged: (val) => setState(() => _selectedGender = val),
           ),
           _buildBottomNavigation(bottomPadding),
@@ -1173,58 +1526,107 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     bool useGrid = false,
     int gridCrossAxisCount = 4,
     double gridChildAspectRatio = 2.0,
+    bool readOnly = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontFamily: 'Montserrat', color: Theme.of(context).textTheme.titleMedium?.color, fontWeight: FontWeight.w700, fontSize: 13)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label, style: TextStyle(fontFamily: 'Montserrat', color: Theme.of(context).textTheme.titleMedium?.color, fontWeight: FontWeight.w700, fontSize: 13)),
+              if (readOnly)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.lock_rounded, size: 11, color: Colors.grey.shade600),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Verified',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
           const SizedBox(height: 8),
           GestureDetector(
-            onTap: () {
-              _showSearchableBottomSheet(
-                title: modalTitle ?? label,
-                items: items,
-                currentValue: value,
-                onSelected: onChanged,
-                enableSearch: enableSearch,
-                useGrid: useGrid,
-                gridCrossAxisCount: gridCrossAxisCount,
-                gridChildAspectRatio: gridChildAspectRatio,
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.02),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  )
-                ],
-              ),
-              child: Row(
-                children: [
-                  Icon(icon, color: const Color(0xFF27347B), size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      value?.toString() ?? hint,
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 15,
-                        color: value != null ? Colors.black87 : Colors.black38,
-                      ),
-                    ),
+            onTap: readOnly
+                ? null
+                : () {
+                    _showSearchableBottomSheet(
+                      title: modalTitle ?? label,
+                      items: items,
+                      currentValue: value,
+                      onSelected: onChanged,
+                      enableSearch: enableSearch,
+                      useGrid: useGrid,
+                      gridCrossAxisCount: gridCrossAxisCount,
+                      gridChildAspectRatio: gridChildAspectRatio,
+                    );
+                  },
+            child: Builder(
+              builder: (context) {
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+                final inputBg = readOnly
+                    ? (isDark ? AsmitaPalette.surfaceDark : const Color(0xFFF5F6FA))
+                    : (isDark ? AsmitaPalette.surfaceElevatedDark : Colors.white);
+                final borderStrokeColor = isDark ? AsmitaPalette.borderGreyDark : Colors.grey.shade200;
+
+                return Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: inputBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: borderStrokeColor),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
                   ),
-                  Icon(Icons.keyboard_arrow_down_rounded, color: Theme.of(context).iconTheme.color, size: 22),
-                ],
-              ),
+                  child: Row(
+                    children: [
+                      Icon(icon, color: isDark ? AsmitaPalette.deepNavyDark : const Color(0xFF27347B), size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          value?.toString() ?? hint,
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 15,
+                            color: value != null
+                                ? (readOnly ? (isDark ? AsmitaPalette.textDarkModeMuted : Colors.black54) : (isDark ? AsmitaPalette.textDarkModeMain : Colors.black87))
+                                : (isDark ? AsmitaPalette.textDarkModeMuted : Colors.black38),
+                            fontWeight: readOnly ? FontWeight.w500 : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                      if (readOnly)
+                        Icon(Icons.lock_rounded, color: isDark ? AsmitaPalette.textDarkModeMuted : Colors.grey.shade600, size: 16)
+                      else
+                        Icon(Icons.keyboard_arrow_down_rounded, color: Theme.of(context).iconTheme.color, size: 22),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ],

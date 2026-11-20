@@ -5,7 +5,6 @@ import 'package:dio/dio.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
-import '../../../../core/widgets/app_skeleton.dart';
 import '../../data/models/amenity_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/amenities_bloc.dart';
@@ -1864,7 +1863,14 @@ Show this at the gate for entry.
           elevation: 0
         ),
         child: isDisabled
-            ? AsmitaSkeleton.circle(size: 20)
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
             : Text(label, style: TextStyle(fontFamily: 'Montserrat', color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.w700, fontSize: 15)),
       ),
     );

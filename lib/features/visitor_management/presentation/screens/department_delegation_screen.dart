@@ -17,6 +17,7 @@ import '../../../../core/widgets/app_refresh.dart';
 import '../../../../core/widgets/asmita_sub_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/utils/property_role_resolver.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 /// Dedicated Settings Screen for Department Delegation:
 /// - Department Head / Director / Executive out-of-office visitor approval delegation
@@ -26,11 +27,13 @@ import '../../../../core/utils/property_role_resolver.dart';
 class DepartmentDelegationScreen extends StatefulWidget {
   final int? departmentId;
   final String? departmentName;
+  final bool? initialIsDelegationEnabled;
 
   const DepartmentDelegationScreen({
     super.key,
     this.departmentId,
     this.departmentName,
+    this.initialIsDelegationEnabled,
   });
 
   @override
@@ -39,6 +42,7 @@ class DepartmentDelegationScreen extends StatefulWidget {
 
 class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen> {
   bool _isDelegationEnabled = false;
+  bool _isLoadingStatus = true;
   bool _hasUserManuallyToggled = false;
   int? _selectedDelegateId;
   bool _isTillTurnOff = true;
@@ -62,15 +66,74 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
   Map<String, dynamic>? _activeOutgoing;
   List<Map<String, dynamic>> _incomingDelegations = [];
 
+  static const String _cacheKey = 'active_delegation_cache';
+
   @override
   void initState() {
     super.initState();
+    if (widget.initialIsDelegationEnabled != null) {
+      _isDelegationEnabled = widget.initialIsDelegationEnabled!;
+    }
+    _restoreCachedDelegationState();
     _fetchCandidateDelegates();
+  }
+
+  void _restoreCachedDelegationState() {
+    try {
+      if (Hive.isBoxOpen('app_cache')) {
+        final box = Hive.box('app_cache');
+        final cached = box.get(_cacheKey);
+        if (cached is Map) {
+          final m = Map<String, dynamic>.from(cached);
+          final isEnabled = m['is_enabled'] == true;
+          _isDelegationEnabled = isEnabled;
+          _selectedDelegateId = m['delegate_user_id'] as int?;
+          _isTillTurnOff = m['is_till_turn_off'] ?? true;
+          if (m['start_date'] != null) {
+            _startDate = DateTime.tryParse(m['start_date'].toString()) ?? _startDate;
+          }
+          if (m['end_date'] != null) {
+            _endDate = DateTime.tryParse(m['end_date'].toString());
+          }
+          if (m['active_outgoing'] is Map) {
+            _activeOutgoing = Map<String, dynamic>.from(m['active_outgoing'] as Map);
+          }
+          _isLoadingStatus = false;
+        }
+      }
+    } catch (e) {
+      debugPrint('[Delegation] Note: Error restoring cached delegation: $e');
+    }
+  }
+
+  void _persistDelegationState({
+    required bool isEnabled,
+    Map<String, dynamic>? activeOutgoing,
+    int? delegateUserId,
+  }) {
+    try {
+      if (Hive.isBoxOpen('app_cache')) {
+        final box = Hive.box('app_cache');
+        box.put(_cacheKey, {
+          'is_enabled': isEnabled,
+          'delegate_user_id': delegateUserId ?? _selectedDelegateId,
+          'is_till_turn_off': _isTillTurnOff,
+          'start_date': _startDate.toIso8601String(),
+          'end_date': _endDate?.toIso8601String(),
+          'active_outgoing': activeOutgoing ?? _activeOutgoing,
+        });
+      }
+    } catch (e) {
+      debugPrint('[Delegation] Note: Error saving delegation cache: $e');
+    }
   }
 
   Future<void> _fetchCandidateDelegates({bool isSilent = false}) async {
     if (!isSilent) {
-      setState(() => _isLoadingStaff = true);
+      setState(() {
+        _isLoadingStaff = true;
+        _isLoadingStatus = true;
+      });
     }
     try {
       final dio = AsmitaDioClient(SecureStorageService()).dio;
@@ -91,6 +154,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         if (mounted) {
           setState(() {
             _isLoadingStaff = false;
+            _isLoadingStatus = false;
             _candidates = [];
             _isDelegationEnabled = false;
           });
@@ -126,60 +190,82 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
       final propertyId = currentUser?.societyId ?? 115;
 
-      // 1. Fetch current user delegation status
-      try {
-        final statusRes = await dio.get(
-          EnvConfig.employeeDelegationStatus,
-          queryParameters: {'property_id': propertyId},
-        );
-        if (statusRes.statusCode == 200 && statusRes.data['success'] == true) {
-          final dData = statusRes.data['data'] as Map<String, dynamic>?;
-          if (dData != null) {
-            _activeOutgoing = dData['outgoingDelegation'] as Map<String, dynamic>?;
-            _incomingDelegations = (dData['incomingDelegations'] as List? ?? [])
-                .map((x) => Map<String, dynamic>.from(x as Map))
-                .toList();
-            if (_activeOutgoing != null) {
-              _isDelegationEnabled = true;
-              _selectedDelegateId = _activeOutgoing!['delegate_user_id'] as int?;
-              _isTillTurnOff = _activeOutgoing!['end_date'] == null;
-              if (_activeOutgoing!['start_date'] != null) {
-                _startDate = DateTime.tryParse(_activeOutgoing!['start_date'].toString()) ?? DateTime.now();
-              }
-              if (_activeOutgoing!['end_date'] != null) {
-                _endDate = DateTime.tryParse(_activeOutgoing!['end_date'].toString());
-              }
-            } else if (!_hasUserManuallyToggled) {
-              _isDelegationEnabled = false;
+      // Prepare colleague query parameters
+      final queryParams = <String, dynamic>{};
+      if (currentUserId != null) {
+        queryParams['userId'] = currentUserId;
+      }
+      if (widget.departmentId != null) {
+        queryParams['department_id'] = widget.departmentId;
+      }
+      queryParams['property_id'] = propertyId;
+      queryParams['societyId'] = propertyId;
+
+      // 1 & 2: Fetch both delegation status and colleague candidates concurrently
+      final statusFuture = dio
+          .get(
+            EnvConfig.employeeDelegationStatus,
+            queryParameters: {'property_id': propertyId},
+          )
+          .then<Response<dynamic>?>((res) => res)
+          .catchError((err) {
+            debugPrint('[Delegation] Note: status endpoint error: $err');
+            return null;
+          });
+
+      final colleaguesFuture = dio
+          .get(
+            EnvConfig.employeeDelegationColleagues,
+            queryParameters: queryParams.isNotEmpty ? queryParams : null,
+          )
+          .then<Response<dynamic>?>((res) => res)
+          .catchError((err) {
+            debugPrint('[Delegation] Note: colleagues endpoint error: $err');
+            return null;
+          });
+
+      final results = await Future.wait([
+        statusFuture,
+        colleaguesFuture,
+      ]);
+
+      final statusRes = results[0];
+      final colleagueRes = results[1];
+
+      // Process Status
+      if (statusRes != null && statusRes.statusCode == 200 && statusRes.data['success'] == true) {
+        final dData = statusRes.data['data'] as Map<String, dynamic>?;
+        if (dData != null) {
+          _activeOutgoing = dData['outgoingDelegation'] as Map<String, dynamic>?;
+          _incomingDelegations = (dData['incomingDelegations'] as List? ?? [])
+              .map((x) => Map<String, dynamic>.from(x as Map))
+              .toList();
+          if (_activeOutgoing != null) {
+            _isDelegationEnabled = true;
+            _selectedDelegateId = _activeOutgoing!['delegate_user_id'] as int?;
+            _isTillTurnOff = _activeOutgoing!['end_date'] == null;
+            if (_activeOutgoing!['start_date'] != null) {
+              _startDate = DateTime.tryParse(_activeOutgoing!['start_date'].toString()) ?? DateTime.now();
             }
+            if (_activeOutgoing!['end_date'] != null) {
+              _endDate = DateTime.tryParse(_activeOutgoing!['end_date'].toString());
+            }
+            _persistDelegationState(
+              isEnabled: true,
+              activeOutgoing: _activeOutgoing,
+              delegateUserId: _selectedDelegateId,
+            );
+          } else if (!_hasUserManuallyToggled) {
+            _isDelegationEnabled = false;
+            _persistDelegationState(isEnabled: false);
           }
         }
-      } catch (stErr) {
-        debugPrint('[Delegation] Note: status endpoint fallback: $stErr');
       }
 
-      // 2. Fetch eligible colleagues for personal delegation
+      // Process Colleagues
       List<dynamic> rawList = [];
-      try {
-        final queryParams = <String, dynamic>{};
-        if (currentUserId != null) {
-          queryParams['userId'] = currentUserId;
-        }
-        if (widget.departmentId != null) {
-          queryParams['department_id'] = widget.departmentId;
-        }
-        queryParams['property_id'] = propertyId;
-        queryParams['societyId'] = propertyId;
-
-        final response = await dio.get(
-          EnvConfig.employeeDelegationColleagues,
-          queryParameters: queryParams.isNotEmpty ? queryParams : null,
-        );
-        if (response.statusCode == 200 && response.data['success'] == true) {
-          rawList = response.data['data'] as List? ?? [];
-        }
-      } catch (colleagueErr) {
-        debugPrint('[Delegation] Note: colleagues endpoint error, falling back: $colleagueErr');
+      if (colleagueRes != null && colleagueRes.statusCode == 200 && colleagueRes.data['success'] == true) {
+        rawList = colleagueRes.data['data'] as List? ?? [];
       }
 
       // If colleagues list is empty, query the candidateDelegates endpoint
@@ -259,20 +345,19 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
           return false;
         }
 
-        // Director (power 500)
+        // Director (power 500) can delegate to any colleague
         if (userPower >= 500) {
           return true;
         }
 
-        // Department matching
-        final userDept = (currentUser?.roleDetails?['department'] ?? currentUser?.roleDetails?['department_name'] ?? '').toString().toLowerCase();
-        final candDept = (m['department'] ?? (m['role_details'] is Map ? m['role_details']['department'] : '')).toString().toLowerCase();
-        if (userDept.isNotEmpty && candDept.isNotEmpty && (userDept == candDept || userDept.contains(candDept) || candDept.contains(userDept))) {
-          return true;
-        }
+        // 5. Department Isolation Rule: Non-directors MUST delegate strictly within their own department
+        final userDept = (currentUser?.roleDetails?['department'] ?? currentUser?.roleDetails?['department_name'] ?? '').toString().toLowerCase().trim();
+        final candDept = (m['department'] ?? (m['role_details'] is Map ? m['role_details']['department'] : '')).toString().toLowerCase().trim();
 
-        if (reportsTo != null && currentUserId != null && reportsTo.toString() != currentUserId.toString()) {
-          return false;
+        if (userDept.isNotEmpty) {
+          if (candDept.isEmpty || (!userDept.contains(candDept) && !candDept.contains(userDept))) {
+            return false;
+          }
         }
 
         return true;
@@ -282,7 +367,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         final idx = entry.key;
         final m = Map<String, dynamic>.from(entry.value as Map);
         m['id'] = m['user_id'] ?? m['id'];
-        m['avatarColor'] = _avatarColors[idx % _avatarColors.length];
+        m['avatarColorValue'] = _avatarColors[idx % _avatarColors.length].toARGB32();
 
         // Determine role and designation
         final desig = m['designation']?.toString() ?? m['role']?.toString() ?? 'Colleague';
@@ -325,7 +410,12 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
     } catch (e) {
       debugPrint('[Delegation] Error fetching candidate delegates: $e');
     } finally {
-      if (mounted) setState(() => _isLoadingStaff = false);
+      if (mounted) {
+        setState(() {
+          _isLoadingStaff = false;
+          _isLoadingStatus = false;
+        });
+      }
     }
   }
 
@@ -400,9 +490,13 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
       if (!PropertyRoleResolver.canDelegate(currentUser)) {
         if (mounted) {
+          final normalizedRole = PropertyRoleResolver.normalizeRole(currentUser?.primaryRole);
+          final errorMsg = normalizedRole == 'receptionist'
+              ? 'Gate receptionists handle perimeter intake and cannot delegate approvals.'
+              : 'Your current role or profile permissions do not have visitor delegation authority.';
           AsmitaToast.show(
             context,
-            message: 'Gate receptionists handle perimeter intake and cannot delegate approvals.',
+            message: errorMsg,
             type: AsmitaToastType.error,
           );
         }
@@ -415,10 +509,11 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
           EnvConfig.employeeDelegation,
           queryParameters: {'property_id': propertyId},
         );
+        _persistDelegationState(isEnabled: false);
         if (mounted) {
           AsmitaToast.show(
             context,
-            message: 'Visitor delegation has been deactivated. Approvals will route directly to you.',
+            message: 'Delegation deactivated.',
             type: AsmitaToastType.success,
           );
           Navigator.pop(context, true);
@@ -440,15 +535,30 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
       final delegate = _candidates.firstWhere(
         (s) => s['id'] == _selectedDelegateId,
-        orElse: () => {'name': 'Selected Colleague'},
+        orElse: () => {'name': 'Colleague'},
       );
 
-      final msg = 'Approvals sent to ${delegate['name']}.';
+      _persistDelegationState(
+        isEnabled: true,
+        activeOutgoing: {
+          'delegate_user_id': _selectedDelegateId,
+          'start_date': _startDate.toIso8601String(),
+          'end_date': _isTillTurnOff ? null : _endDate?.toIso8601String(),
+          'delegate': delegate,
+        },
+        delegateUserId: _selectedDelegateId,
+      );
+
+      final msg = 'Delegated to ${delegate['name']}.';
 
       if (mounted) {
+        final serverMsg = response.data?['message']?.toString();
+        final shortMsg = (serverMsg != null && serverMsg.length <= 30)
+            ? serverMsg
+            : msg;
         AsmitaToast.show(
           context,
-          message: response.data?['message'] ?? msg,
+          message: shortMsg,
           type: AsmitaToastType.success,
         );
         Navigator.pop(context, true);
@@ -650,15 +760,19 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                                 ),
                                 const SizedBox(height: 3),
                                 Text(
-                                  _isDelegationEnabled
-                                      ? 'Delegation is currently ACTIVE'
-                                      : 'Delegation is turned OFF',
+                                  _isLoadingStatus
+                                      ? 'Checking delegation status...'
+                                      : (_isDelegationEnabled
+                                          ? 'Delegation is currently ACTIVE'
+                                          : 'Delegation is turned OFF'),
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500,
-                                    color: _isDelegationEnabled
-                                        ? (isDark ? AsmitaPalette.successGreenDark : AsmitaPalette.successGreen)
-                                        : (isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight),
+                                    color: _isLoadingStatus
+                                        ? (isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight)
+                                        : (_isDelegationEnabled
+                                            ? (isDark ? AsmitaPalette.successGreenDark : AsmitaPalette.successGreen)
+                                            : (isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight)),
                                   ),
                                 ),
                               ],
@@ -681,7 +795,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                     ),
                     const SizedBox(height: 20),
 
-                    if (_isDelegationEnabled) ...[
+                    if (_isDelegationEnabled || (_isLoadingStatus && _candidates.isEmpty)) ...[
                       // Section Header: Select Delegate & BBPS-style Category Dropdown
                       Padding(
                         padding: const EdgeInsets.only(left: 4, bottom: 8),
@@ -745,7 +859,8 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
                             return Column(
                               children: filtered.map((staff) {
                                 final isSelected = _selectedDelegateId == staff['id'];
-                                final color = staff['avatarColor'] as Color? ?? AsmitaPalette.deepNavy;
+                                final colorVal = staff['avatarColorValue'] as int?;
+                                final color = colorVal != null ? Color(colorVal) : AsmitaPalette.deepNavy;
 
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 10),
@@ -1094,14 +1209,14 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
   List<Map<String, dynamic>> _getAvailableStaffCategories() {
     final List<Map<String, dynamic>> categories = [
-      {
+      <String, dynamic>{
         'label': 'All',
         'count': _candidates.length,
         'icon': Icons.grid_view_rounded,
       },
     ];
     if (_candidates.any((c) => c['category'] == 'HOD' || c['is_hod'] == true)) {
-      categories.add({
+      categories.add(<String, dynamic>{
         'label': 'HOD',
         'count': _candidates.where((c) => c['category'] == 'HOD' || c['is_hod'] == true).length,
         'icon': Icons.badge_outlined,
@@ -1109,7 +1224,7 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
     }
     if (_candidates.any((c) =>
         c['category'] == 'Receptionist' || c['category'] == 'Floor Receptionist')) {
-      categories.add({
+      categories.add(<String, dynamic>{
         'label': 'Receptionist',
         'count': _candidates
             .where((c) =>
@@ -1120,21 +1235,21 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
       });
     }
     if (_candidates.any((c) => c['category'] == 'Team Lead')) {
-      categories.add({
+      categories.add(<String, dynamic>{
         'label': 'Team Lead',
         'count': _candidates.where((c) => c['category'] == 'Team Lead').length,
         'icon': Icons.supervisor_account_outlined,
       });
     }
     if (_candidates.any((c) => c['category'] == 'Team Member')) {
-      categories.add({
+      categories.add(<String, dynamic>{
         'label': 'Team Member',
         'count': _candidates.where((c) => c['category'] == 'Team Member').length,
         'icon': Icons.person_outline_rounded,
       });
     }
     if (_candidates.any((c) => c['category'] == 'Intern')) {
-      categories.add({
+      categories.add(<String, dynamic>{
         'label': 'Intern',
         'count': _candidates.where((c) => c['category'] == 'Intern').length,
         'icon': Icons.school_outlined,
@@ -1145,8 +1260,8 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
 
   Widget _buildStaffCategoryDropdown(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final categories = _getAvailableStaffCategories();
-    final currentItem = categories.firstWhere(
+    final List<Map<String, dynamic>> categories = _getAvailableStaffCategories();
+    final Map<String, dynamic> currentItem = categories.firstWhere(
       (c) => c['label'] == _selectedCategory,
       orElse: () => categories.first,
     );

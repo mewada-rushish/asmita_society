@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
@@ -17,7 +16,9 @@ import 'package:asmita_society/core/security/secure_storage_service.dart';
 import 'package:asmita_society/core/di/injection_container.dart' as di;
 
 class DocumentsScreen extends StatelessWidget {
-  const DocumentsScreen({super.key});
+  final String title;
+
+  const DocumentsScreen({super.key, this.title = 'Important Documents'});
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +39,7 @@ class DocumentsScreen extends StatelessWidget {
           return BlocProvider<SocietyBloc>(
             create: (_) =>
                 SocietyBloc(repository: repo)..add(const LoadSocietyData()),
-            child: const _DocumentsScreenBody(),
+            child: _DocumentsScreenBody(title: title),
           );
         }
 
@@ -47,14 +48,16 @@ class DocumentsScreen extends StatelessWidget {
           ctx.read<SocietyBloc>().add(const LoadSocietyData());
         }
 
-        return const _DocumentsScreenBody();
+        return _DocumentsScreenBody(title: title);
       },
     );
   }
 }
 
 class _DocumentsScreenBody extends StatelessWidget {
-  const _DocumentsScreenBody();
+  final String title;
+
+  const _DocumentsScreenBody({this.title = 'Important Documents'});
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +68,7 @@ class _DocumentsScreenBody extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            const AsmitaSubHeader(title: 'Important Documents'),
+            AsmitaSubHeader(title: title),
             Expanded(
               child: BlocBuilder<SocietyBloc, SocietyState>(
                 builder: (context, societyState) {
@@ -173,7 +176,6 @@ class _DocumentsScreenBody extends StatelessWidget {
   }
 
   Widget _buildDocumentsSkeleton(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AsmitaSkeleton(
       isLoading: true,
       child: ListView.builder(
@@ -185,12 +187,23 @@ class _DocumentsScreenBody extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isDark ? AsmitaPalette.borderGreyDark : const Color(0xFFE2E8F0),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : const Color(0xFFE2E8F0),
                 width: 1.2,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.black.withValues(alpha: 0.25)
+                      : const Color(0xFF1E293B).withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Row(
               children: [
@@ -215,7 +228,7 @@ class _DocumentsScreenBody extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Actions
+                // Actions (View pill + Download circle)
                 AsmitaSkeleton.pill(width: 54, height: 28),
                 const SizedBox(width: 8),
                 AsmitaSkeleton.circle(size: 28),

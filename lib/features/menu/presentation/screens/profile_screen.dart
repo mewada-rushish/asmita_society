@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
-import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
+import 'package:asmita_society/core/widgets/app_button.dart';
+import 'package:asmita_society/core/widgets/app_refresh.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_event.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/auth/data/models/user_model.dart';
+import 'package:asmita_society/core/utils/property_role_resolver.dart';
 
 class ProfileScreen extends StatefulWidget {
   final void Function(int)? onNavigateToTab;
+
   const ProfileScreen({super.key, this.onNavigateToTab});
 
   @override
@@ -30,17 +32,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _emailController = TextEditingController();
     _phoneController = TextEditingController();
 
-    // Initialize with current state if available
-    final authState = context.read<AuthBloc>().state;
-    if (authState is AuthAuthenticated) {
-      _populateControllers(authState.user);
-    }
-  }
-
-  void _populateControllers(UserModel user) {
-    _nameController.text = user.fullName;
-    _emailController.text = user.emailId ?? '';
-    _phoneController.text = user.mobileNumber ?? '';
+    // Trigger profile refresh on mount
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<AuthBloc>().add(AuthRefreshProfileRequested());
+      }
+    });
   }
 
   @override
@@ -51,33 +48,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
+  void _populateControllers(UserModel user) {
+    _nameController.text = user.fullName;
+    _emailController.text = user.emailId ?? '';
+    _phoneController.text = user.mobileNumber ?? '';
+  }
+
   void _toggleEdit() {
     setState(() {
       _isEditing = !_isEditing;
       if (!_isEditing) {
-        // Reset to original values if cancelled
-        final authState = context.read<AuthBloc>().state;
-        if (authState is AuthAuthenticated) {
-          _populateControllers(authState.user);
+        final state = context.read<AuthBloc>().state;
+        if (state is AuthAuthenticated) {
+          _populateControllers(state.user);
         }
       }
     });
   }
 
   void _saveProfile() {
-    if (_nameController.text.trim().isEmpty ||
-        _phoneController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Name and Phone are required')),
-      );
-      return;
-    }
-
     context.read<AuthBloc>().add(
       AuthUpdateProfileRequested(
-        fullName: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        mobile: _phoneController.text.trim(),
+        fullName: _nameController.text,
+        email: _emailController.text,
+        mobile: _phoneController.text,
       ),
     );
     setState(() {
@@ -93,12 +87,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       listener: (context, state) {
         if (state is AuthAuthenticated) {
           _populateControllers(state.user);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile updated successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
@@ -110,7 +98,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         bool isLoading = state is AuthLoading;
         if (state is AuthAuthenticated) {
           user = state.user;
+          if (!_isEditing && _nameController.text.isEmpty) {
+            _populateControllers(user);
+          }
         }
+
+        final isIndustrial =
+            user != null && PropertyRoleResolver.isIndustrialContext(user);
 
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -139,22 +133,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 Expanded(
-                  child: AsmitaPullToRefresh(
+                  child: AppRefresh(
                     onRefresh: () async {
-                      context.read<AuthBloc>().add(AuthCheckRequested());
+                      context.read<AuthBloc>().add(
+                        AuthRefreshProfileRequested(),
+                      );
                       await Future.delayed(const Duration(milliseconds: 700));
                     },
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     child: user == null
                         ? _buildProfileSkeleton(context)
                         : Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              _buildProfileHeader(textTheme, user),
-                              const SizedBox(height: 24),
-                              _buildDetailsSection(textTheme, user),
-                              const SizedBox(height: 24),
-                              if (_isEditing)
+                              _buildProfileHeader(
+                                textTheme,
+                                user,
+                                isIndustrial,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildContactDetailsSection(textTheme, user),
+                              const SizedBox(height: 16),
+                              if (isIndustrial) ...[
+                                _buildWorkplaceSeatingCard(textTheme, user),
+                                const SizedBox(height: 16),
+                                _buildReportingDelegationCard(textTheme, user),
+                                const SizedBox(height: 16),
+                              ],
+                              if (_isEditing) ...[
+                                const SizedBox(height: 8),
                                 _buildSaveButton(textTheme, isLoading),
+                              ],
+                              const SizedBox(height: 32),
                             ],
                           ),
                   ),
@@ -167,7 +180,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileHeader(TextTheme textTheme, UserModel user) {
+  Widget _buildProfileHeader(
+    TextTheme textTheme,
+    UserModel user,
+    bool isIndustrial,
+  ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     String initials = user.fullName.isNotEmpty
         ? user.fullName
               .trim()
@@ -178,17 +198,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               .toUpperCase()
         : 'U';
 
+    final roleTitle = user.designation.isNotEmpty
+        ? user.designation
+        : user.primaryRole;
+
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
+        border: Border.all(color: theme.dividerColor, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(
-              context,
-            ).colorScheme.onSurface.withValues(alpha: 0.03),
+            color: theme.colorScheme.onSurface.withValues(
+              alpha: isDark ? 0.2 : 0.03,
+            ),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -197,8 +221,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           CircleAvatar(
-            radius: 40,
-            backgroundColor: Theme.of(context).colorScheme.primary,
+            radius: 42,
+            backgroundColor: theme.colorScheme.primary,
             backgroundImage:
                 user.profilePictureUrl != null &&
                     user.profilePictureUrl!.isNotEmpty
@@ -210,8 +234,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ? Text(
                     initials,
                     style: textTheme.titleLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.surface,
-                      fontSize: 24,
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
                     ),
                   )
                 : null,
@@ -223,36 +248,310 @@ class _ProfileScreenState extends State<ProfileScreen> {
               fontSize: 20,
               fontWeight: FontWeight.w700,
             ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              (user.systemRole ?? user.primaryRole).toUpperCase(),
-              style: textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.w700,
+
+          // Role Badge with Score & Duty status
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF334155)
+                        : const Color(0xFFCBD5E1),
+                  ),
+                ),
+                child: Text(
+                  isIndustrial
+                      ? roleTitle.toUpperCase()
+                      : (user.systemRole ?? user.primaryRole).toUpperCase(),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                  ),
+                ),
               ),
-            ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF10B981),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      user.isActive ? 'Active' : 'Offline',
+                      style: const TextStyle(
+                        color: Color(0xFF059669),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDetailsSection(TextTheme textTheme, UserModel user) {
+  // 1. WORKPLACE & SEATING CARD
+  Widget _buildWorkplaceSeatingCard(TextTheme textTheme, UserModel user) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final cabin = user.cabinCode;
+    final desk = user.deskCode;
+    final ext = user.extensionNumber;
+
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
+        border: Border.all(color: theme.dividerColor, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.onSurface.withValues(
+              alpha: isDark ? 0.2 : 0.03,
+            ),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.business_center_rounded,
+                  size: 16,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'WORKPLACE & SEATING',
+                  style: textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: theme.dividerColor),
+          _buildInfoRow(
+            icon: Icons.apartment_rounded,
+            label: 'Department',
+            value: user.departmentName,
+            showBorder: true,
+          ),
+          _buildInfoRow(
+            icon: Icons.layers_outlined,
+            label: 'Floor & Wing',
+            value: user.floorWing,
+            showBorder: true,
+          ),
+          if (desk.isNotEmpty)
+            _buildInfoRow(
+              icon: Icons.chair_outlined,
+              label: 'Desk Code',
+              value: desk,
+              showBorder: cabin.isNotEmpty || ext.isNotEmpty,
+            ),
+          if (cabin.isNotEmpty)
+            _buildInfoRow(
+              icon: Icons.meeting_room_outlined,
+              label: 'Cabin',
+              value: cabin,
+              showBorder: ext.isNotEmpty,
+            ),
+          if (ext.isNotEmpty)
+            _buildInfoRow(
+              icon: Icons.phone_forwarded_rounded,
+              label: 'Intercom Ext.',
+              value: ext,
+              showBorder: false,
+            ),
+        ],
+      ),
+    );
+  }
+
+  // 2. REPORTING & DELEGATION CARD
+  Widget _buildReportingDelegationCard(TextTheme textTheme, UserModel user) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final reportsTo = user.reportsToName;
+    final reportsDesig = user.reportsToDesignation;
+    final delegatedTo = user.delegatedToName;
+    final delegatedDesig = user.delegatedToDesignation;
+
+    // Resolve Approval Tier based on power score
+    final power = user.rolePower ?? 50;
+    String approvalTier = 'Host Level 1';
+    if (power >= 90) {
+      approvalTier = 'Director / Executive Level';
+    } else if (power >= 70) {
+      approvalTier = 'HOD Level 2 Approval Authority';
+    } else if (power >= 60) {
+      approvalTier = 'Team Lead (Escalation Fallback)';
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.dividerColor, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.onSurface.withValues(
+              alpha: isDark ? 0.2 : 0.03,
+            ),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.account_tree_outlined,
+                  size: 16,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'REPORTING & DELEGATION',
+                  style: textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: theme.dividerColor),
+          _buildInfoRow(
+            icon: Icons.supervisor_account_rounded,
+            label: 'Reporting To',
+            value: reportsTo.isNotEmpty
+                ? (reportsDesig.isNotEmpty
+                      ? '$reportsTo ($reportsDesig)'
+                      : reportsTo)
+                : 'Direct to Executive Management',
+            showBorder: true,
+          ),
+          _buildInfoRow(
+            icon: Icons.swap_horiz_rounded,
+            label: 'Delegated To',
+            value: delegatedTo.isNotEmpty
+                ? (delegatedDesig.isNotEmpty
+                      ? '$delegatedTo ($delegatedDesig)'
+                      : delegatedTo)
+                : 'Direct (No Active Delegation)',
+            showBorder: true,
+          ),
+          _buildInfoRow(
+            icon: Icons.verified_user_outlined,
+            label: 'Approval Tier',
+            value: approvalTier,
+            showBorder: false,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 3. PERSONAL & CONTACT SECTION (Editable)
+  Widget _buildContactDetailsSection(TextTheme textTheme, UserModel user) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.dividerColor, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.onSurface.withValues(
+              alpha: isDark ? 0.2 : 0.03,
+            ),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.contact_phone_outlined,
+                  size: 16,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'PERSONAL & CONTACT',
+                  style: textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: theme.dividerColor),
           _buildEditableRow(
             textTheme,
             Icons.person_rounded,
@@ -273,6 +572,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'Phone',
             _phoneController,
             false,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required bool showBorder,
+  }) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        border: showBorder
+            ? Border(bottom: BorderSide(color: theme.dividerColor, width: 1))
+            : null,
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: theme.colorScheme.primary, size: 18),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: textTheme.bodySmall?.color?.withValues(alpha: 0.65),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -321,33 +675,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Text(
                   label,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).textTheme.bodyMedium?.color,
-                    fontSize: 12,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: textTheme.bodySmall?.color?.withValues(alpha: 0.6),
                   ),
                 ),
-                const SizedBox(height: 2),
-                if (_isEditing)
-                  TextField(
-                    controller: controller,
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 4),
-                      border: InputBorder.none,
-                    ),
-                    style: textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  )
-                else
-                  Text(
-                    controller.text.isEmpty ? 'Not provided' : controller.text,
-                    style: textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
+                const SizedBox(height: 4),
+                _isEditing
+                    ? TextField(
+                        controller: controller,
+                        style: textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(vertical: 4),
+                          border: UnderlineInputBorder(),
+                        ),
+                      )
+                    : Text(
+                        controller.text,
+                        style: textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
               ],
             ),
           ),
@@ -359,85 +709,132 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildSaveButton(TextTheme textTheme, bool isLoading) {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
+      height: 48,
+      child: AppButton(
+        label: 'Save Profile',
+        isLoading: isLoading,
         onPressed: isLoading ? null : _saveProfile,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
+        borderRadius: 12,
+        textStyle: textTheme.titleMedium?.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
         ),
-        child: isLoading
-            ? SizedBox(
-                height: 20,
-                width: 20,
-                child: Center(
-                  child: AsmitaSkeleton(
-                    isLoading: true,
-                    child: AsmitaSkeleton.circle(size: 16),
-                  ),
-                ),
-              )
-            : Text(
-                'Save Profile',
-                style: textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.surface,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
       ),
     );
   }
 
   Widget _buildProfileSkeleton(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return AsmitaSkeleton(
       isLoading: true,
       child: Column(
         children: [
-          // Profile Header Skeleton
-          AsmitaSkeleton.circle(size: 96),
-          const SizedBox(height: 16),
-          AsmitaSkeleton.text(width: 150, height: 18, borderRadius: 4),
-          const SizedBox(height: 8),
-          AsmitaSkeleton.pill(width: 110, height: 24),
-          const SizedBox(height: 24),
-
-          // Details Section Skeleton
+          // 1. Profile Header Card Skeleton
           Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark
-                    ? AsmitaPalette.borderGreyDark
-                    : Colors.grey.withValues(alpha: 0.15),
-              ),
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: theme.dividerColor, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.onSurface.withValues(
+                    alpha: isDark ? 0.2 : 0.03,
+                  ),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
+            child: Column(
+              children: [
+                AsmitaSkeleton.circle(size: 80),
+                const SizedBox(height: 16),
+                AsmitaSkeleton.text(width: 150, height: 20, borderRadius: 4),
+                const SizedBox(height: 8),
+                AsmitaSkeleton.pill(width: 110, height: 24),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 2. Workplace Card Skeleton
+          Container(
             padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: theme.dividerColor, width: 1.5),
+            ),
             child: Column(
               children: List.generate(
-                4,
-                (index) => Padding(
-                  padding: EdgeInsets.only(bottom: index < 3 ? 16.0 : 0),
+                3,
+                (i) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Row(
                     children: [
                       AsmitaSkeleton.circle(size: 24),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AsmitaSkeleton.text(
+                              width: 80,
+                              height: 10,
+                              borderRadius: 3,
+                            ),
+                            const SizedBox(height: 6),
+                            AsmitaSkeleton.text(
+                              width: 140,
+                              height: 14,
+                              borderRadius: 4,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 3. Details Section Card Skeleton
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: theme.dividerColor, width: 1.5),
+            ),
+            child: Column(
+              children: List.generate(
+                3,
+                (i) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      AsmitaSkeleton.circle(size: 24),
+                      const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             AsmitaSkeleton.text(
                               width: 60,
-                              height: 11,
+                              height: 10,
                               borderRadius: 3,
                             ),
                             const SizedBox(height: 6),
                             AsmitaSkeleton.text(
-                              width: 140,
+                              width: 160,
                               height: 14,
                               borderRadius: 4,
                             ),

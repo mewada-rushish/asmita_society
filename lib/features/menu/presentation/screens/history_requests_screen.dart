@@ -5,6 +5,7 @@ import '../../bloc/historyrequest_bloc.dart';
 import '../../bloc/historyrequest_event.dart';
 import '../../bloc/historyrequest_state.dart';
 import '../../data/models/history_request_model.dart';
+import 'package:asmita_society/core/widgets/app_refresh.dart';
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/features/menu/data/repositories/history_request_repository.dart';
 import 'package:asmita_society/core/network/dio_client.dart';
@@ -64,18 +65,27 @@ class HistoryRequestsScreen extends StatelessWidget {
               return const Center(child: Text('No access requests found.'));
             }
 
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<HistoryRequestBloc>().add(const LoadHistoryRequest());
-              },
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: requests.length,
-                itemBuilder: (context, index) {
-                  final req = requests[index];
-                  return _buildRequestCard(context, textTheme, req);
-                },
+            return CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
               ),
+              slivers: [
+                AppRefresh.sliver(
+                  onRefresh: () async {
+                    context.read<HistoryRequestBloc>().add(const LoadHistoryRequest());
+                  },
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: SliverList.builder(
+                    itemCount: requests.length,
+                    itemBuilder: (context, index) {
+                      final req = requests[index];
+                      return _buildRequestCard(context, textTheme, req);
+                    },
+                  ),
+                ),
+              ],
             );
           }
           return const SizedBox.shrink();
@@ -212,9 +222,11 @@ class HistoryRequestsScreen extends StatelessWidget {
 
   Widget _buildHistoryRequestsSkeleton(BuildContext context) {
     return AsmitaSkeleton(
+      isLoading: true,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: 5,
+        physics: const NeverScrollableScrollPhysics(),
         itemBuilder: (context, index) {
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
@@ -232,9 +244,9 @@ class HistoryRequestsScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            AsmitaSkeleton.text(width: double.infinity, height: 16),
+                            AsmitaSkeleton.text(width: 200, height: 16, borderRadius: 4),
                             const SizedBox(height: 4),
-                            AsmitaSkeleton.text(width: 140, height: 14),
+                            AsmitaSkeleton.text(width: 140, height: 14, borderRadius: 3),
                           ],
                         ),
                       ),
@@ -243,16 +255,9 @@ class HistoryRequestsScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  AsmitaSkeleton.text(width: 120, height: 12),
+                  AsmitaSkeleton.text(width: 120, height: 12, borderRadius: 3),
                   const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
+                  AsmitaSkeleton.bone(width: double.infinity, height: 40, borderRadius: 8),
                 ],
               ),
             ),

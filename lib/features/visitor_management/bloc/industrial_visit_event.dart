@@ -12,16 +12,18 @@ class LoadIndustrialVisits extends IndustrialVisitEvent {
   final String? arrivalMode;
   final int? departmentId;
   final int? hostUserId;
+  final bool isSilent;
 
   const LoadIndustrialVisits({
     this.status,
     this.arrivalMode,
     this.departmentId,
     this.hostUserId,
+    this.isSilent = false,
   });
 
   @override
-  List<Object?> get props => [status, arrivalMode, departmentId, hostUserId];
+  List<Object?> get props => [status, arrivalMode, departmentId, hostUserId, isSilent];
 }
 
 class DecideVisitEvent extends IndustrialVisitEvent {
