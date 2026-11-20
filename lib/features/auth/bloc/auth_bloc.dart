@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../data/repositories/auth_repository.dart';
 import '../../../core/security/secure_storage_service.dart';
+import '../../../core/services/permission_manager_service.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 import '../data/models/auth_response.dart';
@@ -142,6 +143,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         flat: event.flat,
         role: event.role,
         profilePicture: event.profilePicture,
+        inviteToken: event.inviteToken,
+        otp: event.otp,
       );
       
       // Save token if available (e.g. for pre-approved users)
@@ -239,6 +242,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     // 3. Clear stored credentials and cached token
     await secureStorage.clearSession();
     await secureStorage.delete(key: 'fcm_token');
+    PermissionManagerService.resetSession();
     emit(AuthUnauthenticated());
   }
 

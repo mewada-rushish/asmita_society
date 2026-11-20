@@ -30,6 +30,7 @@ import '../../../../core/security/secure_storage_service.dart';
 import '../../widgets/asmita_pre_approve_wizard.dart';
 import '../../widgets/bbps_bill_payments_sheet.dart';
 import '../../widgets/asmita_hotline_sheet.dart';
+import '../../../visitor_management/presentation/screens/employee_gate_attendance_scanner_screen.dart';
 export '../../widgets/bbps_bill_payments_sheet.dart';
 
 /// Team Lead & HOD Role Dashboard:
@@ -48,7 +49,7 @@ class EmployeeDashboardView extends StatefulWidget {
   final bool isActive;
   final bool? canDelegate;
   final List<IndustrialVisitModel>? visits;
-  final VoidCallback onOpenDelegation;
+  final FutureOr<void> Function()? onOpenDelegation;
   final Function(int visitId, String action)? onDecideVisit;
   final Function(int visitId)? onAcknowledgeVisit;
   final ValueChanged<int>? onNavigateToTab;
@@ -63,7 +64,7 @@ class EmployeeDashboardView extends StatefulWidget {
     this.isActive = true,
     this.canDelegate,
     this.visits,
-    required this.onOpenDelegation,
+    this.onOpenDelegation,
     this.onDecideVisit,
     this.onAcknowledgeVisit,
     this.onNavigateToTab,
@@ -93,11 +94,11 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         } catch (_) {}
       });
 
-      // Periodic auto-sync so newly arrived walk-ins & decisions reflect automatically
+      // Periodic background sync so newly arrived walk-ins & decisions reflect silently without flashes
       _autoSyncTimer = Timer.periodic(const Duration(seconds: 15), (_) {
         if (mounted) {
           try {
-            context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+            context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits(isSilent: true));
           } catch (_) {}
         }
       });
@@ -125,6 +126,13 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         }
       }
     } catch (_) {}
+  }
+
+  void _openDelegationScreen() async {
+    if (widget.onOpenDelegation != null) {
+      await widget.onOpenDelegation!();
+    }
+    _fetchDelegationStatus();
   }
 
   @override
@@ -192,8 +200,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         }
       },
       builder: (context, state) {
-        final isLoading = state.status == IndustrialVisitBlocStatus.loading &&
-            state.visits.isEmpty;
+        final isLoading = state.status == IndustrialVisitBlocStatus.loading;
 
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -201,6 +208,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
             children: [
               AsmitaPrimaryHeader(
                 allowPropertySwitching: false,
+                onHotlinePressed: () => _showSecurityModal(context),
                 onSearchPressed: () {
                   setState(() {
                     _showSearchBar = !_showSearchBar;
@@ -244,8 +252,18 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
                 color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
+                  color: isDark ? AsmitaPalette.borderGreyDark : const Color(0xFFE2E8F0),
+                  width: 1.2,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.35)
+                        : const Color(0xFF0F172A).withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
@@ -311,71 +329,77 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
             ),
             const SizedBox(height: 16),
 
-            // 3. Tab bar skeleton
-            Container(
-              height: 44,
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: isDark ? AsmitaPalette.surfaceDark : Colors.grey.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: List.generate(
-                  3,
-                  (index) => Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: AsmitaSkeleton.bone(
-                        height: 36,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
+            // 3. Operational KPI Metrics (2x2 Grid)
+            Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: _buildMetricTileSkeleton(isDark)),
+                    const SizedBox(width: 10),
+                    Expanded(child: _buildMetricTileSkeleton(isDark)),
+                  ],
                 ),
-              ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(child: _buildMetricTileSkeleton(isDark)),
+                    const SizedBox(width: 10),
+                    Expanded(child: _buildMetricTileSkeleton(isDark)),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
 
             // 4. Visitor Card skeletons
             ...List.generate(
-              3,
-              (index) => Container(
+              2,
+              (index) => AsmitaSkeleton.visitorCard(
+                showActions: true,
                 margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isDark ? AsmitaPalette.borderGreyDark : Colors.grey.withValues(alpha: 0.15),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    AsmitaSkeleton.circle(size: 48),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AsmitaSkeleton.text(width: 130, height: 15, borderRadius: 4),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              AsmitaSkeleton.pill(width: 75, height: 20),
-                              const SizedBox(width: 8),
-                              AsmitaSkeleton.text(width: 60, height: 12, borderRadius: 3),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    AsmitaSkeleton.pill(width: 70, height: 26),
-                  ],
-                ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMetricTileSkeleton(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.35)
+                : const Color(0xFF0F172A).withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              AsmitaSkeleton.bone(width: 31, height: 31, borderRadius: BorderRadius.circular(10)),
+              AsmitaSkeleton.text(width: 28, height: 21, borderRadius: 4),
+            ],
+          ),
+          const SizedBox(height: 10),
+          AsmitaSkeleton.text(width: 65, height: 13, borderRadius: 3),
+          const SizedBox(height: 4),
+          AsmitaSkeleton.text(width: 90, height: 11, borderRadius: 3),
+        ],
       ),
     );
   }
@@ -446,31 +470,35 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
 
           // Active Delegation Status Banner (if active)
           if (_activeDelegateName != null) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+            InkWell(
+              onTap: _openDelegationScreen,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+                  ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.sync_alt_rounded, color: Color(0xFF2563EB), size: 18),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Visitor approvals currently delegated to $_activeDelegateName. Deliveries & cabs alert you directly.',
-                      style: const TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF1E3A8A),
+                child: Row(
+                  children: [
+                    const Icon(Icons.sync_alt_rounded, color: Color(0xFF2563EB), size: 18),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Visitor approvals currently delegated to $_activeDelegateName. Deliveries & cabs alert you directly.',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF1E3A8A),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -478,7 +506,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
 
           // 2. Quick Action Grid (Square Icon Boxes: Pre-approve, Delegate, Meeting Rooms, Bill payments)
           _buildQuickActionsGrid(context),
-          const SizedBox(height: 10),
+          const SizedBox(height: 18),
 
           // 3. Operational KPI Overview Metrics (4 interactive cards)
           _buildMetricsOverview(
@@ -534,9 +562,9 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         onTap: () => _openMeetingRoomReservation(context),
       ),
       _QuickActionItemData(
-        label: 'Security',
-        icon: Icons.shield_rounded,
-        onTap: () => _showSecurityModal(context),
+        label: 'QR Scanner',
+        icon: Icons.qr_code_scanner_rounded,
+        onTap: () => _openQrScanner(context),
       ),
       _QuickActionItemData(
         label: 'Pay Bills',
@@ -546,7 +574,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
     ];
 
     return Padding(
-      padding: const EdgeInsets.only(top: 4, bottom: 0),
+      padding: const EdgeInsets.only(top: 4, bottom: 4),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final count = actions.length;
@@ -667,6 +695,15 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
     );
   }
 
+  void _openQrScanner(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const EmployeeGateAttendanceScannerScreen(),
+      ),
+    );
+  }
+
   void _openBillPayments(BuildContext context) {
     BbpsBillPaymentsSheet.show(context, onNavigateToTab: widget.onNavigateToTab);
   }
@@ -695,7 +732,6 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
       title: 'Floor Support & Security Hotline',
       child: AsmitaHotlineSheet(
         societyId: societyId,
-        onOpenSecurityCommand: () => _showSecurityModal(context),
       ),
     );
   }

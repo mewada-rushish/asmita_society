@@ -8,6 +8,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'core/adapters/color_adapter.dart';
 import 'core/security/secure_storage_service.dart';
 
 import 'firebase_options.dart';
@@ -78,6 +79,10 @@ Future<void> main() async {
         Hive.initFlutter(),
         BbpsSecureConfig.ensureLoaded(),
       ]);
+
+      if (!Hive.isAdapterRegistered(200)) {
+        Hive.registerAdapter(ColorAdapter());
+      }
 
       // Setup global error handling for Flutter framework
       FlutterError.onError = (details) {

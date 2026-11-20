@@ -107,9 +107,11 @@ class AuthRepository {
     required String flat,
     required String role,
     dynamic profilePicture,
+    String? inviteToken,
+    String? otp,
   }) async {
     try {
-      final formData = FormData.fromMap({
+      final mapData = <String, dynamic>{
         'mobile_number': mobile,
         'full_name': fullName,
         'email_id': email,
@@ -119,7 +121,16 @@ class AuthRepository {
         'floor_id': floor,
         'flat_id': flat,
         'ownership_type': role,
-      });
+      };
+
+      if (inviteToken != null && inviteToken.trim().isNotEmpty) {
+        mapData['invite_token'] = inviteToken.trim();
+      }
+      if (otp != null && otp.trim().isNotEmpty) {
+        mapData['otp'] = otp.trim();
+      }
+
+      final formData = FormData.fromMap(mapData);
 
       if (profilePicture != null) {
         if (profilePicture is String) {

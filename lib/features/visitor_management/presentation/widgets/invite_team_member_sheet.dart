@@ -481,28 +481,50 @@ class _InviteTeamMemberSheetState extends State<InviteTeamMemberSheet> {
   @override
   Widget build(BuildContext context) {
     if (_isLoadingPermission) {
-      return Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          children: [
-            AsmitaSkeleton.bone(
-              width: double.infinity,
-              height: 48,
-              borderRadius: 12,
-            ),
-            const SizedBox(height: 16),
-            AsmitaSkeleton.bone(
-              width: double.infinity,
-              height: 48,
-              borderRadius: 12,
-            ),
-            const SizedBox(height: 16),
-            AsmitaSkeleton.bone(
-              width: double.infinity,
-              height: 48,
-              borderRadius: 12,
-            ),
-          ],
+      return AsmitaSkeleton(
+        isLoading: true,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 1. Department Field Skeleton (Label + Dropdown Box)
+              AsmitaSkeleton.text(width: 80, height: 12, borderRadius: 3),
+              const SizedBox(height: 8),
+              AsmitaSkeleton.bone(width: double.infinity, height: 48, borderRadius: 12),
+              const SizedBox(height: 16),
+
+              // 2. Target Role Field Skeleton (Label + 3 Role Chips)
+              AsmitaSkeleton.text(width: 70, height: 12, borderRadius: 3),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  AsmitaSkeleton.pill(width: 80, height: 32),
+                  const SizedBox(width: 8),
+                  AsmitaSkeleton.pill(width: 90, height: 32),
+                  const SizedBox(width: 8),
+                  AsmitaSkeleton.pill(width: 75, height: 32),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // 3. Recipient Name Input Skeleton (Label + Input Box)
+              AsmitaSkeleton.text(width: 140, height: 12, borderRadius: 3),
+              const SizedBox(height: 8),
+              AsmitaSkeleton.bone(width: double.infinity, height: 48, borderRadius: 12),
+              const SizedBox(height: 16),
+
+              // 4. Recipient Mobile Input Skeleton (Label + Input Box)
+              AsmitaSkeleton.text(width: 180, height: 12, borderRadius: 3),
+              const SizedBox(height: 8),
+              AsmitaSkeleton.bone(width: double.infinity, height: 48, borderRadius: 12),
+              const SizedBox(height: 24),
+
+              // 5. Submit CTA Button Skeleton
+              AsmitaSkeleton.bone(width: double.infinity, height: 48, borderRadius: 12),
+            ],
+          ),
         ),
       );
     }

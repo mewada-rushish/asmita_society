@@ -8,6 +8,18 @@ import '../../../../core/security/secure_storage_service.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../core/widgets/app_skeleton.dart';
 
+class _HotlineCategoryItem {
+  final String label;
+  final int count;
+  final IconData icon;
+
+  const _HotlineCategoryItem({
+    required this.label,
+    required this.count,
+    required this.icon,
+  });
+}
+
 class AsmitaHotlineSheet extends StatefulWidget {
   final int societyId;
   final VoidCallback? onOpenSecurityCommand;
@@ -22,24 +34,21 @@ class AsmitaHotlineSheet extends StatefulWidget {
   State<AsmitaHotlineSheet> createState() => _AsmitaHotlineSheetState();
 }
 
-class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _allHotlines = [];
+  String _selectedCategory = 'All';
 
   final List<String> _tabs = ['All', 'Security', 'Reception', 'Emergency'];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);
     _loadHotlines();
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     super.dispose();
   }
 
@@ -168,138 +177,246 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
     return Icons.phone_in_talk_rounded;
   }
 
+  List<_HotlineCategoryItem> _getAvailableHotlineCategories() {
+    return _tabs.map<_HotlineCategoryItem>((tab) {
+      final items = _filterHotlines(tab);
+      IconData icon;
+      switch (tab) {
+        case 'Security':
+          icon = Icons.shield_rounded;
+          break;
+        case 'Reception':
+          icon = Icons.support_agent_rounded;
+          break;
+        case 'Emergency':
+          icon = Icons.emergency_rounded;
+          break;
+        case 'All':
+        default:
+          icon = Icons.grid_view_rounded;
+          break;
+      }
+      return _HotlineCategoryItem(
+        label: tab,
+        count: items.length,
+        icon: icon,
+      );
+    }).toList();
+  }
+
+  Widget _buildCategoryDropdown(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final List<_HotlineCategoryItem> categories = _getAvailableHotlineCategories();
+    final _HotlineCategoryItem currentItem = categories.firstWhere(
+      (c) => c.label == _selectedCategory,
+      orElse: () => categories.isNotEmpty
+          ? categories.first
+          : const _HotlineCategoryItem(label: 'All', count: 0, icon: Icons.grid_view_rounded),
+    );
+
+    return PopupMenuButton<String>(
+      initialValue: _selectedCategory,
+      tooltip: 'Filter Hotline Category',
+      offset: const Offset(0, 32),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+        ),
+      ),
+      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+      elevation: 6,
+      onSelected: (String cat) {
+        HapticFeedback.selectionClick();
+        setState(() {
+          _selectedCategory = cat;
+        });
+      },
+      itemBuilder: (BuildContext context) {
+        return categories.map((item) {
+          final label = item.label;
+          final count = item.count;
+          final icon = item.icon;
+          final isSelected = label == _selectedCategory;
+          return PopupMenuItem<String>(
+            value: label,
+            height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 15,
+                  color: isSelected
+                      ? (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
+                      : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    count > 0 ? '$label ($count)' : label,
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected
+                          ? (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
+                          : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                    ),
+                  ),
+                ),
+                if (isSelected)
+                  Icon(
+                    Icons.check_rounded,
+                    size: 16,
+                    color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                  ),
+              ],
+            ),
+          );
+        }).toList();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.15)
+                  : Colors.black.withValues(alpha: 0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              currentItem.icon,
+              size: 13,
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              '${currentItem.label} (${currentItem.count})',
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(width: 3),
+            Icon(
+              Icons.arrow_drop_down_rounded,
+              size: 18,
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final items = _filterHotlines(_selectedCategory);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 1. Tab Bar for Categories
-        Container(
-          height: 38,
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: TabBar(
-            controller: _tabController,
-            isScrollable: false,
-            indicator: BoxDecoration(
-              color: isDark ? const Color(0xFF334155) : Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-                  blurRadius: 3,
-                  offset: const Offset(0, 1),
+        // 1. Header with Title & Filter Dropdown (like Delegation page)
+        Padding(
+          padding: const EdgeInsets.only(left: 2, right: 2, bottom: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'HOTLINE CONTACTS',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                    color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                  ),
                 ),
-              ],
-            ),
-            indicatorSize: TabBarIndicatorSize.tab,
-            dividerColor: Colors.transparent,
-            labelColor: isDark ? Colors.white : AsmitaPalette.deepNavy,
-            unselectedLabelColor: isDark
-                ? const Color(0xFF94A3B8)
-                : const Color(0xFF64748B),
-            labelStyle: const TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-            ),
-            unselectedLabelStyle: const TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 11.5,
-              fontWeight: FontWeight.w500,
-            ),
-            tabs: _tabs.map((t) => Tab(text: t)).toList(),
+              ),
+              _buildCategoryDropdown(context),
+            ],
           ),
         ),
 
-        // 2. Tab Views
+        // 2. Hotline List View
         if (_isLoading)
           SizedBox(
             height: 280,
             child: _buildHotlineSkeleton(isDark),
           )
+        else if (items.isEmpty)
+          Container(
+            height: 200,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Theme.of(context).dividerColor),
+            ),
+            child: Center(
+              child: Text(
+                'No $_selectedCategory hotlines listed for this property.',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 12,
+                  color: isDark
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF64748B),
+                ),
+              ),
+            ),
+          )
         else
           SizedBox(
             height: 280,
-            child: TabBarView(
-              controller: _tabController,
-              children: _tabs.map((tab) {
-                final items = _filterHotlines(tab);
-                if (items.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'No $tab hotlines listed for this property.',
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 12,
-                        color: isDark
-                            ? const Color(0xFF94A3B8)
-                            : const Color(0xFF64748B),
-                      ),
-                    ),
-                  );
-                }
-                return ListView.separated(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  itemCount: items.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, idx) {
-                    final item = items[idx];
-                    final title = item['title'] ?? 'Support Hotline';
-                    final subtitle = item['subtitle'] ?? '';
-                    final phone = item['phone'] ?? item['contact_number'] ?? '';
-                    final isEmergency =
-                        item['is_emergency'] == true ||
-                        (item['category'] ?? '').toString().toUpperCase() ==
-                            'EMERGENCY';
-                    final category = item['category'] ?? '';
+            child: ListView.separated(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              itemCount: items.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              itemBuilder: (context, idx) {
+                final item = items[idx];
+                final title = item['title'] ?? 'Support Hotline';
+                final subtitle = item['subtitle'] ?? '';
+                final phone = item['phone'] ?? item['contact_number'] ?? '';
+                final isEmergency =
+                    item['is_emergency'] == true ||
+                    (item['category'] ?? '').toString().toUpperCase() ==
+                        'EMERGENCY';
+                final category = item['category'] ?? '';
 
-                    return _buildHotlineTile(
-                      context,
-                      icon: _getCategoryIcon(category, isEmergency),
-                      title: title,
-                      subtitle: subtitle,
-                      isEmergency: isEmergency,
-                      onCall: () {
-                        Navigator.pop(context);
-                        _callContact(title, phone);
-                      },
-                    );
+                return _buildHotlineTile(
+                  context,
+                  icon: _getCategoryIcon(category, isEmergency),
+                  title: title,
+                  subtitle: subtitle,
+                  isEmergency: isEmergency,
+                  onCall: () {
+                    Navigator.pop(context);
+                    _callContact(title, phone);
                   },
                 );
-              }).toList(),
+              },
             ),
           ),
-
-        // 3. Security Command CTA
-        if (widget.onOpenSecurityCommand != null) ...[
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.shield_outlined, size: 16),
-            label: const Text(
-              'Campus Security Command & Dispatches',
-              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
-            ),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              widget.onOpenSecurityCommand!();
-            },
-          ),
-          const SizedBox(height: 8),
-        ],
       ],
     );
   }
@@ -442,6 +559,7 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
 
   Widget _buildHotlineSkeleton(bool isDark) {
     return AsmitaSkeleton(
+      isLoading: true,
       child: ListView.separated(
         physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -455,7 +573,17 @@ class _AsmitaHotlineSheetState extends State<AsmitaHotlineSheet>
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                width: 1.2,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.35)
+                      : const Color(0xFF0F172A).withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: Row(
               children: [
