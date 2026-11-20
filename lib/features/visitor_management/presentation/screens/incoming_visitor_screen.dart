@@ -640,92 +640,154 @@ class _IncomingVisitorScreenState extends State<IncomingVisitorScreen>
 
                   const Spacer(flex: 2),
 
-                  // Bottom Action Buttons (Material 3 AsmitA Corporate Style)
+                  // Bottom Action Buttons (Material 3 AsmitA Corporate Style - Icon layout)
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: context.isCompact ? 10 : 14, vertical: 14),
-                    child: Row(
-                      children: [
-                        // 1. Deny Entry Button
-                        Expanded(
-                          flex: 1,
-                          child: AppButton(
-                            onPressed: _isSubmitting ? null : () => _handleDecision('REJECT'),
-                            isLoading: _isSubmitting && _decisionStatus == 'REJECT',
-                            style: AppButtonStyle.custom,
-                            height: 50,
-                            padding: EdgeInsets.symmetric(horizontal: context.isCompact ? 4 : 6),
-                            borderRadius: 16,
-                            backgroundColor: isDark
-                                ? const Color(0xFF4C0519).withValues(alpha: 0.35)
-                                : const Color(0xFFFFF1F2),
-                            foregroundColor: AsmitaPalette.actionRed,
-                            icon: Icons.close_rounded,
-                            label: 'Deny',
-                            textStyle: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: context.isCompact ? 12 : 13,
-                              fontWeight: FontWeight.w700,
-                              color: AsmitaPalette.actionRed,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: context.isCompact ? 16 : 24,
+                      vertical: context.isCompact ? 10 : 16,
+                    ),
+                    child: Builder(
+                      builder: (context) {
+                        final buttonSize = context.isCompact ? 56.0 : 64.0;
+                        final iconSize = context.isCompact ? 28.0 : 32.0;
+                        final labelFontSize = context.isCompact ? 11.0 : 12.0;
+
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // 1. Decline Action
+                            Semantics(
+                              button: true,
+                              label: 'Decline entry',
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  AppButton(
+                                    onPressed: _isSubmitting ? null : () => _handleDecision('REJECT'),
+                                    isLoading: _isSubmitting && _decisionStatus == 'REJECT',
+                                    style: AppButtonStyle.custom,
+                                    width: buttonSize,
+                                    height: buttonSize,
+                                    borderRadius: buttonSize / 2,
+                                    padding: EdgeInsets.zero,
+                                    backgroundColor: isDark
+                                        ? const Color(0xFFDC2626)
+                                        : AsmitaPalette.actionRed,
+                                    foregroundColor: Colors.white,
+                                    icon: Icon(
+                                      Icons.close_rounded,
+                                      size: iconSize,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Decline',
+                                    style: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: labelFontSize,
+                                      fontWeight: FontWeight.w700,
+                                      color: AsmitaPalette.actionRed,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ),
 
-                        SizedBox(width: context.isCompact ? 4 : 6),
-
-                        // 2. Acknowledge Button
-                        Expanded(
-                          flex: 1,
-                          child: AppButton(
-                            onPressed: _isSubmitting ? null : () => _handleDecision('ACKNOWLEDGE'),
-                            isLoading: _isSubmitting && _decisionStatus == 'ACKNOWLEDGE',
-                            style: AppButtonStyle.custom,
-                            height: 50,
-                            padding: EdgeInsets.symmetric(horizontal: context.isCompact ? 4 : 6),
-                            borderRadius: 16,
-                            backgroundColor: isDark
-                                ? const Color(0xFF1E293B)
-                                : const Color(0xFFF1F5F9),
-                            foregroundColor: isDark
-                                ? const Color(0xFF93C5FD)
-                                : AsmitaPalette.deepNavy,
-                            icon: Icons.touch_app_outlined,
-                            label: 'Ack',
-                            textStyle: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: context.isCompact ? 12 : 13,
-                              fontWeight: FontWeight.w700,
-                              color: isDark
-                                  ? const Color(0xFF93C5FD)
-                                  : AsmitaPalette.deepNavy,
+                            // 2. Acknowledge Action
+                            Semantics(
+                              button: true,
+                              label: 'Acknowledge visitor',
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  AppButton(
+                                    onPressed: _isSubmitting ? null : () => _handleDecision('ACKNOWLEDGE'),
+                                    isLoading: _isSubmitting && _decisionStatus == 'ACKNOWLEDGE',
+                                    style: AppButtonStyle.custom,
+                                    width: buttonSize,
+                                    height: buttonSize,
+                                    borderRadius: buttonSize / 2,
+                                    padding: EdgeInsets.zero,
+                                    backgroundColor: isDark
+                                        ? const Color(0xFF1E293B)
+                                        : const Color(0xFFF1F5F9),
+                                    foregroundColor: isDark
+                                        ? const Color(0xFF93C5FD)
+                                        : AsmitaPalette.deepNavy,
+                                    borderSide: BorderSide(
+                                      color: isDark
+                                          ? const Color(0xFF334155)
+                                          : const Color(0xFFCBD5E1),
+                                      width: 1.5,
+                                    ),
+                                    icon: Icon(
+                                      Icons.touch_app_outlined,
+                                      size: iconSize,
+                                      color: isDark
+                                          ? const Color(0xFF93C5FD)
+                                          : AsmitaPalette.deepNavy,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Acknowledge',
+                                    style: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: labelFontSize,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark
+                                          ? const Color(0xFF93C5FD)
+                                          : AsmitaPalette.deepNavy,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ),
 
-                        SizedBox(width: context.isCompact ? 4 : 6),
-
-                        // 3. Allow Entry Button
-                        Expanded(
-                          flex: 1,
-                          child: AppButton(
-                            onPressed: _isSubmitting ? null : () => _handleDecision('APPROVE'),
-                            isLoading: _isSubmitting && _decisionStatus == 'APPROVE',
-                            style: AppButtonStyle.custom,
-                            height: 50,
-                            padding: EdgeInsets.symmetric(horizontal: context.isCompact ? 4 : 6),
-                            borderRadius: 16,
-                            backgroundColor: AsmitaPalette.successGreen,
-                            foregroundColor: Colors.white,
-                            icon: Icons.check_rounded,
-                            label: 'Approve',
-                            textStyle: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: context.isCompact ? 12 : 13,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                            // 3. Approve Action
+                            Semantics(
+                              button: true,
+                              label: 'Approve entry',
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  AppButton(
+                                    onPressed: _isSubmitting ? null : () => _handleDecision('APPROVE'),
+                                    isLoading: _isSubmitting && _decisionStatus == 'APPROVE',
+                                    style: AppButtonStyle.custom,
+                                    width: buttonSize,
+                                    height: buttonSize,
+                                    borderRadius: buttonSize / 2,
+                                    padding: EdgeInsets.zero,
+                                    backgroundColor: AsmitaPalette.successGreen,
+                                    foregroundColor: Colors.white,
+                                    icon: Icon(
+                                      Icons.check_rounded,
+                                      size: iconSize,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Approve',
+                                    style: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: labelFontSize,
+                                      fontWeight: FontWeight.w700,
+                                      color: AsmitaPalette.successGreen,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ),
-                      ],
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ],

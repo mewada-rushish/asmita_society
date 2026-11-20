@@ -2323,27 +2323,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
         child: Row(
         children: [
           // Left: Avatar + Details
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy).withValues(alpha: isDark ? 0.15 : 0.1),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Theme.of(context).dividerColor),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              visit.visitorName.isNotEmpty
-                  ? visit.visitorName[0].toUpperCase()
-                  : 'V',
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontWeight: FontWeight.w800,
-                color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
-                fontSize: 14,
-              ),
-            ),
-          ),
+          _buildVisitorPhotoAvatar(visit, size: 36),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
