@@ -889,7 +889,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
       context: context,
       title: deptName,
       subtitle: floor,
-      contentPadding: EdgeInsets.zero,
+      contentPadding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
       child: _DepartmentEmployeesSheet(
         departmentName: deptName,
         floor: floor,
@@ -1063,9 +1063,12 @@ class _DepartmentEmployeesSheetState extends State<_DepartmentEmployeesSheet> {
       return name.contains(q) || phone.contains(q) || ext.contains(q);
     }).toList();
 
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.70,
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.75,
+      ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Search within Department
@@ -1075,7 +1078,9 @@ class _DepartmentEmployeesSheetState extends State<_DepartmentEmployeesSheet> {
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: theme.dividerColor),
+              border: Border.all(
+                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              ),
             ),
             child: Row(
               children: [
@@ -1109,21 +1114,25 @@ class _DepartmentEmployeesSheetState extends State<_DepartmentEmployeesSheet> {
               ],
             ),
           ),
-          const SizedBox(height: 14),
-          Expanded(
+          const SizedBox(height: 12),
+          Flexible(
             child: _isLoading
                 ? _buildStaffListSkeleton(context, isDark)
                 : displayed.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No employees found in this department',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 28),
+                        child: Center(
+                          child: Text(
+                            'No employees found in this department',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                            ),
                           ),
                         ),
                       )
                     : ListView.separated(
+                        shrinkWrap: true,
                         itemCount: displayed.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
