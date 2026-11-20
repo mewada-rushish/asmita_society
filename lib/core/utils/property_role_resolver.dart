@@ -309,6 +309,20 @@ class PropertyRoleResolver {
     // All corporate roles (Admin, Director, HOD, Manager, Team Lead, Employee, Receptionist, Resident, Tenant, Owner) can delegate approvals
     return true;
   }
+
+  /// Checks whether the user is strictly an operational intake gatekeeper (Security Guard or Receptionist).
+  /// Only these roles have physical access to check in/out visitors and hold them at the gate/desk.
+  static bool canCheckInOut(UserModel? user, {String? role}) {
+    final normalized = normalizeRole(role ?? user?.primaryRole);
+    return normalized == 'guard' || normalized == 'receptionist';
+  }
+
+  /// Checks whether the user can resend visitor approval notifications to the host.
+  /// Strictly operational intake gatekeepers (Guards and Receptionists) waiting for host approval at the gate.
+  static bool canResendToHost(UserModel? user, {String? role}) {
+    final normalized = normalizeRole(role ?? user?.primaryRole);
+    return normalized == 'guard' || normalized == 'receptionist';
+  }
   /// Checks whether an employee/corporate user has authority to invite team members.
   static bool canInviteTeamMembers(UserModel? user, {String? designation, String? role}) {
     if (user != null && user.permissions.isNotEmpty) {
