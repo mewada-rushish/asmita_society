@@ -83,14 +83,33 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
   }
 
   Future<void> _showPreApproveModal(BuildContext context) async {
+    final authState = context.read<AuthBloc>().state;
+    bool isStaff = false;
+    if (authState is AuthAuthenticated) {
+      final user = authState.user;
+      final rawRole = authState.sessionRole.isNotEmpty == true
+          ? authState.sessionRole
+          : (user.systemRole?.isNotEmpty == true
+              ? user.systemRole
+              : user.primaryRole);
+      final role = PropertyRoleResolver.normalizeRole(
+        rawRole,
+        scope: user.roleScope,
+        power: user.rolePower,
+        isIndustrial: true,
+      );
+      isStaff = role == 'receptionist' || role == 'guard';
+    }
+
     await AsmitaPreApproveWizard.showAsModalSheet(
       context,
-      title: 'Schedule Visitor',
+      isGuardMode: isStaff,
+      title: isStaff ? 'New Walk-in Visitor' : 'Schedule Visitor',
+      subtitle: isStaff ? 'Record lobby guest entry details' : null,
     );
 
     if (!context.mounted) return;
     context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
-    final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
       context.read<VisitorBloc>().add(
         LoadMyHistory(residentId: authState.user.userId, isRefresh: true),
@@ -1296,6 +1315,23 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final authState = context.watch<AuthBloc>().state;
+    bool isStaff = false;
+    if (authState is AuthAuthenticated) {
+      final user = authState.user;
+      final rawRole = authState.sessionRole.isNotEmpty == true
+          ? authState.sessionRole
+          : (user.systemRole?.isNotEmpty == true
+              ? user.systemRole
+              : user.primaryRole);
+      final role = PropertyRoleResolver.normalizeRole(
+        rawRole,
+        scope: user.roleScope,
+        power: user.rolePower,
+        isIndustrial: true,
+      );
+      isStaff = role == 'receptionist' || role == 'guard';
+    }
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -1311,10 +1347,10 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
               : AsmitaPalette.deepNavy,
           foregroundColor: Colors.white,
           elevation: 3,
-          icon: const Icon(Icons.add_rounded, size: 20),
-          label: const Text(
-            'Schedule',
-            style: TextStyle(
+          icon: Icon(isStaff ? Icons.person_add_rounded : Icons.add_rounded, size: 20),
+          label: Text(
+            isStaff ? 'New Walk-in' : 'Schedule',
+            style: const TextStyle(
               fontFamily: 'Montserrat',
               fontWeight: FontWeight.bold,
               fontSize: 13,
