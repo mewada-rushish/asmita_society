@@ -7,7 +7,11 @@ import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../config/env_config.dart';
 import '../constants/design_system.dart';
+import '../utils/property_role_resolver.dart';
+import 'app_skeleton.dart';
 import 'asmita_toast.dart';
+import '../../features/auth/bloc/auth_bloc.dart';
+import '../../features/auth/bloc/auth_state.dart';
 import '../../features/visitor_management/data/models/industrial_visit_model.dart';
 import '../../features/visitor_management/bloc/industrial_visit_bloc.dart';
 import '../../features/visitor_management/bloc/industrial_visit_event.dart';
@@ -227,9 +231,162 @@ class AsmitaVisitorCard extends StatelessWidget {
     );
   }
 
+  /// Universal photo avatar widget replicating the robust multi-format loader
+  /// from Visitor History and Visits & Passes screens.
+  static Widget buildVisitorPhotoAvatar(
+    IndustrialVisitModel visit, {
+    double size = 48,
+  }) {
+    final photo = visit.visitorPhotoUrl?.trim();
+    final isDelivery = visit.isDelivery;
+    final displayName = visit.cleanVisitorName.isNotEmpty
+        ? visit.cleanVisitorName
+        : (isDelivery ? (visit.deliveryCompany ?? 'Delivery') : 'Visitor');
+    final initial = displayName.trim().isNotEmpty
+        ? displayName.trim()[0].toUpperCase()
+        : 'V';
+
+    Widget initialsFallback() {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            colors: [
+              Colors.white.withValues(alpha: 0.25),
+              Colors.white.withValues(alpha: 0.08),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        alignment: Alignment.center,
+        child: isDelivery && (photo == null || photo.isEmpty)
+            ? Icon(
+                Icons.local_shipping_rounded,
+                size: size * 0.5,
+                color: Colors.white,
+              )
+            : Text(
+                initial,
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontWeight: FontWeight.bold,
+                  fontSize: size * 0.45,
+                  color: Colors.white,
+                ),
+              ),
+      );
+    }
+
+    Widget content;
+    if (photo == null || photo.isEmpty) {
+      content = initialsFallback();
+    } else if (photo.startsWith('data:image')) {
+      try {
+        final commaIndex = photo.indexOf(',');
+        final base64Str = commaIndex != -1 ? photo.substring(commaIndex + 1) : photo;
+        final bytes = base64Decode(base64Str);
+        content = Image.memory(
+          bytes,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => initialsFallback(),
+        );
+      } catch (_) {
+        content = initialsFallback();
+      }
+    } else if (!photo.startsWith('http://') &&
+        !photo.startsWith('https://') &&
+        !photo.startsWith('/') &&
+        photo.length > 200) {
+      try {
+        final bytes = base64Decode(photo);
+        content = Image.memory(
+          bytes,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => initialsFallback(),
+        );
+      } catch (_) {
+        content = initialsFallback();
+      }
+    } else {
+      String fullUrl = photo;
+      if (photo.startsWith('/')) {
+        fullUrl = '${EnvConfig.baseUrl}$photo';
+      }
+      content = CachedNetworkImage(
+        imageUrl: fullUrl,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: AsmitaSkeleton.bone(
+              width: size,
+              height: size,
+              borderRadius: size / 2,
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => initialsFallback(),
+      );
+    }
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.4),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipOval(child: content),
+    );
+  }
+
   /// Global helper to display the executive visitor slide-up pass details modal
   static void showVisitDetailsSheet(BuildContext context, IndustrialVisitModel visit) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Strictly check if logged-in user is a security guard or front desk receptionist
+    bool isSecurityOrReceptionist = false;
+    try {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AuthAuthenticated) {
+        final rawRole = authState.sessionRole.isNotEmpty == true
+            ? authState.sessionRole
+            : (authState.user.systemRole?.isNotEmpty == true
+                ? authState.user.systemRole
+                : authState.user.primaryRole);
+        final normalizedRole = PropertyRoleResolver.normalizeRole(
+          rawRole,
+          scope: authState.user.roleScope,
+          power: authState.user.rolePower,
+          isIndustrial: true,
+        );
+        isSecurityOrReceptionist = normalizedRole == 'guard' || normalizedRole == 'receptionist';
+      }
+    } catch (_) {}
 
     showModalBottomSheet(
       context: context,
@@ -304,19 +461,7 @@ class AsmitaVisitorCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundColor: Colors.white.withValues(alpha: 0.15),
-                          child: Icon(
-                            visit.isDelivery
-                                ? Icons.local_shipping_rounded
-                                : (visit.isCheckedIn
-                                    ? Icons.how_to_reg_rounded
-                                    : Icons.person_rounded),
-                            color: Colors.white,
-                            size: 26,
-                          ),
-                        ),
+                        buildVisitorPhotoAvatar(visit, size: 48),
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(
@@ -525,11 +670,12 @@ class AsmitaVisitorCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              // Action Buttons for Receptionist / Host inside info slide up sheet
-              if (visit.status == IndustrialVisitStatus.approved ||
-                  visit.status == IndustrialVisitStatus.checkedIn ||
-                  visit.status == IndustrialVisitStatus.waitingToMeet ||
-                  visit.status == IndustrialVisitStatus.onTheWay) ...[
+              // Action Buttons for Receptionist / Security Guard strictly inside info slide up sheet
+              if (isSecurityOrReceptionist &&
+                  (visit.status == IndustrialVisitStatus.approved ||
+                      visit.status == IndustrialVisitStatus.checkedIn ||
+                      visit.status == IndustrialVisitStatus.waitingToMeet ||
+                      visit.status == IndustrialVisitStatus.onTheWay)) ...[
                 Row(
                   children: [
                     // 1. Make Person Wait button (shown when not already waiting and not checked out)
@@ -1390,6 +1536,25 @@ class AsmitaVisitorCard extends StatelessWidget {
           final commaIndex = trimmedPhoto.indexOf(',');
           final base64Str = commaIndex != -1 ? trimmedPhoto.substring(commaIndex + 1) : trimmedPhoto;
           final bytes = base64Decode(base64Str);
+          avatarContent = ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Image.memory(
+              bytes,
+              fit: BoxFit.cover,
+              width: 48,
+              height: 48,
+              errorBuilder: (_, _, _) => _buildAvatarFallback(),
+            ),
+          );
+        } catch (_) {
+          avatarContent = _buildAvatarFallback();
+        }
+      } else if (!trimmedPhoto.startsWith('http://') &&
+          !trimmedPhoto.startsWith('https://') &&
+          !trimmedPhoto.startsWith('/') &&
+          trimmedPhoto.length > 200) {
+        try {
+          final bytes = base64Decode(trimmedPhoto);
           avatarContent = ClipRRect(
             borderRadius: BorderRadius.circular(14),
             child: Image.memory(

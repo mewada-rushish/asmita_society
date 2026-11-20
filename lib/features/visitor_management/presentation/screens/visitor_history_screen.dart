@@ -26,6 +26,7 @@ import '../../../dashboard/widgets/asmita_pre_approve_wizard.dart';
 import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import '../../data/models/invite_model.dart';
 import 'invite_pass_screen.dart';
+import '../../../../core/utils/property_role_resolver.dart';
 
 class VisitorHistoryScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -2430,8 +2431,22 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
   Widget build(BuildContext context) {
     final authState = context.read<AuthBloc>().state;
     String currentUserName = 'Resident';
+    bool isStaff = false;
     if (authState is AuthAuthenticated) {
       currentUserName = authState.user.fullName;
+      final user = authState.user;
+      final rawRole = authState.sessionRole.isNotEmpty == true
+          ? authState.sessionRole
+          : (user.systemRole?.isNotEmpty == true
+              ? user.systemRole
+              : user.primaryRole);
+      final role = PropertyRoleResolver.normalizeRole(
+        rawRole,
+        scope: user.roleScope,
+        power: user.rolePower,
+        isIndustrial: true,
+      );
+      isStaff = role == 'receptionist' || role == 'guard';
     }
 
     return Scaffold(
@@ -2711,15 +2726,20 @@ class _VisitorHistoryScreenState extends State<VisitorHistoryScreen> {
           onPressed: () async {
             await AsmitaPreApproveWizard.showAsModalSheet(
               context,
-              title: 'Pre-Approve Entry',
+              isGuardMode: isStaff,
+              title: isStaff ? 'New Walk-in Visitor' : 'Pre-Approve Entry',
+              subtitle: isStaff ? 'Record lobby guest entry details' : null,
             );
             if (!context.mounted) return;
             _loadHistory(isRefresh: true);
           },
           backgroundColor: Theme.of(context).colorScheme.primary,
-          icon: Icon(Icons.add, color: Theme.of(context).colorScheme.surface),
+          icon: Icon(
+            isStaff ? Icons.person_add_rounded : Icons.add,
+            color: Theme.of(context).colorScheme.surface,
+          ),
           label: Text(
-            'Add Visitor',
+            isStaff ? 'New Walk-in' : 'Add Visitor',
             style: TextStyle(
               color: Theme.of(context).colorScheme.surface,
               fontWeight: FontWeight.w600,
