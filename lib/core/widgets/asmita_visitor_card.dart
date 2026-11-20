@@ -378,13 +378,10 @@ class AsmitaVisitorCard extends StatelessWidget {
             : (authState.user.systemRole?.isNotEmpty == true
                 ? authState.user.systemRole
                 : authState.user.primaryRole);
-        final normalizedRole = PropertyRoleResolver.normalizeRole(
-          rawRole,
-          scope: authState.user.roleScope,
-          power: authState.user.rolePower,
-          isIndustrial: true,
+        isSecurityOrReceptionist = PropertyRoleResolver.canCheckInOut(
+          authState.user,
+          role: rawRole,
         );
-        isSecurityOrReceptionist = normalizedRole == 'guard' || normalizedRole == 'receptionist';
       }
     } catch (_) {}
 
@@ -1672,11 +1669,26 @@ class AsmitaVisitorCard extends StatelessWidget {
   Widget _buildRightAffordance(BuildContext context, bool isDark) {
     if (trailing != null) return trailing!;
 
-    if (hasQrCode || onResend != null) {
+    bool canResendRole = false;
+    try {
+      final authState = context.read<AuthBloc?>()?.state;
+      if (authState is AuthAuthenticated) {
+        final rawRole = authState.sessionRole.isNotEmpty == true
+            ? authState.sessionRole
+            : (authState.user.systemRole?.isNotEmpty == true
+                ? authState.user.systemRole
+                : authState.user.primaryRole);
+        canResendRole = PropertyRoleResolver.canResendToHost(authState.user, role: rawRole);
+      }
+    } catch (_) {}
+
+    final allowResend = onResend != null && canResendRole;
+
+    if (hasQrCode || allowResend) {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (onResend != null) ...[
+          if (allowResend) ...[
             Semantics(
               label: 'Resend approval request',
               button: true,

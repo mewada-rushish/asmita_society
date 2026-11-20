@@ -180,7 +180,10 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
         isIndustrial: true,
       );
     }
-    final isSecurityOrReceptionist = userRole == 'guard' || userRole == 'receptionist';
+    final isSecurityOrReceptionist = PropertyRoleResolver.canCheckInOut(
+      authState is AuthAuthenticated ? authState.user : null,
+      role: userRole,
+    );
 
     showAsmitaBottomSheet(
       context: context,
@@ -1071,8 +1074,8 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                 ),
               ],
 
-              // Resend Approval for Expired Passes (Only within 30 minutes of expiry)
-              if (canResend) ...[
+              // Resend Approval for Expired Passes (Only within 30 minutes of expiry, strictly for intake security guard or receptionist)
+              if (canResend && isSecurityOrReceptionist) ...[
                 const SizedBox(height: 10),
                 ElevatedButton.icon(
                   onPressed: () {
@@ -1081,7 +1084,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                   },
                   icon: const Icon(Icons.send_rounded, size: 18),
                   label: const Text(
-                    'Resend Approval',
+                    'Resend Approval to Host',
                     style: TextStyle(
                       fontFamily: 'Montserrat',
                       fontWeight: FontWeight.bold,
@@ -2091,9 +2094,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     // Resolve user role
     final authState = context.read<AuthBloc>().state;
     String userRole = '';
-    int? currentUserId;
     if (authState is AuthAuthenticated) {
-      currentUserId = authState.user.userId;
       userRole = PropertyRoleResolver.normalizeRole(
         authState.user.primaryRole,
         scope: authState.user.roleScope,
@@ -2104,8 +2105,6 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
 
     final isReceptionist = userRole == 'receptionist';
     final isGuard = userRole == 'guard';
-    final isHostOrAssignee = (visit.hostUserId != null && visit.hostUserId == currentUserId) ||
-        (visit.assignedToUserId != null && visit.assignedToUserId == currentUserId);
 
     // Dynamic receptionist front-desk actions (Only for active non-terminal visits)
     Widget? bottomActions;
@@ -2392,8 +2391,8 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       );
     }
 
-    // Only allow Resend if within 30 minutes AND user is either host or receptionist or admin
-    final showResend = canResend && (isHostOrAssignee || isReceptionist || canApprove);
+    // Only allow Resend to Host strictly for intake gatekeepers (Guard & Receptionist) within 30 minutes of expiry
+    final showResend = canResend && (isReceptionist || isGuard);
 
     return AsmitaVisitorCard.fromIndustrialVisit(
       visit: visit,
