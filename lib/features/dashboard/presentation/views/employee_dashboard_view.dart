@@ -112,13 +112,13 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
       final res = await dio.get(EnvConfig.employeeDelegationStatus);
       if (res.statusCode == 200 && res.data['success'] == true) {
         final dData = res.data['data'] as Map<String, dynamic>?;
-        final outgoing = dData?['outgoingDelegation'] as Map<String, dynamic>?;
+        final outgoing = (dData?['outgoingDelegation'] ?? dData?['activeOutgoing']) as Map<String, dynamic>?;
 
         if (mounted) {
           setState(() {
             if (outgoing != null) {
               final delegate = outgoing['delegate'] as Map<String, dynamic>?;
-              _activeDelegateName = delegate?['full_name'] as String? ?? 'Colleague';
+              _activeDelegateName = delegate?['name'] as String? ?? delegate?['full_name'] as String? ?? outgoing['delegate_name'] as String? ?? 'Colleague';
             } else if (_activeDelegateName != null) {
               _activeDelegateName = null;
             }
