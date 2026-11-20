@@ -4,6 +4,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:asmita_society/main.dart' show rootNavigatorKey;
 import 'package:asmita_society/features/visitor_management/data/repositories/industrial_visit_repository.dart';
 import 'package:asmita_society/core/security/secure_storage_service.dart';
+import 'package:asmita_society/core/utils/property_role_resolver.dart';
 import 'package:asmita_society/core/di/injection_container.dart' as di;
 import 'package:asmita_society/features/visitor_management/presentation/screens/incoming_visitor_screen.dart';
 
@@ -156,12 +157,36 @@ class IncomingVisitorService {
   /// Called whenever a doorbell / visitor arrival notification arrives
   /// (foreground, background launch, or lock screen wake-up).
   static void onIncomingCallReceived(Map<String, dynamic> rawData, {String? soundAsset}) async {
-    // 0. Security Guard: Verify active authenticated session. If logged out, ignore incoming call completely!
+    // 0. Security & Role Guard:
+    // Verify active authenticated session.
+    // Front desk receptionists, guards, and non-target hosts NEVER get approval popups!
     try {
       final sessionToken = await SecureStorageService().getToken();
       if (sessionToken == null || sessionToken.isEmpty) {
         debugPrint('[IncomingVisitorService] User is logged out. Dropping incoming visitor call.');
         return;
+      }
+
+      final role = await SecureStorageService().getUserRole();
+      final normalizedRole = PropertyRoleResolver.normalizeRole(role, isIndustrial: true);
+      if (normalizedRole == 'receptionist' || normalizedRole == 'guard' || normalizedRole == 'facility') {
+        debugPrint('[IncomingVisitorService] User role is staff desk ($normalizedRole). Dropping incoming visitor approval modal.');
+        return;
+      }
+
+      // If notification payload specifies a target host ID, only alert the intended recipient
+      final currentUserId = await SecureStorageService().getUserId();
+      final rawHostId = rawData['host_user_id'] ??
+          rawData['target_host_id'] ??
+          rawData['approver_id'] ??
+          rawData['approver_user_id'] ??
+          rawData['user_id'];
+      if (currentUserId != null && rawHostId != null) {
+        final targetHostId = int.tryParse(rawHostId.toString());
+        if (targetHostId != null && targetHostId != currentUserId) {
+          debugPrint('[IncomingVisitorService] Call intended for host $targetHostId, current user is $currentUserId. Dropping.');
+          return;
+        }
       }
     } catch (_) {}
 

@@ -338,11 +338,32 @@ class FirebaseMessagingService {
   }
 
   bool _isApproval(Map<String, dynamic> data) {
+    final notifType = data['notification_type']?.toString().toLowerCase().trim() ?? '';
+    // Exclude informational alerts for receptionists, guards, and general staff
+    if (notifType == 'floor_alert' ||
+        notifType == 'ground_waiting_list' ||
+        notifType == 'floor_escalation' ||
+        notifType == 'visitor_transferred_out' ||
+        notifType == 'visitor_checkout' ||
+        notifType == 'gate_pass' ||
+        notifType == 'status_update' ||
+        notifType == 'info' ||
+        notifType == 'announcement') {
+      return false;
+    }
+
     final eventType = data['event']?.toString() ??
         data['eventType']?.toString() ??
         data['event_type']?.toString() ??
         data['notification_type']?.toString() ??
         '';
+
+    // Exclude explicit reception event types
+    if (eventType == 'RECEPTION_FLOOR_ALERT' ||
+        eventType == 'RECEPTION_WAITING_LIST' ||
+        eventType == 'VISITOR_HOST_TRANSFER_OLD') {
+      return false;
+    }
 
     return eventType == 'VISITOR_REQUEST' ||
         eventType == 'VISITOR_ARRIVAL' ||
