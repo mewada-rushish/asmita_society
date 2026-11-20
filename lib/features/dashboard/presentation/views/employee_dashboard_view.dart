@@ -75,7 +75,7 @@ class EmployeeDashboardView extends StatefulWidget {
 }
 
 class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
-  int _selectedTab = 0; // 0: Pending, 1: On-Site, 2: Expected, 3: All
+  int _selectedTab = 0; // 0: All, 1: Pending, 2: Expected, 3: On-Site
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _showSearchBar = false;
@@ -418,17 +418,17 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
     List<IndustrialVisitModel> currentList;
     switch (_selectedTab) {
       case 0:
-        currentList = pendingVisits;
+        currentList = allVisits;
         break;
       case 1:
-        currentList = onSiteVisits;
+        currentList = pendingVisits;
         break;
       case 2:
         currentList = expectedVisits;
         break;
       case 3:
       default:
-        currentList = allVisits;
+        currentList = onSiteVisits;
         break;
     }
 
@@ -754,11 +754,11 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
               child: _buildMetricTile(
                 context,
                 index: 0,
-                title: 'Pending',
-                count: pendingCount,
-                subtitle: pendingCount > 0 ? '$pendingCount Action Required' : 'All Clear',
-                icon: Icons.pending_actions_rounded,
-                accentColor: pendingCount > 0 ? AsmitaPalette.actionRed : const Color(0xFFF59E0B),
+                title: 'All',
+                count: totalCount,
+                subtitle: 'Total Department Logs',
+                icon: Icons.history_rounded,
+                accentColor: const Color(0xFF64748B),
               ),
             ),
             const SizedBox(width: 10),
@@ -766,11 +766,11 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
               child: _buildMetricTile(
                 context,
                 index: 1,
-                title: 'On-Site',
-                count: onSiteCount,
-                subtitle: onSiteCount > 0 ? '$onSiteCount In Department' : 'No Visitors Inside',
-                icon: Icons.business_rounded,
-                accentColor: const Color(0xFF10B981),
+                title: 'Pending',
+                count: pendingCount,
+                subtitle: pendingCount > 0 ? '$pendingCount Action Required' : 'All Clear',
+                icon: Icons.pending_actions_rounded,
+                accentColor: pendingCount > 0 ? AsmitaPalette.actionRed : const Color(0xFFF59E0B),
               ),
             ),
           ],
@@ -794,11 +794,11 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
               child: _buildMetricTile(
                 context,
                 index: 3,
-                title: 'All Visits',
-                count: totalCount,
-                subtitle: 'Total Department Logs',
-                icon: Icons.history_rounded,
-                accentColor: const Color(0xFF64748B),
+                title: 'On-Site',
+                count: onSiteCount,
+                subtitle: onSiteCount > 0 ? '$onSiteCount In Department' : 'No Visitors Inside',
+                icon: Icons.business_rounded,
+                accentColor: const Color(0xFF10B981),
               ),
             ),
           ],
@@ -1046,11 +1046,11 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
     } else {
       switch (tabIndex) {
         case 1:
-          icon = Icons.meeting_room_outlined;
+          icon = Icons.task_alt_rounded;
           iconColor = const Color(0xFF10B981);
-          title = 'No Visitors On-Site';
-          subtitle = 'No guests are currently checked in or inside your department cabin.';
-          buttonText = 'Issue Guest Pass';
+          title = 'All Caught Up!';
+          subtitle = 'There are no pending visitor approvals requiring your attention right now. When security registers a visitor, they will appear here instantly.';
+          buttonText = '+ Issue Guest Pass';
           onButtonTap = () => _showPreApproveModal(context);
           break;
         case 2:
@@ -1062,6 +1062,15 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
           onButtonTap = () => _showPreApproveModal(context);
           break;
         case 3:
+          icon = Icons.meeting_room_outlined;
+          iconColor = const Color(0xFF10B981);
+          title = 'No Visitors On-Site';
+          subtitle = 'No guests are currently checked in or inside your department cabin.';
+          buttonText = 'Issue Guest Pass';
+          onButtonTap = () => _showPreApproveModal(context);
+          break;
+        case 0:
+        default:
           icon = Icons.folder_open_rounded;
           iconColor = const Color(0xFF64748B);
           title = 'No Visit History';
@@ -1070,15 +1079,6 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
           onButtonTap = () {
             context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
           };
-          break;
-        case 0:
-        default:
-          icon = Icons.task_alt_rounded;
-          iconColor = const Color(0xFF10B981);
-          title = 'All Caught Up!';
-          subtitle = 'There are no pending visitor approvals requiring your attention right now. When security registers a visitor, they will appear here instantly.';
-          buttonText = '+ Issue Guest Pass';
-          onButtonTap = () => _showPreApproveModal(context);
           break;
       }
     }
