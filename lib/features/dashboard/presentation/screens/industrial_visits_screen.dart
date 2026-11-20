@@ -146,6 +146,23 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
             DateTime.now().difference(visit.createdAt!).inMinutes.abs() <= 30);
     final canResend = isExpired && isWithin30Min;
 
+    String userRole = '';
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthAuthenticated) {
+      final rawRole = authState.sessionRole.isNotEmpty == true
+          ? authState.sessionRole
+          : (authState.user.systemRole?.isNotEmpty == true
+              ? authState.user.systemRole
+              : authState.user.primaryRole);
+      userRole = PropertyRoleResolver.normalizeRole(
+        rawRole,
+        scope: authState.user.roleScope,
+        power: authState.user.rolePower,
+        isIndustrial: true,
+      );
+    }
+    final isSecurityOrReceptionist = userRole == 'guard' || userRole == 'receptionist';
+
     showAsmitaBottomSheet(
       context: context,
       title: 'Visitor Pass Details',
@@ -798,8 +815,8 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                   ),
                 ],
               ),
-            ] else ...[
-              // Operational CTA Row for Approved, Forwarded, Waiting, or Checked In visitors
+            ] else if (isSecurityOrReceptionist) ...[
+              // Operational CTA Row for Approved, Forwarded, Waiting, or Checked In visitors (strictly guard & receptionist)
               if (visit.status == IndustrialVisitStatus.approved ||
                   visit.status == IndustrialVisitStatus.onTheWay ||
                   visit.status == IndustrialVisitStatus.waitingToMeet ||
