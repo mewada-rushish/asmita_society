@@ -294,26 +294,20 @@ class PropertyRoleResolver {
   /// Dynamically consults portal-configured permissions if loaded (canDelegate);
   /// gracefully falls back to corporate hierarchy heuristic when permissions are not present.
   static bool canDelegate(UserModel? user, {String? designation, String? role}) {
-    if (user != null && user.permissions.isNotEmpty) {
-      if (user.permissions.containsKey('canDelegate')) {
-        return user.canDelegate;
-      }
-    }
-
     final normalized = normalizeRole(role ?? user?.primaryRole);
-    // Security guards, visitors, front desk receptionists, and facility staff cannot delegate visitor approvals
-    if (normalized == 'guard' ||
-        normalized == 'visitor' ||
-        normalized == 'receptionist' ||
-        normalized == 'facility') {
+    // Security guards and unverified visitors cannot delegate visitor approvals
+    if (normalized == 'guard' || normalized == 'visitor') {
       return false;
     }
 
-    // Corporate leadership and employee hosts can delegate
-    return normalized == 'director' ||
-        normalized == 'employee' ||
-        normalized == 'owner' ||
-        normalized == 'tenant';
+    if (user != null && user.permissions.isNotEmpty) {
+      if (user.permissions.containsKey('canDelegate') && user.permissions['canDelegate'] == true) {
+        return true;
+      }
+    }
+
+    // All corporate roles (Admin, Director, HOD, Manager, Team Lead, Employee, Receptionist, Resident, Tenant, Owner) can delegate approvals
+    return true;
   }
   /// Checks whether an employee/corporate user has authority to invite team members.
   static bool canInviteTeamMembers(UserModel? user, {String? designation, String? role}) {
