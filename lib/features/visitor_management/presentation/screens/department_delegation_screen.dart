@@ -162,26 +162,6 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
         return;
       }
 
-      int computeRolePower(UserModel? u) {
-        if (u == null) return 100;
-        final r = u.primaryRole.toLowerCase();
-        final d = (u.roleDetails?['designation']?.toString() ?? '').toLowerCase();
-        final lead = (u.roleDetails?['leadership_role']?.toString() ?? '').toLowerCase();
-        final isHod = u.roleDetails?['is_hod'] == true;
-
-        if ((r.contains('gate') || d.contains('gate')) && (r.contains('reception') || d.contains('reception'))) return 0;
-        if (r.contains('director') || d.contains('director') || lead.contains('director')) return 500;
-        if (isHod || r.contains('hod') || r.contains('head') || d.contains('hod') || d.contains('head') || lead.contains('hod') || lead.contains('head')) return 400;
-        if (r.contains('lead') || r.contains('manager') || r.contains('tl') || d.contains('lead') || d.contains('manager') || d.contains('tl')) return 300;
-        if (r.contains('reception') || d.contains('reception')) return 200;
-        if (r.contains('employee') || d.contains('employee') || r.contains('staff') || d.contains('member') || d.contains('executive')) return 100;
-        if (r.contains('intern') || d.contains('intern') || r.contains('trainee') || d.contains('trainee')) return 50;
-
-        if (u.rolePower != null && u.rolePower! >= 200) return u.rolePower!;
-        return 100;
-      }
-
-      final userPower = computeRolePower(currentUser);
       final userFloor = (currentUser?.roleDetails?['floor']?.toString() ?? '')
           .toLowerCase()
           .replaceAll('floor', '')
@@ -236,8 +216,8 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
       if (statusRes != null && statusRes.statusCode == 200 && statusRes.data['success'] == true) {
         final dData = statusRes.data['data'] as Map<String, dynamic>?;
         if (dData != null) {
-          _activeOutgoing = dData['outgoingDelegation'] as Map<String, dynamic>?;
-          _incomingDelegations = (dData['incomingDelegations'] as List? ?? [])
+          _activeOutgoing = (dData['outgoingDelegation'] ?? dData['activeOutgoing']) as Map<String, dynamic>?;
+          _incomingDelegations = ((dData['incomingDelegations'] ?? dData['activeIncoming']) as List? ?? [])
               .map((x) => Map<String, dynamic>.from(x as Map))
               .toList();
           if (_activeOutgoing != null) {
@@ -324,42 +304,10 @@ class _DepartmentDelegationScreenState extends State<DepartmentDelegationScreen>
           return false;
         }
 
-        // 3. For ALL other colleagues: MUST BE EXPLICITLY AN ENABLED DELEGATEE
-        final isExplicitlyDisabled = m['is_delegatee'] == false ||
-            (m['role_details'] is Map && m['role_details']['is_delegatee'] == false);
-        if (isExplicitlyDisabled) return false;
+        // 3. Exclude gate guards who cannot receive approval authority
+        if (role.contains('guard') || desig.contains('guard')) return false;
 
-        // DIRECT SUBORDINATE: If candidate reports directly to current user, they are ALWAYS eligible!
-        final reportsTo = m['reports_to_user_id'] ?? m['reports_to_id'] ??
-            (m['role_details'] is Map ? (m['role_details']['reports_to_user_id'] ?? m['role_details']['reports_to_id']) : null);
-        if (currentUserId != null && reportsTo != null && reportsTo.toString() == currentUserId.toString()) {
-          return true;
-        }
-
-        // 4. Candidate role power MUST NOT be greater than delegator (peers with equal power are allowed)
-        final candidatePower = m['power'] is int
-            ? m['power'] as int
-            : int.tryParse(m['power']?.toString() ?? '') ?? 100;
-
-        if (userPower < 500 && candidatePower > userPower) {
-          return false;
-        }
-
-        // Director (power 500) can delegate to any colleague
-        if (userPower >= 500) {
-          return true;
-        }
-
-        // 5. Department Isolation Rule: Non-directors MUST delegate strictly within their own department
-        final userDept = (currentUser?.roleDetails?['department'] ?? currentUser?.roleDetails?['department_name'] ?? '').toString().toLowerCase().trim();
-        final candDept = (m['department'] ?? (m['role_details'] is Map ? m['role_details']['department'] : '')).toString().toLowerCase().trim();
-
-        if (userDept.isNotEmpty) {
-          if (candDept.isEmpty || (!userDept.contains(candDept) && !candDept.contains(userDept))) {
-            return false;
-          }
-        }
-
+        // 4. Colleagues within the property or department are eligible
         return true;
       }).toList();
 
