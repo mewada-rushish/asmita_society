@@ -127,7 +127,8 @@ class MenuScreen extends StatelessWidget {
                           items: [
                             if (PropertyRoleResolver.canDelegate(currentUser, role: resolvedRole))
                               _buildMenuItem(context, Icons.swap_horiz_rounded, 'Department Delegation'),
-                            _buildMenuItem(context, Icons.group_add_rounded, 'Invite Team'),
+                            if (PropertyRoleResolver.canInviteTeamMembers(currentUser, role: resolvedRole))
+                              _buildMenuItem(context, Icons.group_add_rounded, 'Invite Team'),
                             if (PropertyRoleResolver.canManageVehicles(currentUser, role: resolvedRole))
                               _buildMenuItem(context, Icons.directions_car_filled_outlined, 'Workplace Vehicles'),
                             _buildMenuItem(context, Icons.contact_phone_outlined, 'Campus Directory & Hotlines'),

@@ -331,6 +331,8 @@ class PropertyRoleResolver {
     return normalized == 'guard' || normalized == 'receptionist';
   }
   /// Checks whether an employee/corporate user has authority to invite team members.
+  /// Allowed for Directors, HODs, Team Leaders, or users with explicit management permissions.
+  /// Hidden for intake staff (Guards, Receptionists), facility staff, residential roles, and standard staff without leadership.
   static bool canInviteTeamMembers(UserModel? user, {String? designation, String? role}) {
     if (user != null && user.permissions.isNotEmpty) {
       if (user.permissions.containsKey('canManageUsers')) {
@@ -342,6 +344,14 @@ class PropertyRoleResolver {
     }
 
     final normalized = normalizeRole(role ?? user?.primaryRole);
+    if (normalized == 'guard' ||
+        normalized == 'receptionist' ||
+        normalized == 'facility' ||
+        normalized == 'visitor' ||
+        normalized == 'tenant' ||
+        normalized == 'owner') {
+      return false;
+    }
     if (normalized == 'director') return true;
 
     if (user != null) {
@@ -361,6 +371,6 @@ class PropertyRoleResolver {
       if (isHod || isTL || isDirector) return true;
     }
 
-    return normalized == 'director' || normalized == 'employee';
+    return false;
   }
 }
