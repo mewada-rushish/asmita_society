@@ -59,6 +59,7 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
 
   String _selectedFloor = 'All Floors';
   String _selectedDepartment = 'All Departments';
+  String _selectedMovementFilter = 'ALL'; // 'OUT' | 'IN' | 'ALL'
 
   // In-memory session log for movement: employee_id -> {status: 'IN' | 'OUT', time: DateTime}
   static final Map<int, Map<String, dynamic>> _sessionMovementLog = {};
@@ -153,7 +154,19 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
     return list;
   }
 
-  List<Map<String, dynamic>> get _filteredEmployees {
+  bool _isEmpIn(Map<String, dynamic> emp) {
+    final empId = (emp['user_id'] ?? emp['id'] ?? 0) as int;
+    final movement = _sessionMovementLog[empId];
+    if (movement != null) {
+      return movement['status'] == 'IN';
+    }
+    return emp['is_checked_in'] == true ||
+        emp['duty_status'] == 'ON_DUTY' ||
+        emp['status'] == 'IN' ||
+        emp['attendance_status'] == 'IN';
+  }
+
+  List<Map<String, dynamic>> get _baseFilteredEmployees {
     return _allEmployees.where((e) {
       // 1. Search Query Filter
       if (_searchQuery.trim().isNotEmpty) {
@@ -193,6 +206,16 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
 
       return true;
     }).toList();
+  }
+
+  List<Map<String, dynamic>> get _filteredEmployees {
+    final base = _baseFilteredEmployees;
+    if (_selectedMovementFilter == 'IN') {
+      return base.where((e) => _isEmpIn(e)).toList();
+    } else if (_selectedMovementFilter == 'OUT') {
+      return base.where((e) => !_isEmpIn(e)).toList();
+    }
+    return base;
   }
 
   void _showMovementDialog(Map<String, dynamic> emp, {required bool isCheckIn}) {
@@ -579,10 +602,15 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final base = _baseFilteredEmployees;
+    final outCount = base.where((e) => !_isEmpIn(e)).length;
+    final inCount = base.where((e) => _isEmpIn(e)).length;
+    final allCount = base.length;
     final filtered = _filteredEmployees;
     final hasActiveFilter = _selectedFloor != 'All Floors' ||
         _selectedDepartment != 'All Departments' ||
-        _searchQuery.isNotEmpty;
+        _searchQuery.isNotEmpty ||
+        _selectedMovementFilter != 'ALL';
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -613,167 +641,188 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
             ),
           ),
 
-          // Main Content Area with Pull-to-Refresh
+          // Main Content Area with Pull-to-Refresh & Responsive Bounded Canvas
           Expanded(
-            child: AppRefresh(
-              onRefresh: () async {
-                await _loadData(forceRefresh: true);
-              },
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Search Bar with perfectly aligned icon & placeholder text
-                  Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey,
-                        width: 1.5,
+            child: BoundedCanvas(
+              maxWidth: 600,
+              child: AppRefresh(
+                onRefresh: () async {
+                  await _loadData(forceRefresh: true);
+                },
+                padding: EdgeInsets.fromLTRB(
+                  context.responsivePadding(16),
+                  8,
+                  context.responsivePadding(16),
+                  24,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Search Bar with perfectly aligned icon & placeholder text
+                    Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey,
+                          width: 1.5,
+                        ),
                       ),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      textAlignVertical: TextAlignVertical.center,
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 13,
-                        color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
-                      ),
-                      decoration: InputDecoration(
-                        isDense: true,
-                        hintText: 'Search employee name, department or role...',
-                        hintStyle: TextStyle(
+                      child: TextField(
+                        controller: _searchController,
+                        textAlignVertical: TextAlignVertical.center,
+                        style: TextStyle(
                           fontFamily: 'Poppins',
-                          fontSize: 12.5,
-                          color: isDark
-                              ? AsmitaPalette.textDarkModeMuted
-                              : AsmitaPalette.textLight,
+                          fontSize: context.responsiveFont(13),
+                          color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
                         ),
-                        prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 48),
-                        prefixIcon: Icon(
-                          Icons.search_rounded,
-                          size: 20,
-                          color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          hintText: 'Search employee name, department or role...',
+                          hintStyle: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: context.responsiveFont(12.5),
+                            color: isDark
+                                ? AsmitaPalette.textDarkModeMuted
+                                : AsmitaPalette.textLight,
+                          ),
+                          prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 48),
+                          prefixIcon: Icon(
+                            Icons.search_rounded,
+                            size: 20,
+                            color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
+                          ),
+                          suffixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 48),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear_rounded, size: 18),
+                                  padding: EdgeInsets.zero,
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
                         ),
-                        suffixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 48),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear_rounded, size: 18),
-                                padding: EdgeInsets.zero,
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() => _searchQuery = '');
-                                },
-                              )
-                            : null,
-                        border: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+                        onChanged: (val) => setState(() => _searchQuery = val),
                       ),
-                      onChanged: (val) => setState(() => _searchQuery = val),
                     ),
-                  ),
 
-                  const SizedBox(height: 14),
+                    const SizedBox(height: 12),
 
-                  // Section Header with BBPS-Style Filter Dropdowns
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Left: Staff count badge
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Staff',
-                              style: TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                letterSpacing: -0.2,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
-                                    .withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                '${filtered.length}',
-                                style: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                    // KPI Movement Filter Tabs (Out, In, All)
+                    _buildKpiFilterTabs(
+                      context,
+                      outCount: outCount,
+                      inCount: inCount,
+                      allCount: allCount,
+                    ),
 
-                        // Right: Reset button + Floor Dropdown + Department Dropdown
-                        Flexible(
-                          child: Row(
+                    const SizedBox(height: 14),
+
+                    // Section Header with BBPS-Style Filter Dropdowns
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Left: Staff count badge
+                          Row(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              if (hasActiveFilter) ...[
-                                GestureDetector(
-                                  onTap: () {
-                                    HapticFeedback.lightImpact();
-                                    _searchController.clear();
-                                    setState(() {
-                                      _searchQuery = '';
-                                      _selectedFloor = 'All Floors';
-                                      _selectedDepartment = 'All Departments';
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4.5),
-                                    margin: const EdgeInsets.only(right: 6),
-                                    decoration: BoxDecoration(
-                                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.refresh_rounded,
-                                          size: 11,
-                                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                        ),
-                                        const SizedBox(width: 3),
-                                        Text(
-                                          'Reset',
-                                          style: TextStyle(
-                                            fontFamily: 'Montserrat',
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w600,
-                                            color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                              Text(
+                                'Staff',
+                                style: TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: context.responsiveFont(13),
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
+                                      .withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '${filtered.length}',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: context.responsiveFont(10.5),
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
                                   ),
                                 ),
-                              ],
+                              ),
+                            ],
+                          ),
+
+                          // Right: Reset button + Floor Dropdown + Department Dropdown
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerRight,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                if (hasActiveFilter) ...[
+                                  GestureDetector(
+                                    onTap: () {
+                                      HapticFeedback.lightImpact();
+                                      _searchController.clear();
+                                      setState(() {
+                                        _searchQuery = '';
+                                        _selectedFloor = 'All Floors';
+                                        _selectedDepartment = 'All Departments';
+                                        _selectedMovementFilter = 'ALL';
+                                      });
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4.5),
+                                      margin: const EdgeInsets.only(right: 6),
+                                      decoration: BoxDecoration(
+                                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.refresh_rounded,
+                                            size: 11,
+                                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                          ),
+                                          const SizedBox(width: 3),
+                                          Text(
+                                            'Reset',
+                                            style: TextStyle(
+                                              fontFamily: 'Montserrat',
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w600,
+                                              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
 
                               // Floor Dropdown
                               _buildDropdownPill(
@@ -807,9 +856,10 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                             ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                ),
 
                   const SizedBox(height: 6),
 
@@ -962,16 +1012,19 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                                     Row(
                                       children: [
                                         Flexible(
-                                          child: Text(
-                                            name,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              fontFamily: 'Montserrat',
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 13.5,
-                                              color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
-                                              letterSpacing: -0.2,
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            alignment: Alignment.centerLeft,
+                                            child: Text(
+                                              name,
+                                              maxLines: 1,
+                                              style: TextStyle(
+                                                fontFamily: 'Montserrat',
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: context.responsiveFont(13.5),
+                                                color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
+                                                letterSpacing: -0.2,
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -1010,17 +1063,20 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                                     const SizedBox(height: 3),
 
                                     // Row 2: Department & Designation
-                                    Text(
-                                      '$dept • $role',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w500,
-                                        color: isDark
-                                            ? AsmitaPalette.textDarkModeMuted
-                                            : AsmitaPalette.textLight,
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        '$dept • $role',
+                                        maxLines: 1,
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: context.responsiveFont(11.5),
+                                          fontWeight: FontWeight.w500,
+                                          color: isDark
+                                              ? AsmitaPalette.textDarkModeMuted
+                                              : AsmitaPalette.textLight,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(height: 5),
@@ -1057,114 +1113,123 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                               const SizedBox(width: 8),
 
                               // Quick Action Buttons (Check In / Check Out)
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // In Button
-                                  Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      onTap: () => _showMovementDialog(emp, isCheckIn: true),
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-                                        decoration: BoxDecoration(
-                                          color: isCheckedIn
-                                              ? (isDark ? const Color(0xFF064E3B) : const Color(0xFF059669))
-                                              : (isDark
-                                                  ? const Color(0xFF064E3B).withValues(alpha: 0.25)
-                                                  : const Color(0xFFECFDF5)),
-                                          borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(
-                                            color: isCheckedIn
-                                                ? (isDark ? const Color(0xFF059669) : const Color(0xFF047857))
-                                                : (isDark
-                                                    ? const Color(0xFF059669).withValues(alpha: 0.4)
-                                                    : const Color(0xFFA7F3D0)),
-                                            width: 1,
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // In Button
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () => _showMovementDialog(emp, isCheckIn: true),
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: context.isCompact ? 8 : 11,
+                                            vertical: 7,
                                           ),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              Icons.login_rounded,
-                                              size: 13,
+                                          decoration: BoxDecoration(
+                                            color: isCheckedIn
+                                                ? (isDark ? const Color(0xFF064E3B) : const Color(0xFF059669))
+                                                : (isDark
+                                                    ? const Color(0xFF064E3B).withValues(alpha: 0.25)
+                                                    : const Color(0xFFECFDF5)),
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(
                                               color: isCheckedIn
-                                                  ? Colors.white
-                                                  : (isDark ? const Color(0xFF34D399) : const Color(0xFF047857)),
+                                                  ? (isDark ? const Color(0xFF059669) : const Color(0xFF047857))
+                                                  : (isDark
+                                                      ? const Color(0xFF059669).withValues(alpha: 0.4)
+                                                      : const Color(0xFFA7F3D0)),
+                                              width: 1,
                                             ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              'In',
-                                              style: TextStyle(
-                                                fontFamily: 'Montserrat',
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w700,
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.login_rounded,
+                                                size: 13,
                                                 color: isCheckedIn
                                                     ? Colors.white
                                                     : (isDark ? const Color(0xFF34D399) : const Color(0xFF047857)),
                                               ),
-                                            ),
-                                          ],
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'In',
+                                                style: TextStyle(
+                                                  fontFamily: 'Montserrat',
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: isCheckedIn
+                                                      ? Colors.white
+                                                      : (isDark ? const Color(0xFF34D399) : const Color(0xFF047857)),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 6),
+                                    const SizedBox(width: 6),
 
-                                  // Out Button
-                                  Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      onTap: () => _showMovementDialog(emp, isCheckIn: false),
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-                                        decoration: BoxDecoration(
-                                          color: !isCheckedIn && movement != null
-                                              ? (isDark ? const Color(0xFF991B1B) : AsmitaPalette.actionRed)
-                                              : (isDark
-                                                  ? const Color(0xFF4C0519).withValues(alpha: 0.25)
-                                                  : const Color(0xFFFFF1F2)),
-                                          borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(
-                                            color: !isCheckedIn && movement != null
-                                                ? (isDark ? const Color(0xFFB91C1C) : AsmitaPalette.actionRed)
-                                                : (isDark
-                                                    ? const Color(0xFFBE123C).withValues(alpha: 0.35)
-                                                    : const Color(0xFFFECDD3)),
-                                            width: 1,
+                                    // Out Button
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () => _showMovementDialog(emp, isCheckIn: false),
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: context.isCompact ? 8 : 11,
+                                            vertical: 7,
                                           ),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              Icons.logout_rounded,
-                                              size: 13,
+                                          decoration: BoxDecoration(
+                                            color: !isCheckedIn && movement != null
+                                                ? (isDark ? const Color(0xFF991B1B) : AsmitaPalette.actionRed)
+                                                : (isDark
+                                                    ? const Color(0xFF4C0519).withValues(alpha: 0.25)
+                                                    : const Color(0xFFFFF1F2)),
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(
                                               color: !isCheckedIn && movement != null
-                                                  ? Colors.white
-                                                  : AsmitaPalette.actionRed,
+                                                  ? (isDark ? const Color(0xFFB91C1C) : AsmitaPalette.actionRed)
+                                                  : (isDark
+                                                      ? const Color(0xFFBE123C).withValues(alpha: 0.35)
+                                                      : const Color(0xFFFECDD3)),
+                                              width: 1,
                                             ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              'Out',
-                                              style: TextStyle(
-                                                fontFamily: 'Montserrat',
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w700,
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.logout_rounded,
+                                                size: 13,
                                                 color: !isCheckedIn && movement != null
                                                     ? Colors.white
                                                     : AsmitaPalette.actionRed,
                                               ),
-                                            ),
-                                          ],
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'Out',
+                                                style: TextStyle(
+                                                  fontFamily: 'Montserrat',
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: !isCheckedIn && movement != null
+                                                      ? Colors.white
+                                                      : AsmitaPalette.actionRed,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -1175,7 +1240,166 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
               ),
             ),
           ),
+        ),
         ],
+      ),
+    );
+  }
+
+  /// KPI Movement Filter Tabs (Out, In, All) matching Image 2
+  Widget _buildKpiFilterTabs(
+    BuildContext context, {
+    required int outCount,
+    required int inCount,
+    required int allCount,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Row(
+      children: [
+        Expanded(
+          child: _buildKpiCard(
+            context,
+            label: 'Out',
+            count: outCount,
+            icon: Icons.logout_rounded,
+            accentColor: isDark ? const Color(0xFFF87171) : const Color(0xFFEF4444),
+            filterKey: 'OUT',
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildKpiCard(
+            context,
+            label: 'In',
+            count: inCount,
+            icon: Icons.login_rounded,
+            accentColor: isDark ? const Color(0xFF34D399) : AsmitaPalette.successGreen,
+            filterKey: 'IN',
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildKpiCard(
+            context,
+            label: 'All',
+            count: allCount,
+            icon: Icons.groups_rounded,
+            accentColor: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+            filterKey: 'ALL',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildKpiCard(
+    BuildContext context, {
+    required String label,
+    required int count,
+    required IconData icon,
+    required Color accentColor,
+    required String filterKey,
+  }) {
+    final isSelected = _selectedMovementFilter == filterKey;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() {
+          _selectedMovementFilter = filterKey;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(
+          vertical: context.responsiveScale(12),
+          horizontal: 4,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDark
+                  ? accentColor.withValues(alpha: 0.18)
+                  : accentColor.withValues(alpha: 0.08))
+              : Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? accentColor
+                : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? accentColor.withValues(alpha: 0.12)
+                  : Colors.black.withValues(alpha: 0.02),
+              blurRadius: isSelected ? 8 : 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Squircle Icon Container
+            Container(
+              width: context.responsiveScale(34),
+              height: context.responsiveScale(34),
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: isDark ? 0.22 : 0.10),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: accentColor.withValues(
+                    alpha: isSelected ? 0.45 : 0.18,
+                  ),
+                  width: 1.0,
+                ),
+              ),
+              child: Center(
+                child: Icon(
+                  icon,
+                  color: accentColor,
+                  size: context.responsiveScale(18),
+                ),
+              ),
+            ),
+            SizedBox(height: context.responsiveScale(6)),
+            // KPI Count Number
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                '$count',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: context.responsiveFont(18),
+                  fontWeight: FontWeight.w800,
+                  color: isSelected
+                      ? (isDark ? Colors.white : accentColor)
+                      : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
+            // KPI Label
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: context.responsiveFont(11),
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected
+                      ? (isDark ? Colors.white : accentColor)
+                      : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1200,21 +1424,24 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
           width: 0.8,
         ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 10.5, color: badgeColor),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: badgeColor,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 10.5, color: badgeColor),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: badgeColor,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1255,34 +1482,47 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          AsmitaSkeleton.text(width: 110, height: 14, borderRadius: 3),
-                          const SizedBox(width: 6),
-                          AsmitaSkeleton.pill(width: 55, height: 16),
-                        ],
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AsmitaSkeleton.text(width: 90, height: 14, borderRadius: 3),
+                            const SizedBox(width: 6),
+                            AsmitaSkeleton.pill(width: 45, height: 16),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 5),
-                      AsmitaSkeleton.text(width: 130, height: 12, borderRadius: 3),
+                      AsmitaSkeleton.text(width: 110, height: 12, borderRadius: 3),
                       const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          AsmitaSkeleton.bone(width: 60, height: 20, borderRadius: 6),
-                          const SizedBox(width: 6),
-                          AsmitaSkeleton.bone(width: 50, height: 20, borderRadius: 6),
-                        ],
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AsmitaSkeleton.bone(width: 50, height: 18, borderRadius: 6),
+                            const SizedBox(width: 6),
+                            AsmitaSkeleton.bone(width: 45, height: 18, borderRadius: 6),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 8),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    AsmitaSkeleton.bone(width: 44, height: 28, borderRadius: 10),
-                    const SizedBox(width: 6),
-                    AsmitaSkeleton.bone(width: 44, height: 28, borderRadius: 10),
-                  ],
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AsmitaSkeleton.bone(width: 40, height: 26, borderRadius: 10),
+                      const SizedBox(width: 6),
+                      AsmitaSkeleton.bone(width: 40, height: 26, borderRadius: 10),
+                    ],
+                  ),
                 ),
               ],
             ),
