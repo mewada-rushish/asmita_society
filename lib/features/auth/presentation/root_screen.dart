@@ -7,7 +7,7 @@ import '../../onboarding/presentation/onboarding_screen.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
-import 'login_screen.dart'; 
+import 'login_screen.dart';
 import 'biometric_lock_wrapper.dart';
 import 'package:asmita_society/core/services/incoming_visitor_service.dart';
 import 'package:asmita_society/features/visitor_management/presentation/screens/incoming_visitor_screen.dart';
@@ -53,9 +53,9 @@ class _RootScreenState extends State<RootScreen> {
               current is AuthUnauthenticated ||
               current is AuthError,
           listener: (context, state) {
-            if (state is AuthAuthenticated || 
-                state is AuthUnauthenticated || 
-                state is AuthNeedsOnboarding || 
+            if (state is AuthAuthenticated ||
+                state is AuthUnauthenticated ||
+                state is AuthNeedsOnboarding ||
                 state is AuthError) {
               FlutterNativeSplash.remove();
             }
@@ -100,4 +100,4 @@ class _RootScreenState extends State<RootScreen> {
       },
     );
   }
-}
+}
