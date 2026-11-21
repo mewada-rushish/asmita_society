@@ -7,7 +7,7 @@ import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_event.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
-import 'package:asmita_society/features/auth/presentation/login_screen.dart';
+import 'package:asmita_society/features/auth/presentation/root_screen.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_bloc.dart';
 import 'package:asmita_society/features/visitor_management/bloc/visitor_event.dart';
 import 'package:asmita_society/features/visitor_management/presentation/screens/department_delegation_screen.dart';
@@ -475,7 +475,7 @@ class MenuScreen extends StatelessWidget {
 
                                   if (context.mounted) {
                                     Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                                      MaterialPageRoute(builder: (_) => const RootScreen()),
                                       (route) => false,
                                     );
                                   }

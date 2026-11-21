@@ -6,7 +6,7 @@ import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/asmita_toast.dart';
 import '../../../core/navigation/app_transitions.dart';
 import '../../../core/utils/property_role_resolver.dart';
-import '../../dashboard/presentation/main_dashboard_screen.dart'; // Added dashboard routing import
+import '../../dashboard/presentation/main_dashboard_screen.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -89,17 +89,21 @@ class _OtpScreenState extends State<OtpScreen> {
               message: 'Identity verified successfully.',
               type: AsmitaToastType.success,
             );
-            final normalizedRole = PropertyRoleResolver.normalizeRole(state.sessionRole);
-            if (Navigator.canPop(context)) {
-              Navigator.popUntil(context, (route) => route.isFirst);
-            } else {
-              Navigator.pushReplacement(
-                context,
-                AsmitaPageTransitions.adaptiveRoute(
-                  builder: (_) => MainDashboardScreen(userRole: normalizedRole),
-                ),
-              );
-            }
+            final normalizedRole = PropertyRoleResolver.normalizeRole(
+              state.sessionRole,
+              scope: state.user.roleScope,
+              power: state.user.rolePower,
+              isIndustrial: PropertyRoleResolver.isIndustrialContext(
+                state.user,
+                propertyType: state.user.propertyType,
+              ),
+            );
+            Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+              AsmitaPageTransitions.adaptiveRoute(
+                builder: (_) => MainDashboardScreen(userRole: normalizedRole),
+              ),
+              (route) => false,
+            );
           } else if (state is AuthRegistrationRequired) {
             Navigator.pushReplacement(
               context,
