@@ -7,7 +7,7 @@ import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../../../core/widgets/asmita_toast.dart';
-import 'login_screen.dart';
+import 'root_screen.dart';
 
 import 'dart:async';
 
@@ -180,7 +180,7 @@ class _ApprovalPendingScreenState extends State<ApprovalPendingScreen> {
                                     onPressed: () {
                                       Navigator.pushAndRemoveUntil(
                                         context,
-                                        AsmitaPageTransitions.adaptiveRoute(builder: (_) => const LoginScreen()),
+                                        AsmitaPageTransitions.adaptiveRoute(builder: (_) => const RootScreen()),
                                         (route) => false,
                                       );
                                     },
@@ -229,7 +229,7 @@ class _ApprovalPendingScreenState extends State<ApprovalPendingScreen> {
                                   onPressed: () {
                                     Navigator.pushAndRemoveUntil(
                                       context,
-                                      AsmitaPageTransitions.adaptiveRoute(builder: (_) => const LoginScreen()),
+                                      AsmitaPageTransitions.adaptiveRoute(builder: (_) => const RootScreen()),
                                       (route) => false,
                                     );
                                   },

@@ -11,6 +11,7 @@ import 'login_screen.dart';
 import 'biometric_lock_wrapper.dart';
 import 'package:asmita_society/core/services/incoming_visitor_service.dart';
 import 'package:asmita_society/features/visitor_management/presentation/screens/incoming_visitor_screen.dart';
+import '../../../core/utils/property_role_resolver.dart';
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
@@ -65,8 +66,17 @@ class _RootScreenState extends State<RootScreen> {
               if (effectiveRole.trim().isEmpty) {
                 effectiveRole = 'resident';
               }
+              final normalizedRole = PropertyRoleResolver.normalizeRole(
+                effectiveRole,
+                scope: state.user.roleScope,
+                power: state.user.rolePower,
+                isIndustrial: PropertyRoleResolver.isIndustrialContext(
+                  state.user,
+                  propertyType: state.user.propertyType,
+                ),
+              );
               return BiometricLockWrapper(
-                child: MainDashboardScreen(userRole: effectiveRole),
+                child: MainDashboardScreen(userRole: normalizedRole),
               );
             } else if (state is AuthNeedsOnboarding) {
               return const OnboardingScreen();

@@ -13,6 +13,8 @@ import '../../../core/widgets/asmita_toast.dart';
 import '../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../core/navigation/app_transitions.dart';
 import '../../../core/constants/design_system.dart';
+import '../../../core/utils/property_role_resolver.dart';
+import '../../dashboard/presentation/main_dashboard_screen.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -20,7 +22,6 @@ import '../data/repositories/auth_repository.dart';
 import '../data/repositories/property_repository.dart';
 import '../data/models/invite_token_info.dart';
 import '../data/models/property_models.dart';
-import '../../dashboard/presentation/main_dashboard_screen.dart';
 import 'approval_pending_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -814,16 +815,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               message: 'Registration complete! Welcome to AsmitA.',
               type: AsmitaToastType.success,
             );
-            if (Navigator.canPop(context)) {
-              Navigator.popUntil(context, (route) => route.isFirst);
-            } else {
-              Navigator.pushReplacement(
-                context,
-                AsmitaPageTransitions.adaptiveRoute(
-                  builder: (_) => MainDashboardScreen(userRole: state.sessionRole),
-                ),
-              );
-            }
+            final normalizedRole = PropertyRoleResolver.normalizeRole(
+              state.sessionRole,
+              scope: state.user.roleScope,
+              power: state.user.rolePower,
+              isIndustrial: PropertyRoleResolver.isIndustrialContext(
+                state.user,
+                propertyType: state.user.propertyType,
+              ),
+            );
+            Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+              AsmitaPageTransitions.adaptiveRoute(
+                builder: (_) => MainDashboardScreen(userRole: normalizedRole),
+              ),
+              (route) => false,
+            );
           } else if (state is AuthError) {
             AsmitaToast.show(
               context,
