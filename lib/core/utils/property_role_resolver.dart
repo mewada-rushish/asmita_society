@@ -294,20 +294,27 @@ class PropertyRoleResolver {
   /// Dynamically consults portal-configured permissions if loaded (canDelegate);
   /// gracefully falls back to corporate hierarchy heuristic when permissions are not present.
   static bool canDelegate(UserModel? user, {String? designation, String? role}) {
-    final normalized = normalizeRole(role ?? user?.primaryRole);
-    // Security guards and unverified visitors cannot delegate visitor approvals
-    if (normalized == 'guard' || normalized == 'visitor') {
-      return false;
-    }
-
     if (user != null && user.permissions.isNotEmpty) {
-      if (user.permissions.containsKey('canDelegate') && user.permissions['canDelegate'] == true) {
-        return true;
+      if (user.permissions.containsKey('canDelegate')) {
+        return user.permissions['canDelegate'] == true;
       }
     }
 
-    // All corporate roles (Admin, Director, HOD, Manager, Team Lead, Employee, Receptionist, Resident, Tenant, Owner) can delegate approvals
-    return true;
+    final normalized = normalizeRole(role ?? user?.primaryRole);
+
+    // Gate intake staff (guards, receptionists), facility staff, and unverified visitors cannot delegate visitor approvals
+    if (normalized == 'guard' ||
+        normalized == 'receptionist' ||
+        normalized == 'facility' ||
+        normalized == 'visitor') {
+      return false;
+    }
+
+    // Only host roles who receive and approve visitor requests (Director, Employee/HOD, Owner, Tenant) can delegate approvals
+    return normalized == 'director' ||
+        normalized == 'employee' ||
+        normalized == 'owner' ||
+        normalized == 'tenant';
   }
 
   /// Checks whether the user is strictly an operational intake gatekeeper (Security Guard or Receptionist).
