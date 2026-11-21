@@ -211,6 +211,42 @@ class AsmitaPreApproveWizard extends StatefulWidget {
     return [];
   }
 
+  /// Records real-time employee gate movement (Check-In / Check-Out) to the centralized database.
+  static Future<bool> recordEmployeeMovement({
+    required int societyId,
+    required int employeeId,
+    required String status, // 'IN' | 'OUT'
+    DateTime? recordedAt,
+    int? gateId,
+    String? gateName,
+    String? notes,
+  }) async {
+    try {
+      final secureStorage = SecureStorageService();
+      final client = AsmitaDioClient(secureStorage).dio;
+      final payload = <String, dynamic>{
+        'society_id': societyId,
+        'employee_id': employeeId,
+        'status': status.toUpperCase(),
+        if (recordedAt != null) 'recorded_at': recordedAt.toIso8601String(),
+        ...?gateId == null ? null : {'gate_id': gateId},
+        ...?gateName == null ? null : {'gate_name': gateName},
+        ...?notes == null ? null : {'notes': notes},
+      };
+      final response = await client.post(
+        '${EnvConfig.baseUrl}/api/public/visitor/employee-movement',
+        data: payload,
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        clearEmployeeCache(societyId);
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Error recording employee movement: $e');
+    }
+    return false;
+  }
+
   static Future<List<Map<String, dynamic>>> loadSocietyDepartments(int? societyId) async {
     if (societyId == null) return [];
     if (_cachedSocietyDepartments.containsKey(societyId) &&
