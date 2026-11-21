@@ -29,6 +29,7 @@ class IndustrialDirectoryScreen extends StatefulWidget {
 
 class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
   bool _isDelegationActive = false;
+  bool _hasIncomingDelegation = false;
   String? _activeDelegateName;
   List<Map<String, dynamic>> _dynamicDepartments = [];
   bool _isLoadingDepartments = true;
@@ -53,9 +54,12 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
       if (res.statusCode == 200 && res.data != null && res.data['success'] == true) {
         final dData = res.data['data'] as Map<String, dynamic>?;
         final outgoing = (dData?['outgoingDelegation'] ?? dData?['activeOutgoing']) as Map<String, dynamic>?;
+        final incoming = (dData?['incomingDelegations'] as List?) ?? [];
+        final hasActiveIncoming = incoming.any((d) => d is Map && d['is_active'] == true);
         if (mounted) {
           setState(() {
             _isDelegationActive = outgoing != null;
+            _hasIncomingDelegation = hasActiveIncoming;
             if (outgoing != null) {
               final delegate = outgoing['delegate'] as Map<String, dynamic>?;
               _activeDelegateName = delegate?['name'] as String? ??
@@ -243,6 +247,7 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
     final authState = context.read<AuthBloc>().state;
     final currentUser = authState is AuthAuthenticated ? authState.user : null;
     final canDelegate = PropertyRoleResolver.canDelegate(currentUser);
+    final canInviteTeam = PropertyRoleResolver.canInviteTeamMembers(currentUser) || _hasIncomingDelegation;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -518,92 +523,94 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
                     ),
                   ],
 
-                  const SizedBox(height: 14),
-                  // Invite Team Member Action Card
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: Theme.of(context).dividerColor,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(14),
-                      child: InkWell(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          showInviteTeamMemberSheet(context);
-                        },
+                  if (canInviteTeam) ...[
+                    const SizedBox(height: 14),
+                    // Invite Team Member Action Card
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(14),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy).withValues(alpha: isDark ? 0.22 : 0.10),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy).withValues(alpha: isDark ? 0.35 : 0.2),
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(14),
+                        child: InkWell(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            showInviteTeamMemberSheet(context);
+                          },
+                          borderRadius: BorderRadius.circular(14),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy).withValues(alpha: isDark ? 0.22 : 0.10),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy).withValues(alpha: isDark ? 0.35 : 0.2),
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.person_add_alt_1_rounded,
+                                    color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
+                                    size: 20,
                                   ),
                                 ),
-                                child: Icon(
-                                  Icons.person_add_alt_1_rounded,
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Invite Team Member',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark ? Colors.white : AsmitaPalette.textDark,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Generate role-locked onboarding link with DLT SMS',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 11,
+                                          color: isDark
+                                              ? AsmitaPalette.textDarkModeMuted
+                                              : AsmitaPalette.textLight,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right_rounded,
                                   color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
                                   size: 20,
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'Invite Team Member',
-                                      style: TextStyle(
-                                        fontFamily: 'Montserrat',
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        color: isDark ? Colors.white : AsmitaPalette.textDark,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'Generate role-locked onboarding link with DLT SMS',
-                                      style: TextStyle(
-                                        fontFamily: 'Montserrat',
-                                        fontSize: 11,
-                                        color: isDark
-                                            ? AsmitaPalette.textDarkModeMuted
-                                            : AsmitaPalette.textLight,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
-                                size: 20,
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
 
                   const SizedBox(height: 18),
 
