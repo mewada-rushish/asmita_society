@@ -11,6 +11,7 @@ import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_state.dart';
+import '../../../../features/dashboard/widgets/asmita_pre_approve_wizard.dart';
 
 /// Dedicated Employee Gate Attendance Scanner:
 /// - Designed strictly for employee on-site check-in & check-out.
@@ -188,6 +189,21 @@ class _EmployeeGateAttendanceScannerScreenState
         });
       }
     } catch (_) {}
+
+    // Persist real-time gate movement to backend server
+    final scannedSocietyId = int.tryParse(gateInfo['societyId']?.toString() ?? '') ?? 1;
+    final scannedGateId = int.tryParse(gateInfo['gate']?.toString() ?? '');
+    if (userId > 0) {
+      AsmitaPreApproveWizard.recordEmployeeMovement(
+        societyId: scannedSocietyId,
+        employeeId: userId,
+        status: newStatus,
+        recordedAt: now,
+        gateId: scannedGateId,
+        gateName: gateName,
+        notes: 'QR Scan check-$newStatus at $gateName',
+      );
+    }
 
     if (!mounted) return;
 

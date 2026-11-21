@@ -27,6 +27,28 @@ class AuthRepository {
     }
   }
 
+  /// Checks whether an active onboarding invite exists for the given mobile number.
+  Future<InviteTokenInfo?> checkPendingInviteByPhone(String mobile) async {
+    try {
+      final cleanMobile = mobile.replaceAll(RegExp(r'\D'), '');
+      final formatted = cleanMobile.length >= 10
+          ? cleanMobile.substring(cleanMobile.length - 10)
+          : cleanMobile;
+      if (formatted.length != 10) return null;
+
+      final response = await dio.get(EnvConfig.inviteLookupByPhone(formatted));
+      final data = _ensureMap(response.data);
+      if (data['success'] == true && data['has_invite'] == true) {
+        return InviteTokenInfo.fromJson(data);
+      }
+      return null;
+    } on DioException catch (_) {
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Initiates an OTP login request.
   Future<bool> initiateLogin(String mobile) async {
     try {

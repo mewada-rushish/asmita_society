@@ -18,6 +18,7 @@ import '../../../visitor_management/presentation/widgets/receptionist_reassign_s
 import '../../../visitor_management/presentation/widgets/delivery_action_sheet.dart';
 import '../../../visitor_management/presentation/screens/guard_qr_scanner_screen.dart';
 import '../../../visitor_management/presentation/widgets/employee_registry_sheet.dart';
+import '../../../visitor_management/presentation/screens/receptionist_lobby_updates_screen.dart';
 import 'employee_dashboard_view.dart';
 
 class ReceptionistDashboardView extends StatefulWidget {
@@ -45,8 +46,29 @@ class ReceptionistDashboardView extends StatefulWidget {
 }
 
 class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
+  final GlobalKey<EmployeeRegistryScreenState> _registryKey =
+      GlobalKey<EmployeeRegistryScreenState>();
   int _selectedTabIndex = 0;
   late bool _isOnDuty;
+
+  bool get _isPropertyReceptionist {
+    try {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AuthAuthenticated) {
+        final user = authState.user;
+        final primaryRole = user.primaryRole.toLowerCase();
+        final designation = user.designation.toLowerCase();
+        final roleDetailsDesig =
+            (user.roleDetails?['designation'] ?? '').toString().toLowerCase();
+
+        final isFloor = primaryRole.contains('floor') ||
+            designation.contains('floor') ||
+            roleDetailsDesig.contains('floor');
+        return !isFloor;
+      }
+    } catch (_) {}
+    return true; // Property receptionist by default
+  }
 
   @override
   void initState() {
@@ -100,6 +122,14 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
     setState(() => _isOnDuty = val);
     if (widget.onToggleDuty != null) {
       widget.onToggleDuty!(val);
+    } else {
+      try {
+        if (val) {
+          context.read<IndustrialVisitBloc>().add(const ClockInDutyEvent(1));
+        } else {
+          context.read<IndustrialVisitBloc>().add(const ClockOutDutyEvent());
+        }
+      } catch (_) {}
     }
     AsmitaToast.show(
       context,
@@ -151,6 +181,187 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
     );
     if (!mounted) return;
     context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits());
+  }
+
+  void _handleScannedDigitalPass(BuildContext modalContext, String rawCode) {
+    String cleanCode = rawCode.trim();
+    final uri = Uri.tryParse(cleanCode);
+    if (uri != null && uri.queryParameters.containsKey('code')) {
+      cleanCode = uri.queryParameters['code']!;
+    }
+
+    try {
+      final visits = context.read<IndustrialVisitBloc>().state.visits;
+      IndustrialVisitModel? match;
+      for (final v in visits) {
+        if ((v.passCode != null && v.passCode!.toUpperCase() == cleanCode.toUpperCase()) ||
+            v.id.toString() == cleanCode ||
+            (v.visitorMobile != null && v.visitorMobile!.contains(cleanCode))) {
+          match = v;
+          break;
+        }
+      }
+
+      if (match != null) {
+        _showScannedVisitModal(modalContext, match);
+        return;
+      }
+    } catch (_) {}
+
+    AsmitaToast.show(
+      modalContext,
+      message: 'Scanned Pass: $cleanCode. Not found in active register.',
+      type: AsmitaToastType.info,
+    );
+  }
+
+  void _showScannedVisitModal(BuildContext ctx, IndustrialVisitModel visit) {
+    final isDark = Theme.of(ctx).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: ctx,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        decoration: BoxDecoration(
+          color: Theme.of(ctx).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        visit.visitorName,
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Pass #${visit.passCode ?? visit.id} • Host: ${(visit.hostName != null && visit.hostName!.isNotEmpty) ? visit.hostName : "Reception"}',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: visit.isCheckedIn
+                        ? (isDark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5))
+                        : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    visit.isCheckedIn ? 'Checked In' : 'Pass Verified',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: visit.isCheckedIn
+                          ? const Color(0xFF10B981)
+                          : (isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                if (!visit.isCheckedIn) ...[
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(sheetCtx);
+                        ctx.read<IndustrialVisitBloc>().add(
+                          CheckInPassEvent(
+                            visitId: visit.id,
+                            gateId: 1,
+                            passCode: visit.passCode,
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.login_rounded, size: 16),
+                      label: const Text('Check In'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF059669),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(sheetCtx);
+                        ctx.read<IndustrialVisitBloc>().add(
+                          SendToLobbyEvent(
+                            visitId: visit.id,
+                            floor: visit.floor,
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.meeting_room_rounded, size: 16),
+                      label: const Text('Send to Lobby'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(sheetCtx);
+                        ctx.read<IndustrialVisitBloc>().add(
+                          CheckOutPassEvent(visitId: visit.id, gateId: 1),
+                        );
+                      },
+                      icon: const Icon(Icons.logout_rounded, size: 16),
+                      label: const Text('Check Out'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFDC2626),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -227,6 +438,9 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                     .timeout(const Duration(seconds: 4), onTimeout: () => bloc.state);
                 bloc.add(const LoadIndustrialVisits());
                 await future;
+                if (_registryKey.currentState != null) {
+                  await _registryKey.currentState?.reload();
+                }
               },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -237,34 +451,47 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                   // 2. Gate Receptionist Quick Operational Actions
                   _buildQuickActionBar(context),
 
-                  // 3. Modern Segmented Tab Bar Header
-                  _buildSegmentedTabBar(
-                    context,
-                    waitingList.length,
-                    floorAlerts.length,
-                    isDark,
-                  ),
+                  const SizedBox(height: 8),
 
-                  // 4. Content Area: Inline Visit Cards or Empty State
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                  if (_isPropertyReceptionist) ...[
+                    // For receptionists assigned to a property: Replaced with the shared Staff Registry section
+                    EmployeeRegistryScreen(
+                      key: _registryKey,
+                      isEmbedded: true,
+                      societyId: (context.read<AuthBloc>().state is AuthAuthenticated)
+                          ? (context.read<AuthBloc>().state as AuthAuthenticated).user.societyId ?? 1
+                          : 1,
                     ),
-                    child: isLoading
-                        ? _buildReceptionistListSkeleton(context)
-                        : (_selectedTabIndex == 0
-                              ? _buildInlineVisitList(
-                                  context,
-                                  waitingList,
-                                  isAlertTab: false,
-                                )
-                              : _buildInlineVisitList(
-                                  context,
-                                  floorAlerts,
-                                  isAlertTab: true,
-                                )),
-                  ),
+                  ] else ...[
+                    // 3. Modern Segmented Tab Bar Header
+                    _buildSegmentedTabBar(
+                      context,
+                      waitingList.length,
+                      floorAlerts.length,
+                      isDark,
+                    ),
+
+                    // 4. Content Area: Inline Visit Cards or Empty State
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: isLoading
+                          ? _buildReceptionistListSkeleton(context)
+                          : (_selectedTabIndex == 0
+                                ? _buildInlineVisitList(
+                                    context,
+                                    waitingList,
+                                    isAlertTab: false,
+                                  )
+                                : _buildInlineVisitList(
+                                    context,
+                                    floorAlerts,
+                                    isAlertTab: true,
+                                  )),
+                    ),
+                  ],
 
                   // 5. Bottom clearance above floating curved nav bar
                   const SizedBox(height: 180),
@@ -454,6 +681,9 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                   MaterialPageRoute(
                     builder: (_) => GuardQrScannerScreen(
                       isActive: true,
+                      onCodeScanned: (code) {
+                        _handleScannedDigitalPass(context, code);
+                      },
                       onScanComplete: () => Navigator.pop(context),
                       onBack: () => Navigator.pop(context),
                     ),
@@ -462,13 +692,31 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
               },
             ),
           ),
-          // 3. Employee Registry (Check-in / Check-out)
+          // 3. Action 3: When Property Receptionist (Staff Registry is already on dashboard), show "Lobby & Alerts" to open Lobby Updates in a screen.
+          // For Floor Receptionist, show "Staff Registry".
           Expanded(
             child: _buildSquareActionBox(
               context,
-              icon: Icons.badge_rounded,
-              label: 'Staff Registry',
-              onTap: () => EmployeeRegistrySheet.show(context),
+              icon: _isPropertyReceptionist
+                  ? Icons.meeting_room_rounded
+                  : Icons.badge_rounded,
+              label: _isPropertyReceptionist ? 'Lobby & Alerts' : 'Staff Registry',
+              onTap: () {
+                if (_isPropertyReceptionist) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ReceptionistLobbyUpdatesScreen(
+                        onNavigateToTab: widget.onNavigateToTab,
+                        onDecideVisit: widget.onDecideVisit,
+                        onReassignVisit: widget.onReassignVisit,
+                      ),
+                    ),
+                  );
+                } else {
+                  EmployeeRegistrySheet.show(context);
+                }
+              },
             ),
           ),
           // 4. BBPS Bill Payments

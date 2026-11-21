@@ -23,17 +23,20 @@ import '../../../dashboard/widgets/asmita_pre_approve_wizard.dart';
 class EmployeeRegistryScreen extends StatefulWidget {
   final int? societyId;
   final ValueChanged<int>? onNavigateToTab;
+  final bool isEmbedded;
 
   const EmployeeRegistryScreen({
     super.key,
     this.societyId,
     this.onNavigateToTab,
+    this.isEmbedded = false,
   });
 
   static Future<int?> open(
     BuildContext context, {
     int? societyId,
     ValueChanged<int>? onNavigateToTab,
+    bool isEmbedded = false,
   }) {
     return Navigator.push<int>(
       context,
@@ -41,18 +44,21 @@ class EmployeeRegistryScreen extends StatefulWidget {
         builder: (_) => EmployeeRegistryScreen(
           societyId: societyId,
           onNavigateToTab: onNavigateToTab,
+          isEmbedded: isEmbedded,
         ),
       ),
     );
   }
 
   @override
-  State<EmployeeRegistryScreen> createState() => _EmployeeRegistryScreenState();
+  State<EmployeeRegistryScreen> createState() => EmployeeRegistryScreenState();
 }
 
-class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
+class EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _allEmployees = [];
+
+  Future<void> reload() => _loadData(forceRefresh: true);
   List<Map<String, dynamic>> _allDepartments = [];
   bool _isLoading = true;
   String _searchQuery = '';
@@ -67,7 +73,7 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadData(forceRefresh: true);
   }
 
   @override
@@ -86,12 +92,25 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
         return authState.user.societyId!;
       }
     } catch (_) {}
-    return 115;
+    return 1;
+  }
+
+  static DateTime? _parseDateTime(dynamic val) {
+    if (val == null) return null;
+    if (val is DateTime) return val;
+    try {
+      return DateTime.parse(val.toString()).toLocal();
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> _loadData({bool forceRefresh = false}) async {
     final sId = _resolveSocietyId();
     setState(() => _isLoading = true);
+    if (forceRefresh) {
+      _sessionMovementLog.clear();
+    }
     try {
       final results = await Future.wait([
         AsmitaPreApproveWizard.loadSocietyEmployees(sId, forceRefresh: forceRefresh),
@@ -166,6 +185,32 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
         emp['attendance_status'] == 'IN';
   }
 
+  bool _isEmpCheckedOutToday(Map<String, dynamic> emp) {
+    if (_isEmpIn(emp)) return false;
+    final empId = (emp['user_id'] ?? emp['id'] ?? 0) as int;
+    final movement = _sessionMovementLog[empId];
+    if (movement != null) {
+      return movement['status'] == 'OUT';
+    }
+    if (emp['last_check_out_at'] != null ||
+        emp['check_out_at'] != null ||
+        emp['check_out_time'] != null) {
+      return true;
+    }
+    final status = (emp['status'] ?? emp['attendance_status'] ?? '').toString().toUpperCase();
+    if (status == 'OUT' &&
+        (emp['last_movement_at'] != null ||
+            emp['last_check_in_at'] != null ||
+            emp['recorded_at'] != null)) {
+      return true;
+    }
+    return false;
+  }
+
+  bool _isEmpPendingToday(Map<String, dynamic> emp) {
+    return !_isEmpIn(emp) && !_isEmpCheckedOutToday(emp);
+  }
+
   List<Map<String, dynamic>> get _baseFilteredEmployees {
     return _allEmployees.where((e) {
       // 1. Search Query Filter
@@ -210,10 +255,12 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
 
   List<Map<String, dynamic>> get _filteredEmployees {
     final base = _baseFilteredEmployees;
-    if (_selectedMovementFilter == 'IN') {
+    if (_selectedMovementFilter == 'PENDING') {
+      return base.where((e) => _isEmpPendingToday(e)).toList();
+    } else if (_selectedMovementFilter == 'IN') {
       return base.where((e) => _isEmpIn(e)).toList();
     } else if (_selectedMovementFilter == 'OUT') {
-      return base.where((e) => !_isEmpIn(e)).toList();
+      return base.where((e) => _isEmpCheckedOutToday(e)).toList();
     }
     return base;
   }
@@ -436,11 +483,41 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                   ElevatedButton(
                     onPressed: () {
                       final recordedTime = useCurrentTime ? DateTime.now() : selectedDateTime;
+                      final statusStr = isCheckIn ? 'IN' : 'OUT';
+                      final existingSession = _sessionMovementLog[empId];
+                      final existingCheckIn = existingSession?['last_check_in_at'] ??
+                          _parseDateTime(
+                            emp['last_check_in_at'] ??
+                            emp['check_in_at'] ??
+                            emp['check_in_time'],
+                          );
                       setState(() {
                         _sessionMovementLog[empId] = {
-                          'status': isCheckIn ? 'IN' : 'OUT',
+                          'status': statusStr,
                           'time': recordedTime,
+                          'last_movement_at': recordedTime,
+                          if (isCheckIn) 'last_check_in_at': recordedTime,
+                          if (!isCheckIn) 'last_check_out_at': recordedTime,
+                          if (!isCheckIn && existingCheckIn != null) 'last_check_in_at': existingCheckIn,
                         };
+                        final idx = _allEmployees.indexWhere(
+                          (e) => ((e['user_id'] ?? e['id'] ?? 0) as int) == empId,
+                        );
+                        if (idx != -1) {
+                          _allEmployees[idx]['is_checked_in'] = isCheckIn;
+                          _allEmployees[idx]['status'] = statusStr;
+                          _allEmployees[idx]['attendance_status'] = statusStr;
+                          _allEmployees[idx]['duty_status'] = isCheckIn ? 'ON_DUTY' : 'OFF_DUTY';
+                          _allEmployees[idx]['last_movement_at'] = recordedTime.toIso8601String();
+                          if (isCheckIn) {
+                            _allEmployees[idx]['last_check_in_at'] = recordedTime.toIso8601String();
+                          } else {
+                            _allEmployees[idx]['last_check_out_at'] = recordedTime.toIso8601String();
+                            if (existingCheckIn != null) {
+                              _allEmployees[idx]['last_check_in_at'] = existingCheckIn.toIso8601String();
+                            }
+                          }
+                        }
                       });
                       Navigator.pop(sheetContext);
                       HapticFeedback.mediumImpact();
@@ -448,6 +525,17 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                         context,
                         message: '${isCheckIn ? "Checked in" : "Checked out"} $empName.',
                         type: AsmitaToastType.success,
+                      );
+
+                      // Persist to backend server so other gates/receptionists see it
+                      final sId = _resolveSocietyId();
+                      AsmitaPreApproveWizard.recordEmployeeMovement(
+                        societyId: sId,
+                        employeeId: empId,
+                        status: statusStr,
+                        recordedAt: recordedTime,
+                        gateName: 'Gate Reception',
+                        notes: 'Manual check-$statusStr by Receptionist',
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -480,121 +568,406 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
     );
   }
 
-  Widget _buildDropdownPill({
-    required BuildContext context,
-    required bool isDark,
-    required String selectedValue,
-    required List<String> items,
-    required IconData icon,
-    required String tooltip,
-    required ValueChanged<String> onSelected,
-  }) {
-    final theme = Theme.of(context);
-    return Theme(
-      data: theme.copyWith(
-        hoverColor: Colors.transparent,
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-      ),
-      child: PopupMenuButton<String>(
-        initialValue: selectedValue,
-        tooltip: tooltip,
-        offset: const Offset(0, 36),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-          ),
-        ),
-        color: isDark ? AsmitaPalette.surfaceElevatedDark : Colors.white,
-        elevation: 4,
-        onSelected: onSelected,
-        itemBuilder: (BuildContext ctx) {
-          return items.map((val) {
-            final isSelected = val == selectedValue;
-            return PopupMenuItem<String>(
-              value: val,
-              height: 38,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Row(
-                children: [
-                  Icon(
-                    icon,
-                    size: 15,
-                    color: isSelected
-                        ? (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy)
-                        : (isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight),
+  void _showFilterSheet(BuildContext context) {
+    HapticFeedback.lightImpact();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMain = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
+    String tempFloor = _selectedFloor;
+    String tempDept = _selectedDepartment;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final hasTempFilters = tempFloor != 'All Floors' || tempDept != 'All Departments';
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.70,
+              decoration: BoxDecoration(
+                color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      val,
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected
-                            ? (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy)
-                            : (isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (isSelected)
-                    Icon(
-                      Icons.check_rounded,
-                      size: 16,
-                      color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
-                    ),
                 ],
               ),
-            );
-          }).toList();
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey,
-              width: 1.2,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 13,
-                color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
-              ),
-              const SizedBox(width: 5),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 110),
-                child: Text(
-                  selectedValue,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
-                  ),
+              child: DefaultTabController(
+                length: 2,
+                child: Column(
+                  children: [
+                    // Handle Bar
+                    Container(
+                      margin: const EdgeInsets.only(top: 10, bottom: 6),
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+
+                    // Sheet Header
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.tune_rounded,
+                            size: 20,
+                            color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Filter Staff',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 17,
+                              color: textMain,
+                            ),
+                          ),
+                          const Spacer(),
+                          if (hasTempFilters)
+                            GestureDetector(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                setModalState(() {
+                                  tempFloor = 'All Floors';
+                                  tempDept = 'All Departments';
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  'Reset',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFFEF4444),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: Icon(Icons.close_rounded, size: 22, color: textMuted),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Segmented Tabs: Floors & Department
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                      child: Container(
+                        height: 42,
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                            width: 1,
+                          ),
+                        ),
+                        child: TabBar(
+                          indicator: BoxDecoration(
+                            color: isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy,
+                            borderRadius: BorderRadius.circular(9),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          dividerColor: Colors.transparent,
+                          labelColor: Colors.white,
+                          unselectedLabelColor: textMuted,
+                          labelStyle: const TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12.5,
+                          ),
+                          unselectedLabelStyle: const TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12.5,
+                          ),
+                          tabs: [
+                            Tab(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.layers_outlined, size: 15),
+                                    const SizedBox(width: 6),
+                                    const Text('Floors'),
+                                    if (tempFloor != 'All Floors') ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFF10B981),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Tab(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.business_outlined, size: 15),
+                                    const SizedBox(width: 6),
+                                    const Text('Departments'),
+                                    if (tempDept != 'All Departments') ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFF10B981),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // Tab Views
+                    Expanded(
+                      child: TabBarView(
+                        children: [
+                          // Tab 1: Floor values in Grid of 5
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            child: GridView.builder(
+                              itemCount: _availableFloors.length,
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 5,
+                                crossAxisSpacing: 8,
+                                mainAxisSpacing: 8,
+                                childAspectRatio: 1.05,
+                              ),
+                              itemBuilder: (context, i) {
+                                final f = _availableFloors[i];
+                                final isSelected = tempFloor == f;
+                                final isAll = f == 'All Floors';
+                                final cleanNum = isAll
+                                    ? 'All'
+                                    : f.replaceAll(RegExp(r'^floor\s*', caseSensitive: false), '').trim();
+
+                                return InkWell(
+                                  onTap: () {
+                                    HapticFeedback.selectionClick();
+                                    setModalState(() => tempFloor = f);
+                                  },
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
+                                          : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC)),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
+                                            : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                                        width: isSelected ? 1.5 : 1,
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          if (!isAll)
+                                            Text(
+                                              'FL',
+                                              style: TextStyle(
+                                                fontFamily: 'Montserrat',
+                                                fontSize: 8.5,
+                                                fontWeight: FontWeight.w600,
+                                                color: isSelected
+                                                    ? Colors.white70
+                                                    : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+                                              ),
+                                            ),
+                                          FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              cleanNum,
+                                              style: TextStyle(
+                                                fontFamily: 'Montserrat',
+                                                fontSize: isAll ? 13 : 15,
+                                                fontWeight: FontWeight.w700,
+                                                color: isSelected ? Colors.white : textMain,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+
+                          // Tab 2: Departments in List
+                          ListView.separated(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            itemCount: _availableDepartments.length,
+                            separatorBuilder: (_, _) => Divider(
+                              height: 1,
+                              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                            ),
+                            itemBuilder: (context, i) {
+                              final d = _availableDepartments[i];
+                              final isSelected = tempDept == d;
+
+                              return InkWell(
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  setModalState(() => tempDept = d);
+                                },
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? (isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF))
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        d == 'All Departments'
+                                            ? Icons.dashboard_outlined
+                                            : Icons.business_outlined,
+                                        size: 18,
+                                        color: isSelected
+                                            ? (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
+                                            : textMuted,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          d,
+                                          style: TextStyle(
+                                            fontFamily: 'Montserrat',
+                                            fontSize: 13,
+                                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                            color: isSelected
+                                                ? (isDark ? Colors.white : AsmitaPalette.deepNavy)
+                                                : textMain,
+                                          ),
+                                        ),
+                                      ),
+                                      if (isSelected)
+                                        Icon(
+                                          Icons.check_circle_rounded,
+                                          size: 18,
+                                          color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Apply Button Sticky Footer
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                        border: Border(
+                          top: BorderSide(
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: SafeArea(
+                        top: false,
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 46,
+                          child: ElevatedButton(
+                            key: const Key('apply_staff_filters_btn'),
+                            onPressed: () {
+                              HapticFeedback.mediumImpact();
+                              setState(() {
+                                _selectedFloor = tempFloor;
+                                _selectedDepartment = tempDept;
+                              });
+                              Navigator.pop(ctx);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Apply Filters',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 3),
-              Icon(
-                Icons.arrow_drop_down_rounded,
-                size: 18,
-                color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textLight,
-              ),
-            ],
-          ),
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -603,61 +976,32 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final base = _baseFilteredEmployees;
-    final outCount = base.where((e) => !_isEmpIn(e)).length;
+    final pendingCount = base.where((e) => _isEmpPendingToday(e)).length;
     final inCount = base.where((e) => _isEmpIn(e)).length;
+    final outCount = base.where((e) => _isEmpCheckedOutToday(e)).length;
     final allCount = base.length;
     final filtered = _filteredEmployees;
-    final hasActiveFilter = _selectedFloor != 'All Floors' ||
-        _selectedDepartment != 'All Departments' ||
+    final hasFloorFilter = _selectedFloor != 'All Floors';
+    final hasDeptFilter = _selectedDepartment != 'All Departments';
+    final hasFloorOrDeptFilter = hasFloorFilter || hasDeptFilter;
+    final hasActiveFilter = hasFloorOrDeptFilter ||
         _searchQuery.isNotEmpty ||
         _selectedMovementFilter != 'ALL';
+    final hasFiltersApplied = hasFloorOrDeptFilter || _searchQuery.isNotEmpty;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      bottomNavigationBar: AsmitaBottomNavBar(
-        currentIndex: -1,
-        onTap: (index) {
-          Navigator.pop(context, index);
-          if (widget.onNavigateToTab != null) {
-            widget.onNavigateToTab!(index);
-          }
-        },
-      ),
-      body: Column(
-        children: [
-          // Standard Primary App Header matching BBPS & Society views
-          AsmitaPrimaryHeader(
-            subtitleOverride: 'Staff Registry',
-            showBackButton: true,
-            allowPropertySwitching: false,
-            bottomPadding: 12.0,
-            trailingExtraAction: IconButton(
-              icon: const Icon(Icons.refresh_rounded, size: 20, color: Colors.white),
-              tooltip: 'Refresh Registry',
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                _loadData(forceRefresh: true);
-              },
-            ),
-          ),
+    String filterLabel = 'Filter';
+    if (hasFloorFilter && hasDeptFilter) {
+      filterLabel = '2 Filters';
+    } else if (hasFloorFilter) {
+      final clean = _selectedFloor.replaceAll(RegExp(r'^floor\s*', caseSensitive: false), '').trim();
+      filterLabel = clean.isNotEmpty ? 'Floor $clean' : _selectedFloor;
+    } else if (hasDeptFilter) {
+      filterLabel = _selectedDepartment;
+    }
 
-          // Main Content Area with Pull-to-Refresh & Responsive Bounded Canvas
-          Expanded(
-            child: BoundedCanvas(
-              maxWidth: 600,
-              child: AppRefresh(
-                onRefresh: () async {
-                  await _loadData(forceRefresh: true);
-                },
-                padding: EdgeInsets.fromLTRB(
-                  context.responsivePadding(16),
-                  8,
-                  context.responsivePadding(16),
-                  24,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
+    final bodyContent = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
                     // Search Bar with perfectly aligned icon & placeholder text
                     Container(
                       height: 48,
@@ -715,158 +1059,187 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
 
                     const SizedBox(height: 12),
 
-                    // KPI Movement Filter Tabs (Out, In, All)
+                    // KPI Movement Filter Tabs (Pending, In, Out, All)
                     _buildKpiFilterTabs(
                       context,
-                      outCount: outCount,
+                      pendingCount: pendingCount,
                       inCount: inCount,
+                      outCount: outCount,
                       allCount: allCount,
                     ),
 
                     const SizedBox(height: 14),
 
-                    // Section Header with BBPS-Style Filter Dropdowns
+                    // Section Header: Staff Count + Filter Actions
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // Left: Staff count badge
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Staff',
-                                style: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: context.responsiveFont(13),
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                  letterSpacing: -0.2,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
-                                      .withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  '${filtered.length}',
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: SizedBox(
+                        height: 34,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Left: Staff count badge
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Staff',
                                   style: TextStyle(
                                     fontFamily: 'Montserrat',
-                                    fontSize: context.responsiveFont(10.5),
+                                    fontSize: context.responsiveFont(13.5),
                                     fontWeight: FontWeight.w700,
-                                    color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    letterSpacing: -0.2,
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-
-                          // Right: Reset button + Floor Dropdown + Department Dropdown
-                          Flexible(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerRight,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                if (hasActiveFilter) ...[
-                                  GestureDetector(
-                                    onTap: () {
-                                      HapticFeedback.lightImpact();
-                                      _searchController.clear();
-                                      setState(() {
-                                        _searchQuery = '';
-                                        _selectedFloor = 'All Floors';
-                                        _selectedDepartment = 'All Departments';
-                                        _selectedMovementFilter = 'ALL';
-                                      });
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4.5),
-                                      margin: const EdgeInsets.only(right: 6),
-                                      decoration: BoxDecoration(
-                                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.refresh_rounded,
-                                            size: 11,
-                                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                          ),
-                                          const SizedBox(width: 3),
-                                          Text(
-                                            'Reset',
-                                            style: TextStyle(
-                                              fontFamily: 'Montserrat',
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w600,
-                                              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  height: 22,
+                                  padding: const EdgeInsets.symmetric(horizontal: 7),
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
+                                        .withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(11),
+                                  ),
+                                  child: Text(
+                                    '${filtered.length}',
+                                    style: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: context.responsiveFont(10.5),
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
                                     ),
                                   ),
-                                ],
+                                ),
+                              ],
+                            ),
 
-                              // Floor Dropdown
-                              _buildDropdownPill(
-                                context: context,
-                                isDark: isDark,
-                                selectedValue: _selectedFloor,
-                                items: _availableFloors,
-                                icon: Icons.layers_outlined,
-                                tooltip: 'Filter by Floor',
-                                onSelected: (val) {
-                                  HapticFeedback.selectionClick();
-                                  setState(() => _selectedFloor = val);
-                                },
+                            // Right: Reset button + Single Filter Button
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerRight,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    if (hasFiltersApplied) ...[
+                                      GestureDetector(
+                                        onTap: () {
+                                          HapticFeedback.lightImpact();
+                                          _searchController.clear();
+                                          setState(() {
+                                            _searchQuery = '';
+                                            _selectedFloor = 'All Floors';
+                                            _selectedDepartment = 'All Departments';
+                                          });
+                                        },
+                                        child: Container(
+                                          height: 32,
+                                          padding: const EdgeInsets.symmetric(horizontal: 9),
+                                          margin: const EdgeInsets.only(right: 6),
+                                          decoration: BoxDecoration(
+                                            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(
+                                              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.refresh_rounded,
+                                                size: 12,
+                                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'Reset',
+                                                style: TextStyle(
+                                                  fontFamily: 'Montserrat',
+                                                  fontSize: 10.5,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+
+                                    // Single Filter Button opening Slideup with Tabs
+                                    GestureDetector(
+                                      key: const Key('employee_registry_filter_btn'),
+                                      onTap: () => _showFilterSheet(context),
+                                      child: Container(
+                                        height: 32,
+                                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                                        decoration: BoxDecoration(
+                                          color: hasFloorOrDeptFilter
+                                              ? (isDark ? const Color(0xFF2563EB) : AsmitaPalette.deepNavy)
+                                              : (isDark ? AsmitaPalette.surfaceDark : Colors.white),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: hasFloorOrDeptFilter
+                                                ? Colors.transparent
+                                                : (isDark ? AsmitaPalette.borderGreyDark : const Color(0xFFCBD5E1)),
+                                            width: 1.1,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: 0.03),
+                                              blurRadius: 3,
+                                              offset: const Offset(0, 1),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.tune_rounded,
+                                              size: 13,
+                                              color: hasFloorOrDeptFilter
+                                                  ? Colors.white
+                                                  : (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy),
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              filterLabel,
+                                              style: TextStyle(
+                                                fontFamily: 'Montserrat',
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: hasFloorOrDeptFilter
+                                                    ? Colors.white
+                                                    : (isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-
-                              const SizedBox(width: 6),
-
-                              // Department Dropdown
-                              _buildDropdownPill(
-                                context: context,
-                                isDark: isDark,
-                                selectedValue: _selectedDepartment,
-                                items: _availableDepartments,
-                                icon: Icons.business_outlined,
-                                tooltip: 'Filter by Department',
-                                onSelected: (val) {
-                                  HapticFeedback.selectionClick();
-                                  setState(() => _selectedDepartment = val);
-                                },
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-
-                  const SizedBox(height: 6),
+                    ),
 
                   // Active movement count notice
                   if (_sessionMovementLog.isNotEmpty) ...[
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.only(top: 4, bottom: 8),
                       child: Row(
                         children: [
                           const Icon(Icons.history_rounded, size: 14, color: AsmitaPalette.successGreen),
@@ -938,6 +1311,7 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                     )
                   else
                     ListView.separated(
+                      padding: EdgeInsets.zero,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: filtered.length,
@@ -952,305 +1326,544 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                         final desk = (emp['desk_code'] ?? '').toString().trim();
                         final cabin = (emp['cabin_code'] ?? '').toString().trim();
                         final movement = _sessionMovementLog[empId];
-                        final isCheckedIn = movement != null && movement['status'] == 'IN';
+                        final isCheckedIn = _isEmpIn(emp);
+
+                        DateTime? parseDateTime(dynamic val) {
+                          if (val == null) return null;
+                          if (val is DateTime) return val;
+                          try {
+                            return DateTime.parse(val.toString()).toLocal();
+                          } catch (_) {
+                            return null;
+                          }
+                        }
+
+                        DateTime? checkInTime = parseDateTime(
+                          emp['last_check_in_at'] ??
+                          emp['check_in_at'] ??
+                          emp['check_in_time'] ??
+                          emp['checked_in_at'],
+                        );
+                        DateTime? checkOutTime = parseDateTime(
+                          emp['last_check_out_at'] ??
+                          emp['check_out_at'] ??
+                          emp['check_out_time'] ??
+                          emp['checked_out_at'],
+                        );
+
+                        final lastMovement = parseDateTime(emp['last_movement_at'] ?? emp['recorded_at']);
+                        if (lastMovement != null) {
+                          if (isCheckedIn && checkInTime == null) {
+                            checkInTime = lastMovement;
+                          } else if (!isCheckedIn && checkOutTime == null) {
+                            checkOutTime = lastMovement;
+                          }
+                        }
+
+                        if (movement != null) {
+                          final status = movement['status'];
+                          final time = movement['time'] as DateTime;
+                          if (status == 'IN') {
+                            checkInTime = time;
+                          } else if (status == 'OUT') {
+                            checkOutTime = time;
+                          }
+                          if (movement['last_check_in_at'] != null) {
+                            checkInTime = movement['last_check_in_at'] as DateTime;
+                          }
+                          if (movement['last_check_out_at'] != null) {
+                            checkOutTime = movement['last_check_out_at'] as DateTime;
+                          }
+                        }
 
                         String cleanFloor = '';
                         if (floor.isNotEmpty) {
                           cleanFloor = floor.replaceAll(RegExp(r'^floor\s*', caseSensitive: false), '').trim();
                         }
 
+                        // Generate smart 2-letter initials
+                        String initials = 'S';
+                        final nameParts = name.trim().split(RegExp(r'\s+'));
+                        if (nameParts.isNotEmpty && nameParts[0].isNotEmpty) {
+                          if (nameParts.length == 1) {
+                            initials = nameParts[0][0].toUpperCase();
+                          } else if (nameParts[1].isNotEmpty) {
+                            initials = '${nameParts[0][0]}${nameParts[1][0]}'.toUpperCase();
+                          }
+                        }
+
+                        final isAllFilter = _selectedMovementFilter == 'ALL';
+                        final isPendingFilter = _selectedMovementFilter == 'PENDING';
+                        final isInFilter = _selectedMovementFilter == 'IN';
+                        final isOutFilter = _selectedMovementFilter == 'OUT';
+
+                        final showFooter = !isAllFilter;
+                        final showInButton = isPendingFilter || isOutFilter;
+                        final showOutButton = isInFilter;
+
                         return Container(
-                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: theme.colorScheme.surface,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: isCheckedIn
-                                  ? AsmitaPalette.successGreen
-                                  : (isDark ? AsmitaPalette.borderGreyDark : AsmitaPalette.borderGrey),
-                              width: 1.5,
+                                  ? (isDark
+                                      ? const Color(0xFF059669).withValues(alpha: 0.45)
+                                      : const Color(0xFF10B981).withValues(alpha: 0.35))
+                                  : (isDark ? AsmitaPalette.borderGreyDark : const Color(0xFFE2E8F0)),
+                              width: isCheckedIn ? 1.4 : 1,
                             ),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // Squircle Avatar in Asmita Deep Navy
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? AsmitaPalette.deepNavyDark.withValues(alpha: 0.15)
-                                      : AsmitaPalette.deepNavy.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: isDark
-                                        ? AsmitaPalette.deepNavyDark.withValues(alpha: 0.3)
-                                        : AsmitaPalette.deepNavy.withValues(alpha: 0.15),
-                                    width: 1,
-                                  ),
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  name.isNotEmpty ? name[0].toUpperCase() : 'S',
-                                  style: TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy,
-                                    fontSize: 16,
-                                  ),
-                                ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
                               ),
-                              const SizedBox(width: 12),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // ── UPPER SECTION: Employee Profile & Presence ──
+                              Padding(
+                                padding: EdgeInsets.fromLTRB(14, 13, 14, isAllFilter ? 13 : 11),
+                                child: IntrinsicHeight(
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      // Squircle Avatar with Presence Dot
+                                      AspectRatio(
+                                        aspectRatio: 1,
+                                        child: Stack(
+                                          clipBehavior: Clip.none,
+                                          children: [
+                                            Container(
+                                              width: double.infinity,
+                                              height: double.infinity,
+                                              decoration: BoxDecoration(
+                                                color: isCheckedIn
+                                                    ? (isDark
+                                                        ? const Color(0xFF064E3B).withValues(alpha: 0.35)
+                                                        : const Color(0xFFECFDF5))
+                                                    : (isDark
+                                                        ? AsmitaPalette.deepNavyDark.withValues(alpha: 0.15)
+                                                        : const Color(0xFFF1F5F9)),
+                                                borderRadius: BorderRadius.circular(14),
+                                                border: Border.all(
+                                                  color: isCheckedIn
+                                                      ? (isDark ? const Color(0xFF059669) : const Color(0xFF10B981).withValues(alpha: 0.4))
+                                                      : (isDark ? AsmitaPalette.borderGreyDark : const Color(0xFFCBD5E1)),
+                                                  width: 1,
+                                                ),
+                                              ),
+                                              alignment: Alignment.center,
+                                              child: Text(
+                                                initials,
+                                                style: TextStyle(
+                                                  fontFamily: 'Montserrat',
+                                                  fontWeight: FontWeight.w700,
+                                                  color: isCheckedIn
+                                                      ? (isDark ? const Color(0xFF34D399) : const Color(0xFF059669))
+                                                      : (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy),
+                                                  fontSize: 16,
+                                                  letterSpacing: 0.4,
+                                                ),
+                                              ),
+                                            ),
+                                            // Presence Status Dot
+                                            Positioned(
+                                              right: -1,
+                                              bottom: -1,
+                                              child: Container(
+                                                width: 13,
+                                                height: 13,
+                                                decoration: BoxDecoration(
+                                                  color: isCheckedIn ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                    color: theme.colorScheme.surface,
+                                                    width: 2,
+                                                  ),
+                                                  boxShadow: [
+                                                    if (isCheckedIn)
+                                                      BoxShadow(
+                                                        color: const Color(0xFF10B981).withValues(alpha: 0.5),
+                                                        blurRadius: 4,
+                                                        offset: const Offset(0, 1),
+                                                      ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
 
-                              // Info Column
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Row 1: Name and optional movement status tag
-                                    Row(
-                                      children: [
-                                        Flexible(
-                                          child: FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            alignment: Alignment.centerLeft,
-                                            child: Text(
+                                      // Name, Role & Location
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
                                               name,
                                               maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                               style: TextStyle(
                                                 fontFamily: 'Montserrat',
                                                 fontWeight: FontWeight.w700,
-                                                fontSize: context.responsiveFont(13.5),
-                                                color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,
+                                                fontSize: context.responsiveFont(14),
+                                                height: 1.15,
+                                                color: isDark ? AsmitaPalette.textDarkModeMain : const Color(0xFF0F172A),
                                                 letterSpacing: -0.2,
                                               ),
                                             ),
-                                          ),
-                                        ),
-                                        if (movement != null) ...[
-                                          const SizedBox(width: 6),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color: isCheckedIn
-                                                  ? AsmitaPalette.successGreen.withValues(alpha: 0.12)
-                                                  : AsmitaPalette.actionRed.withValues(alpha: 0.12),
-                                              borderRadius: BorderRadius.circular(6),
-                                              border: Border.all(
-                                                color: isCheckedIn
-                                                    ? AsmitaPalette.successGreen.withValues(alpha: 0.4)
-                                                    : AsmitaPalette.actionRed.withValues(alpha: 0.4),
-                                                width: 0.8,
-                                              ),
-                                            ),
-                                            child: Text(
-                                              isCheckedIn
-                                                  ? 'IN • ${DateFormat("hh:mm a").format(movement["time"] as DateTime)}'
-                                                  : 'OUT • ${DateFormat("hh:mm a").format(movement["time"] as DateTime)}',
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              dept.isNotEmpty && role.isNotEmpty ? '$role • $dept' : (role.isNotEmpty ? role : dept),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                               style: TextStyle(
-                                                fontSize: 9.5,
-                                                fontWeight: FontWeight.bold,
-                                                color: isCheckedIn
-                                                    ? AsmitaPalette.successGreen
-                                                    : AsmitaPalette.actionRed,
+                                                fontFamily: 'Poppins',
+                                                fontSize: context.responsiveFont(11.5),
+                                                height: 1.15,
+                                                fontWeight: FontWeight.w500,
+                                                color: isDark ? AsmitaPalette.textDarkModeMuted : const Color(0xFF64748B),
                                               ),
                                             ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                    const SizedBox(height: 3),
-
-                                    // Row 2: Department & Designation
-                                    FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        '$dept • $role',
-                                        maxLines: 1,
-                                        style: TextStyle(
-                                          fontFamily: 'Poppins',
-                                          fontSize: context.responsiveFont(11.5),
-                                          fontWeight: FontWeight.w500,
-                                          color: isDark
-                                              ? AsmitaPalette.textDarkModeMuted
-                                              : AsmitaPalette.textLight,
+                                            const SizedBox(height: 6),
+                                            if (cleanFloor.isNotEmpty || desk.isNotEmpty || cabin.isNotEmpty)
+                                              Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 6.5, vertical: 2),
+                                                    decoration: BoxDecoration(
+                                                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                                                      borderRadius: BorderRadius.circular(6),
+                                                      border: Border.all(
+                                                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                                        width: 0.8,
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          Icons.layers_rounded,
+                                                          size: 11,
+                                                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                                        ),
+                                                        const SizedBox(width: 3.5),
+                                                        Text(
+                                                          [
+                                                            if (cleanFloor.isNotEmpty) 'Floor $cleanFloor',
+                                                            if (desk.isNotEmpty) desk,
+                                                            if (cabin.isNotEmpty) cabin,
+                                                          ].join(' • '),
+                                                          style: TextStyle(
+                                                            fontFamily: 'Poppins',
+                                                            fontSize: 10,
+                                                            fontWeight: FontWeight.w500,
+                                                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              )
+                                            else
+                                              const SizedBox(height: 18),
+                                          ],
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 5),
+                                      const SizedBox(width: 8),
 
-                                    // Row 3: Meta Badges (Floor, Desk, Cabin)
-                                    Wrap(
-                                      spacing: 5,
-                                      runSpacing: 4,
-                                      children: [
-                                        if (cleanFloor.isNotEmpty)
-                                          _buildBadge(
-                                            icon: Icons.layers_rounded,
-                                            label: 'Floor $cleanFloor',
-                                            isDark: isDark,
-                                          ),
-                                        if (desk.isNotEmpty)
-                                          _buildBadge(
-                                            icon: Icons.desk_rounded,
-                                            label: desk,
-                                            isDark: isDark,
-                                          ),
-                                        if (cabin.isNotEmpty)
-                                          _buildBadge(
-                                            icon: Icons.meeting_room_rounded,
-                                            label: cabin,
-                                            isDark: isDark,
-                                          ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              const SizedBox(width: 8),
-
-                              // Quick Action Buttons (Check In / Check Out)
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // In Button
-                                    Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap: () => _showMovementDialog(emp, isCheckIn: true),
-                                        borderRadius: BorderRadius.circular(10),
+                                      // Presence Badge (Top-Right)
+                                      Align(
+                                        alignment: Alignment.topRight,
                                         child: Container(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: context.isCompact ? 8 : 11,
-                                            vertical: 7,
-                                          ),
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                                           decoration: BoxDecoration(
                                             color: isCheckedIn
-                                                ? (isDark ? const Color(0xFF064E3B) : const Color(0xFF059669))
-                                                : (isDark
-                                                    ? const Color(0xFF064E3B).withValues(alpha: 0.25)
-                                                    : const Color(0xFFECFDF5)),
-                                            borderRadius: BorderRadius.circular(10),
+                                                ? (isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFECFDF5))
+                                                : (isPendingFilter
+                                                    ? (isDark ? const Color(0xFF78350F).withValues(alpha: 0.35) : const Color(0xFFFEF3C7))
+                                                    : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9))),
+                                            borderRadius: BorderRadius.circular(8),
                                             border: Border.all(
                                               color: isCheckedIn
-                                                  ? (isDark ? const Color(0xFF059669) : const Color(0xFF047857))
-                                                  : (isDark
-                                                      ? const Color(0xFF059669).withValues(alpha: 0.4)
-                                                      : const Color(0xFFA7F3D0)),
-                                              width: 1,
+                                                  ? const Color(0xFF10B981).withValues(alpha: 0.4)
+                                                  : (isPendingFilter
+                                                      ? const Color(0xFFF59E0B).withValues(alpha: 0.4)
+                                                      : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0))),
+                                              width: 0.8,
                                             ),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Icon(
-                                                Icons.login_rounded,
-                                                size: 13,
-                                                color: isCheckedIn
-                                                    ? Colors.white
-                                                    : (isDark ? const Color(0xFF34D399) : const Color(0xFF047857)),
+                                              Container(
+                                                width: 6,
+                                                height: 6,
+                                                decoration: BoxDecoration(
+                                                  color: isCheckedIn
+                                                      ? const Color(0xFF10B981)
+                                                      : (isPendingFilter
+                                                          ? const Color(0xFFF59E0B)
+                                                          : const Color(0xFF94A3B8)),
+                                                  shape: BoxShape.circle,
+                                                ),
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
-                                                'In',
+                                                isCheckedIn ? 'Inside' : (isPendingFilter ? 'Pending' : 'Out'),
                                                 style: TextStyle(
                                                   fontFamily: 'Montserrat',
-                                                  fontSize: 11,
+                                                  fontSize: 10,
                                                   fontWeight: FontWeight.w700,
                                                   color: isCheckedIn
-                                                      ? Colors.white
-                                                      : (isDark ? const Color(0xFF34D399) : const Color(0xFF047857)),
+                                                      ? (isDark ? const Color(0xFF34D399) : const Color(0xFF059669))
+                                                      : (isPendingFilter
+                                                          ? (isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309))
+                                                          : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
                                                 ),
                                               ),
                                             ],
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 6),
-
-                                    // Out Button
-                                    Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap: () => _showMovementDialog(emp, isCheckIn: false),
-                                        borderRadius: BorderRadius.circular(10),
-                                        child: Container(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: context.isCompact ? 8 : 11,
-                                            vertical: 7,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: !isCheckedIn && movement != null
-                                                ? (isDark ? const Color(0xFF991B1B) : AsmitaPalette.actionRed)
-                                                : (isDark
-                                                    ? const Color(0xFF4C0519).withValues(alpha: 0.25)
-                                                    : const Color(0xFFFFF1F2)),
-                                            borderRadius: BorderRadius.circular(10),
-                                            border: Border.all(
-                                              color: !isCheckedIn && movement != null
-                                                  ? (isDark ? const Color(0xFFB91C1C) : AsmitaPalette.actionRed)
-                                                  : (isDark
-                                                      ? const Color(0xFFBE123C).withValues(alpha: 0.35)
-                                                      : const Color(0xFFFECDD3)),
-                                              width: 1,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                Icons.logout_rounded,
-                                                size: 13,
-                                                color: !isCheckedIn && movement != null
-                                                    ? Colors.white
-                                                    : AsmitaPalette.actionRed,
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                'Out',
-                                                style: TextStyle(
-                                                  fontFamily: 'Montserrat',
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: !isCheckedIn && movement != null
-                                                      ? Colors.white
-                                                      : AsmitaPalette.actionRed,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
+
+                              // ── INTEGRATED FOOTER: Timestamps + Action Buttons (Hidden on 'ALL' tab) ──
+                              if (showFooter)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? const Color(0xFF0F172A).withValues(alpha: 0.4)
+                                        : const Color(0xFFF8FAFC),
+                                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(15)),
+                                    border: Border(
+                                      top: BorderSide(
+                                        color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                                        width: 1,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      // Left: Timestamps / Status
+                                      Expanded(
+                                        child: Builder(
+                                          builder: (_) {
+                                            if (isOutFilter) {
+                                              // "In checked out show check in and out timestamps both."
+                                              return Row(
+                                                children: [
+                                                  if (checkInTime != null) ...[
+                                                    Icon(
+                                                      Icons.login_rounded,
+                                                      size: 12,
+                                                      color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                                                    ),
+                                                    const SizedBox(width: 3),
+                                                    Text(
+                                                      'In ${DateFormat("hh:mm a").format(checkInTime)}',
+                                                      style: TextStyle(
+                                                        fontFamily: 'Poppins',
+                                                        fontSize: 10.5,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: isDark ? const Color(0xFF34D399) : const Color(0xFF047857),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                  if (checkInTime != null && checkOutTime != null)
+                                                    Padding(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                                                      child: Text(
+                                                        '•',
+                                                        style: TextStyle(
+                                                          color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  if (checkOutTime != null) ...[
+                                                    Icon(
+                                                      Icons.logout_rounded,
+                                                      size: 12,
+                                                      color: isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626),
+                                                    ),
+                                                    const SizedBox(width: 3),
+                                                    Text(
+                                                      'Out ${DateFormat("hh:mm a").format(checkOutTime)}',
+                                                      style: TextStyle(
+                                                        fontFamily: 'Poppins',
+                                                        fontSize: 10.5,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: isDark ? const Color(0xFFF87171) : const Color(0xFFB91C1C),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                  if (checkInTime == null && checkOutTime == null) ...[
+                                                    Icon(
+                                                      Icons.logout_rounded,
+                                                      size: 12,
+                                                      color: isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626),
+                                                    ),
+                                                    const SizedBox(width: 3),
+                                                    Text(
+                                                      'Checked out today',
+                                                      style: TextStyle(
+                                                        fontFamily: 'Poppins',
+                                                        fontSize: 10.5,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: isDark ? const Color(0xFFF87171) : const Color(0xFFB91C1C),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
+                                              );
+                                            } else if (isInFilter) {
+                                              return Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.login_rounded,
+                                                    size: 12,
+                                                    color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                                                  ),
+                                                  const SizedBox(width: 3),
+                                                  Text(
+                                                    checkInTime != null
+                                                        ? 'In ${DateFormat("hh:mm a").format(checkInTime)}'
+                                                        : 'Inside property',
+                                                    style: TextStyle(
+                                                      fontFamily: 'Poppins',
+                                                      fontSize: 10.5,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: isDark ? const Color(0xFF34D399) : const Color(0xFF047857),
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            } else if (isPendingFilter) {
+                                              return Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.schedule_rounded,
+                                                    size: 12,
+                                                    color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    'Pending check-in',
+                                                    style: TextStyle(
+                                                      fontFamily: 'Poppins',
+                                                      fontSize: 10.5,
+                                                      fontWeight: FontWeight.w500,
+                                                      color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309),
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            }
+                                            return const SizedBox.shrink();
+                                          },
+                                        ),
+                                      ),
+
+                                      const SizedBox(width: 8),
+
+                                      // Right: Action Button
+                                      if (showInButton)
+                                        _buildMovementActionButton(
+                                          emp: emp,
+                                          isCheckIn: true,
+                                          isDark: isDark,
+                                          compact: false,
+                                        ),
+                                      if (showOutButton)
+                                        _buildMovementActionButton(
+                                          emp: emp,
+                                          isCheckIn: false,
+                                          isDark: isDark,
+                                          compact: false,
+                                        ),
+                                    ],
+                                  ),
+                                ),
                             ],
                           ),
                         );
                       },
                     ),
                 ],
+              );
+
+    if (widget.isEmbedded) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: bodyContent,
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      bottomNavigationBar: AsmitaBottomNavBar(
+        currentIndex: -1,
+        onTap: (index) {
+          Navigator.pop(context, index);
+          if (widget.onNavigateToTab != null) {
+            widget.onNavigateToTab!(index);
+          }
+        },
+      ),
+      body: Column(
+        children: [
+          // Standard Primary App Header matching BBPS & Society views
+          const AsmitaPrimaryHeader(
+            subtitleOverride: 'Staff Registry',
+            showBackButton: true,
+            allowPropertySwitching: false,
+            bottomPadding: 12.0,
+          ),
+
+          // Main Content Area with Pull-to-Refresh & Responsive Bounded Canvas
+          Expanded(
+            child: BoundedCanvas(
+              maxWidth: 600,
+              child: AppRefresh(
+                onRefresh: () async {
+                  await _loadData(forceRefresh: true);
+                },
+                padding: EdgeInsets.fromLTRB(
+                  context.responsivePadding(16),
+                  8,
+                  context.responsivePadding(16),
+                  24,
+                ),
+                child: bodyContent,
               ),
             ),
           ),
-        ),
         ],
       ),
     );
   }
 
-  /// KPI Movement Filter Tabs (Out, In, All) matching Image 2
+  /// KPI Movement Filter Tabs (Pending, In, Out, All)
   Widget _buildKpiFilterTabs(
     BuildContext context, {
-    required int outCount,
+    required int pendingCount,
     required int inCount,
+    required int outCount,
     required int allCount,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -1260,14 +1873,14 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
         Expanded(
           child: _buildKpiCard(
             context,
-            label: 'Out',
-            count: outCount,
-            icon: Icons.logout_rounded,
-            accentColor: isDark ? const Color(0xFFF87171) : const Color(0xFFEF4444),
-            filterKey: 'OUT',
+            label: 'Pending',
+            count: pendingCount,
+            icon: Icons.hourglass_top_rounded,
+            accentColor: isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
+            filterKey: 'PENDING',
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         Expanded(
           child: _buildKpiCard(
             context,
@@ -1278,7 +1891,18 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
             filterKey: 'IN',
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
+        Expanded(
+          child: _buildKpiCard(
+            context,
+            label: 'Out',
+            count: outCount,
+            icon: Icons.logout_rounded,
+            accentColor: isDark ? const Color(0xFFF87171) : const Color(0xFFEF4444),
+            filterKey: 'OUT',
+          ),
+        ),
+        const SizedBox(width: 6),
         Expanded(
           child: _buildKpiCard(
             context,
@@ -1314,8 +1938,8 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(
-          vertical: context.responsiveScale(12),
-          horizontal: 4,
+          vertical: context.responsiveScale(10),
+          horizontal: 2,
         ),
         decoration: BoxDecoration(
           color: isSelected
@@ -1345,11 +1969,11 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
           children: [
             // Squircle Icon Container
             Container(
-              width: context.responsiveScale(34),
-              height: context.responsiveScale(34),
+              width: context.responsiveScale(30),
+              height: context.responsiveScale(30),
               decoration: BoxDecoration(
                 color: accentColor.withValues(alpha: isDark ? 0.22 : 0.10),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(9),
                 border: Border.all(
                   color: accentColor.withValues(
                     alpha: isSelected ? 0.45 : 0.18,
@@ -1361,11 +1985,11 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                 child: Icon(
                   icon,
                   color: accentColor,
-                  size: context.responsiveScale(18),
+                  size: context.responsiveScale(16),
                 ),
               ),
             ),
-            SizedBox(height: context.responsiveScale(6)),
+            SizedBox(height: context.responsiveScale(5)),
             // KPI Count Number
             FittedBox(
               fit: BoxFit.scaleDown,
@@ -1373,11 +1997,9 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                 '$count',
                 style: TextStyle(
                   fontFamily: 'Montserrat',
-                  fontSize: context.responsiveFont(18),
+                  fontSize: context.responsiveFont(16.5),
                   fontWeight: FontWeight.w800,
-                  color: isSelected
-                      ? (isDark ? Colors.white : accentColor)
-                      : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
                   letterSpacing: -0.5,
                 ),
               ),
@@ -1390,11 +2012,11 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                 label,
                 style: TextStyle(
                   fontFamily: 'Poppins',
-                  fontSize: context.responsiveFont(11),
+                  fontSize: context.responsiveFont(10.5),
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected
-                      ? (isDark ? Colors.white : accentColor)
-                      : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                  color: isDark
+                      ? (isSelected ? Colors.white : const Color(0xFF94A3B8))
+                      : (isSelected ? const Color(0xFF0F172A) : const Color(0xFF64748B)),
                 ),
               ),
             ),
@@ -1404,43 +2026,53 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
     );
   }
 
-  Widget _buildBadge({
-    required IconData icon,
-    required String label,
+  Widget _buildMovementActionButton({
+    required Map<String, dynamic> emp,
+    required bool isCheckIn,
     required bool isDark,
+    bool compact = false,
   }) {
-    final badgeColor = isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AsmitaPalette.deepNavyDark.withValues(alpha: 0.12)
-            : AsmitaPalette.deepNavy.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: isDark
-              ? AsmitaPalette.deepNavyDark.withValues(alpha: 0.25)
-              : AsmitaPalette.deepNavy.withValues(alpha: 0.15),
-          width: 0.8,
-        ),
-      ),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 10.5, color: badgeColor),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: badgeColor,
+    final bgColor = isCheckIn ? const Color(0xFF059669) : const Color(0xFFDC2626);
+    final icon = isCheckIn ? Icons.login_rounded : Icons.logout_rounded;
+    final label = compact ? (isCheckIn ? 'In' : 'Out') : (isCheckIn ? 'Check In' : 'Check Out');
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _showMovementDialog(emp, isCheckIn: isCheckIn),
+        borderRadius: BorderRadius.circular(8),
+        child: Ink(
+          height: 32,
+          padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 13),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: bgColor.withValues(alpha: 0.25),
+                blurRadius: 4,
+                offset: const Offset(0, 1.5),
               ),
-            ),
-          ],
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 13, color: Colors.white),
+              const SizedBox(width: 4.5),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  letterSpacing: 0.1,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1455,72 +2087,68 @@ class _EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
           4,
           (index) => Container(
             margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: isDark ? AsmitaPalette.borderGreyDark : const Color(0xFFE2E8F0),
-                width: 1.5,
+                width: 1,
               ),
               boxShadow: [
                 BoxShadow(
                   color: isDark
                       ? Colors.black.withValues(alpha: 0.35)
-                      : const Color(0xFF0F172A).withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                      : const Color(0xFF0F172A).withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            child: Column(
               children: [
-                AsmitaSkeleton.bone(width: 44, height: 44, borderRadius: 12),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 13, 14, 11),
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                      AsmitaSkeleton.bone(width: 58, height: 58, borderRadius: 14),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            AsmitaSkeleton.text(width: 90, height: 14, borderRadius: 3),
-                            const SizedBox(width: 6),
-                            AsmitaSkeleton.pill(width: 45, height: 16),
+                            AsmitaSkeleton.text(width: 120, height: 14, borderRadius: 3),
+                            const SizedBox(height: 5),
+                            AsmitaSkeleton.text(width: 160, height: 12, borderRadius: 3),
+                            const SizedBox(height: 6),
+                            AsmitaSkeleton.bone(width: 65, height: 18, borderRadius: 6),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 5),
-                      AsmitaSkeleton.text(width: 110, height: 12, borderRadius: 3),
-                      const SizedBox(height: 8),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            AsmitaSkeleton.bone(width: 50, height: 18, borderRadius: 6),
-                            const SizedBox(width: 6),
-                            AsmitaSkeleton.bone(width: 45, height: 18, borderRadius: 6),
-                          ],
-                        ),
-                      ),
+                      const SizedBox(width: 8),
+                      AsmitaSkeleton.pill(width: 55, height: 22),
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF0F172A).withValues(alpha: 0.4)
+                        : const Color(0xFFF8FAFC),
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(15)),
+                    border: Border(
+                      top: BorderSide(
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                        width: 1,
+                      ),
+                    ),
+                  ),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      AsmitaSkeleton.bone(width: 40, height: 26, borderRadius: 10),
-                      const SizedBox(width: 6),
-                      AsmitaSkeleton.bone(width: 40, height: 26, borderRadius: 10),
+                      AsmitaSkeleton.text(width: 100, height: 12, borderRadius: 3),
+                      AsmitaSkeleton.bone(width: 70, height: 30, borderRadius: 8),
                     ],
                   ),
                 ),

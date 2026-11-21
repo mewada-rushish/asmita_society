@@ -11,12 +11,14 @@ class GuardQrScannerScreen extends StatefulWidget {
   final VoidCallback onScanComplete;
   final bool isActive;
   final VoidCallback? onBack;
+  final void Function(String code)? onCodeScanned;
 
   const GuardQrScannerScreen({
     super.key,
     required this.onScanComplete,
     required this.isActive,
     this.onBack,
+    this.onCodeScanned,
   });
 
   @override
@@ -70,7 +72,11 @@ class _GuardQrScannerScreenState extends State<GuardQrScannerScreen> {
     setState(() => _isProcessing = true);
     _scannerController.stop();
 
-    context.read<GuardGateBloc>().add(SearchInviteByCode(code));
+    if (widget.onCodeScanned != null) {
+      widget.onCodeScanned!(code);
+    } else {
+      context.read<GuardGateBloc>().add(SearchInviteByCode(code));
+    }
     widget.onScanComplete();
   }
 
@@ -88,8 +94,12 @@ class _GuardQrScannerScreenState extends State<GuardQrScannerScreen> {
         // Pause scanner
         _scannerController.stop();
 
-        // Trigger search bloc
-        context.read<GuardGateBloc>().add(SearchInviteByCode(code));
+        // Trigger code scan handler or fallback search bloc
+        if (widget.onCodeScanned != null) {
+          widget.onCodeScanned!(code);
+        } else {
+          context.read<GuardGateBloc>().add(SearchInviteByCode(code));
+        }
 
         // Navigate back to home
         widget.onScanComplete();

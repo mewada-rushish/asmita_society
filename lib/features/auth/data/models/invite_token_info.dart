@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 /// Data class representing resolved invite token details for registration prefill.
 class InviteTokenInfo extends Equatable {
   final bool success;
+  final bool hasInvite;
   final int societyId;
   final String societyName;
   final String targetRole;
@@ -15,6 +16,7 @@ class InviteTokenInfo extends Equatable {
 
   const InviteTokenInfo({
     required this.success,
+    this.hasInvite = true,
     required this.societyId,
     required this.societyName,
     required this.targetRole,
@@ -47,8 +49,13 @@ class InviteTokenInfo extends Equatable {
     final emailStr = json['recipient_email']?.toString().trim();
     final genderStr = json['recipient_gender']?.toString().trim();
 
+    final bool hasInviteVal = json['has_invite'] != null
+        ? json['has_invite'] == true
+        : (json['success'] == true && parsedSocietyId > 0);
+
     return InviteTokenInfo(
       success: json['success'] == true,
+      hasInvite: hasInviteVal,
       societyId: parsedSocietyId,
       societyName: json['society_name']?.toString().trim() ?? '',
       targetRole: json['target_role']?.toString().trim() ?? 'Corporate Employee',
@@ -64,6 +71,7 @@ class InviteTokenInfo extends Equatable {
   Map<String, dynamic> toJson() {
     return {
       'success': success,
+      'has_invite': hasInvite,
       'society_id': societyId,
       'society_name': societyName,
       'target_role': targetRole,
@@ -78,6 +86,7 @@ class InviteTokenInfo extends Equatable {
 
   InviteTokenInfo copyWith({
     bool? success,
+    bool? hasInvite,
     int? societyId,
     String? societyName,
     String? targetRole,
@@ -90,6 +99,7 @@ class InviteTokenInfo extends Equatable {
   }) {
     return InviteTokenInfo(
       success: success ?? this.success,
+      hasInvite: hasInvite ?? this.hasInvite,
       societyId: societyId ?? this.societyId,
       societyName: societyName ?? this.societyName,
       targetRole: targetRole ?? this.targetRole,
@@ -105,6 +115,7 @@ class InviteTokenInfo extends Equatable {
   @override
   List<Object?> get props => [
         success,
+        hasInvite,
         societyId,
         societyName,
         targetRole,
