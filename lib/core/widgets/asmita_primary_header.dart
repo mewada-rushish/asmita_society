@@ -529,8 +529,8 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                   child: Row(
                     children: [
                       Container(
-                        width: 38,
-                        height: 38,
+                        width: context.isCompact ? 34 : 38,
+                        height: context.isCompact ? 34 : 38,
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.surface,
                           shape: BoxShape.circle,
@@ -549,11 +549,11 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                           child: Icon(
                             brandingIcon,
                             color: brandingColor,
-                            size: 20,
+                            size: context.isCompact ? 18 : 20,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: context.isCompact ? 8 : 12),
                       Expanded(
                         child: InkWell(
                           onTap: allowPropertySwitching
@@ -576,14 +576,17 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Flexible(
-                                    child: Text(
-                                      societyName,
-                                      style: textTheme.titleLarge?.copyWith(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w800,
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        societyName,
+                                        style: textTheme.titleLarge?.copyWith(
+                                          fontSize: context.responsiveFont(15),
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                        maxLines: 1,
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                   if (allowPropertySwitching) ...[
@@ -600,15 +603,18 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                                 ],
                               ),
                               const SizedBox(height: 2),
-                              Text(
-                                flatDetails,
-                                style: textTheme.bodyMedium?.copyWith(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                  color: AsmitaPalette.textLight,
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  flatDetails,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    fontSize: context.responsiveFont(12),
+                                    fontWeight: FontWeight.w400,
+                                    color: AsmitaPalette.textLight,
+                                  ),
+                                  maxLines: 1,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
@@ -654,28 +660,30 @@ class AsmitaPrimaryHeader extends StatelessWidget {
                       ),
                     ),
                   ] else if (isIndustrial) ...[
-                    // Industrial / Corporate Actions: 1. Search, 2. Campus Hotlines
-                    InkWell(
-                      onTap: onSearchPressed ??
-                          () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => AsmitaSearchScreen(
-                                    onBack: () => Navigator.pop(context),
+                    // Industrial / Corporate Actions: 1. Search (if not suppressed by in-page extra action), 2. Campus Hotlines
+                    if (extraAction == null) ...[
+                      InkWell(
+                        onTap: onSearchPressed ??
+                            () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => AsmitaSearchScreen(
+                                      onBack: () => Navigator.pop(context),
+                                    ),
                                   ),
                                 ),
-                              ),
-                      borderRadius: BorderRadius.circular(20),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Icon(
-                          Icons.search_rounded,
-                          color: Theme.of(context).iconTheme.color,
-                          size: 24,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Icon(
+                            Icons.search_rounded,
+                            color: Theme.of(context).iconTheme.color,
+                            size: 24,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
+                      const SizedBox(width: 4),
+                    ],
                     InkWell(
                       onTap: onHotlinePressed ?? () => _showCampusHotlinesSheet(context),
                       borderRadius: BorderRadius.circular(20),
