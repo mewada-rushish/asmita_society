@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -265,7 +266,185 @@ class EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
     return base;
   }
 
+  Future<DateTime?> _showIosTimePicker(BuildContext context, DateTime initialDateTime) async {
+    DateTime tempTime = initialDateTime;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return showModalBottomSheet<DateTime>(
+      context: context,
+      useSafeArea: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (pickerCtx) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. Centered drag handle
+                Center(
+                  child: Container(
+                    width: 38,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+
+                // 2. Styled Header Bar
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Cancel Pill
+                    InkWell(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.pop(pickerCtx);
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF334155).withValues(alpha: 0.5)
+                              : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isDark
+                                ? const Color(0xFF475569).withValues(alpha: 0.4)
+                                : const Color(0xFFE2E8F0),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Centered Title with Clock Badge
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.schedule_rounded,
+                            size: 16,
+                            color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Select Time',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(pickerCtx).colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Done Filled Pill
+                    InkWell(
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
+                        Navigator.pop(pickerCtx, tempTime);
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy).withValues(alpha: 0.25),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          'Done',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                // Subtle modern divider
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Cupertino Picker
+                SizedBox(
+                  height: 190,
+                  child: CupertinoTheme(
+                    data: CupertinoThemeData(
+                      brightness: isDark ? Brightness.dark : Brightness.light,
+                      textTheme: CupertinoTextThemeData(
+                        dateTimePickerTextStyle: TextStyle(
+                          color: Theme.of(pickerCtx).colorScheme.onSurface,
+                          fontSize: 22,
+                          fontFamily: 'Montserrat',
+                        ),
+                      ),
+                    ),
+                    child: CupertinoDatePicker(
+                      mode: CupertinoDatePickerMode.time,
+                      initialDateTime: initialDateTime,
+                      use24hFormat: false,
+                      onDateTimeChanged: (DateTime newDateTime) {
+                        tempTime = newDateTime;
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _showMovementDialog(Map<String, dynamic> emp, {required bool isCheckIn}) {
+    FocusScope.of(context).unfocus();
     final empId = (emp['user_id'] ?? emp['id'] ?? 0) as int;
     final empName = (emp['full_name'] ?? emp['name'] ?? 'Employee').toString();
     DateTime selectedDateTime = DateTime.now();
@@ -274,6 +453,7 @@ class EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -285,281 +465,289 @@ class EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
             final actionColor = isCheckIn ? AsmitaPalette.successGreen : const Color(0xFFDC2626);
             final actionTitle = isCheckIn ? 'Check In Employee' : 'Check Out Employee';
 
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 18,
-                bottom: MediaQuery.of(dialogCtx).viewInsets.bottom + 24,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(2),
+            return SafeArea(
+              top: false,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  top: 18,
+                  bottom: MediaQuery.of(dialogCtx).viewInsets.bottom + 16,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: actionColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: actionColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            isCheckIn ? Icons.login_rounded : Icons.logout_rounded,
+                            color: actionColor,
+                            size: 20,
+                          ),
                         ),
-                        child: Icon(
-                          isCheckIn ? Icons.login_rounded : Icons.logout_rounded,
-                          color: actionColor,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              actionTitle,
-                              style: const TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                actionTitle,
+                                style: const TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
                               ),
+                              Text(
+                                empName,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(dialogCtx).textTheme.bodySmall?.color,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded, size: 20),
+                          onPressed: () => Navigator.pop(sheetContext),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          splashRadius: 20,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Option 1: Real-time
+                    InkWell(
+                      onTap: () => setDialogState(() => useCurrentTime = true),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: useCurrentTime
+                              ? actionColor.withValues(alpha: isDark ? 0.2 : 0.08)
+                              : Theme.of(dialogCtx).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: useCurrentTime ? actionColor : Theme.of(dialogCtx).dividerColor,
+                            width: useCurrentTime ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              useCurrentTime ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
+                              color: useCurrentTime ? actionColor : Colors.grey,
+                              size: 20,
                             ),
-                            Text(
-                              empName,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Theme.of(dialogCtx).textTheme.bodySmall?.color,
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Log Current Time (Real-Time)',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  Text(
+                                    DateFormat('hh:mm a • dd MMM yyyy').format(DateTime.now()),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: actionColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
+                    ),
 
-                  // Option 1: Real-time
-                  InkWell(
-                    onTap: () => setDialogState(() => useCurrentTime = true),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: useCurrentTime
-                            ? actionColor.withValues(alpha: isDark ? 0.2 : 0.08)
-                            : Theme.of(dialogCtx).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: useCurrentTime ? actionColor : Theme.of(dialogCtx).dividerColor,
-                          width: useCurrentTime ? 1.5 : 1,
+                    const SizedBox(height: 10),
+
+                    // Option 2: Custom Picked Time (iPhone Style Cupertino Picker)
+                    InkWell(
+                      onTap: () async {
+                        setDialogState(() => useCurrentTime = false);
+                        final picked = await _showIosTimePicker(dialogCtx, selectedDateTime);
+                        if (picked != null) {
+                          final now = DateTime.now();
+                          setDialogState(() {
+                            useCurrentTime = false;
+                            selectedDateTime = DateTime(
+                              now.year,
+                              now.month,
+                              now.day,
+                              picked.hour,
+                              picked.minute,
+                            );
+                          });
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: !useCurrentTime
+                              ? actionColor.withValues(alpha: isDark ? 0.2 : 0.08)
+                              : Theme.of(dialogCtx).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: !useCurrentTime ? actionColor : Theme.of(dialogCtx).dividerColor,
+                            width: !useCurrentTime ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              !useCurrentTime ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
+                              color: !useCurrentTime ? actionColor : Colors.grey,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Select Custom Time',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  Text(
+                                    !useCurrentTime
+                                        ? DateFormat('hh:mm a • dd MMM yyyy').format(selectedDateTime)
+                                        : 'Tap to pick specific hour & minute',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: !useCurrentTime ? actionColor : Colors.grey,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.access_time_rounded,
+                              color: !useCurrentTime ? actionColor : Colors.grey,
+                              size: 18,
+                            ),
+                          ],
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            useCurrentTime ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-                            color: useCurrentTime ? actionColor : Colors.grey,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Log Current Time (Real-Time)',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                Text(
-                                  DateFormat('hh:mm a • dd MMM yyyy').format(DateTime.now()),
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: actionColor,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: 10),
+                    const SizedBox(height: 20),
 
-                  // Option 2: Custom Picked Time
-                  InkWell(
-                    onTap: () async {
-                      setDialogState(() => useCurrentTime = false);
-                      final pickedTime = await showTimePicker(
-                        context: dialogCtx,
-                        initialTime: TimeOfDay.fromDateTime(selectedDateTime),
-                      );
-                      if (pickedTime != null) {
-                        final now = DateTime.now();
-                        setDialogState(() {
-                          useCurrentTime = false;
-                          selectedDateTime = DateTime(
-                            now.year,
-                            now.month,
-                            now.day,
-                            pickedTime.hour,
-                            pickedTime.minute,
+                    ElevatedButton(
+                      onPressed: () {
+                        FocusScope.of(context).unfocus();
+                        final recordedTime = useCurrentTime ? DateTime.now() : selectedDateTime;
+                        final statusStr = isCheckIn ? 'IN' : 'OUT';
+                        final existingSession = _sessionMovementLog[empId];
+                        final existingCheckIn = existingSession?['last_check_in_at'] ??
+                            _parseDateTime(
+                              emp['last_check_in_at'] ??
+                              emp['check_in_at'] ??
+                              emp['check_in_time'],
+                            );
+                        setState(() {
+                          _sessionMovementLog[empId] = {
+                            'status': statusStr,
+                            'time': recordedTime,
+                            'last_movement_at': recordedTime,
+                            if (isCheckIn) 'last_check_in_at': recordedTime,
+                            if (!isCheckIn) 'last_check_out_at': recordedTime,
+                            if (!isCheckIn && existingCheckIn != null) 'last_check_in_at': existingCheckIn,
+                          };
+                          final idx = _allEmployees.indexWhere(
+                            (e) => ((e['user_id'] ?? e['id'] ?? 0) as int) == empId,
                           );
-                        });
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: !useCurrentTime
-                            ? actionColor.withValues(alpha: isDark ? 0.2 : 0.08)
-                            : Theme.of(dialogCtx).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: !useCurrentTime ? actionColor : Theme.of(dialogCtx).dividerColor,
-                          width: !useCurrentTime ? 1.5 : 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            !useCurrentTime ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-                            color: !useCurrentTime ? actionColor : Colors.grey,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Select Custom Time',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                Text(
-                                  !useCurrentTime
-                                      ? DateFormat('hh:mm a (Selected)').format(selectedDateTime)
-                                      : 'Tap to pick specific hour & minute',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: !useCurrentTime ? actionColor : Colors.grey,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Icon(
-                            Icons.access_time_rounded,
-                            color: !useCurrentTime ? actionColor : Colors.grey,
-                            size: 18,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  ElevatedButton(
-                    onPressed: () {
-                      final recordedTime = useCurrentTime ? DateTime.now() : selectedDateTime;
-                      final statusStr = isCheckIn ? 'IN' : 'OUT';
-                      final existingSession = _sessionMovementLog[empId];
-                      final existingCheckIn = existingSession?['last_check_in_at'] ??
-                          _parseDateTime(
-                            emp['last_check_in_at'] ??
-                            emp['check_in_at'] ??
-                            emp['check_in_time'],
-                          );
-                      setState(() {
-                        _sessionMovementLog[empId] = {
-                          'status': statusStr,
-                          'time': recordedTime,
-                          'last_movement_at': recordedTime,
-                          if (isCheckIn) 'last_check_in_at': recordedTime,
-                          if (!isCheckIn) 'last_check_out_at': recordedTime,
-                          if (!isCheckIn && existingCheckIn != null) 'last_check_in_at': existingCheckIn,
-                        };
-                        final idx = _allEmployees.indexWhere(
-                          (e) => ((e['user_id'] ?? e['id'] ?? 0) as int) == empId,
-                        );
-                        if (idx != -1) {
-                          _allEmployees[idx]['is_checked_in'] = isCheckIn;
-                          _allEmployees[idx]['status'] = statusStr;
-                          _allEmployees[idx]['attendance_status'] = statusStr;
-                          _allEmployees[idx]['duty_status'] = isCheckIn ? 'ON_DUTY' : 'OFF_DUTY';
-                          _allEmployees[idx]['last_movement_at'] = recordedTime.toIso8601String();
-                          if (isCheckIn) {
-                            _allEmployees[idx]['last_check_in_at'] = recordedTime.toIso8601String();
-                          } else {
-                            _allEmployees[idx]['last_check_out_at'] = recordedTime.toIso8601String();
-                            if (existingCheckIn != null) {
-                              _allEmployees[idx]['last_check_in_at'] = existingCheckIn.toIso8601String();
+                          if (idx != -1) {
+                            _allEmployees[idx]['is_checked_in'] = isCheckIn;
+                            _allEmployees[idx]['status'] = statusStr;
+                            _allEmployees[idx]['attendance_status'] = statusStr;
+                            _allEmployees[idx]['duty_status'] = isCheckIn ? 'ON_DUTY' : 'OFF_DUTY';
+                            _allEmployees[idx]['last_movement_at'] = recordedTime.toIso8601String();
+                            if (isCheckIn) {
+                              _allEmployees[idx]['last_check_in_at'] = recordedTime.toIso8601String();
+                            } else {
+                              _allEmployees[idx]['last_check_out_at'] = recordedTime.toIso8601String();
+                              if (existingCheckIn != null) {
+                                _allEmployees[idx]['last_check_in_at'] = existingCheckIn.toIso8601String();
+                              }
                             }
                           }
-                        }
-                      });
-                      Navigator.pop(sheetContext);
-                      HapticFeedback.mediumImpact();
-                      AsmitaToast.show(
-                        context,
-                        message: '${isCheckIn ? "Checked in" : "Checked out"} $empName.',
-                        type: AsmitaToastType.success,
-                      );
+                        });
+                        Navigator.pop(sheetContext);
+                        HapticFeedback.mediumImpact();
+                        AsmitaToast.show(
+                          context,
+                          message: '${isCheckIn ? "Checked in" : "Checked out"} $empName.',
+                          type: AsmitaToastType.success,
+                        );
 
-                      // Persist to backend server so other gates/receptionists see it
-                      final sId = _resolveSocietyId();
-                      AsmitaPreApproveWizard.recordEmployeeMovement(
-                        societyId: sId,
-                        employeeId: empId,
-                        status: statusStr,
-                        recordedAt: recordedTime,
-                        gateName: 'Gate Reception',
-                        notes: 'Manual check-$statusStr by Receptionist',
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isDark
-                          ? const Color(0xFF2563EB)
-                          : AsmitaPalette.deepNavy,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        // Persist to backend server so other gates/receptionists see it
+                        final sId = _resolveSocietyId();
+                        AsmitaPreApproveWizard.recordEmployeeMovement(
+                          societyId: sId,
+                          employeeId: empId,
+                          status: statusStr,
+                          recordedAt: recordedTime,
+                          gateName: 'Gate Reception',
+                          notes: 'Manual check-$statusStr by Receptionist',
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDark
+                            ? const Color(0xFF2563EB)
+                            : AsmitaPalette.deepNavy,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
                       ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      'Confirm ${isCheckIn ? "Check-in" : "Check-out"}',
-                      style: const TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        letterSpacing: 0.2,
+                      child: Text(
+                        'Confirm ${isCheckIn ? "Check-in" : "Check-out"}',
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          letterSpacing: 0.2,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           },
