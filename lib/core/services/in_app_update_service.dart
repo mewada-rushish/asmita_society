@@ -60,23 +60,18 @@ class InAppUpdateService {
         if (updateInfo.flexibleUpdateAllowed) {
           final startResult = await InAppUpdate.startFlexibleUpdate();
           if (startResult == AppUpdateResult.success) {
-            // Once downloaded, prompt the user or complete update
+            // Once downloaded, prompt the user via Asmita custom toast/snackbar
             if (context != null && context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text(
-                    'An update has been downloaded. Restart to apply.',
-                    style: TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.w600),
-                  ),
-                  duration: const Duration(days: 1),
-                  action: SnackBarAction(
-                    label: 'RESTART',
-                    textColor: Colors.amberAccent,
-                    onPressed: () {
-                      InAppUpdate.completeFlexibleUpdate();
-                    },
-                  ),
-                ),
+              AsmitaToast.show(
+                context,
+                message: 'Update downloaded. Restart to apply.',
+                type: AsmitaToastType.success,
+                duration: const Duration(days: 1),
+                actionLabel: 'RESTART',
+                bottomOffset: 96.0,
+                onAction: () {
+                  InAppUpdate.completeFlexibleUpdate();
+                },
               );
             } else {
               await InAppUpdate.completeFlexibleUpdate();

@@ -4,6 +4,7 @@ import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/app_button.dart';
 import 'package:asmita_society/core/widgets/app_refresh.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_event.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
@@ -88,8 +89,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (state is AuthAuthenticated) {
           _populateControllers(state.user);
         } else if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+          AsmitaToast.show(
+            context,
+            message: state.message,
+            type: AsmitaToastType.error,
           );
         }
       },

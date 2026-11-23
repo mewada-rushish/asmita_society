@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_skeleton.dart';
+import '../../../../core/widgets/asmita_toast.dart';
 import 'package:asmita_society/core/widgets/asmita_primary_header.dart';
 import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
@@ -319,16 +320,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                           Clipboard.setData(
                                             ClipboardData(text: selectedTexts),
                                           );
-                                          ScaffoldMessenger.of(
+                                          AsmitaToast.show(
                                             context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Copied to clipboard',
-                                              ),
-                                              behavior:
-                                                  SnackBarBehavior.floating,
-                                            ),
+                                            message: 'Copied to clipboard',
+                                            type: AsmitaToastType.success,
                                           );
                                           if (mounted) {
                                             context.read<CommunityBloc>().add(ClearMessageSelection());

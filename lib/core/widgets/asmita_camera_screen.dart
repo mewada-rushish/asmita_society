@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 
 /// Categories of camera failure for user-friendly error recovery.
 enum CameraErrorKind {
@@ -275,14 +276,10 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
     } catch (e) {
       debugPrint('Fallback image picker error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Could not open ${source == ImageSource.camera ? "camera" : "gallery"}: $e',
-              style: const TextStyle(fontFamily: 'Poppins', fontSize: 13),
-            ),
-            backgroundColor: AsmitaPalette.actionRed,
-          ),
+        AsmitaToast.show(
+          context,
+          message: 'Could not open ${source == ImageSource.camera ? "camera" : "gallery"}: $e',
+          type: AsmitaToastType.error,
         );
       }
     }
@@ -338,11 +335,10 @@ class _AsmitaCameraScreenState extends State<AsmitaCameraScreen>
     } catch (e) {
       if (mounted) {
         setState(() => _isTakingPicture = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to take photo: $e'),
-            backgroundColor: AsmitaPalette.actionRed,
-          ),
+        AsmitaToast.show(
+          context,
+          message: 'Failed to take photo: $e',
+          type: AsmitaToastType.error,
         );
       }
     }
