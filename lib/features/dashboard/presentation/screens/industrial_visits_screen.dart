@@ -41,6 +41,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   final Set<int> _acknowledgedIds = {};
+  final Map<int, String> _processingActions = {};
   Timer? _tickerTimer;
 
   @override
@@ -128,11 +129,17 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
         return false;
       }
 
-      // Host themselves or designated assigned user can approve
+      // Host themselves, assigned user, or designated current approver (delegatee) can approve
       if (visit.hostUserId != null && visit.hostUserId == user.userId) {
         return true;
       }
       if (visit.assignedToUserId != null && visit.assignedToUserId == user.userId) {
+        return true;
+      }
+      if (visit.currentApproverUserId != null && visit.currentApproverUserId == user.userId) {
+        return true;
+      }
+      if (visit.isDelegatedApproval) {
         return true;
       }
 
@@ -212,6 +219,15 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
           Expanded(
             child: BlocConsumer<IndustrialVisitBloc, IndustrialVisitState>(
               listener: (context, state) {
+                if (state.status == IndustrialVisitBlocStatus.actionSuccess ||
+                    state.status == IndustrialVisitBlocStatus.error ||
+                    state.status == IndustrialVisitBlocStatus.loaded) {
+                  if (mounted && _processingActions.isNotEmpty) {
+                    setState(() {
+                      _processingActions.clear();
+                    });
+                  }
+                }
                 if (state.status == IndustrialVisitBlocStatus.actionSuccess &&
                     state.successMessage != null) {
                   AsmitaToast.show(
@@ -942,6 +958,10 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
     final isReceptionist = userRole == 'receptionist';
     final isGuard = userRole == 'guard';
 
+    final isCheckingIn = _processingActions[visit.id] == 'CHECK_IN';
+    final isCheckingOut = _processingActions[visit.id] == 'CHECK_OUT';
+    final isForwarding = _processingActions[visit.id] == 'FORWARD';
+
     // Dynamic receptionist front-desk actions (Only for active non-terminal visits)
     Widget? bottomActions;
     final isTerminal = isExpired ||
@@ -1040,14 +1060,19 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: () {
-                    context.read<IndustrialVisitBloc>().add(
-                      SendToLobbyEvent(
-                        visitId: visit.id,
-                        floor: visit.floor,
-                      ),
-                    );
-                  },
+                  onTap: isForwarding
+                      ? null
+                      : () {
+                          setState(() {
+                            _processingActions[visit.id] = 'FORWARD';
+                          });
+                          context.read<IndustrialVisitBloc>().add(
+                            SendToLobbyEvent(
+                              visitId: visit.id,
+                              floor: visit.floor,
+                            ),
+                          );
+                        },
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
                     height: 40,
@@ -1064,28 +1089,58 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                         ),
                       ],
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.forward_rounded, size: 16, color: Colors.white),
-                        SizedBox(width: 5),
-                        Flexible(
-                          child: Text(
-                            'Forward',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              letterSpacing: 0.2,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                    child: isForwarding
+                        ? const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              ),
+                              SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'Forwarding...',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: 0.2,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.forward_rounded, size: 16, color: Colors.white),
+                              SizedBox(width: 5),
+                              Flexible(
+                                child: Text(
+                                  'Forward',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: 0.2,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ),
@@ -1101,15 +1156,20 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: () {
-                    context.read<IndustrialVisitBloc>().add(
-                      CheckInPassEvent(
-                        visitId: visit.id,
-                        gateId: 1,
-                        passCode: visit.passCode,
-                      ),
-                    );
-                  },
+                  onTap: isCheckingIn
+                      ? null
+                      : () {
+                          setState(() {
+                            _processingActions[visit.id] = 'CHECK_IN';
+                          });
+                          context.read<IndustrialVisitBloc>().add(
+                            CheckInPassEvent(
+                              visitId: visit.id,
+                              gateId: 1,
+                              passCode: visit.passCode,
+                            ),
+                          );
+                        },
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
                     height: 40,
@@ -1120,41 +1180,71 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Color(0xFF27347B),
-                          Color(0xFF1A2352),
+                          Color(0xFF059669),
+                          Color(0xFF047857),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF27347B).withValues(alpha: 0.28),
+                          color: const Color(0xFF059669).withValues(alpha: 0.32),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.how_to_reg_rounded, size: 16, color: Colors.white),
-                        SizedBox(width: 5),
-                        Flexible(
-                          child: Text(
-                            'Check In',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              letterSpacing: 0.2,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                    child: isCheckingIn
+                        ? const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              ),
+                              SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'Checking In...',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: 0.2,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.how_to_reg_rounded, size: 16, color: Colors.white),
+                              SizedBox(width: 5),
+                              Flexible(
+                                child: Text(
+                                  'Check In',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: 0.2,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ),
@@ -1168,11 +1258,16 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: () {
-                    context.read<IndustrialVisitBloc>().add(
-                      CheckOutPassEvent(visitId: visit.id, gateId: 1),
-                    );
-                  },
+                  onTap: isCheckingOut
+                      ? null
+                      : () {
+                          setState(() {
+                            _processingActions[visit.id] = 'CHECK_OUT';
+                          });
+                          context.read<IndustrialVisitBloc>().add(
+                            CheckOutPassEvent(visitId: visit.id, gateId: 1),
+                          );
+                        },
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
                     height: 40,
@@ -1183,41 +1278,71 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Color(0xFF27347B),
-                          Color(0xFF1A2352),
+                          Color(0xFFDC2626),
+                          Color(0xFFB91C1C),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF27347B).withValues(alpha: 0.28),
+                          color: const Color(0xFFDC2626).withValues(alpha: 0.32),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.logout_rounded, size: 16, color: Colors.white),
-                        SizedBox(width: 5),
-                        Flexible(
-                          child: Text(
-                            'Check Out',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              letterSpacing: 0.2,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                    child: isCheckingOut
+                        ? const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              ),
+                              SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'Checking Out...',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: 0.2,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.logout_rounded, size: 16, color: Colors.white),
+                              SizedBox(width: 5),
+                              Flexible(
+                                child: Text(
+                                  'Check Out',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: 0.2,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ),
@@ -1235,7 +1360,7 @@ class _IndustrialVisitsScreenState extends State<IndustrialVisitsScreen> {
       context: context,
       showSubtitle: false,
       isAcknowledged: isAck,
-      onAcknowledge: (isPending && !isAck)
+      onAcknowledge: (isPending && !isAck && canApprove)
           ? () {
               setState(() {
                 _acknowledgedIds.add(visit.id);

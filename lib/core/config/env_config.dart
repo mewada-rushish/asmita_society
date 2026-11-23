@@ -172,5 +172,7 @@ class EnvConfig {
   /// Invite Token & Team Member Endpoints
   static String inviteTokenInfo(String token) =>
       '$baseUrl/api/invites/token-info/$token';
+  static String inviteLookupByPhone(String mobile) =>
+      '$baseUrl/api/invites/lookup-by-phone/$mobile';
   static String get generateInvite => '$baseUrl/api/invites/generate';
 }

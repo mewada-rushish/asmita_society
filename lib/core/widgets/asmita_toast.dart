@@ -12,8 +12,10 @@ class AsmitaToast {
     Duration duration = const Duration(seconds: 3),
     String? actionLabel,
     VoidCallback? onAction,
+    double? bottomOffset,
   }) {
-    final overlayState = Overlay.of(context, rootOverlay: true);
+    final overlayState = Overlay.maybeOf(context, rootOverlay: true);
+    if (overlayState == null) return;
     late OverlayEntry overlayEntry;
 
     overlayEntry = OverlayEntry(
@@ -23,7 +25,12 @@ class AsmitaToast {
         duration: duration,
         actionLabel: actionLabel,
         onAction: onAction,
-        onDismiss: () => overlayEntry.remove(),
+        bottomOffset: bottomOffset,
+        onDismiss: () {
+          if (overlayEntry.mounted) {
+            overlayEntry.remove();
+          }
+        },
       ),
     );
 
@@ -38,6 +45,7 @@ class _ToastWidget extends StatefulWidget {
   final VoidCallback onDismiss;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final double? bottomOffset;
 
   const _ToastWidget({
     required this.message,
@@ -46,6 +54,7 @@ class _ToastWidget extends StatefulWidget {
     required this.onDismiss,
     this.actionLabel,
     this.onAction,
+    this.bottomOffset,
   });
 
   @override
@@ -129,13 +138,15 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
   Widget build(BuildContext context) {
     final attrs = _getTypeAttributes();
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final effectiveBottomOffset = widget.bottomOffset ?? 32.0;
 
     return SafeArea(
       top: false,
       child: Align(
         alignment: Alignment.bottomCenter, // Centers the floating pill
         child: Padding(
-          padding: EdgeInsets.only(bottom: bottomPadding + 32.0),
+          padding: EdgeInsets.only(bottom: bottomPadding + effectiveBottomOffset),
           child: SlideTransition(
             position: _offsetAnimation,
             child: FadeTransition(
@@ -145,20 +156,23 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
                 child: GestureDetector(
                   onTap: _reverseAndDismiss, // Tap anywhere to close instantly
                   child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 24.0),
+                    margin: const EdgeInsets.symmetric(horizontal: 20.0),
                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
                       borderRadius: BorderRadius.circular(100), // Perfect pill shape
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        width: 1,
+                      ),
                       boxShadow: [
-                        // Soft double-shadow characteristic of react-hot-toast
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                          color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
                         ),
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
+                          color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -188,30 +202,33 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
                             style: TextStyle(
                               fontFamily: 'Poppins',
                               fontWeight: FontWeight.w500,
-                              fontSize: 14,
-                              color: Colors.grey.shade900,
+                              fontSize: 13.5,
+                              color: isDark ? Colors.white : Colors.grey.shade900,
                             ),
                           ),
                         ),
                         if (widget.actionLabel != null && widget.onAction != null) ...[
                           const SizedBox(width: 12),
-                          TextButton(
-                            onPressed: () {
+                          InkWell(
+                            onTap: () {
                               widget.onAction!();
                               _reverseAndDismiss();
                             },
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: Text(
-                              widget.actionLabel!,
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                                color: attrs['color'] as Color,
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: (attrs['color'] as Color).withValues(alpha: isDark ? 0.25 : 0.12),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                widget.actionLabel!,
+                                style: TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12.5,
+                                  color: attrs['color'] as Color,
+                                ),
                               ),
                             ),
                           ),

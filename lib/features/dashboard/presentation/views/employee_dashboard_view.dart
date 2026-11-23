@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive/hive.dart';
 
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/app_skeleton.dart';
@@ -81,10 +82,12 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
   bool _showSearchBar = false;
   String? _activeDelegateName;
   Timer? _autoSyncTimer;
+  bool _isCheckedIn = false;
 
   @override
   void initState() {
     super.initState();
+    _loadAttendanceStatus();
     if (widget.visits == null) {
       _fetchDelegationStatus();
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -99,9 +102,56 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
         if (mounted) {
           try {
             context.read<IndustrialVisitBloc>().add(const LoadIndustrialVisits(isSilent: true));
+            _loadAttendanceStatus();
           } catch (_) {}
         }
       });
+    }
+  }
+
+  Future<void> _loadAttendanceStatus() async {
+    try {
+      int userId = 0;
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AuthAuthenticated) {
+        userId = authState.user.userId;
+        final roleDetails = authState.user.roleDetails;
+        if (roleDetails != null) {
+          final isOnDuty = roleDetails['is_on_duty'] == true ||
+              roleDetails['duty_status'] == 'ON_DUTY' ||
+              roleDetails['duty_status'] == 'IN';
+          final lastMovementStr = roleDetails['last_movement_at'] as String?;
+          if (isOnDuty && lastMovementStr != null) {
+            final lastMov = DateTime.tryParse(lastMovementStr);
+            if (lastMov != null) {
+              final now = DateTime.now();
+              if (lastMov.year == now.year && lastMov.month == now.month && lastMov.day == now.day) {
+                if (mounted) setState(() => _isCheckedIn = true);
+                return;
+              }
+            }
+          }
+        }
+      }
+
+      if (userId > 0 && Hive.isBoxOpen('app_cache')) {
+        final record = Hive.box('app_cache').get('employee_gate_attendance_$userId');
+        if (record is Map && record['status'] == 'IN') {
+          final tsStr = record['timestamp'] as String?;
+          if (tsStr != null) {
+            final ts = DateTime.tryParse(tsStr);
+            if (ts != null) {
+              final now = DateTime.now();
+              final isToday = ts.year == now.year && ts.month == now.month && ts.day == now.day;
+              if (mounted) setState(() => _isCheckedIn = isToday);
+              return;
+            }
+          }
+        }
+      }
+      if (mounted) setState(() => _isCheckedIn = false);
+    } catch (_) {
+      if (mounted) setState(() => _isCheckedIn = false);
     }
   }
 
@@ -457,6 +507,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
             .firstWhere((s) => s.status != IndustrialVisitBlocStatus.loading)
             .timeout(const Duration(seconds: 4), onTimeout: () => bloc.state);
         _fetchDelegationStatus();
+        _loadAttendanceStatus();
         bloc.add(const LoadIndustrialVisits());
         await future;
       },
@@ -544,7 +595,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
       departmentName: widget.departmentName,
       cabinNumber: widget.cabinNumber,
       deskNumber: widget.deskNumber,
-      isActive: widget.isActive,
+      isActive: _isCheckedIn,
     );
   }
 
@@ -699,9 +750,15 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const EmployeeGateAttendanceScannerScreen(),
+        builder: (_) => EmployeeGateAttendanceScannerScreen(
+          onAttendanceRecorded: () {
+            _loadAttendanceStatus();
+          },
+        ),
       ),
-    );
+    ).then((_) {
+      _loadAttendanceStatus();
+    });
   }
 
   void _openBillPayments(BuildContext context) {

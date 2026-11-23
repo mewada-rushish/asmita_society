@@ -7,6 +7,7 @@ import '../../bloc/historyrequest_state.dart';
 import '../../data/models/history_request_model.dart';
 import 'package:asmita_society/core/widgets/app_refresh.dart';
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/features/menu/data/repositories/history_request_repository.dart';
 import 'package:asmita_society/core/network/dio_client.dart';
 import 'package:asmita_society/core/security/secure_storage_service.dart';
@@ -204,8 +205,10 @@ class HistoryRequestsScreen extends StatelessWidget {
                       endDate: selectedRange!.end
                     ));
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Access approval request submitted')),
+                      AsmitaToast.show(
+                        context,
+                        message: 'Access approval request submitted',
+                        type: AsmitaToastType.success,
                       );
                     }
                   },

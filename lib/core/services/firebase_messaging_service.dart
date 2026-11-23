@@ -68,6 +68,19 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
       );
 
+      final androidPlugin = localNotifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      await androidPlugin?.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'approval_channel',
+          'Visitor Approvals',
+          description: 'Used for high-priority visitor entry approvals with sound.',
+          importance: Importance.max,
+          playSound: true,
+          sound: RawResourceAndroidNotificationSound('asmita_alert_1'),
+        ),
+      );
+
       final title = message.notification?.title ??
           message.data['title'] ??
           'Visitor at Gate: ${message.data['visitor_name'] ?? 'Visitor'}';

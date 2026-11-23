@@ -208,8 +208,10 @@ class FamilyMembersScreen extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (isPrimary) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Primary member profile can be edited from the Profile section')),
+          AsmitaToast.show(
+            context,
+            message: 'Primary member profile can be edited from the Profile section',
+            type: AsmitaToastType.info,
           );
         } else {
           _showMemberOptions(context, member);

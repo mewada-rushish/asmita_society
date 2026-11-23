@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
 import 'package:asmita_society/core/widgets/asmita_bottom_sheet.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/features/menu/bloc/support_bloc.dart';
 import 'package:asmita_society/features/menu/data/repositories/support_repository.dart';
 import 'package:asmita_society/core/network/dio_client.dart';
@@ -509,13 +510,10 @@ class _HelpSupportContent extends StatelessWidget {
                         ));
                         if (context.mounted) {
                           Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Ticket raised successfully'),
-                              backgroundColor: Theme.of(context).brightness == Brightness.dark
-                                  ? const Color(0xFF2563EB)
-                                  : AsmitaPalette.deepNavy,
-                            ),
+                          AsmitaToast.show(
+                            context,
+                            message: 'Ticket raised successfully',
+                            type: AsmitaToastType.success,
                           );
                         }
                       },

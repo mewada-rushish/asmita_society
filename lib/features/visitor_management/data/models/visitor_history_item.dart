@@ -1,3 +1,5 @@
+import 'industrial_visit_model.dart';
+
 class VisitorHistoryItem {
   final String recordType; // 'PRE_APPROVED' or 'WALK_IN'
   final String name;
@@ -49,9 +51,20 @@ class VisitorHistoryItem {
         ? (json['invite_type'] ?? 'Invite')
         : (json['visitor_type_name'] ?? 'Walk-in');
 
-    final entryTimeStr = json['checkin_at'] ?? json['start_time'];
-    final exitTimeStr = json['checkout_at'] ?? json['end_time'];
-    final dateStr = json['created_at'] ?? json['valid_from'];
+    final entryTimeStr = json['check_in_at'] ??
+        json['checkin_at'] ??
+        json['checked_in_at'] ??
+        json['entry_time'] ??
+        json['start_time'];
+    final exitTimeStr = json['check_out_at'] ??
+        json['checkout_at'] ??
+        json['checked_out_at'] ??
+        json['exit_time'] ??
+        json['end_time'];
+    final dateStr = json['created_at'] ??
+        json['valid_from'] ??
+        json['requested_at'] ??
+        json['date'];
     final photo = json['photo_url'] ?? json['visitor_photo_url'] ?? json['photo'] ?? json['image_url'];
 
     return VisitorHistoryItem(
@@ -95,4 +108,10 @@ class VisitorHistoryItem {
       .trim();
 
   dynamic operator [](String key) => rawData[key];
+
+  /// Unifies history items into the core industrial visit model so the same
+  /// high-fidelity card and modal components can be shared seamlessly.
+  IndustrialVisitModel toIndustrialVisit() {
+    return IndustrialVisitModel.fromJson(rawData);
+  }
 }

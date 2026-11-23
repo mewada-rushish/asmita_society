@@ -29,6 +29,7 @@ import 'package:asmita_society/core/widgets/asmita_vehicle_plate_field.dart';
 import 'package:asmita_society/core/widgets/asmita_camera_screen.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/security/secure_storage_service.dart';
+import 'package:asmita_society/core/services/location_geofence_service.dart';
 class AsmitaPreApproveWizard extends StatefulWidget {
   final bool isGuardMode;
   final String? initialCategory;
@@ -209,6 +210,46 @@ class AsmitaPreApproveWizard extends StatefulWidget {
       debugPrint('Error fetching employees: $e');
     }
     return [];
+  }
+
+  /// Records real-time employee gate movement (Check-In / Check-Out) to the centralized database.
+  static Future<bool> recordEmployeeMovement({
+    required int societyId,
+    required int employeeId,
+    required String status, // 'IN' | 'OUT'
+    DateTime? recordedAt,
+    int? gateId,
+    String? gateName,
+    String? notes,
+    double? latitude,
+    double? longitude,
+  }) async {
+    try {
+      final secureStorage = SecureStorageService();
+      final client = AsmitaDioClient(secureStorage).dio;
+      final payload = <String, dynamic>{
+        'society_id': societyId,
+        'employee_id': employeeId,
+        'status': status.toUpperCase(),
+        if (recordedAt != null) 'recorded_at': recordedAt.toIso8601String(),
+        'gate_id': ?gateId,
+        'gate_name': ?gateName,
+        'notes': ?notes,
+        'latitude': ?latitude,
+        'longitude': ?longitude,
+      };
+      final response = await client.post(
+        '${EnvConfig.baseUrl}/api/public/visitor/employee-movement',
+        data: payload,
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        clearEmployeeCache(societyId);
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Error recording employee movement: $e');
+    }
+    return false;
   }
 
   static Future<List<Map<String, dynamic>>> loadSocietyDepartments(int? societyId) async {
@@ -1069,7 +1110,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     if (_currentStep > 0) setState(() => _currentStep--);
   }
 
-  void _submitInvite() {
+  Future<void> _submitInvite() async {
     final authState = context.read<AuthBloc>().state;
     if (authState is! AuthAuthenticated) return;
 
@@ -1081,6 +1122,25 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         type: AsmitaToastType.error,
       );
       return;
+    }
+
+    // Strict 50m Physical Geofence verification for Gate Reception / Guard Walk-ins
+    if (widget.isGuardMode) {
+      final sId = user.societyId ?? 114;
+      final geofenceResult = await LocationGeofenceService.verifySocietyProximity(
+        societyId: sId,
+        defaultRadius: 50.0,
+      );
+      if (!mounted) return;
+      if (!geofenceResult.isAllowed) {
+        AsmitaToast.show(
+          context,
+          message: geofenceResult.errorMessage ?? 'You must be physically present at the entrance (within 50m) to check in visitors.',
+          type: AsmitaToastType.error,
+          duration: const Duration(seconds: 4),
+        );
+        return;
+      }
     }
 
     List<FlatMapping> selectedFlats = List.from(_selectedFlatMappings);
@@ -1465,7 +1525,18 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<GuardGateBloc, GuardGateState>(
+    final canGoBackToCategory = _currentStep > 0 &&
+        (widget.initialCategory == null || widget.initialCategory!.isEmpty);
+
+    return PopScope(
+      canPop: !canGoBackToCategory,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (canGoBackToCategory) {
+          _prevStep();
+        }
+      },
+      child: BlocListener<GuardGateBloc, GuardGateState>(
       listener: (context, guardState) {
         if (guardState.status == GuardGateStatus.success) {
           try {
@@ -1535,31 +1606,49 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               if (state is VisitorLoading || isGuardSubmitting)
                 Positioned.fill(
                   child: Container(
-                    color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.8),
+                    color: Colors.black.withValues(alpha: 0.3),
                     child: Center(
-                      child: AsmitaSkeleton(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Theme.of(context).dividerColor, width: 1.2),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.08),
-                                blurRadius: 16,
-                                offset: const Offset(0, 4),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.12),
+                              blurRadius: 18,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF60A5FA)
+                                    : AsmitaPalette.deepNavy,
                               ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              AsmitaSkeleton.circle(size: 24),
-                              const SizedBox(width: 12),
-                              AsmitaSkeleton.text(width: 120, height: 14),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(width: 14),
+                            Text(
+                              isGuardSubmitting ? 'Generating Digital Pass...' : 'Submitting Pass...',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13.5,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -1569,6 +1658,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           );
         },
       ),
+    ),
     );
   }
 
@@ -2305,6 +2395,79 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (widget.initialCategory == null || widget.initialCategory!.isEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Row(
+              children: [
+                InkWell(
+                  onTap: _prevStep,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1E293B)
+                          : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF334155)
+                            : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.arrow_back_rounded,
+                          size: 16,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF60A5FA)
+                              : AsmitaPalette.deepNavy,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Change Category',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF60A5FA)
+                                : AsmitaPalette.deepNavy,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: (Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF3B82F6)
+                            : AsmitaPalette.deepNavy)
+                        .withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    _selectedCategory,
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF60A5FA)
+                          : AsmitaPalette.deepNavy,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         AsmitaTextField(
           controller: _visitorNameController,
           label: nameLabel,
@@ -2605,14 +2768,17 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
-              children: [
-                AsmitaSkeleton.bone(
+              children: const [
+                SizedBox(
                   width: 16,
                   height: 16,
-                  borderRadius: 8,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AsmitaPalette.deepNavy,
+                  ),
                 ),
-                const SizedBox(width: 10),
-                const Text(
+                SizedBox(width: 10),
+                Text(
                   'Loading host directory...',
                   style: TextStyle(
                     fontFamily: 'Poppins',
@@ -2805,11 +2971,14 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                       shape: BoxShape.circle,
                     ),
                     child: _isCapturingPhoto
-                        ? Center(
-                            child: AsmitaSkeleton.bone(
+                        ? const Center(
+                            child: SizedBox(
                               width: 20,
                               height: 20,
-                              borderRadius: 10,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AsmitaPalette.deepNavy,
+                              ),
                             ),
                           )
                         : const Icon(
@@ -3523,11 +3692,12 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   void _showDaysOfWeekPickerSheet() {
     final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     List<bool> tempSelected = List.from(_customDaysSelected);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => StatefulBuilder(
@@ -3535,34 +3705,68 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
           return SafeArea(
             top: false,
             child: Padding(
-              padding: EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Center(
+                    child: Container(
+                      width: 38,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Select Days of Week',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.date_range_rounded,
+                              size: 16,
+                              color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Select Days of Week',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
                       ),
                       IconButton(
-                        icon: Icon(
-                          Icons.close,
-                          color: Theme.of(context).colorScheme.onSurface,
-                          size: 20,
-                        ),
+                        icon: const Icon(Icons.close_rounded, size: 20),
+                        color: Theme.of(context).colorScheme.onSurface,
                         onPressed: () => Navigator.pop(ctx),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        splashRadius: 20,
                       ),
                     ],
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 10),
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                  ),
+                  const SizedBox(height: 14),
                   // Quick Presets Row
                   Row(
                     children: [
@@ -3756,6 +3960,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
   void _showValidityPickerSheet() {
     final options = ['1 week', '1 month', '6 months'];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -3765,21 +3971,68 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       builder: (ctx) => SafeArea(
         top: false,
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Select Validity',
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Theme.of(context).colorScheme.onSurface,
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
-              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.hourglass_top_rounded,
+                          size: 16,
+                          color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Select Validity',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(ctx).colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 20),
+                    color: Theme.of(ctx).colorScheme.onSurface,
+                    onPressed: () => Navigator.pop(ctx),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    splashRadius: 20,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Divider(
+                height: 1,
+                thickness: 1,
+                color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+              ),
+              const SizedBox(height: 16),
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
@@ -3824,6 +4077,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     final allowedHours = [1, 2, 4, 6, 12, 18, 24];
     final maxLimit = _getMaxAllowedHours();
     final validOptions = allowedHours.where((h) => h <= maxLimit).toList();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showModalBottomSheet(
       context: context,
@@ -3834,21 +4088,68 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       builder: (ctx) => SafeArea(
         top: false,
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Select Validity Duration',
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Theme.of(context).colorScheme.onSurface,
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
-              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.timelapse_rounded,
+                          size: 16,
+                          color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Select Validity Duration',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(ctx).colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 20),
+                    color: Theme.of(ctx).colorScheme.onSurface,
+                    onPressed: () => Navigator.pop(ctx),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    splashRadius: 20,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Divider(
+                height: 1,
+                thickness: 1,
+                color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+              ),
+              const SizedBox(height: 16),
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
@@ -3890,6 +4191,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   }
 
   void _showDatePickerSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -3899,10 +4202,66 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.calendar_today_rounded,
+                          size: 16,
+                          color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Select Date',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(ctx).colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 20),
+                    color: Theme.of(ctx).colorScheme.onSurface,
+                    onPressed: () => Navigator.pop(ctx),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    splashRadius: 20,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Divider(
+                height: 1,
+                thickness: 1,
+                color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+              ),
               CalendarDatePicker(
                 initialDate: _selectedDate,
                 firstDate: DateTime.now(),
@@ -3920,6 +4279,8 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
   }
 
   void _showEndDatePickerSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -3929,10 +4290,66 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.event_available_rounded,
+                          size: 16,
+                          color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Select End Date',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(ctx).colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 20),
+                    color: Theme.of(ctx).colorScheme.onSurface,
+                    onPressed: () => Navigator.pop(ctx),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    splashRadius: 20,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Divider(
+                height: 1,
+                thickness: 1,
+                color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+              ),
               CalendarDatePicker(
                 initialDate: _selectedEndDate.isBefore(_selectedDate)
                     ? _selectedDate
@@ -3953,8 +4370,11 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
 
   void _showTimePickerSheet({bool isEndTime = false}) {
     TimeOfDay initialTime = isEndTime ? _selectedEndTime : _selectedTime;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -3962,47 +4382,155 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       builder: (ctx) => SafeArea(
         top: false,
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                isEndTime ? 'Select End Time' : 'Select Arrival Time',
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 180,
-                child: CupertinoDatePicker(
-                  mode: CupertinoDatePickerMode.time,
-                  initialDateTime: DateTime(
-                    2026,
-                    1,
-                    1,
-                    initialTime.hour,
-                    initialTime.minute,
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  onDateTimeChanged: (time) {
-                    setState(() {
-                      if (isEndTime) {
-                        _selectedEndTime = TimeOfDay.fromDateTime(time);
-                      } else {
-                        _selectedTime = TimeOfDay.fromDateTime(time);
-                      }
-                    });
-                  },
                 ),
               ),
-              const SizedBox(height: 16),
-              _buildPrimaryButton(
-                label: 'Done',
-                onPressed: () => Navigator.pop(ctx),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  InkWell(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.pop(ctx);
+                    },
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF334155).withValues(alpha: 0.5)
+                            : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF475569).withValues(alpha: 0.4)
+                              : const Color(0xFFE2E8F0),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.schedule_rounded,
+                          size: 16,
+                          color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        isEndTime ? 'Select End Time' : 'Select Arrival Time',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(ctx).colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  InkWell(
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      Navigator.pop(ctx);
+                    },
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy).withValues(alpha: 0.25),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        'Done',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Divider(
+                height: 1,
+                thickness: 1,
+                color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 190,
+                child: CupertinoTheme(
+                  data: CupertinoThemeData(
+                    brightness: isDark ? Brightness.dark : Brightness.light,
+                    textTheme: CupertinoTextThemeData(
+                      dateTimePickerTextStyle: TextStyle(
+                        color: Theme.of(ctx).colorScheme.onSurface,
+                        fontSize: 22,
+                        fontFamily: 'Montserrat',
+                      ),
+                    ),
+                  ),
+                  child: CupertinoDatePicker(
+                    mode: CupertinoDatePickerMode.time,
+                    initialDateTime: DateTime(
+                      2026,
+                      1,
+                      1,
+                      initialTime.hour,
+                      initialTime.minute,
+                    ),
+                    onDateTimeChanged: (time) {
+                      setState(() {
+                        if (isEndTime) {
+                          _selectedEndTime = TimeOfDay.fromDateTime(time);
+                        } else {
+                          _selectedTime = TimeOfDay.fromDateTime(time);
+                        }
+                      });
+                    },
+                  ),
+                ),
               ),
             ],
           ),
@@ -4026,8 +4554,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       ),
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
-          // Using static class companyLogos
-
+          final isDark = Theme.of(ctx).brightness == Brightness.dark;
           final cabCompanies = [
             'Personal Vehicle',
             'Uber',
@@ -4053,31 +4580,69 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                   24,
               left: 20,
               right: 20,
-              top: 24,
+              top: 10,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Center(
+                  child: Container(
+                    width: 38,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Company Network',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.business_rounded,
+                            size: 16,
+                            color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Company Network',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(ctx).colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close),
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                      color: Theme.of(ctx).colorScheme.onSurface,
                       onPressed: () => Navigator.pop(ctx),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      splashRadius: 20,
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                ),
+                const SizedBox(height: 14),
                 Flexible(
                   child: SingleChildScrollView(
                     physics: const ClampingScrollPhysics(),
@@ -4588,29 +5153,47 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       context: context,
       barrierDismissible: false,
       builder: (_) => Center(
-        child: AsmitaSkeleton(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Theme.of(context).dividerColor, width: 1.2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF60A5FA)
+                      : AsmitaPalette.deepNavy,
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AsmitaSkeleton.circle(size: 24),
-                const SizedBox(width: 12),
-                AsmitaSkeleton.text(width: 130, height: 14),
-              ],
-            ),
+              ),
+              const SizedBox(width: 14),
+              Text(
+                'Sending verification code...',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13.5,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -5173,6 +5756,7 @@ class _VisitorOtpSheetWidget extends StatefulWidget {
 
 class _VisitorOtpSheetWidgetState extends State<_VisitorOtpSheetWidget> {
   final TextEditingController _otpController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
   bool _isVerifying = false;
   bool _isResending = false;
   String? _errorMessage;
@@ -5185,6 +5769,11 @@ class _VisitorOtpSheetWidgetState extends State<_VisitorOtpSheetWidget> {
     super.initState();
     _devOtp = widget.initialDevOtp;
     _startTimer();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        FocusScope.of(context).requestFocus(_focusNode);
+      }
+    });
   }
 
   void _startTimer() {
@@ -5202,6 +5791,7 @@ class _VisitorOtpSheetWidgetState extends State<_VisitorOtpSheetWidget> {
   @override
   void dispose() {
     _timer?.cancel();
+    _focusNode.dispose();
     _otpController.dispose();
     super.dispose();
   }
@@ -5370,36 +5960,107 @@ class _VisitorOtpSheetWidgetState extends State<_VisitorOtpSheetWidget> {
             ),
           ),
           const SizedBox(height: 20),
-          TextField(
-            controller: _otpController,
-            keyboardType: TextInputType.number,
-            maxLength: 6,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 10,
-              color: AsmitaPalette.deepNavy,
-            ),
-            decoration: InputDecoration(
-              counterText: '',
-              hintText: '• • • • • •',
-              hintStyle: TextStyle(
-                fontSize: 24,
-                letterSpacing: 8,
-                color: Colors.grey.shade300,
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(vertical: 14),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: AsmitaPalette.borderGrey),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: AsmitaPalette.deepNavy, width: 2),
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: GestureDetector(
+                onTap: () => FocusScope.of(context).requestFocus(_focusNode),
+                behavior: HitTestBehavior.opaque,
+                child: Builder(
+                  builder: (context) {
+                    final screenWidth = MediaQuery.sizeOf(context).width;
+                    final availableWidth = (screenWidth - 48.0).clamp(0.0, 400.0);
+                    const totalSlots = 6;
+                    const totalGaps = totalSlots - 1;
+                    double boxGap = availableWidth < 330 ? 6.0 : 8.0;
+                    double boxWidth = ((availableWidth - (totalGaps * boxGap)) / totalSlots).clamp(36.0, 52.0);
+
+                    if ((boxWidth * totalSlots + boxGap * totalGaps) > availableWidth && availableWidth > 0) {
+                      boxGap = ((availableWidth - (boxWidth * totalSlots)) / totalGaps).clamp(4.0, 8.0);
+                      boxWidth = ((availableWidth - (totalGaps * boxGap)) / totalSlots).clamp(34.0, 52.0);
+                    }
+
+                    final boxHeight = (boxWidth * 1.15).clamp(46.0, 60.0);
+                    final fontSize = (boxWidth * 0.44).clamp(18.0, 24.0);
+                    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: List.generate(6, (index) {
+                            final isFilled = index < _otpController.text.length;
+                            final isActive = index == _otpController.text.length;
+                            final hasError = _errorMessage != null;
+
+                            return Container(
+                              height: boxHeight,
+                              width: boxWidth,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: isDark ? AsmitaPalette.surfaceDark : Colors.white,
+                                borderRadius: BorderRadius.circular(boxWidth * 0.25),
+                                border: Border.all(
+                                  color: hasError
+                                      ? Colors.red
+                                      : (isActive
+                                          ? (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
+                                          : (isFilled
+                                              ? (isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy)
+                                              : (isDark ? const Color(0xFF334155) : AsmitaPalette.borderGrey))),
+                                  width: isActive || isFilled ? 2.0 : 1.0,
+                                ),
+                                boxShadow: [
+                                  if (isActive)
+                                    BoxShadow(
+                                      color: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy)
+                                          .withValues(alpha: 0.15),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                ],
+                              ),
+                              child: Text(
+                                isFilled ? _otpController.text[index] : '',
+                                style: TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  color: isDark ? Colors.white : AsmitaPalette.deepNavy,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: fontSize,
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                        Positioned.fill(
+                          child: Opacity(
+                            opacity: 0.0,
+                            child: TextField(
+                              focusNode: _focusNode,
+                              controller: _otpController,
+                              keyboardType: TextInputType.number,
+                              maxLength: 6,
+                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              onChanged: (val) {
+                                setState(() {
+                                  _errorMessage = null;
+                                });
+                                if (val.length == 6) {
+                                  _verifyOtp();
+                                }
+                              },
+                              decoration: const InputDecoration(
+                                counterText: '',
+                                border: InputBorder.none,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
           ),

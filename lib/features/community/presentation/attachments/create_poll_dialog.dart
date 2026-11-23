@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import '../../bloc/community_bloc.dart';
 import '../../bloc/community_event.dart';
 
@@ -56,8 +57,10 @@ class _CreatePollDialogState extends State<CreatePollDialog> {
           ));
       Navigator.of(context).pop();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please provide at least 2 options.')),
+      AsmitaToast.show(
+        context,
+        message: 'Please provide at least 2 options.',
+        type: AsmitaToastType.error,
       );
     }
   }
