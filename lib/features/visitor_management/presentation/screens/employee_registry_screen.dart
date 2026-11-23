@@ -8,6 +8,7 @@ import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/app_skeleton.dart';
 import '../../../../core/widgets/app_refresh.dart';
 import '../../../../core/widgets/asmita_toast.dart';
+import '../../../../core/services/location_geofence_service.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_bottom_nav_bar.dart';
 import '../../../auth/bloc/auth_bloc.dart';
@@ -667,8 +668,27 @@ class EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                     const SizedBox(height: 20),
 
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         FocusScope.of(context).unfocus();
+                        final sId = _resolveSocietyId();
+
+                        // Strict 50m Physical Geofence Verification for Receptionist Actions
+                        final geofenceResult = await LocationGeofenceService.verifySocietyProximity(
+                          societyId: sId,
+                          defaultRadius: 50.0,
+                        );
+
+                        if (!mounted) return;
+                        if (!geofenceResult.isAllowed) {
+                          AsmitaToast.show(
+                            context,
+                            message: geofenceResult.errorMessage ?? 'You must be physically present at the entrance (within 50m) to record attendance.',
+                            type: AsmitaToastType.error,
+                            duration: const Duration(seconds: 4),
+                          );
+                          return;
+                        }
+
                         final recordedTime = useCurrentTime ? DateTime.now() : selectedDateTime;
                         final statusStr = isCheckIn ? 'IN' : 'OUT';
                         final existingSession = _sessionMovementLog[empId];
@@ -706,6 +726,7 @@ class EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                             }
                           }
                         });
+                        if (!mounted || !sheetContext.mounted) return;
                         Navigator.pop(sheetContext);
                         HapticFeedback.mediumImpact();
                         AsmitaToast.show(
@@ -715,7 +736,6 @@ class EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                         );
 
                         // Persist to backend server so other gates/receptionists see it
-                        final sId = _resolveSocietyId();
                         AsmitaPreApproveWizard.recordEmployeeMovement(
                           societyId: sId,
                           employeeId: empId,
@@ -723,6 +743,8 @@ class EmployeeRegistryScreenState extends State<EmployeeRegistryScreen> {
                           recordedAt: recordedTime,
                           gateName: 'Gate Reception',
                           notes: 'Manual check-$statusStr by Receptionist',
+                          latitude: geofenceResult.currentLatitude,
+                          longitude: geofenceResult.currentLongitude,
                         );
                       },
                       style: ElevatedButton.styleFrom(

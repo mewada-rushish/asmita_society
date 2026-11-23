@@ -9,6 +9,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_toast.dart';
+import '../../../../core/services/location_geofence_service.dart';
 import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_state.dart';
 import '../../../../features/dashboard/widgets/asmita_pre_approve_wizard.dart';
@@ -150,6 +151,41 @@ class _EmployeeGateAttendanceScannerScreenState
     await _scannerController.stop();
     HapticFeedback.mediumImpact();
 
+    final scannedSocietyId = int.tryParse(gateInfo['societyId']?.toString() ?? '') ?? 114;
+
+    // Strict Physical Geofence Verification (Max 50 meters from Gate)
+    if (mounted) {
+      AsmitaToast.show(
+        context,
+        message: 'Verifying GPS proximity at entrance...',
+        type: AsmitaToastType.info,
+        duration: const Duration(milliseconds: 1500),
+      );
+    }
+
+    final geofenceResult = await LocationGeofenceService.verifySocietyProximity(
+      societyId: scannedSocietyId,
+      defaultRadius: 50.0,
+    );
+
+    if (!geofenceResult.isAllowed) {
+      if (mounted) {
+        HapticFeedback.heavyImpact();
+        AsmitaToast.show(
+          context,
+          message: geofenceResult.errorMessage ?? 'Physical presence within 50m of entrance is required to check in.',
+          type: AsmitaToastType.error,
+          duration: const Duration(seconds: 4),
+        );
+        await Future.delayed(const Duration(seconds: 3));
+        if (mounted) {
+          setState(() => _isProcessing = false);
+          _scannerController.start();
+        }
+      }
+      return;
+    }
+
     int userId = 0;
     if (mounted) {
       try {
@@ -186,12 +222,14 @@ class _EmployeeGateAttendanceScannerScreenState
           'timestamp': now.toIso8601String(),
           'gate': gateInfo['gate'],
           'gate_name': gateName,
+          'latitude': geofenceResult.currentLatitude,
+          'longitude': geofenceResult.currentLongitude,
+          'distance': geofenceResult.distanceMeters,
         });
       }
     } catch (_) {}
 
     // Persist real-time gate movement to backend server
-    final scannedSocietyId = int.tryParse(gateInfo['societyId']?.toString() ?? '') ?? 1;
     final scannedGateId = int.tryParse(gateInfo['gate']?.toString() ?? '');
     if (userId > 0) {
       AsmitaPreApproveWizard.recordEmployeeMovement(
@@ -201,7 +239,9 @@ class _EmployeeGateAttendanceScannerScreenState
         recordedAt: now,
         gateId: scannedGateId,
         gateName: gateName,
-        notes: 'QR Scan check-$newStatus at $gateName',
+        notes: 'QR Scan check-$newStatus at $gateName (${geofenceResult.distanceMeters != null ? "${geofenceResult.distanceMeters!.round()}m from gate" : "geofenced"})',
+        latitude: geofenceResult.currentLatitude,
+        longitude: geofenceResult.currentLongitude,
       );
     }
 

@@ -29,6 +29,7 @@ import 'package:asmita_society/core/widgets/asmita_vehicle_plate_field.dart';
 import 'package:asmita_society/core/widgets/asmita_camera_screen.dart';
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/security/secure_storage_service.dart';
+import 'package:asmita_society/core/services/location_geofence_service.dart';
 class AsmitaPreApproveWizard extends StatefulWidget {
   final bool isGuardMode;
   final String? initialCategory;
@@ -220,6 +221,8 @@ class AsmitaPreApproveWizard extends StatefulWidget {
     int? gateId,
     String? gateName,
     String? notes,
+    double? latitude,
+    double? longitude,
   }) async {
     try {
       final secureStorage = SecureStorageService();
@@ -229,9 +232,11 @@ class AsmitaPreApproveWizard extends StatefulWidget {
         'employee_id': employeeId,
         'status': status.toUpperCase(),
         if (recordedAt != null) 'recorded_at': recordedAt.toIso8601String(),
-        ...?gateId == null ? null : {'gate_id': gateId},
-        ...?gateName == null ? null : {'gate_name': gateName},
-        ...?notes == null ? null : {'notes': notes},
+        'gate_id': ?gateId,
+        'gate_name': ?gateName,
+        'notes': ?notes,
+        'latitude': ?latitude,
+        'longitude': ?longitude,
       };
       final response = await client.post(
         '${EnvConfig.baseUrl}/api/public/visitor/employee-movement',
@@ -1105,7 +1110,7 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
     if (_currentStep > 0) setState(() => _currentStep--);
   }
 
-  void _submitInvite() {
+  Future<void> _submitInvite() async {
     final authState = context.read<AuthBloc>().state;
     if (authState is! AuthAuthenticated) return;
 
@@ -1117,6 +1122,25 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
         type: AsmitaToastType.error,
       );
       return;
+    }
+
+    // Strict 50m Physical Geofence verification for Gate Reception / Guard Walk-ins
+    if (widget.isGuardMode) {
+      final sId = user.societyId ?? 114;
+      final geofenceResult = await LocationGeofenceService.verifySocietyProximity(
+        societyId: sId,
+        defaultRadius: 50.0,
+      );
+      if (!mounted) return;
+      if (!geofenceResult.isAllowed) {
+        AsmitaToast.show(
+          context,
+          message: geofenceResult.errorMessage ?? 'You must be physically present at the entrance (within 50m) to check in visitors.',
+          type: AsmitaToastType.error,
+          duration: const Duration(seconds: 4),
+        );
+        return;
+      }
     }
 
     List<FlatMapping> selectedFlats = List.from(_selectedFlatMappings);
@@ -1582,31 +1606,49 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               if (state is VisitorLoading || isGuardSubmitting)
                 Positioned.fill(
                   child: Container(
-                    color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.8),
+                    color: Colors.black.withValues(alpha: 0.3),
                     child: Center(
-                      child: AsmitaSkeleton(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Theme.of(context).dividerColor, width: 1.2),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.08),
-                                blurRadius: 16,
-                                offset: const Offset(0, 4),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.12),
+                              blurRadius: 18,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF60A5FA)
+                                    : AsmitaPalette.deepNavy,
                               ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              AsmitaSkeleton.circle(size: 24),
-                              const SizedBox(width: 12),
-                              AsmitaSkeleton.text(width: 120, height: 14),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(width: 14),
+                            Text(
+                              isGuardSubmitting ? 'Generating Digital Pass...' : 'Submitting Pass...',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13.5,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -2726,14 +2768,17 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
-              children: [
-                AsmitaSkeleton.bone(
+              children: const [
+                SizedBox(
                   width: 16,
                   height: 16,
-                  borderRadius: 8,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AsmitaPalette.deepNavy,
+                  ),
                 ),
-                const SizedBox(width: 10),
-                const Text(
+                SizedBox(width: 10),
+                Text(
                   'Loading host directory...',
                   style: TextStyle(
                     fontFamily: 'Poppins',
@@ -2926,11 +2971,14 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
                       shape: BoxShape.circle,
                     ),
                     child: _isCapturingPhoto
-                        ? Center(
-                            child: AsmitaSkeleton.bone(
+                        ? const Center(
+                            child: SizedBox(
                               width: 20,
                               height: 20,
-                              borderRadius: 10,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AsmitaPalette.deepNavy,
+                              ),
                             ),
                           )
                         : const Icon(
@@ -5105,29 +5153,47 @@ class _AsmitaPreApproveWizardState extends State<AsmitaPreApproveWizard>
       context: context,
       barrierDismissible: false,
       builder: (_) => Center(
-        child: AsmitaSkeleton(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Theme.of(context).dividerColor, width: 1.2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF60A5FA)
+                      : AsmitaPalette.deepNavy,
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AsmitaSkeleton.circle(size: 24),
-                const SizedBox(width: 12),
-                AsmitaSkeleton.text(width: 130, height: 14),
-              ],
-            ),
+              ),
+              const SizedBox(width: 14),
+              Text(
+                'Sending verification code...',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13.5,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ],
           ),
         ),
       ),
