@@ -106,7 +106,55 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     if (widget.inviteToken != null && widget.inviteToken!.isNotEmpty) {
       _resolveInviteToken(widget.inviteToken!);
+    } else if (widget.verifiedMobile != null && widget.verifiedMobile!.isNotEmpty) {
+      _checkInviteByMobile(widget.verifiedMobile!);
     } else {
+      _fetchSocieties();
+    }
+  }
+
+  Future<void> _checkInviteByMobile(String mobile) async {
+    setState(() {
+      _isLoadingInvite = true;
+      _inviteError = null;
+    });
+    try {
+      final InviteTokenInfo? info = await _authRepo.checkPendingInviteByPhone(mobile);
+      if (!mounted) return;
+      if (info != null && info.hasInvite) {
+        setState(() {
+          _isLoadingInvite = false;
+          _isInviteLocked = true;
+          _selectedSociety = PropertyItem(id: info.societyId, name: info.societyName);
+          _departmentId = info.departmentId;
+          _departmentName = info.departmentName;
+          _selectedRole = info.targetRole;
+
+          if (info.recipientPhone != null && info.recipientPhone!.isNotEmpty) {
+            _mobileController.text = info.recipientPhone!;
+            _recipientPhoneProvided = true;
+          }
+          if (info.recipientName != null && info.recipientName!.isNotEmpty) {
+            _nameController.text = info.recipientName!;
+          }
+          if (info.recipientEmail != null && info.recipientEmail!.isNotEmpty) {
+            _emailController.text = info.recipientEmail!;
+          }
+          if (info.recipientGender != null && info.recipientGender!.isNotEmpty) {
+            _selectedGender = info.recipientGender!;
+          }
+        });
+      } else {
+        setState(() {
+          _isLoadingInvite = false;
+        });
+        _fetchSocieties();
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingInvite = false;
+      });
       _fetchSocieties();
     }
   }
@@ -316,8 +364,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
 
     final bool isFromInvite = (widget.inviteToken != null && widget.inviteToken!.isNotEmpty) || _isInviteLocked;
+    final bool alreadyVerifiedOnOtpScreen = widget.verifiedMobile != null && widget.verifiedMobile!.isNotEmpty;
 
-    if (isFromInvite) {
+    if (isFromInvite && !alreadyVerifiedOnOtpScreen) {
       _promptInviteOtpVerification(
         mobile: mobile,
         name: name,

@@ -55,6 +55,8 @@
 		<string>This app requires photo library access to upload profile pictures and share images in the community.</string>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>This app requires microphone access to record audio messages.</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>This app requires location access to verify physical presence at the entrance for gate attendance and visitor check-in.</string>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>UILaunchStoryboardName</key>

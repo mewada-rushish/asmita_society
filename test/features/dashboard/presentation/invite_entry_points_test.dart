@@ -7,12 +7,10 @@ import 'package:asmita_society/features/auth/bloc/auth_bloc.dart';
 import 'package:asmita_society/features/auth/bloc/auth_state.dart';
 import 'package:asmita_society/features/auth/data/models/user_model.dart';
 import 'package:asmita_society/features/menu/presentation/screens/menu_screen.dart';
-import 'package:asmita_society/features/dashboard/presentation/views/employee_dashboard_view.dart';
 import 'package:asmita_society/features/dashboard/presentation/screens/industrial_directory_screen.dart';
 import 'package:asmita_society/core/utils/property_role_resolver.dart';
 import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_bloc.dart';
 import 'package:asmita_society/features/visitor_management/bloc/industrial_visit_state.dart';
-import 'package:asmita_society/features/visitor_management/data/models/industrial_visit_model.dart';
 
 class MockAuthBloc extends Mock implements AuthBloc {}
 class MockIndustrialVisitBloc extends Mock implements IndustrialVisitBloc {}

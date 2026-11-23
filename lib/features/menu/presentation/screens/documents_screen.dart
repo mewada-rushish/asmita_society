@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
 import 'package:asmita_society/core/widgets/asmita_animated_refresh.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:asmita_society/features/menu/bloc/society_bloc.dart';
 import 'package:asmita_society/features/menu/bloc/society_event.dart';
 import 'package:asmita_society/features/menu/bloc/society_state.dart';
@@ -258,8 +259,10 @@ class _DocumentCard extends StatelessWidget {
 
   void _openInAppViewer(BuildContext context) {
     if (doc.fileUrl.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Document file URL is not available')),
+      AsmitaToast.show(
+        context,
+        message: 'Document file URL is not available',
+        type: AsmitaToastType.error,
       );
       return;
     }
@@ -279,8 +282,10 @@ class _DocumentCard extends StatelessWidget {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open external link')),
+        AsmitaToast.show(
+          context,
+          message: 'Could not open external link',
+          type: AsmitaToastType.error,
         );
       }
     }

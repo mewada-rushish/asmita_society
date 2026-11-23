@@ -13,6 +13,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../bloc/community_state.dart';
 import '../attachments/attachment_bottom_sheet.dart';
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/asmita_toast.dart';
 
 class ChatComposer extends StatefulWidget {
   const ChatComposer({super.key});
@@ -159,10 +160,10 @@ class _ChatComposerState extends State<ChatComposer>
         });
       } else {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Microphone permission is required to record audio.'),
-          ),
+        AsmitaToast.show(
+          context,
+          message: 'Microphone permission is required to record audio.',
+          type: AsmitaToastType.error,
         );
       }
     } catch (e) {

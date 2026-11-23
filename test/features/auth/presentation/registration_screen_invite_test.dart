@@ -31,6 +31,7 @@ void main() {
     when(() => mockAuthBloc.state).thenReturn(AuthInitial());
     when(() => mockAuthBloc.stream).thenAnswer((_) => authStateController.stream);
     when(() => mockPropertyRepository.getSocieties()).thenAnswer((_) async => []);
+    when(() => mockAuthRepository.checkPendingInviteByPhone(any())).thenAnswer((_) async => null);
   });
 
   tearDown(() {
@@ -153,8 +154,8 @@ void main() {
       expect(find.text('Jane Smith'), findsOneWidget);
       expect(find.text('9876543210'), findsOneWidget);
 
-      // Phone number should show "Verified" lock indicator
-      expect(find.text('Verified'), findsOneWidget);
+      // Phone number and name show "Verified" lock indicator
+      expect(find.text('Verified'), findsWidgets);
     });
 
     testWidgets('unspecified recipient phone allows manual 10-digit mobile entry in Step 2', (tester) async {
@@ -226,9 +227,59 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Since inviteToken is null, residential setup is available
+      // Since inviteToken is null and no invite found for phone, residential setup is available
       expect(find.text('Select Society'), findsOneWidget);
       expect(find.text('Owner / Tenant'), findsOneWidget);
+    });
+
+    testWidgets('resolves pending invite automatically by verifiedMobile and locks fields', (tester) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      const phone = '9876543210';
+      const tokenInfo = InviteTokenInfo(
+        success: true,
+        hasInvite: true,
+        societyId: 114,
+        societyName: 'AsmitA House',
+        targetRole: 'Corporate Employee',
+        departmentId: 5,
+        departmentName: 'IT Operations',
+        recipientPhone: phone,
+        recipientName: 'Jane Doe',
+      );
+
+      when(() => mockAuthRepository.checkPendingInviteByPhone(phone))
+          .thenAnswer((_) async => tokenInfo);
+
+      await tester.pumpWidget(
+        buildTestWidget(
+          RegistrationScreen(
+            verifiedMobile: phone,
+            authRepository: mockAuthRepository,
+            propertyRepository: mockPropertyRepository,
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      verify(() => mockAuthRepository.checkPendingInviteByPhone(phone)).called(1);
+
+      // Verify "Verified Invitation" banner is displayed
+      expect(find.text('Verified Invitation'), findsOneWidget);
+
+      // Verify Society is pre-filled and locked
+      expect(find.text('AsmitA House'), findsOneWidget);
+
+      // Verify Department is pre-filled and displayed
+      expect(find.text('IT Operations'), findsOneWidget);
+
+      // Verify Role is locked to Corporate Employee
+      expect(find.text('Corporate Employee'), findsOneWidget);
     });
   });
 }
