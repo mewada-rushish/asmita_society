@@ -48,8 +48,10 @@ class _CustomiseQuickActionsSheetState extends State<CustomiseQuickActionsSheet>
           _unselectedActions.remove(type);
           _selectedActions.add(type);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('You can only select up to $_maxSelection actions.')),
+          AsmitaToast.show(
+            context,
+            message: 'You can only select up to $_maxSelection actions.',
+            type: AsmitaToastType.info,
           );
         }
       }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/asmita_select_field.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/asmita_toast.dart';
 import '../../bloc/industrial_visit_bloc.dart';
 import '../../bloc/industrial_visit_event.dart';
 import '../../bloc/industrial_visit_state.dart';
@@ -66,11 +67,10 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
     final recipient = _recipientNameController.text.trim();
 
     if (courier.isEmpty || recipient.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Courier company and recipient name are required.'),
-          backgroundColor: AsmitaPalette.actionRed,
-        ),
+      AsmitaToast.show(
+        context,
+        message: 'Courier company and recipient name are required.',
+        type: AsmitaToastType.error,
       );
       return;
     }
@@ -109,21 +109,17 @@ class _GuardDeliveryEntryScreenState extends State<GuardDeliveryEntryScreen> {
       body: BlocConsumer<IndustrialVisitBloc, IndustrialVisitState>(
         listener: (context, state) {
           if (state.status == IndustrialVisitBlocStatus.actionSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  state.successMessage ?? 'Delivery intake logged successfully',
-                ),
-                backgroundColor: AsmitaPalette.successGreen,
-              ),
+            AsmitaToast.show(
+              context,
+              message: state.successMessage ?? 'Delivery intake logged successfully',
+              type: AsmitaToastType.success,
             );
             Navigator.pop(context);
           } else if (state.status == IndustrialVisitBlocStatus.error) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage ?? 'Error logging delivery'),
-                backgroundColor: AsmitaPalette.actionRed,
-              ),
+            AsmitaToast.show(
+              context,
+              message: state.errorMessage ?? 'Error logging delivery',
+              type: AsmitaToastType.error,
             );
           }
         },
