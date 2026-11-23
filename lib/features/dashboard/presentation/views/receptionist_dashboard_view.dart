@@ -50,6 +50,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
       GlobalKey<EmployeeRegistryScreenState>();
   int _selectedTabIndex = 0;
   late bool _isOnDuty;
+  final Map<int, String> _processingActions = {};
 
   bool get _isPropertyReceptionist {
     try {
@@ -372,6 +373,15 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
 
     return BlocConsumer<IndustrialVisitBloc, IndustrialVisitState>(
       listener: (context, state) {
+        if (state.status == IndustrialVisitBlocStatus.actionSuccess ||
+            state.status == IndustrialVisitBlocStatus.error ||
+            state.status == IndustrialVisitBlocStatus.loaded) {
+          if (mounted && _processingActions.isNotEmpty) {
+            setState(() {
+              _processingActions.clear();
+            });
+          }
+        }
         if (state.status == IndustrialVisitBlocStatus.actionSuccess &&
             state.successMessage != null) {
           AsmitaToast.show(
@@ -962,6 +972,7 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                         );
                       },
                       borderRadius: BorderRadius.circular(10),
+                      // Check In Button
                       child: Container(
                         height: 40,
                         alignment: Alignment.center,
@@ -971,14 +982,14 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Color(0xFF27347B),
-                              Color(0xFF1A2352),
+                              Color(0xFF059669),
+                              Color(0xFF047857),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF27347B).withValues(alpha: 0.28),
+                              color: const Color(0xFF059669).withValues(alpha: 0.32),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),
@@ -1149,16 +1160,22 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: () {
-                        context.read<IndustrialVisitBloc>().add(
-                          CheckInPassEvent(
-                            visitId: visit.id,
-                            gateId: 1,
-                            passCode: visit.passCode,
-                          ),
-                        );
-                      },
+                      onTap: _processingActions[visit.id] == 'CHECK_IN'
+                          ? null
+                          : () {
+                              setState(() {
+                                _processingActions[visit.id] = 'CHECK_IN';
+                              });
+                              context.read<IndustrialVisitBloc>().add(
+                                CheckInPassEvent(
+                                  visitId: visit.id,
+                                  gateId: 1,
+                                  passCode: visit.passCode,
+                                ),
+                              );
+                            },
                       borderRadius: BorderRadius.circular(10),
+                      // Check In Button
                       child: Container(
                         height: 40,
                         alignment: Alignment.center,
@@ -1168,41 +1185,71 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Color(0xFF27347B),
-                              Color(0xFF1A2352),
+                              Color(0xFF059669),
+                              Color(0xFF047857),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF27347B).withValues(alpha: 0.28),
+                              color: const Color(0xFF059669).withValues(alpha: 0.32),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),
                           ],
                         ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.how_to_reg_rounded, size: 16, color: Colors.white),
-                            SizedBox(width: 5),
-                            Flexible(
-                              child: Text(
-                                'Check In',
-                                style: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  letterSpacing: 0.2,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                        child: _processingActions[visit.id] == 'CHECK_IN'
+                            ? const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  ),
+                                  SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      'Checking In...',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                        letterSpacing: 0.2,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.how_to_reg_rounded, size: 16, color: Colors.white),
+                                  SizedBox(width: 5),
+                                  Flexible(
+                                    child: Text(
+                                      'Check In',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                        letterSpacing: 0.2,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ),
@@ -1280,12 +1327,18 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: () {
-                        context.read<IndustrialVisitBloc>().add(
-                          CheckOutPassEvent(visitId: visit.id, gateId: 1),
-                        );
-                      },
+                      onTap: _processingActions[visit.id] == 'CHECK_OUT'
+                          ? null
+                          : () {
+                              setState(() {
+                                _processingActions[visit.id] = 'CHECK_OUT';
+                              });
+                              context.read<IndustrialVisitBloc>().add(
+                                CheckOutPassEvent(visitId: visit.id, gateId: 1),
+                              );
+                            },
                       borderRadius: BorderRadius.circular(10),
+                      // Check Out Button
                       child: Container(
                         height: 40,
                         alignment: Alignment.center,
@@ -1295,41 +1348,71 @@ class _ReceptionistDashboardViewState extends State<ReceptionistDashboardView> {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Color(0xFF27347B),
-                              Color(0xFF1A2352),
+                              Color(0xFFDC2626),
+                              Color(0xFFB91C1C),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF27347B).withValues(alpha: 0.28),
+                              color: const Color(0xFFDC2626).withValues(alpha: 0.32),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),
                           ],
                         ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.logout_rounded, size: 16, color: Colors.white),
-                            SizedBox(width: 5),
-                            Flexible(
-                              child: Text(
-                                'Check Out',
-                                style: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  letterSpacing: 0.2,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                        child: _processingActions[visit.id] == 'CHECK_OUT'
+                            ? const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  ),
+                                  SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      'Checking Out...',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                        letterSpacing: 0.2,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.logout_rounded, size: 16, color: Colors.white),
+                                  SizedBox(width: 5),
+                                  Flexible(
+                                    child: Text(
+                                      'Check Out',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                        letterSpacing: 0.2,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ),

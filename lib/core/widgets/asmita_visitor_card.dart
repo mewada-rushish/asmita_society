@@ -174,10 +174,17 @@ class AsmitaVisitorCard extends StatelessWidget {
                     : 'Guest Visit')));
 
     // Time & Date format
-    final DateTime? dt = visit.checkInAt ?? visit.createdAt;
-    final String timeAndDate = dt != null
-        ? '${DateFormat('hh:mm a').format(dt)} • ${DateFormat('dd MMM yyyy').format(dt)}'
-        : 'Scheduled Visit';
+    final DateTime? dt = visit.checkInAt ?? visit.checkOutAt ?? visit.createdAt;
+    String timeAndDate = 'Scheduled Visit';
+    if (dt != null) {
+      final now = DateTime.now();
+      final loc = dt.toLocal();
+      final isToday = loc.year == now.year && loc.month == now.month && loc.day == now.day;
+      final timeStr = DateFormat('hh:mm a').format(loc);
+      timeAndDate = isToday
+          ? '$timeStr • Today'
+          : '$timeStr • ${DateFormat('dd MMM yyyy').format(loc)}';
+    }
 
     // Meta cell logic
     final bool hasVehicle = visit.vehicleNumber != null && visit.vehicleNumber!.trim().isNotEmpty;
@@ -731,20 +738,31 @@ class AsmitaVisitorCard extends StatelessWidget {
                     customValue: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 9,
-                        vertical: 3,
+                        vertical: 3.5,
                       ),
                       decoration: BoxDecoration(
                         color: visit.status.fillColor(isDark),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text(
-                        visit.status.label,
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: visit.status.textColor(isDark),
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            visit.status.iconData,
+                            size: 13,
+                            color: visit.status.textColor(isDark),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            visit.status.label,
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: visit.status.textColor(isDark),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -792,26 +810,31 @@ class AsmitaVisitorCard extends StatelessWidget {
                       icon: Icons.phone_outlined,
                       label: 'Visitor Contact',
                       value: visit.visitorMobile!,
-                      trailing: IconButton(
-                        constraints: const BoxConstraints(),
-                        padding: const EdgeInsets.all(4),
-                        icon: const Icon(
-                          Icons.phone_in_talk_rounded,
-                          size: 16,
-                          color: AsmitaPalette.successGreen,
+                      trailing: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            Clipboard.setData(
+                              ClipboardData(text: visit.visitorMobile!),
+                            );
+                            HapticFeedback.lightImpact();
+                            AsmitaToast.show(
+                              context,
+                              message:
+                                  'Phone number ${visit.visitorMobile} copied!',
+                              type: AsmitaToastType.info,
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(6),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            child: Icon(
+                              Icons.phone_in_talk_rounded,
+                              size: 16,
+                              color: AsmitaPalette.successGreen,
+                            ),
+                          ),
                         ),
-                        onPressed: () {
-                          Clipboard.setData(
-                            ClipboardData(text: visit.visitorMobile!),
-                          );
-                          HapticFeedback.lightImpact();
-                          AsmitaToast.show(
-                            context,
-                            message:
-                                'Phone number ${visit.visitorMobile} copied!',
-                            type: AsmitaToastType.info,
-                          );
-                        },
                       ),
                     ),
                   ],
@@ -848,30 +871,54 @@ class AsmitaVisitorCard extends StatelessWidget {
                       ),
                     ),
                   ],
-                  _buildRowDivider(context),
-                  _buildDetailRow(
-                    context,
-                    icon: Icons.access_time_rounded,
-                    label: 'Scheduled Time',
-                    value: visit.checkInAt != null
-                        ? DateFormat(
-                            'dd MMM yyyy, hh:mm a',
-                          ).format(visit.checkInAt!)
-                        : (visit.createdAt != null
-                              ? DateFormat(
-                                  'dd MMM yyyy, hh:mm a',
-                                ).format(visit.createdAt!)
-                              : 'Scheduled Visit'),
-                  ),
+                  // Date row (date separated cleanly from times)
+                  if ((visit.checkInAt ?? visit.createdAt ?? visit.checkOutAt) != null) ...[
+                    _buildRowDivider(context),
+                    _buildDetailRow(
+                      context,
+                      icon: Icons.calendar_today_rounded,
+                      label: 'Date',
+                      value: DateFormat('dd MMM yyyy').format(
+                        (visit.checkInAt ?? visit.createdAt ?? visit.checkOutAt)!.toLocal(),
+                      ),
+                    ),
+                  ],
+                  // 1. Scheduled Time (only if pre-scheduled/pre-approved and not checked in yet)
+                  if (visit.checkInAt == null && visit.createdAt != null) ...[
+                    _buildRowDivider(context),
+                    _buildDetailRow(
+                      context,
+                      icon: Icons.access_time_rounded,
+                      label: 'Scheduled Time',
+                      value: DateFormat('hh:mm a').format(visit.createdAt!.toLocal()),
+                    ),
+                  ],
+                  // 2. Check In Time (when visitor entered - time only)
+                  if (visit.checkInAt != null) ...[
+                    _buildRowDivider(context),
+                    _buildDetailRow(
+                      context,
+                      icon: Icons.login_rounded,
+                      label: 'Check In Time',
+                      value: DateFormat('hh:mm a').format(visit.checkInAt!.toLocal()),
+                    ),
+                  ] else if (!visit.isPreApproved && visit.createdAt != null) ...[
+                    _buildRowDivider(context),
+                    _buildDetailRow(
+                      context,
+                      icon: Icons.login_rounded,
+                      label: 'Check In Time',
+                      value: DateFormat('hh:mm a').format(visit.createdAt!.toLocal()),
+                    ),
+                  ],
+                  // 3. Check Out Time (when visitor exited - time only)
                   if (visit.checkOutAt != null) ...[
                     _buildRowDivider(context),
                     _buildDetailRow(
                       context,
                       icon: Icons.logout_rounded,
                       label: 'Check Out Time',
-                      value: DateFormat(
-                        'dd MMM yyyy, hh:mm a',
-                      ).format(visit.checkOutAt!),
+                      value: DateFormat('hh:mm a').format(visit.checkOutAt!.toLocal()),
                     ),
                   ],
                   if (visit.notes != null && visit.notes!.isNotEmpty) ...[
@@ -1259,10 +1306,8 @@ class AsmitaVisitorCard extends StatelessWidget {
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).brightness ==
-                                    Brightness.dark
-                                ? const Color(0xFF2563EB)
-                                : AsmitaPalette.deepNavy,
+                            backgroundColor: const Color(0xFFDC2626),
+                            foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -1376,12 +1421,19 @@ class AsmitaVisitorCard extends StatelessWidget {
         return false;
       }
 
-      // Host themselves or designated assigned user can approve
+      // Host themselves, assigned user, or designated current approver (delegatee) can approve
       if (visit.hostUserId != null && visit.hostUserId == user.userId) {
         return true;
       }
       if (visit.assignedToUserId != null &&
           visit.assignedToUserId == user.userId) {
+        return true;
+      }
+      if (visit.currentApproverUserId != null &&
+          visit.currentApproverUserId == user.userId) {
+        return true;
+      }
+      if (visit.isDelegatedApproval) {
         return true;
       }
 
@@ -1448,8 +1500,8 @@ class AsmitaVisitorCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Flexible(
-            flex: 2,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 135),
             child: Text(
               label,
               style: const TextStyle(
@@ -1462,10 +1514,13 @@ class AsmitaVisitorCard extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Expanded(
-            flex: 3,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                if (trailing != null) ...[
+                  trailing,
+                  const SizedBox(width: 6),
+                ],
                 if (customValue != null)
                   Flexible(child: customValue)
                 else if (value != null)
@@ -1483,10 +1538,6 @@ class AsmitaVisitorCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                if (trailing != null) ...[
-                  const SizedBox(width: 4),
-                  trailing,
-                ],
               ],
             ),
           ),
@@ -1508,11 +1559,37 @@ class AsmitaVisitorCard extends StatelessWidget {
     final bool hasQr = qrCode != null && qrCode.isNotEmpty;
 
     // Time & Date format
-    final entryTime = item['entryTime'] as String? ?? '';
-    final date = item['date'] as String? ?? '';
+    String entryTime = item['entryTime'] as String? ?? '';
+    String date = item['date'] as String? ?? '';
+    if (entryTime == '--:--' || entryTime == '--') entryTime = '';
+
+    if (entryTime.isEmpty || date.isEmpty || date == 'Today') {
+      final rawDt = item['check_in_at'] ??
+          item['checkin_at'] ??
+          item['checked_in_at'] ??
+          item['created_at'] ??
+          item['valid_from'] ??
+          item['date'];
+      if (rawDt != null) {
+        final parsed = DateTime.tryParse(rawDt.toString())?.toLocal();
+        if (parsed != null) {
+          final now = DateTime.now();
+          final isToday = parsed.year == now.year &&
+              parsed.month == now.month &&
+              parsed.day == now.day;
+          if (entryTime.isEmpty) {
+            entryTime = DateFormat('hh:mm a').format(parsed);
+          }
+          if (date.isEmpty || date == 'Today') {
+            date = isToday ? 'Today' : DateFormat('dd MMM yyyy').format(parsed);
+          }
+        }
+      }
+    }
+
     final timeAndDate = entryTime.isNotEmpty && date.isNotEmpty
         ? '$entryTime • $date'
-        : (entryTime.isNotEmpty ? entryTime : date);
+        : (entryTime.isNotEmpty ? entryTime : (date.isNotEmpty ? date : 'Scheduled Visit'));
 
     // Slot vs Vehicle vs Gate
     final bool isFrequent = item['inviteSubType'] == 'FREQUENT' &&
@@ -2717,6 +2794,57 @@ class AsmitaVisitorCard extends StatelessWidget {
     );
   }
 
+  static String _formatStatusLabel(String? status) {
+    if (status == null || status.trim().isEmpty) return 'Active';
+    final clean = status.trim().replaceAll('_', ' ').toUpperCase();
+    if (clean.contains('CHECKED OUT') || clean.contains('EXIT') || clean.contains('OUT')) {
+      return 'Checked Out';
+    }
+    if (clean.contains('CHECKED IN') || clean.contains('ENTER') || clean.contains('INSIDE')) {
+      return 'Checked In';
+    }
+    if (clean.contains('AWAIT') || clean.contains('WAIT')) {
+      return 'Awaiting Host';
+    }
+    if (clean.contains('PRE')) {
+      return 'Pre-Approved';
+    }
+    if (clean.contains('APPROV') || clean.contains('ALLOW')) {
+      return 'Approved';
+    }
+    if (clean.contains('REJECT') || clean.contains('DENI')) {
+      return 'Rejected';
+    }
+    if (clean.contains('REVOK')) {
+      return 'Revoked';
+    }
+    if (clean.contains('EXPIR') || clean.contains('OVERSTAY')) {
+      return 'Expired';
+    }
+    if (clean.contains('CANCEL')) {
+      return 'Cancelled';
+    }
+    if (clean.contains('COLLECT')) {
+      return 'Collected';
+    }
+    if (clean.contains('MEET')) {
+      return 'In Meeting';
+    }
+    if (clean.contains('ASSIGN')) {
+      return 'Assigned';
+    }
+    if (clean.contains('COMPLET') || clean.contains('USED')) {
+      return 'Completed';
+    }
+    if (clean.contains('PENDING') || clean.contains('SUBMIT')) {
+      return 'Pending';
+    }
+    return status.trim().replaceAll('_', ' ').split(' ').map((w) {
+      if (w.isEmpty) return '';
+      return '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}';
+    }).join(' ');
+  }
+
   _StatusThemeConfig _resolveStatusConfig({
     required String? rawStatus,
     required bool isDark,
@@ -2732,7 +2860,7 @@ class AsmitaVisitorCard extends StatelessWidget {
         clean.contains('WAIT') ||
         clean.contains('SUBMIT')) {
       return _StatusThemeConfig(
-        label: rawStatus ?? 'Awaiting Host',
+        label: _formatStatusLabel(rawStatus ?? 'Awaiting Host'),
         icon: Icons.hourglass_top_rounded,
         bgColor: isDark
             ? const Color(0xFF451A03).withValues(alpha: 0.5)
@@ -2749,7 +2877,7 @@ class AsmitaVisitorCard extends StatelessWidget {
         clean.contains('ALLOW') ||
         clean.contains('PRE_')) {
       return _StatusThemeConfig(
-        label: rawStatus ?? 'Approved',
+        label: clean.contains('PRE') ? 'Pre-Approved' : 'Approved',
         icon: Icons.check_circle_rounded,
         bgColor: isDark
             ? const Color(0xFF064E3B).withValues(alpha: 0.5)
@@ -2766,7 +2894,7 @@ class AsmitaVisitorCard extends StatelessWidget {
         clean.contains('CHECKED IN') ||
         clean.contains('INSIDE')) {
       return _StatusThemeConfig(
-        label: rawStatus ?? 'Checked In',
+        label: 'Checked In',
         icon: Icons.sensor_door_rounded,
         bgColor: isDark
             ? const Color(0xFF134E4A).withValues(alpha: 0.5)
@@ -2783,7 +2911,7 @@ class AsmitaVisitorCard extends StatelessWidget {
         clean.contains('EXIT') ||
         clean.contains('COMPLET')) {
       return _StatusThemeConfig(
-        label: rawStatus ?? 'Checked Out',
+        label: 'Checked Out',
         icon: Icons.logout_rounded,
         bgColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
         borderColor: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
@@ -2797,7 +2925,7 @@ class AsmitaVisitorCard extends StatelessWidget {
         clean.contains('REVOK') ||
         clean.contains('BLOCK')) {
       return _StatusThemeConfig(
-        label: rawStatus ?? 'Denied',
+        label: clean.contains('REVOK') ? 'Revoked' : 'Rejected',
         icon: Icons.cancel_rounded,
         bgColor: isDark
             ? const Color(0xFF4C0519).withValues(alpha: 0.5)
@@ -2812,7 +2940,7 @@ class AsmitaVisitorCard extends StatelessWidget {
     // 6. Expired / Overstay
     if (clean.contains('EXPIR') || clean.contains('OVERSTAY')) {
       return _StatusThemeConfig(
-        label: rawStatus ?? 'Expired',
+        label: 'Expired',
         icon: Icons.timer_off_rounded,
         bgColor: isDark ? const Color(0xFF1F2937) : const Color(0xFFF3F4F6),
         borderColor: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
@@ -2823,7 +2951,7 @@ class AsmitaVisitorCard extends StatelessWidget {
     // 7. Assigned / Host Acknowledged
     if (clean.contains('ASSIGN') || clean.contains('HOST_ACK')) {
       return _StatusThemeConfig(
-        label: rawStatus ?? 'Assigned',
+        label: 'Assigned',
         icon: Icons.person_add_alt_1_rounded,
         bgColor: isDark
             ? const Color(0xFF2E1065).withValues(alpha: 0.5)
@@ -2838,7 +2966,7 @@ class AsmitaVisitorCard extends StatelessWidget {
     // Explicit override fallback
     if (overrideFill != null && overrideText != null) {
       return _StatusThemeConfig(
-        label: rawStatus ?? 'Active',
+        label: _formatStatusLabel(rawStatus ?? 'Active'),
         icon: overrideIcon ?? Icons.info_outline_rounded,
         bgColor: overrideFill,
         borderColor: overrideText.withValues(alpha: 0.25),
@@ -2848,7 +2976,7 @@ class AsmitaVisitorCard extends StatelessWidget {
 
     // Default neutral fallback
     return _StatusThemeConfig(
-      label: rawStatus ?? 'Active',
+      label: _formatStatusLabel(rawStatus ?? 'Active'),
       icon: overrideIcon ?? Icons.info_outline_rounded,
       bgColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
       borderColor: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
