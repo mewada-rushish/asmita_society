@@ -199,20 +199,47 @@ class _EmployeeGateAttendanceScannerScreenState
     // Read previous status from local Hive app_cache
     final cacheKey = 'employee_gate_attendance_$userId';
     bool isCurrentlyCheckedIn = false;
+    String? lastRecordedTime;
     try {
       if (Hive.isBoxOpen('app_cache')) {
         final record = Hive.box('app_cache').get(cacheKey);
         if (record is Map && record['status'] == 'IN') {
           isCurrentlyCheckedIn = true;
+          if (record['timestamp'] != null) {
+            final parsedTime = DateTime.tryParse(record['timestamp'].toString());
+            if (parsedTime != null) {
+              lastRecordedTime = DateFormat('hh:mm a').format(parsedTime);
+            }
+          }
         }
       }
     } catch (_) {}
 
-    // Toggle: if currently IN -> Check OUT. If currently OUT -> Check IN.
-    final newStatus = isCurrentlyCheckedIn ? 'OUT' : 'IN';
+    final gateName = gateInfo['gateName'] as String;
+
+    if (!mounted) return;
+
+    // Present interactive modal asking employee to confirm Check In or Check Out
+    final chosenStatus = await _showAttendanceActionModal(
+      context: context,
+      gateName: gateName,
+      isCurrentlyCheckedIn: isCurrentlyCheckedIn,
+      distanceMeters: geofenceResult.distanceMeters,
+      lastRecordedTime: lastRecordedTime,
+    );
+
+    if (chosenStatus == null) {
+      // User dismissed or cancelled the modal - resume scanner
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        _scannerController.start();
+      }
+      return;
+    }
+
+    final newStatus = chosenStatus;
     final now = DateTime.now();
     final timeStr = DateFormat('hh:mm a').format(now);
-    final gateName = gateInfo['gateName'] as String;
 
     try {
       if (Hive.isBoxOpen('app_cache')) {
@@ -263,6 +290,312 @@ class _EmployeeGateAttendanceScannerScreenState
 
     widget.onAttendanceRecorded?.call();
     Navigator.of(context).pop();
+  }
+
+  /// Clean interactive modal bottom sheet asking employee to confirm Check In or Check Out
+  Future<String?> _showAttendanceActionModal({
+    required BuildContext context,
+    required String gateName,
+    required bool isCurrentlyCheckedIn,
+    required double? distanceMeters,
+    String? lastRecordedTime,
+  }) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = Theme.of(context).colorScheme.surface;
+    final onSurfaceColor = Theme.of(context).colorScheme.onSurface;
+
+    return showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: surfaceColor,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 25,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Grab Handle
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.grey[700] : Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Header Row with Gate Name and Close
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AsmitaPalette.deepNavy.withValues(alpha: isDark ? 0.3 : 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.qr_code_scanner_rounded,
+                          color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Gate Attendance',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                                color: onSurfaceColor,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              gateName,
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 13,
+                                color: onSurfaceColor.withValues(alpha: 0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(sheetContext).pop(null),
+                        icon: Icon(Icons.close_rounded, color: onSurfaceColor.withValues(alpha: 0.6)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Location & Geofence Verified Banner
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.15 : 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.verified_rounded,
+                          color: Color(0xFF059669),
+                          size: 18,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            distanceMeters != null
+                                ? 'GPS Proximity Verified (${distanceMeters.round()}m from gate)'
+                                : 'GPS Proximity Verified (<50m entrance zone)',
+                            style: const TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                              color: Color(0xFF059669),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Current Duty Status Box
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isCurrentlyCheckedIn
+                                ? const Color(0xFF10B981)
+                                : const Color(0xFF94A3B8),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Current Status: ',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 13,
+                            color: onSurfaceColor.withValues(alpha: 0.65),
+                          ),
+                        ),
+                        Text(
+                          isCurrentlyCheckedIn ? 'Checked IN (On Duty)' : 'Checked OUT (Off Duty)',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: isCurrentlyCheckedIn
+                                ? const Color(0xFF059669)
+                                : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569)),
+                          ),
+                        ),
+                        if (lastRecordedTime != null && lastRecordedTime.isNotEmpty) ...[
+                          const Spacer(),
+                          Text(
+                            lastRecordedTime,
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 11.5,
+                              color: onSurfaceColor.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Action Buttons: Check In vs Check Out
+                  // 1. Check IN Button
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => Navigator.of(sheetContext).pop('IN'),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF059669),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF059669).withValues(alpha: 0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.login_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              isCurrentlyCheckedIn ? 'Confirm Check IN Again' : 'Check IN (Mark Entry)',
+                              style: const TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14.5,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // 2. Check OUT Button
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => Navigator.of(sheetContext).pop('OUT'),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: isCurrentlyCheckedIn
+                              ? const Color(0xFFDC2626)
+                              : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+                          borderRadius: BorderRadius.circular(14),
+                          border: isCurrentlyCheckedIn
+                              ? null
+                              : Border.all(
+                                  color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                                  width: 1.2,
+                                ),
+                          boxShadow: isCurrentlyCheckedIn
+                              ? [
+                                  BoxShadow(
+                                    color: const Color(0xFFDC2626).withValues(alpha: 0.3),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.logout_rounded,
+                              color: isCurrentlyCheckedIn
+                                  ? Colors.white
+                                  : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              isCurrentlyCheckedIn ? 'Check OUT (Mark Exit)' : 'Check OUT (Mark Departure)',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14.5,
+                                color: isCurrentlyCheckedIn
+                                    ? Colors.white
+                                    : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
