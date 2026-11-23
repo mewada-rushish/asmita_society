@@ -147,44 +147,11 @@ class _EmployeeGateAttendanceScannerScreenState
       return;
     }
 
-    // Gate verified - proceed with Check-in / Check-out toggle
+    // Gate verified - proceed to display attendance action modal
     await _scannerController.stop();
     HapticFeedback.mediumImpact();
 
     final scannedSocietyId = int.tryParse(gateInfo['societyId']?.toString() ?? '') ?? 114;
-
-    // Strict Physical Geofence Verification (Max 50 meters from Gate)
-    if (mounted) {
-      AsmitaToast.show(
-        context,
-        message: 'Verifying GPS proximity at entrance...',
-        type: AsmitaToastType.info,
-        duration: const Duration(milliseconds: 1500),
-      );
-    }
-
-    final geofenceResult = await LocationGeofenceService.verifySocietyProximity(
-      societyId: scannedSocietyId,
-      defaultRadius: 50.0,
-    );
-
-    if (!geofenceResult.isAllowed) {
-      if (mounted) {
-        HapticFeedback.heavyImpact();
-        AsmitaToast.show(
-          context,
-          message: geofenceResult.errorMessage ?? 'Physical presence within 50m of entrance is required to check in.',
-          type: AsmitaToastType.error,
-          duration: const Duration(seconds: 4),
-        );
-        await Future.delayed(const Duration(seconds: 3));
-        if (mounted) {
-          setState(() => _isProcessing = false);
-          _scannerController.start();
-        }
-      }
-      return;
-    }
 
     int userId = 0;
     if (mounted) {
@@ -219,16 +186,16 @@ class _EmployeeGateAttendanceScannerScreenState
 
     if (!mounted) return;
 
-    // Present interactive modal asking employee to confirm Check In or Check Out
-    final chosenStatus = await _showAttendanceActionModal(
+    // Present interactive modal asking employee to confirm the required action
+    final result = await _showAttendanceActionModal(
       context: context,
+      societyId: scannedSocietyId,
       gateName: gateName,
       isCurrentlyCheckedIn: isCurrentlyCheckedIn,
-      distanceMeters: geofenceResult.distanceMeters,
       lastRecordedTime: lastRecordedTime,
     );
 
-    if (chosenStatus == null) {
+    if (result == null) {
       // User dismissed or cancelled the modal - resume scanner
       if (mounted) {
         setState(() => _isProcessing = false);
@@ -237,7 +204,8 @@ class _EmployeeGateAttendanceScannerScreenState
       return;
     }
 
-    final newStatus = chosenStatus;
+    final newStatus = result.status;
+    final geofenceResult = result.geofenceResult;
     final now = DateTime.now();
     final timeStr = DateFormat('hh:mm a').format(now);
 
@@ -293,306 +261,23 @@ class _EmployeeGateAttendanceScannerScreenState
   }
 
   /// Clean interactive modal bottom sheet asking employee to confirm Check In or Check Out
-  Future<String?> _showAttendanceActionModal({
+  Future<_GateAttendanceModalResult?> _showAttendanceActionModal({
     required BuildContext context,
+    required int societyId,
     required String gateName,
     required bool isCurrentlyCheckedIn,
-    required double? distanceMeters,
     String? lastRecordedTime,
   }) async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surfaceColor = Theme.of(context).colorScheme.surface;
-    final onSurfaceColor = Theme.of(context).colorScheme.onSurface;
-
-    return showModalBottomSheet<String>(
+    return showModalBottomSheet<_GateAttendanceModalResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
-        return SafeArea(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: surfaceColor,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.25),
-                  blurRadius: 25,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Grab Handle
-                  Center(
-                    child: Container(
-                      width: 44,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.grey[700] : Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Header Row with Gate Name and Close
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AsmitaPalette.deepNavy.withValues(alpha: isDark ? 0.3 : 0.08),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.qr_code_scanner_rounded,
-                          color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Gate Attendance',
-                              style: TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
-                                color: onSurfaceColor,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              gateName,
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 13,
-                                color: onSurfaceColor.withValues(alpha: 0.7),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.of(sheetContext).pop(null),
-                        icon: Icon(Icons.close_rounded, color: onSurfaceColor.withValues(alpha: 0.6)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Location & Geofence Verified Banner
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.15 : 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.verified_rounded,
-                          color: Color(0xFF059669),
-                          size: 18,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            distanceMeters != null
-                                ? 'GPS Proximity Verified (${distanceMeters.round()}m from gate)'
-                                : 'GPS Proximity Verified (<50m entrance zone)',
-                            style: const TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                              color: Color(0xFF059669),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Current Duty Status Box
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: isCurrentlyCheckedIn
-                                ? const Color(0xFF10B981)
-                                : const Color(0xFF94A3B8),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'Current Status: ',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 13,
-                            color: onSurfaceColor.withValues(alpha: 0.65),
-                          ),
-                        ),
-                        Text(
-                          isCurrentlyCheckedIn ? 'Checked IN (On Duty)' : 'Checked OUT (Off Duty)',
-                          style: TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                            color: isCurrentlyCheckedIn
-                                ? const Color(0xFF059669)
-                                : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569)),
-                          ),
-                        ),
-                        if (lastRecordedTime != null && lastRecordedTime.isNotEmpty) ...[
-                          const Spacer(),
-                          Text(
-                            lastRecordedTime,
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 11.5,
-                              color: onSurfaceColor.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Action Buttons: Check In vs Check Out
-                  // 1. Check IN Button
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => Navigator.of(sheetContext).pop('IN'),
-                      borderRadius: BorderRadius.circular(14),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF059669),
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF059669).withValues(alpha: 0.3),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.login_rounded,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              isCurrentlyCheckedIn ? 'Confirm Check IN Again' : 'Check IN (Mark Entry)',
-                              style: const TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14.5,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // 2. Check OUT Button
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => Navigator.of(sheetContext).pop('OUT'),
-                      borderRadius: BorderRadius.circular(14),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: isCurrentlyCheckedIn
-                              ? const Color(0xFFDC2626)
-                              : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
-                          borderRadius: BorderRadius.circular(14),
-                          border: isCurrentlyCheckedIn
-                              ? null
-                              : Border.all(
-                                  color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
-                                  width: 1.2,
-                                ),
-                          boxShadow: isCurrentlyCheckedIn
-                              ? [
-                                  BoxShadow(
-                                    color: const Color(0xFFDC2626).withValues(alpha: 0.3),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.logout_rounded,
-                              color: isCurrentlyCheckedIn
-                                  ? Colors.white
-                                  : (isDark ? Colors.white70 : const Color(0xFF334155)),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              isCurrentlyCheckedIn ? 'Check OUT (Mark Exit)' : 'Check OUT (Mark Departure)',
-                              style: TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14.5,
-                                color: isCurrentlyCheckedIn
-                                    ? Colors.white
-                                    : (isDark ? Colors.white70 : const Color(0xFF334155)),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-              ),
-            ),
-          ),
+        return _GateAttendanceModalSheet(
+          societyId: societyId,
+          gateName: gateName,
+          isCurrentlyCheckedIn: isCurrentlyCheckedIn,
+          lastRecordedTime: lastRecordedTime,
         );
       },
     );
@@ -721,6 +406,447 @@ class _EmployeeGateAttendanceScannerScreenState
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _GateAttendanceModalResult {
+  final String status;
+  final GeofenceResult geofenceResult;
+
+  _GateAttendanceModalResult({
+    required this.status,
+    required this.geofenceResult,
+  });
+}
+
+class _GateAttendanceModalSheet extends StatefulWidget {
+  final int societyId;
+  final String gateName;
+  final bool isCurrentlyCheckedIn;
+  final String? lastRecordedTime;
+
+  const _GateAttendanceModalSheet({
+    required this.societyId,
+    required this.gateName,
+    required this.isCurrentlyCheckedIn,
+    this.lastRecordedTime,
+  });
+
+  @override
+  State<_GateAttendanceModalSheet> createState() =>
+      _GateAttendanceModalSheetState();
+}
+
+class _GateAttendanceModalSheetState extends State<_GateAttendanceModalSheet> {
+  bool _isVerifyingLocation = true;
+  GeofenceResult? _geofenceResult;
+  String? _locationError;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLocation();
+  }
+
+  Future<void> _checkLocation() async {
+    setState(() {
+      _isVerifyingLocation = true;
+      _locationError = null;
+    });
+
+    try {
+      final result = await LocationGeofenceService.verifySocietyProximity(
+        societyId: widget.societyId,
+        defaultRadius: 50.0,
+      );
+      if (!mounted) return;
+      setState(() {
+        _isVerifyingLocation = false;
+        _geofenceResult = result;
+        if (!result.isAllowed) {
+          _locationError = result.errorMessage ?? 'Please be near the gate entrance to proceed.';
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isVerifyingLocation = false;
+        _locationError = 'Unable to verify location. Tap to retry.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = Theme.of(context).colorScheme.surface;
+    final onSurfaceColor = Theme.of(context).colorScheme.onSurface;
+    final isVerified = _geofenceResult != null && _geofenceResult!.isAllowed;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: SafeArea(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: surfaceColor,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 25,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Grab Handle
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.grey[700] : Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Header Row with Gate Name and Close
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AsmitaPalette.deepNavy.withValues(alpha: isDark ? 0.3 : 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.qr_code_scanner_rounded,
+                          color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Gate Attendance',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                                color: onSurfaceColor,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.gateName,
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 13,
+                                color: onSurfaceColor.withValues(alpha: 0.7),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(null),
+                        icon: Icon(Icons.close_rounded, color: onSurfaceColor.withValues(alpha: 0.6)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Location Verification Banner with Preloader
+                  _buildLocationStatusBanner(isDark),
+                  const SizedBox(height: 12),
+
+                  // Current Duty Status Box (Responsive & no overflow)
+                  _buildDutyStatusBox(isDark, onSurfaceColor),
+                  const SizedBox(height: 20),
+
+                  // SINGLE Context-Aware Action Button (Check IN or Check OUT)
+                  _buildActionButton(isVerified, isDark),
+                  const SizedBox(height: 4),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationStatusBanner(bool isDark) {
+    if (_isVerifyingLocation) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        decoration: BoxDecoration(
+          color: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy).withValues(alpha: isDark ? 0.15 : 0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: (isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy).withValues(alpha: 0.2),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Verifying your location...',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12.5,
+                  color: isDark ? const Color(0xFF93C5FD) : AsmitaPalette.deepNavy,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_geofenceResult != null && _geofenceResult!.isAllowed) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        decoration: BoxDecoration(
+          color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.15 : 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color(0xFF10B981).withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+        child: const Row(
+          children: [
+            Icon(
+              Icons.check_circle_rounded,
+              color: Color(0xFF059669),
+              size: 18,
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Location verified',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12.5,
+                  color: Color(0xFF059669),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEF4444).withValues(alpha: isDark ? 0.15 : 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFEF4444).withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.location_off_rounded,
+            color: Color(0xFFDC2626),
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              _locationError ?? 'Please be near the gate entrance to proceed.',
+              style: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                color: Color(0xFFDC2626),
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: _checkLocation,
+            child: const Text(
+              'Retry',
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+                color: Color(0xFFDC2626),
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDutyStatusBox(bool isDark, Color onSurfaceColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: widget.isCurrentlyCheckedIn
+                  ? const Color(0xFF10B981)
+                  : const Color(0xFF94A3B8),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                text: 'Current Status: ',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 12.5,
+                  color: onSurfaceColor.withValues(alpha: 0.65),
+                ),
+                children: [
+                  TextSpan(
+                    text: widget.isCurrentlyCheckedIn
+                        ? 'Checked IN (On Duty)'
+                        : 'Checked OUT (Off Duty)',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                      color: widget.isCurrentlyCheckedIn
+                          ? const Color(0xFF059669)
+                          : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569)),
+                    ),
+                  ),
+                ],
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (widget.lastRecordedTime != null && widget.lastRecordedTime!.isNotEmpty) ...[
+            const SizedBox(width: 6),
+            Text(
+              widget.lastRecordedTime!,
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 11,
+                color: onSurfaceColor.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton(bool isVerified, bool isDark) {
+    final targetStatus = widget.isCurrentlyCheckedIn ? 'OUT' : 'IN';
+    final isCheckIn = targetStatus == 'IN';
+    final buttonColor = isCheckIn ? const Color(0xFF059669) : const Color(0xFFDC2626);
+    final buttonLabel = isCheckIn ? 'Check IN (Mark Entry)' : 'Check OUT (Mark Exit)';
+    final buttonIcon = isCheckIn ? Icons.login_rounded : Icons.logout_rounded;
+
+    final isEnabled = isVerified && !_isVerifyingLocation;
+
+    return Opacity(
+      opacity: isEnabled ? 1.0 : 0.5,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: isEnabled
+              ? () {
+                  Navigator.of(context).pop(
+                    _GateAttendanceModalResult(
+                      status: targetStatus,
+                      geofenceResult: _geofenceResult!,
+                    ),
+                  );
+                }
+              : null,
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+            decoration: BoxDecoration(
+              color: buttonColor,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: isEnabled
+                  ? [
+                      BoxShadow(
+                        color: buttonColor.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  buttonIcon,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  buttonLabel,
+                  style: const TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14.5,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
