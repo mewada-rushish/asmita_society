@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/widgets/asmita_toast.dart';
 import '../../bloc/industrial_visit_bloc.dart';
 import '../../bloc/industrial_visit_event.dart';
 import '../../bloc/industrial_visit_state.dart';
@@ -55,11 +56,10 @@ class _GuardVehicleDraftScreenState extends State<GuardVehicleDraftScreen> {
           _remainingSeconds = 0;
           _activeDraft = null;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Vehicle draft slip expired. Please generate a new draft if visitor has not completed submission.'),
-            backgroundColor: AsmitaPalette.actionRed,
-          ),
+        AsmitaToast.show(
+          context,
+          message: 'Vehicle draft slip expired. Please generate a new draft if visitor has not completed submission.',
+          type: AsmitaToastType.error,
         );
       } else {
         setState(() => _remainingSeconds--);
@@ -72,11 +72,10 @@ class _GuardVehicleDraftScreenState extends State<GuardVehicleDraftScreen> {
     final name = _nameController.text.trim();
 
     if (plate.isEmpty || name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Both vehicle plate and visitor name are required.'),
-          backgroundColor: AsmitaPalette.actionRed,
-        ),
+      AsmitaToast.show(
+        context,
+        message: 'Both vehicle plate and visitor name are required.',
+        type: AsmitaToastType.error,
       );
       return;
     }
@@ -114,11 +113,10 @@ class _GuardVehicleDraftScreenState extends State<GuardVehicleDraftScreen> {
             _startCountdown(300);
           }
           if (state.status == IndustrialVisitBlocStatus.error) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage ?? 'Error generating draft'),
-                backgroundColor: AsmitaPalette.actionRed,
-              ),
+            AsmitaToast.show(
+              context,
+              message: state.errorMessage ?? 'Error generating draft',
+              type: AsmitaToastType.error,
             );
           }
         },

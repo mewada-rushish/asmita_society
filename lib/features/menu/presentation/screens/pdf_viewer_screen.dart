@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/asmita_sub_header.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 
 class PdfViewerScreen extends StatefulWidget {
   final String title;
@@ -304,11 +305,11 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Preparing file to share...'),
-            duration: Duration(seconds: 1),
-          ),
+        AsmitaToast.show(
+          context,
+          message: 'Preparing file to share...',
+          type: AsmitaToastType.info,
+          duration: const Duration(seconds: 1),
         );
       }
 
@@ -329,9 +330,11 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
+        AsmitaToast.show(
           context,
-        ).showSnackBar(SnackBar(content: Text('Could not share document: $e')));
+          message: 'Could not share document: $e',
+          type: AsmitaToastType.error,
+        );
       }
     }
   }

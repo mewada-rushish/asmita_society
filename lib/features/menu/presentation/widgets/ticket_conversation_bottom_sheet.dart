@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
 import 'package:asmita_society/core/widgets/app_skeleton.dart';
 import 'package:asmita_society/core/widgets/app_button.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 
 class TicketConversationBottomSheet extends StatefulWidget {
   final SupportTicketModel ticket;
@@ -83,12 +84,20 @@ class _TicketConversationBottomSheetState extends State<TicketConversationBottom
         }
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to send message')));
+          AsmitaToast.show(
+            context,
+            message: 'Failed to send message',
+            type: AsmitaToastType.error,
+          );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error sending message')));
+        AsmitaToast.show(
+          context,
+          message: 'Error sending message',
+          type: AsmitaToastType.error,
+        );
       }
     } finally {
       if (mounted) {
@@ -114,7 +123,11 @@ class _TicketConversationBottomSheetState extends State<TicketConversationBottom
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open attachment')));
+        AsmitaToast.show(
+          context,
+          message: 'Could not open attachment',
+          type: AsmitaToastType.error,
+        );
       }
     }
   }

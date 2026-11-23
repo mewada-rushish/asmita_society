@@ -10,6 +10,7 @@ import '../bloc/auth_state.dart';
 import 'login_screen.dart';
 import 'biometric_lock_wrapper.dart';
 import 'package:asmita_society/core/services/incoming_visitor_service.dart';
+import 'package:asmita_society/core/services/in_app_update_service.dart';
 import 'package:asmita_society/features/visitor_management/presentation/screens/incoming_visitor_screen.dart';
 import '../../../core/utils/property_role_resolver.dart';
 
@@ -27,10 +28,11 @@ class _RootScreenState extends State<RootScreen> {
     // Dispatch event to check auth state on start
     context.read<AuthBloc>().add(AuthCheckRequested());
 
-    // Check for any pending lock screen visitor arrival
+    // Check for any pending lock screen visitor arrival & Google Play updates
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         IncomingVisitorService.checkAndLaunchPendingCall(context);
+        InAppUpdateService.checkForUpdate(context: context);
       }
     });
   }

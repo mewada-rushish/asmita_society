@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/widgets/app_skeleton.dart';
+import '../../../../core/widgets/asmita_toast.dart';
 import 'package:asmita_society/features/community/data/models/chat_message_model.dart';
 import 'package:gal/gal.dart';
 import '../../../../core/di/injection_container.dart';
@@ -91,15 +92,19 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${paths.length} image(s) saved to gallery!')),
+        AsmitaToast.show(
+          context,
+          message: '${paths.length} image(s) saved to gallery!',
+          type: AsmitaToastType.success,
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
+        AsmitaToast.show(
           context,
-        ).showSnackBar(SnackBar(content: Text('Failed to save images: $e')));
+          message: 'Failed to save images: $e',
+          type: AsmitaToastType.error,
+        );
       }
     } finally {
       if (mounted) {

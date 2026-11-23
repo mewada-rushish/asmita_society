@@ -77,9 +77,9 @@ class _IndustrialDirectoryScreenState extends State<IndustrialDirectoryScreen> {
   int? _resolveSocietyId() {
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
-      return authState.user.societyId;
+      return authState.user.societyId ?? 1;
     }
-    return 114;
+    return 1;
   }
 
   Future<void> _loadHotlines({bool forceRefresh = false}) async {

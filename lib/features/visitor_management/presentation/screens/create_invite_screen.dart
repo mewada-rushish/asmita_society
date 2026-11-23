@@ -1,5 +1,6 @@
 import 'package:asmita_society/core/constants/design_system.dart';
 import 'package:asmita_society/core/utils/date_formatter.dart';
+import 'package:asmita_society/core/widgets/asmita_toast.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/app_button.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -179,8 +180,10 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
   void _submit() {
     if (_formKey.currentState!.validate()) {
       if (_validFrom == null || (_inviteSubType == 'FREQUENT' && _validTo == null)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select validity dates')),
+        AsmitaToast.show(
+          context,
+          message: 'Please select validity dates',
+          type: AsmitaToastType.error,
         );
         return;
       }
@@ -261,13 +264,17 @@ class _CreateInviteScreenState extends State<CreateInviteScreen> {
     return BlocListener<VisitorBloc, VisitorState>(
       listener: (context, state) {
         if (state is VisitorCreateSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invite created successfully!')),
+          AsmitaToast.show(
+            context,
+            message: 'Invite created successfully!',
+            type: AsmitaToastType.success,
           );
           Navigator.pop(context);
         } else if (state is VisitorError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${state.message}')),
+          AsmitaToast.show(
+            context,
+            message: 'Error: ${state.message}',
+            type: AsmitaToastType.error,
           );
         }
       },

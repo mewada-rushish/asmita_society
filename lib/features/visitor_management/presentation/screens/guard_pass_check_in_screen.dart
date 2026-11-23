@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/app_skeleton.dart';
+import '../../../../core/widgets/asmita_toast.dart';
 import '../../bloc/industrial_visit_bloc.dart';
 import '../../bloc/industrial_visit_event.dart';
 import '../../bloc/industrial_visit_state.dart';
@@ -54,16 +55,12 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
           _isLockedOut = true;
         }
       });
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _isLockedOut
-                ? 'Security Lockout: 3 failed attempts. Terminal locked for 5 minutes.'
-                : 'Pass code not found or expired. Failed attempt $_failedAttempts/3.',
-          ),
-          backgroundColor: AsmitaPalette.actionRed,
-        ),
+      AsmitaToast.show(
+        context,
+        message: _isLockedOut
+            ? 'Security Lockout: 3 failed attempts. Terminal locked for 5 minutes.'
+            : 'Pass code not found or expired. Failed attempt $_failedAttempts/3.',
+        type: AsmitaToastType.error,
       );
     }
   }
@@ -94,18 +91,16 @@ class _GuardPassCheckInScreenState extends State<GuardPassCheckInScreen> {
       body: BlocConsumer<IndustrialVisitBloc, IndustrialVisitState>(
         listener: (context, state) {
           if (state.status == IndustrialVisitBlocStatus.actionSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.successMessage ?? 'Success'),
-                backgroundColor: AsmitaPalette.successGreen,
-              ),
+            AsmitaToast.show(
+              context,
+              message: state.successMessage ?? 'Success',
+              type: AsmitaToastType.success,
             );
           } else if (state.status == IndustrialVisitBlocStatus.error) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage ?? 'Error'),
-                backgroundColor: AsmitaPalette.actionRed,
-              ),
+            AsmitaToast.show(
+              context,
+              message: state.errorMessage ?? 'Error',
+              type: AsmitaToastType.error,
             );
           }
         },

@@ -43,6 +43,7 @@ enum IndustrialVisitStatus {
         return IndustrialVisitStatus.collected;
       case 'CHECKED_IN':
       case 'INSIDE':
+      case 'ENTERED':
         return IndustrialVisitStatus.checkedIn;
       case 'WAITING_TO_MEET':
         return IndustrialVisitStatus.waitingToMeet;
@@ -55,8 +56,10 @@ enum IndustrialVisitStatus {
       case 'MEETING_IN_PROGRESS':
         return IndustrialVisitStatus.meetingInProgress;
       case 'COMPLETED':
+      case 'USED':
         return IndustrialVisitStatus.completed;
       case 'CHECKED_OUT':
+      case 'EXITED':
         return IndustrialVisitStatus.checkedOut;
       default:
         return IndustrialVisitStatus.submitted;
@@ -466,6 +469,8 @@ class IndustrialVisitModel {
   final int? hostUserId;
   final String? hostName;
   final int? assignedToUserId;
+  final int? currentApproverUserId;
+  final bool isDelegatedApproval;
   final IndustrialVisitStatus status;
   final String? statusToken;
   final String? passCode;
@@ -506,6 +511,8 @@ class IndustrialVisitModel {
     this.hostUserId,
     this.hostName,
     this.assignedToUserId,
+    this.currentApproverUserId,
+    this.isDelegatedApproval = false,
     required this.status,
     this.statusToken,
     this.passCode,
@@ -547,6 +554,8 @@ class IndustrialVisitModel {
     int? hostUserId,
     String? hostName,
     int? assignedToUserId,
+    int? currentApproverUserId,
+    bool? isDelegatedApproval,
     IndustrialVisitStatus? status,
     String? statusToken,
     String? passCode,
@@ -587,6 +596,8 @@ class IndustrialVisitModel {
       hostUserId: hostUserId ?? this.hostUserId,
       hostName: hostName ?? this.hostName,
       assignedToUserId: assignedToUserId ?? this.assignedToUserId,
+      currentApproverUserId: currentApproverUserId ?? this.currentApproverUserId,
+      isDelegatedApproval: isDelegatedApproval ?? this.isDelegatedApproval,
       status: status ?? this.status,
       statusToken: statusToken ?? this.statusToken,
       passCode: passCode ?? this.passCode,
@@ -681,58 +692,111 @@ class IndustrialVisitModel {
     return false;
   }
 
+  static DateTime? _parseDateTime(dynamic primaryVal, [dynamic secondaryVal]) {
+    if (primaryVal == null && secondaryVal == null) return null;
+    final pStr = primaryVal?.toString().trim();
+    final sStr = secondaryVal?.toString().trim();
+
+    // 1. If primaryVal itself is a full ISO date-time string
+    if (pStr != null && pStr.isNotEmpty) {
+      final parsed = DateTime.tryParse(pStr);
+      if (parsed != null) return parsed;
+    }
+
+    // 2. If secondaryVal is a full ISO date-time string
+    DateTime? baseDate;
+    if (sStr != null && sStr.isNotEmpty) {
+      baseDate = DateTime.tryParse(sStr);
+    }
+
+    // 3. If primaryVal is time-only (e.g. "14:30:00" or "14:30") and we have baseDate
+    if (baseDate != null && pStr != null && pStr.isNotEmpty && pStr.contains(':')) {
+      final parts = pStr.split(':');
+      if (parts.length >= 2) {
+        final hour = int.tryParse(parts[0]) ?? 0;
+        final minute = int.tryParse(parts[1]) ?? 0;
+        final second = parts.length > 2 ? (int.tryParse(parts[2]) ?? 0) : 0;
+        return DateTime(baseDate.year, baseDate.month, baseDate.day, hour, minute, second);
+      }
+    }
+
+    return baseDate;
+  }
+
   factory IndustrialVisitModel.fromJson(Map<String, dynamic> json) {
     return IndustrialVisitModel(
       id: json['id'] is int
           ? json['id']
-          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
-      requestNumber: json['request_number']?.toString() ?? '',
+          : int.tryParse(json['id']?.toString() ?? '0') ??
+              (json['request_id'] is int
+                  ? json['request_id']
+                  : int.tryParse(json['request_id']?.toString() ?? '0') ?? 0),
+      requestNumber: json['request_number']?.toString() ??
+          json['pass_code']?.toString() ??
+          (json['id'] != null ? '#${json['id']}' : ''),
       propertyId: json['property_id'] is int
           ? json['property_id']
           : int.tryParse(json['property_id']?.toString() ?? '114') ?? 114,
-      visitorName: json['visitor_name']?.toString() ?? 'Unknown Visitor',
-      visitorMobile:
-          json['visitor_mobile']?.toString() ??
-          json['phone_number']?.toString(),
-      visitorPhotoUrl:
-          json['visitor_photo_url']?.toString() ??
-          json['photo_url']?.toString(),
+      visitorName: json['visitor_name']?.toString() ??
+          json['name']?.toString() ??
+          json['full_name']?.toString() ??
+          json['guest_name']?.toString() ??
+          json['title']?.toString() ??
+          'Unknown Visitor',
+      visitorMobile: json['visitor_mobile']?.toString() ??
+          json['mobile_number']?.toString() ??
+          json['phone_number']?.toString() ??
+          json['phone']?.toString() ??
+          json['visitor_phone']?.toString(),
+      visitorPhotoUrl: json['visitor_photo_url']?.toString() ??
+          json['photo_url']?.toString() ??
+          json['photo']?.toString() ??
+          json['image_url']?.toString(),
       arrivalMode: json['arrival_mode']?.toString() ?? 'PEDESTRIAN',
-      vehicleNumber: json['vehicle_number']?.toString(),
+      vehicleNumber: json['vehicle_number']?.toString() ??
+          json['vehicleNumber']?.toString() ??
+          json['vehicle_no']?.toString(),
       departmentId: json['department_id'] is int
           ? json['department_id']
           : int.tryParse(json['department_id']?.toString() ?? ''),
-      departmentName:
-          json['department_name']?.toString() ??
-          json['department']?['name']?.toString(),
+      departmentName: json['department_name']?.toString() ??
+          json['department']?['name']?.toString() ??
+          json['company_name']?.toString() ??
+          json['visitor_type_name']?.toString() ??
+          json['invite_type']?.toString(),
       hostUserId: json['host_user_id'] is int
           ? json['host_user_id']
           : int.tryParse(json['host_user_id']?.toString() ?? ''),
-      hostName:
-          json['host_name']?.toString() ??
+      hostName: json['host_name']?.toString() ??
           json['host']?['name']?.toString() ??
-          json['host_user']?['full_name']?.toString(),
+          json['host_user']?['full_name']?.toString() ??
+          json['resident_name']?.toString() ??
+          json['approved_by_name']?.toString(),
       assignedToUserId: json['assigned_to_user_id'] is int
           ? json['assigned_to_user_id']
           : int.tryParse(json['assigned_to_user_id']?.toString() ?? ''),
+      currentApproverUserId: json['current_approver_user_id'] is int
+          ? json['current_approver_user_id']
+          : int.tryParse(json['current_approver_user_id']?.toString() ?? ''),
+      isDelegatedApproval: json['is_delegated'] == true ||
+          json['isDelegated'] == true ||
+          json['is_delegated_approval'] == true,
       status: IndustrialVisitStatus.fromString(json['status']?.toString()),
-      statusToken: json['status_token']?.toString(),
-      passCode: json['pass_code']?.toString(),
-      passCodeExpiresAt: json['pass_code_expires_at'] != null
-          ? DateTime.tryParse(json['pass_code_expires_at'].toString())
-          : null,
+      statusToken: json['status_token']?.toString() ?? json['qr_code']?.toString(),
+      passCode: json['pass_code']?.toString() ?? json['passCode']?.toString(),
+      passCodeExpiresAt: _parseDateTime(json['pass_code_expires_at'] ?? json['valid_to']),
       verifiedOnSite: json['verified_on_site'] == true,
       verifiedByUserId: json['verified_by_user_id'] is int
           ? json['verified_by_user_id']
           : int.tryParse(json['verified_by_user_id']?.toString() ?? ''),
-      verifiedAt: json['verified_at'] != null
-          ? DateTime.tryParse(json['verified_at'].toString())
-          : null,
+      verifiedAt: _parseDateTime(json['verified_at']),
       cabinNumber:
           json['cabin_number']?.toString() ?? json['cabin']?.toString(),
       deskNumber: json['desk_number']?.toString() ?? json['desk']?.toString(),
       purpose:
-          json['purpose']?.toString() ?? json['purpose_of_visit']?.toString(),
+          json['purpose']?.toString() ??
+          json['purpose_of_visit']?.toString() ??
+          json['company_name']?.toString(),
       notes: json['notes']?.toString(),
       floor:
           json['floor']?.toString() ?? json['department']?['floor']?.toString(),
@@ -740,34 +804,38 @@ class IndustrialVisitModel {
           json['hasFloorReceptionist'] == true,
       isDelivery:
           json['visit_type']?.toString().toUpperCase() == 'DELIVERY' ||
-          json['is_delivery'] == true,
+          json['is_delivery'] == true ||
+          json['invite_type']?.toString().toUpperCase() == 'DELIVERY',
       deliveryCompany: json['delivery_company']?.toString(),
       heldAtGate: json['held_at_gate'] == true,
       isBatched: json['is_batched'] == true,
       isPreApproved:
-          json['is_pre_approved'] == true || json['isPreApproved'] == true,
+          json['is_pre_approved'] == true ||
+          json['isPreApproved'] == true ||
+          json['record_type'] == 'PRE_APPROVED' ||
+          (json['pass_code'] != null && json['pass_code'].toString().isNotEmpty),
       isVip: json['is_vip'] == true ||
           json['isVip'] == true ||
           (json['visitor_name']?.toString().contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false)) ?? false) ||
+          (json['name']?.toString().contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false)) ?? false) ||
+          (json['title']?.toString().contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false)) ?? false) ||
           (json['purpose']?.toString().contains(RegExp(r'[\(\[]VIP[\)\]]', caseSensitive: false)) ?? false),
       isAcknowledged: json['is_acknowledged'] == true ||
           json['isAcknowledged'] == true ||
           json['acknowledged_at'] != null,
-      acknowledgedAt: json['acknowledged_at'] != null
-          ? DateTime.tryParse(json['acknowledged_at'].toString())
-          : null,
+      acknowledgedAt: _parseDateTime(json['acknowledged_at']),
       acknowledgedByUserId: json['acknowledged_by_user_id'] is int
           ? json['acknowledged_by_user_id']
           : int.tryParse(json['acknowledged_by_user_id']?.toString() ?? ''),
-      createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'].toString())
-          : null,
-      checkInAt: json['check_in_at'] != null
-          ? DateTime.tryParse(json['check_in_at'].toString())
-          : null,
-      checkOutAt: json['check_out_at'] != null
-          ? DateTime.tryParse(json['check_out_at'].toString())
-          : null,
+      createdAt: _parseDateTime(json['created_at'] ?? json['valid_from'] ?? json['requested_at'] ?? json['date']),
+      checkInAt: _parseDateTime(
+        json['check_in_at'] ?? json['checkin_at'] ?? json['checked_in_at'] ?? json['start_time'],
+        json['created_at'] ?? json['valid_from'],
+      ),
+      checkOutAt: _parseDateTime(
+        json['check_out_at'] ?? json['checkout_at'] ?? json['checked_out_at'] ?? json['end_time'],
+        json['created_at'] ?? json['valid_from'],
+      ),
     );
   }
 
@@ -784,6 +852,8 @@ class IndustrialVisitModel {
       'department_id': departmentId,
       'host_user_id': hostUserId,
       'assigned_to_user_id': assignedToUserId,
+      'current_approver_user_id': currentApproverUserId,
+      'is_delegated': isDelegatedApproval,
       'status': status.apiValue,
       'status_token': statusToken,
       'pass_code': passCode,
