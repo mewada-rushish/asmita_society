@@ -92,6 +92,7 @@ class LocationGeofenceService {
               : defaultMaxRadiusMeters;
 
           final data = {
+            'name': prop['name']?.toString() ?? 'Site #$societyId',
             'latitude': lat,
             'longitude': lng,
             'geofence_radius': radius,
