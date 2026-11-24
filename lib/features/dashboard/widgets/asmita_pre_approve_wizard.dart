@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:dio/dio.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/config/env_config.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -212,6 +213,9 @@ class AsmitaPreApproveWizard extends StatefulWidget {
     return [];
   }
 
+  /// Holds the last error message from recordEmployeeMovement, if any.
+  static String? lastMovementError;
+
   /// Records real-time employee gate movement (Check-In / Check-Out) to the centralized database.
   static Future<bool> recordEmployeeMovement({
     required int societyId,
@@ -224,6 +228,7 @@ class AsmitaPreApproveWizard extends StatefulWidget {
     double? latitude,
     double? longitude,
   }) async {
+    lastMovementError = null;
     try {
       final secureStorage = SecureStorageService();
       final client = AsmitaDioClient(secureStorage).dio;
@@ -245,8 +250,19 @@ class AsmitaPreApproveWizard extends StatefulWidget {
       if (response.statusCode == 200 && response.data['success'] == true) {
         clearEmployeeCache(societyId);
         return true;
+      } else {
+        lastMovementError = response.data?['message']?.toString();
       }
+    } on DioException catch (dioErr) {
+      final data = dioErr.response?.data;
+      if (data is Map && data['message'] != null) {
+        lastMovementError = data['message'].toString();
+      } else {
+        lastMovementError = dioErr.message;
+      }
+      debugPrint('Error recording employee movement: $lastMovementError');
     } catch (e) {
+      lastMovementError = e.toString();
       debugPrint('Error recording employee movement: $e');
     }
     return false;

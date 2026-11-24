@@ -75,12 +75,16 @@ class _EmployeeGateAttendanceScannerScreenState
             uri.queryParameters['gateId'];
         final societyParam = uri.queryParameters['societyId'] ??
             uri.queryParameters['society_id'];
+        final siteNameParam = uri.queryParameters['siteName'] ??
+            uri.queryParameters['site'] ??
+            uri.queryParameters['propertyName'];
 
         if (gateParam != null && gateParam.isNotEmpty) {
           return {
             'gate': gateParam,
-            'gateName': 'Gate $gateParam (Main Reception)',
+            'gateName': 'Gate $gateParam',
             'societyId': societyParam ?? '114',
+            'siteName': siteNameParam,
             'raw': trimmed,
           };
         }
@@ -153,6 +157,12 @@ class _EmployeeGateAttendanceScannerScreenState
 
     final scannedSocietyId = int.tryParse(gateInfo['societyId']?.toString() ?? '') ?? 114;
 
+    // Fetch site config to resolve the real property/site name dynamically
+    final siteConfig = await LocationGeofenceService.fetchSocietyGeofence(scannedSocietyId);
+    final siteName = gateInfo['siteName']?.toString() ??
+        siteConfig?['name']?.toString() ??
+        'Site #$scannedSocietyId';
+
     int userId = 0;
     if (mounted) {
       try {
@@ -163,8 +173,8 @@ class _EmployeeGateAttendanceScannerScreenState
       } catch (_) {}
     }
 
-    // Read previous status from local Hive app_cache
-    final cacheKey = 'employee_gate_attendance_$userId';
+    // Read previous status from local Hive app_cache (scoped per site to avoid multi-site collisions)
+    final cacheKey = 'employee_gate_attendance_${userId}_$scannedSocietyId';
     bool isCurrentlyCheckedIn = false;
     String? lastRecordedTime;
     try {
@@ -190,6 +200,7 @@ class _EmployeeGateAttendanceScannerScreenState
     final result = await _showAttendanceActionModal(
       context: context,
       societyId: scannedSocietyId,
+      siteName: siteName,
       gateName: gateName,
       isCurrentlyCheckedIn: isCurrentlyCheckedIn,
       lastRecordedTime: lastRecordedTime,
@@ -209,10 +220,44 @@ class _EmployeeGateAttendanceScannerScreenState
     final now = DateTime.now();
     final timeStr = DateFormat('hh:mm a').format(now);
 
+    // Persist real-time gate movement to backend server with Option B Site authorization verification
+    final scannedGateId = int.tryParse(gateInfo['gate']?.toString() ?? '');
+    bool isSuccess = false;
+    if (userId > 0) {
+      isSuccess = await AsmitaPreApproveWizard.recordEmployeeMovement(
+        societyId: scannedSocietyId,
+        employeeId: userId,
+        status: newStatus,
+        recordedAt: now,
+        gateId: scannedGateId,
+        gateName: '$siteName - $gateName',
+        notes: 'QR Scan check-$newStatus at $siteName ($gateName) (${geofenceResult.distanceMeters != null ? "${geofenceResult.distanceMeters!.round()}m from gate" : "geofenced"})',
+        latitude: geofenceResult.currentLatitude,
+        longitude: geofenceResult.currentLongitude,
+      );
+    }
+
+    if (!mounted) return;
+
+    if (!isSuccess) {
+      final errorMsg = AsmitaPreApproveWizard.lastMovementError ??
+          'Unable to verify site access permissions. Please contact your administrator.';
+      AsmitaToast.show(
+        context,
+        message: errorMsg,
+        type: AsmitaToastType.error,
+      );
+      setState(() => _isProcessing = false);
+      _scannerController.start();
+      return;
+    }
+
     try {
       if (Hive.isBoxOpen('app_cache')) {
         await Hive.box('app_cache').put(cacheKey, {
           'user_id': userId,
+          'society_id': scannedSocietyId,
+          'site_name': siteName,
           'status': newStatus,
           'timestamp': now.toIso8601String(),
           'gate': gateInfo['gate'],
@@ -224,34 +269,18 @@ class _EmployeeGateAttendanceScannerScreenState
       }
     } catch (_) {}
 
-    // Persist real-time gate movement to backend server
-    final scannedGateId = int.tryParse(gateInfo['gate']?.toString() ?? '');
-    if (userId > 0) {
-      AsmitaPreApproveWizard.recordEmployeeMovement(
-        societyId: scannedSocietyId,
-        employeeId: userId,
-        status: newStatus,
-        recordedAt: now,
-        gateId: scannedGateId,
-        gateName: gateName,
-        notes: 'QR Scan check-$newStatus at $gateName (${geofenceResult.distanceMeters != null ? "${geofenceResult.distanceMeters!.round()}m from gate" : "geofenced"})',
-        latitude: geofenceResult.currentLatitude,
-        longitude: geofenceResult.currentLongitude,
-      );
-    }
-
     if (!mounted) return;
 
     if (newStatus == 'IN') {
       AsmitaToast.show(
         context,
-        message: 'Checked in at $gateName at $timeStr',
+        message: 'Checked in at $siteName ($gateName) at $timeStr',
         type: AsmitaToastType.success,
       );
     } else {
       AsmitaToast.show(
         context,
-        message: 'Checked out at $gateName at $timeStr',
+        message: 'Checked out at $siteName ($gateName) at $timeStr',
         type: AsmitaToastType.info,
       );
     }
@@ -264,6 +293,7 @@ class _EmployeeGateAttendanceScannerScreenState
   Future<_GateAttendanceModalResult?> _showAttendanceActionModal({
     required BuildContext context,
     required int societyId,
+    required String siteName,
     required String gateName,
     required bool isCurrentlyCheckedIn,
     String? lastRecordedTime,
@@ -275,6 +305,7 @@ class _EmployeeGateAttendanceScannerScreenState
       builder: (sheetContext) {
         return _GateAttendanceModalSheet(
           societyId: societyId,
+          siteName: siteName,
           gateName: gateName,
           isCurrentlyCheckedIn: isCurrentlyCheckedIn,
           lastRecordedTime: lastRecordedTime,
@@ -423,12 +454,14 @@ class _GateAttendanceModalResult {
 
 class _GateAttendanceModalSheet extends StatefulWidget {
   final int societyId;
+  final String siteName;
   final String gateName;
   final bool isCurrentlyCheckedIn;
   final String? lastRecordedTime;
 
   const _GateAttendanceModalSheet({
     required this.societyId,
+    required this.siteName,
     required this.gateName,
     required this.isCurrentlyCheckedIn,
     this.lastRecordedTime,
@@ -443,6 +476,7 @@ class _GateAttendanceModalSheetState extends State<_GateAttendanceModalSheet> {
   bool _isVerifyingLocation = true;
   GeofenceResult? _geofenceResult;
   String? _locationError;
+  String? _overrideStatus;
 
   @override
   void initState() {
@@ -542,17 +576,18 @@ class _GateAttendanceModalSheetState extends State<_GateAttendanceModalSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Gate Attendance',
+                              widget.siteName,
                               style: TextStyle(
                                 fontFamily: 'Montserrat',
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
                                 color: onSurfaceColor,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              widget.gateName,
+                              'Gate Attendance • ${widget.gateName}',
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 13,
@@ -579,8 +614,8 @@ class _GateAttendanceModalSheetState extends State<_GateAttendanceModalSheet> {
                   _buildDutyStatusBox(isDark, onSurfaceColor),
                   const SizedBox(height: 20),
 
-                  // SINGLE Context-Aware Action Button (Check IN or Check OUT)
-                  _buildActionButton(isVerified, isDark),
+                  // SINGLE Context-Aware Action Button (Check IN or Check OUT with toggle)
+                  _buildActionButton(isVerified, isDark, onSurfaceColor),
                   const SizedBox(height: 4),
                 ],
               ),
@@ -785,8 +820,9 @@ class _GateAttendanceModalSheetState extends State<_GateAttendanceModalSheet> {
     );
   }
 
-  Widget _buildActionButton(bool isVerified, bool isDark) {
-    final targetStatus = widget.isCurrentlyCheckedIn ? 'OUT' : 'IN';
+  Widget _buildActionButton(bool isVerified, bool isDark, Color onSurfaceColor) {
+    final defaultTargetStatus = widget.isCurrentlyCheckedIn ? 'OUT' : 'IN';
+    final targetStatus = _overrideStatus ?? defaultTargetStatus;
     final isCheckIn = targetStatus == 'IN';
     final buttonColor = isCheckIn ? const Color(0xFF059669) : const Color(0xFFDC2626);
     final buttonLabel = isCheckIn ? 'Check IN (Mark Entry)' : 'Check OUT (Mark Exit)';
@@ -794,60 +830,91 @@ class _GateAttendanceModalSheetState extends State<_GateAttendanceModalSheet> {
 
     final isEnabled = isVerified && !_isVerifyingLocation;
 
-    return Opacity(
-      opacity: isEnabled ? 1.0 : 0.5,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: isEnabled
-              ? () {
-                  Navigator.of(context).pop(
-                    _GateAttendanceModalResult(
-                      status: targetStatus,
-                      geofenceResult: _geofenceResult!,
-                    ),
-                  );
-                }
-              : null,
-          borderRadius: BorderRadius.circular(14),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-            decoration: BoxDecoration(
-              color: buttonColor,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: isEnabled
-                  ? [
-                      BoxShadow(
-                        color: buttonColor.withValues(alpha: 0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Opacity(
+          opacity: isEnabled ? 1.0 : 0.5,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: isEnabled
+                  ? () {
+                      Navigator.of(context).pop(
+                        _GateAttendanceModalResult(
+                          status: targetStatus,
+                          geofenceResult: _geofenceResult!,
+                        ),
+                      );
+                    }
                   : null,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  buttonIcon,
-                  color: Colors.white,
-                  size: 20,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: buttonColor,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: isEnabled
+                      ? [
+                          BoxShadow(
+                            color: buttonColor.withValues(alpha: 0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
                 ),
-                const SizedBox(width: 10),
-                Text(
-                  buttonLabel,
-                  style: const TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14.5,
-                    color: Colors.white,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      buttonIcon,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      buttonLabel,
+                      style: const TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14.5,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
-      ),
+        const SizedBox(height: 8),
+        Center(
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                _overrideStatus = (targetStatus == 'IN') ? 'OUT' : 'IN';
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+              child: Text(
+                targetStatus == 'IN'
+                    ? 'Need to Check OUT instead?'
+                    : 'Need to Check IN instead?',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: onSurfaceColor.withValues(alpha: 0.6),
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
