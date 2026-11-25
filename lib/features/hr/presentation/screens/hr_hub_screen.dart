@@ -980,15 +980,8 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             ),
           ),
           SizedBox(height: 8 * s),
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 9 * s, vertical: 6 * s),
-            decoration: BoxDecoration(
-              color: st == 'NOT_MARKED'
-                  ? const Color(0xFFF59E0B).withValues(alpha: 0.08)
-                  : AsmitaPalette.subtleAccent(context).withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(10),
-            ),
+          Padding(
+            padding: EdgeInsets.only(top: 2 * s),
             child: Row(
               children: [
                 Icon(
