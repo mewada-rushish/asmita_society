@@ -2,7 +2,7 @@ name: asmita_society
 description: "AsmitA - Secure Smart Home IoT & Society Operations Platform."
 publish_to: 'none'
 
-version: 1.0.5+21
+version: 1.0.5+22
 
 environment:
   sdk: '>=3.12.0 <4.0.0'
