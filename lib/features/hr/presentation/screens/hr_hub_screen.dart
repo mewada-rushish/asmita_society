@@ -1133,6 +1133,29 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                 ],
               ),
             ),
+          if (item['is_late_checkin'] == true || item['is_early_checkout'] == true) ...[
+            SizedBox(height: 6 * s),
+            Wrap(
+              spacing: 6 * s,
+              runSpacing: 4 * s,
+              children: [
+                if (item['is_late_checkin'] == true)
+                  _rangeCountBadge(
+                    icon: Icons.schedule_rounded,
+                    label: 'Late Check-In',
+                    color: const Color(0xFFDC2626),
+                    scale: s,
+                  ),
+                if (item['is_early_checkout'] == true)
+                  _rangeCountBadge(
+                    icon: Icons.logout_rounded,
+                    label: 'Early Check-Out',
+                    color: const Color(0xFFD97706),
+                    scale: s,
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
       ),
