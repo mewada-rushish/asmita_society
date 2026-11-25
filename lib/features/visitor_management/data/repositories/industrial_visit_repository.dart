@@ -30,12 +30,18 @@ class IndustrialVisitRepository {
           EnvConfig.industrialVisits,
           queryParameters: queryParams,
         ).catchError((e) {
+          if (e is DioException && e.response?.statusCode == 429) {
+            throw e;
+          }
           debugPrint('[IndustrialVisitRepository] visits error: $e');
           return Response(requestOptions: RequestOptions(), statusCode: 500);
         }),
         dio.get(
           EnvConfig.myPreApprovedInvites,
         ).catchError((e) {
+          if (e is DioException && e.response?.statusCode == 429) {
+            throw e;
+          }
           debugPrint('[IndustrialVisitRepository] pre-approved invites error: $e');
           return Response(requestOptions: RequestOptions(), statusCode: 500);
         }),

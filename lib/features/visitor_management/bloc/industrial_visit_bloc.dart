@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/models/industrial_visit_model.dart';
 import '../data/repositories/industrial_visit_repository.dart';
@@ -11,6 +11,9 @@ import '../../../core/utils/property_role_resolver.dart';
 
 class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitState> {
   final IndustrialVisitRepository repository;
+  bool _isFetchingVisits = false;
+  DateTime? _lastVisitsFetchAt;
+  DateTime? _visitsRateLimitedUntil;
 
   IndustrialVisitBloc({required this.repository}) : super(const IndustrialVisitState()) {
     on<LoadIndustrialVisits>(_onLoadIndustrialVisits);
@@ -31,6 +34,25 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
     LoadIndustrialVisits event,
     Emitter<IndustrialVisitState> emit,
   ) async {
+    final now = DateTime.now();
+    if (_visitsRateLimitedUntil != null && now.isBefore(_visitsRateLimitedUntil!)) {
+      return;
+    }
+    if (event.isSilent) {
+      final lifecycle = WidgetsBinding.instance.lifecycleState;
+      if (lifecycle != null && lifecycle != AppLifecycleState.resumed) {
+        return;
+      }
+      if (_isFetchingVisits) {
+        return;
+      }
+      if (_lastVisitsFetchAt != null &&
+          now.difference(_lastVisitsFetchAt!) < const Duration(seconds: 10)) {
+        return;
+      }
+    }
+
+    _isFetchingVisits = true;
     if (!event.isSilent && state.visits.isEmpty) {
       emit(state.copyWith(status: IndustrialVisitBlocStatus.loading));
     }
@@ -41,6 +63,8 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
         departmentId: event.departmentId,
         hostUserId: event.hostUserId,
       );
+      _lastVisitsFetchAt = DateTime.now();
+      _visitsRateLimitedUntil = null;
       emit(state.copyWith(
         status: IndustrialVisitBlocStatus.loaded,
         visits: visits,
@@ -82,10 +106,22 @@ class IndustrialVisitBloc extends Bloc<IndustrialVisitEvent, IndustrialVisitStat
         debugPrint('[IndustrialVisitBloc] In-app foreground alert check failed: $e');
       }
     } catch (e) {
+      if (e is DioException && e.response?.statusCode == 429) {
+        final retryAfterHeader = e.response?.headers.value('retry-after');
+        final retrySeconds = int.tryParse(retryAfterHeader ?? '') ?? 60;
+        _visitsRateLimitedUntil = DateTime.now().add(
+          Duration(seconds: retrySeconds.clamp(15, 300)),
+        );
+        if (event.isSilent && state.visits.isNotEmpty) {
+          return;
+        }
+      }
       emit(state.copyWith(
         status: IndustrialVisitBlocStatus.error,
         errorMessage: _parseError(e),
       ));
+    } finally {
+      _isFetchingVisits = false;
     }
   }
 
