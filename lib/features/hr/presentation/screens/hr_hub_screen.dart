@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/design_system.dart';
+import '../../../../core/utils/asmita_time.dart';
 import '../../../../core/widgets/app_skeleton.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_calendar_sheet.dart';
@@ -199,13 +200,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
   }
 
   String _formatTime(dynamic raw) {
-    if (raw == null) return '--';
-    try {
-      final dt = DateTime.parse(raw.toString()).toLocal();
-      return DateFormat('hh:mm a').format(dt);
-    } catch (_) {
-      return '--';
-    }
+    return AsmitaTime.formatTime(raw);
   }
 
   String _formatDate(dynamic raw) {
@@ -1864,13 +1859,7 @@ class _EmployeeAttendanceCalendarSheetState
   }
 
   String _formatTime(dynamic raw) {
-    if (raw == null) return '--';
-    try {
-      final dt = DateTime.parse(raw.toString()).toLocal();
-      return DateFormat('hh:mm a').format(dt);
-    } catch (_) {
-      return '--';
-    }
+    return AsmitaTime.formatTime(raw);
   }
 
   @override
