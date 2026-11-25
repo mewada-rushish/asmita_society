@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/app_refresh.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
+import '../../../../core/widgets/asmita_select_field.dart';
 import '../../../../core/widgets/asmita_toast.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_state.dart';
@@ -228,7 +231,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
           type: AsmitaToastType.success,
         );
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         AsmitaToast.show(context, message: 'Failed to send invite', type: AsmitaToastType.error);
       }
@@ -263,19 +266,22 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Add New Employee', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context))),
+                Text(
+                  'Add New Employee',
+                  style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context)),
+                ),
                 const SizedBox(height: 14),
-                TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Full Name *', border: OutlineInputBorder())),
+                TextField(controller: nameCtrl, decoration: _inputDecoration('Full Name *')),
                 const SizedBox(height: 10),
-                TextField(controller: phoneCtrl, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Mobile Number *', border: OutlineInputBorder())),
+                TextField(controller: phoneCtrl, keyboardType: TextInputType.phone, decoration: _inputDecoration('Mobile Number *')),
                 const SizedBox(height: 10),
-                TextField(controller: emailCtrl, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder())),
+                TextField(controller: emailCtrl, keyboardType: TextInputType.emailAddress, decoration: _inputDecoration('Email')),
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Expanded(child: TextField(controller: deptCtrl, decoration: const InputDecoration(labelText: 'Department', border: OutlineInputBorder()))),
+                    Expanded(child: TextField(controller: deptCtrl, decoration: _inputDecoration('Department'))),
                     const SizedBox(width: 10),
-                    Expanded(child: TextField(controller: desigCtrl, decoration: const InputDecoration(labelText: 'Designation', border: OutlineInputBorder()))),
+                    Expanded(child: TextField(controller: desigCtrl, decoration: _inputDecoration('Designation'))),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -283,7 +289,11 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                   width: double.infinity,
                   height: 46,
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: AsmitaPalette.deepNavy, foregroundColor: Colors.white),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AsmitaPalette.deepNavy,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                     onPressed: saving
                         ? null
                         : () async {
@@ -305,12 +315,12 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                                 AsmitaToast.show(context, message: 'Employee added successfully', type: AsmitaToastType.success);
                                 _loadAll();
                               }
-                            } catch (e) {
+                            } catch (_) {
                               setModalState(() => saving = false);
                               if (mounted) AsmitaToast.show(context, message: 'Failed to add employee', type: AsmitaToastType.error);
                             }
                           },
-                    child: Text(saving ? 'Saving...' : 'Create Employee'),
+                    child: Text(saving ? 'Saving...' : 'Create Employee', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],
@@ -339,29 +349,38 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Post HR Notice / Broadcast', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context))),
+              Text(
+                'Post HR Notice / Broadcast',
+                style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context)),
+              ),
               const SizedBox(height: 12),
-              TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Title *', border: OutlineInputBorder())),
+              TextField(controller: titleCtrl, decoration: _inputDecoration('Title *')),
               const SizedBox(height: 10),
-              TextField(controller: descCtrl, maxLines: 3, decoration: const InputDecoration(labelText: 'Message *', border: OutlineInputBorder())),
-              const SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                initialValue: priority,
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Priority', border: OutlineInputBorder()),
+              TextField(controller: descCtrl, maxLines: 3, decoration: _inputDecoration('Message *')),
+              const SizedBox(height: 12),
+              AsmitaSelectField<String>(
+                label: 'Priority',
+                hint: 'Select Priority',
+                value: priority,
+                prefixIcon: Icons.flag_outlined,
+                sheetTitle: 'Select Notice Priority',
                 items: const [
-                  DropdownMenuItem(value: 'Normal', child: Text('Normal', maxLines: 1, overflow: TextOverflow.ellipsis)),
-                  DropdownMenuItem(value: 'High', child: Text('High', maxLines: 1, overflow: TextOverflow.ellipsis)),
-                  DropdownMenuItem(value: 'Urgent', child: Text('Urgent', maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  AsmitaSelectItem(value: 'Normal', label: 'Normal', icon: Icons.info_outline_rounded),
+                  AsmitaSelectItem(value: 'High', label: 'High', icon: Icons.priority_high_rounded, iconColor: Colors.orange),
+                  AsmitaSelectItem(value: 'Urgent', label: 'Urgent', icon: Icons.warning_amber_rounded, iconColor: Colors.red),
                 ],
                 onChanged: (v) => setModalState(() => priority = v ?? 'Normal'),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 height: 46,
                 child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: AsmitaPalette.deepNavy, foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AsmitaPalette.deepNavy,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                   onPressed: saving
                       ? null
                       : () async {
@@ -387,7 +406,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                             if (mounted) AsmitaToast.show(context, message: 'Failed to post notice', type: AsmitaToastType.error);
                           }
                         },
-                  child: Text(saving ? 'Publishing...' : 'Publish Notice'),
+                  child: Text(saving ? 'Publishing...' : 'Publish Notice', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
                 ),
               ),
             ],
@@ -397,9 +416,22 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     );
   }
 
+  InputDecoration _inputDecoration(String label) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: isDark ? AsmitaPalette.surfaceDark : AsmitaPalette.systemBG,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AsmitaPalette.border(context))),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AsmitaPalette.border(context))),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AsmitaPalette.primary(context), width: 1.5)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bg = Theme.of(context).brightness == Brightness.dark ? AsmitaPalette.systemBGDark : AsmitaPalette.systemBG;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AsmitaPalette.systemBGDark : AsmitaPalette.systemBG;
 
     return Scaffold(
       backgroundColor: bg,
@@ -410,21 +442,51 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             subtitleOverride: 'HR Hub',
             userInitials: _currentUserName().isNotEmpty ? _currentUserName()[0].toUpperCase() : 'H',
           ),
-          _buildKpiStrip(),
-          Container(
-            color: AsmitaPalette.surface(context),
-            child: TabBar(
-              controller: _tabController,
-              labelColor: AsmitaPalette.primary(context),
-              unselectedLabelColor: AsmitaPalette.textSecondary(context),
-              indicatorColor: AsmitaPalette.primary(context),
-              tabs: const [
-                Tab(text: 'Attendance'),
-                Tab(text: 'People & Invites'),
-                Tab(text: 'Visits & Notices'),
-              ],
+          const SizedBox(height: 12),
+          _buildMetricsGrid(context),
+          const SizedBox(height: 12),
+          // Segmented Pill TabBar matching EmployeeRegistryScreen
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              height: 44,
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                  width: 1,
+                ),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                dividerColor: Colors.transparent,
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicator: BoxDecoration(
+                  color: isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy,
+                  borderRadius: BorderRadius.circular(9),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                labelColor: Colors.white,
+                unselectedLabelColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                labelStyle: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+                unselectedLabelStyle: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
+                tabs: const [
+                  Tab(text: 'Attendance'),
+                  Tab(text: 'People'),
+                  Tab(text: 'Visits & Notices'),
+                ],
+              ),
             ),
           ),
+          const SizedBox(height: 8),
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -442,45 +504,166 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildKpiStrip() {
+  Widget _buildMetricsGrid(BuildContext context) {
     final onSite = _attendance.where((e) => e['current_status'] == 'IN').length;
     final checkedOut = _attendance.where((e) => e['current_status'] == 'OUT').length;
     final notMarked = _attendance.where((e) => e['current_status'] == 'NOT_MARKED').length;
-    final pendingInvites = _summary['pending_invites_count'] ??
-        _employees.where((e) => e['approval_status'] == 'PENDING' || e['status'] == 'Invite Pending').length;
+    final pendingInvites = (_summary['pending_invites_count'] ??
+            _employees.where((e) => e['approval_status'] == 'PENDING' || e['status'] == 'Invite Pending').length)
+        as int;
 
-    return Container(
-      color: AsmitaPalette.surface(context),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            _kpiChip('Checked In', onSite, Colors.green),
-            _kpiChip('Checked Out', checkedOut, Colors.blueGrey),
-            _kpiChip('Not Marked', notMarked, Colors.orange),
-            _kpiChip('Pending Invites', pendingInvites, Colors.amber.shade800),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricTile(
+                  context,
+                  title: 'Checked In',
+                  count: onSite,
+                  subtitle: onSite > 0 ? 'On-Site Today' : 'None Inside',
+                  icon: Icons.login_rounded,
+                  accentColor: const Color(0xFF10B981),
+                  isSelected: _tabController.index == 0 && _attendanceFilter == 'IN',
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    _tabController.animateTo(0);
+                    setState(() => _attendanceFilter = _attendanceFilter == 'IN' ? 'ALL' : 'IN');
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildMetricTile(
+                  context,
+                  title: 'Checked Out',
+                  count: checkedOut,
+                  subtitle: 'Left Campus',
+                  icon: Icons.logout_rounded,
+                  accentColor: const Color(0xFF64748B),
+                  isSelected: _tabController.index == 0 && _attendanceFilter == 'OUT',
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    _tabController.animateTo(0);
+                    setState(() => _attendanceFilter = _attendanceFilter == 'OUT' ? 'ALL' : 'OUT');
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricTile(
+                  context,
+                  title: 'Not Marked',
+                  count: notMarked,
+                  subtitle: 'No Check-In Yet',
+                  icon: Icons.person_off_outlined,
+                  accentColor: const Color(0xFFF59E0B),
+                  isSelected: _tabController.index == 0 && _attendanceFilter == 'NOT_MARKED',
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    _tabController.animateTo(0);
+                    setState(() => _attendanceFilter = _attendanceFilter == 'NOT_MARKED' ? 'ALL' : 'NOT_MARKED');
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildMetricTile(
+                  context,
+                  title: 'Pending Invites',
+                  count: pendingInvites,
+                  subtitle: pendingInvites > 0 ? 'Tap to Invite' : 'All Activated',
+                  icon: Icons.mark_email_unread_outlined,
+                  accentColor: const Color(0xFF3B82F6),
+                  isSelected: false,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    _tabController.animateTo(1);
+                    setState(() => _peopleMode = 'PENDING');
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _kpiChip(String label, dynamic count, Color color) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
-      ),
-      child: Row(
-        children: [
-          Text('$count', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: color)),
-          const SizedBox(width: 6),
-          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AsmitaPalette.textPrimary(context))),
-        ],
+  Widget _buildMetricTile(
+    BuildContext context, {
+    required String title,
+    required int count,
+    required String subtitle,
+    required IconData icon,
+    required Color accentColor,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? accentColor.withValues(alpha: isDark ? 0.16 : 0.08)
+              : (isDark ? const Color(0xFF1E293B) : Colors.white),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? accentColor
+                : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+            width: isSelected ? 1.6 : 1.1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 18, color: accentColor),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$count',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      height: 1.1,
+                      color: AsmitaPalette.textPrimary(context),
+                    ),
+                  ),
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: AsmitaPalette.textSecondary(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -499,14 +682,15 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
 
     return AppRefresh(
       onRefresh: _loadAll,
-      child: ListView(
-        padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: AsmitaPalette.surface(context),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(color: AsmitaPalette.border(context)),
             ),
             child: Row(
@@ -521,17 +705,17 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                     onTap: _pickDate,
                     borderRadius: BorderRadius.circular(8),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.calendar_today_rounded, size: 16, color: AsmitaPalette.primary(context)),
+                          Icon(Icons.calendar_today_rounded, size: 15, color: AsmitaPalette.primary(context)),
                           const SizedBox(width: 8),
                           Text(
                             _isSelectedToday
                                 ? 'Today, ${DateFormat('dd MMM yyyy').format(_selectedDate)}'
                                 : DateFormat('EEE, dd MMM yyyy').format(_selectedDate),
-                            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context)),
+                            style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: AsmitaPalette.textPrimary(context)),
                           ),
                         ],
                       ),
@@ -552,10 +736,11 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             onChanged: (v) => setState(() => _searchQuery = v.trim()),
             decoration: InputDecoration(
               hintText: 'Search employee or department...',
-              prefixIcon: const Icon(Icons.search, size: 20),
+              prefixIcon: const Icon(Icons.search_rounded, size: 20),
               filled: true,
               fillColor: AsmitaPalette.surface(context),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AsmitaPalette.border(context))),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AsmitaPalette.border(context))),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AsmitaPalette.border(context))),
               contentPadding: const EdgeInsets.symmetric(vertical: 10),
             ),
           ),
@@ -588,7 +773,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
 
   Widget _buildAttendanceCard(Map<String, dynamic> item) {
     final st = (item['current_status'] ?? 'NOT_MARKED').toString();
-    final Color badgeColor = st == 'IN' ? Colors.green : (st == 'OUT' ? Colors.blueGrey : Colors.orange);
+    final Color badgeColor = st == 'IN' ? const Color(0xFF10B981) : (st == 'OUT' ? const Color(0xFF64748B) : const Color(0xFFF59E0B));
     final String badgeText = st == 'IN' ? 'IN' : (st == 'OUT' ? 'OUT' : 'NOT MARKED');
 
     return Container(
@@ -596,16 +781,17 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AsmitaPalette.surface(context),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AsmitaPalette.border(context)),
       ),
       child: Row(
         children: [
           CircleAvatar(
+            radius: 21,
             backgroundColor: AsmitaPalette.subtleAccent(context),
             child: Text(
               (item['full_name'] ?? 'E').toString().isNotEmpty ? item['full_name'].toString()[0].toUpperCase() : 'E',
-              style: TextStyle(fontWeight: FontWeight.w700, color: AsmitaPalette.primary(context)),
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: AsmitaPalette.primary(context)),
             ),
           ),
           const SizedBox(width: 12),
@@ -613,34 +799,38 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text((item['full_name'] ?? 'Employee').toString(), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AsmitaPalette.textPrimary(context))),
+                Text(
+                  (item['full_name'] ?? 'Employee').toString(),
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14, color: AsmitaPalette.textPrimary(context)),
+                ),
                 Text(
                   '${item['department'] ?? 'General'} • ${item['designation'] ?? 'Staff'}${(item['desk_code'] ?? '').toString().isNotEmpty ? ' • ${item['desk_code']}' : ''}',
-                  style: TextStyle(fontSize: 12, color: AsmitaPalette.textSecondary(context)),
+                  style: GoogleFonts.poppins(fontSize: 11.5, color: AsmitaPalette.textSecondary(context)),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   st == 'NOT_MARKED'
                       ? 'Did not check in on ${DateFormat('dd MMM').format(_selectedDate)}'
-                      : 'In: ${_formatTime(item['first_in_time'])}   •   Out: ${_formatTime(item['last_out_time'])}',
-                  style: TextStyle(
-                    fontSize: 12,
+                      : 'In: ${_formatTime(item['first_in_time'])}  •  Out: ${_formatTime(item['last_out_time'])}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.5,
                     fontWeight: FontWeight.w600,
-                    color: st == 'NOT_MARKED' ? Colors.orange.shade800 : AsmitaPalette.textPrimary(context),
+                    color: st == 'NOT_MARKED' ? const Color(0xFFD97706) : AsmitaPalette.textPrimary(context),
                   ),
                 ),
                 if (item['last_gate_name'] != null && st != 'NOT_MARKED')
                   Text(
                     'Gate: ${item['last_gate_name']}',
-                    style: TextStyle(fontSize: 11, color: AsmitaPalette.textTertiary(context)),
+                    style: GoogleFonts.poppins(fontSize: 11, color: AsmitaPalette.textTertiary(context)),
                   ),
               ],
             ),
           ),
+          const SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
             decoration: BoxDecoration(color: badgeColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
-            child: Text(badgeText, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: badgeColor)),
+            child: Text(badgeText, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: badgeColor)),
           ),
         ],
       ),
@@ -667,31 +857,41 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
 
     return AppRefresh(
       onRefresh: _loadAll,
-      child: ListView(
-        padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           TextField(
             controller: _searchController,
             onChanged: (v) => setState(() => _searchQuery = v.trim()),
             decoration: InputDecoration(
               hintText: _peopleMode == 'SEATS' ? 'Search desk, cabin or occupant...' : 'Search name, phone or department...',
-              prefixIcon: const Icon(Icons.search, size: 20),
+              prefixIcon: const Icon(Icons.search_rounded, size: 20),
               filled: true,
               fillColor: AsmitaPalette.surface(context),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AsmitaPalette.border(context))),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AsmitaPalette.border(context))),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AsmitaPalette.border(context))),
               contentPadding: const EdgeInsets.symmetric(vertical: 10),
             ),
           ),
           const SizedBox(height: 10),
           Row(
             children: [
-              _filterChip('Pending (${pendingList.length})', _peopleMode == 'PENDING', () => setState(() => _peopleMode = 'PENDING')),
-              _filterChip('Directory (${_employees.length})', _peopleMode == 'ALL', () => setState(() => _peopleMode = 'ALL')),
-              _filterChip('Seats (${_desks.length})', _peopleMode == 'SEATS', () => setState(() => _peopleMode = 'SEATS')),
-              const Spacer(),
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _filterChip('Pending (${pendingList.length})', _peopleMode == 'PENDING', () => setState(() => _peopleMode = 'PENDING')),
+                      _filterChip('Directory (${_employees.length})', _peopleMode == 'ALL', () => setState(() => _peopleMode = 'ALL')),
+                      _filterChip('Seats (${_desks.length})', _peopleMode == 'SEATS', () => setState(() => _peopleMode = 'SEATS')),
+                    ],
+                  ),
+                ),
+              ),
               IconButton(
                 onPressed: _openAddEmployeeSheet,
-                icon: Icon(Icons.person_add_alt_1, color: AsmitaPalette.primary(context)),
+                icon: Icon(Icons.person_add_alt_1_rounded, color: AsmitaPalette.primary(context)),
                 tooltip: 'Add Employee',
               ),
             ],
@@ -702,26 +902,30 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
               padding: const EdgeInsets.all(14),
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue.withValues(alpha: 0.25)),
+                color: AsmitaPalette.subtleAccent(context),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AsmitaPalette.primary(context).withValues(alpha: 0.25)),
               ),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
-                      '${pendingList.length} colleague(s) have not activated their app yet.',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AsmitaPalette.textPrimary(context)),
+                      '${pendingList.length} colleague(s) awaiting activation.',
+                      style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: AsmitaPalette.textPrimary(context)),
                     ),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
                     onPressed: _isBulkInviting ? null : _handleBulkInvite,
-                    style: ElevatedButton.styleFrom(backgroundColor: AsmitaPalette.deepNavy, foregroundColor: Colors.white),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AsmitaPalette.deepNavy,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
                     icon: _isBulkInviting
                         ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.send, size: 15),
-                    label: Text(_isBulkInviting ? 'Sending...' : 'Bulk Invite'),
+                        : const Icon(Icons.send_rounded, size: 15),
+                    label: Text(_isBulkInviting ? 'Sending...' : 'Bulk Invite', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -735,24 +939,24 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                 final occ = d['is_occupied'] == true;
                 return Container(
                   margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
                     color: AsmitaPalette.surface(context),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: AsmitaPalette.border(context)),
                   ),
                   child: Row(
                     children: [
-                      Icon(occ ? Icons.person : Icons.event_seat, color: occ ? Colors.blueGrey : Colors.green, size: 20),
+                      Icon(occ ? Icons.person_rounded : Icons.event_seat_rounded, color: occ ? const Color(0xFF64748B) : const Color(0xFF10B981), size: 20),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('${d['flat_number']} (Floor ${d['floor']})', style: TextStyle(fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context))),
+                            Text('${d['flat_number']} (Floor ${d['floor']})', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13.5, color: AsmitaPalette.textPrimary(context))),
                             Text(
                               occ ? 'Occupied by ${d['occupant_name'] ?? 'Colleague'}' : 'Available • ${d['department'] ?? 'Open'}',
-                              style: TextStyle(fontSize: 12, color: occ ? AsmitaPalette.textSecondary(context) : Colors.green.shade700),
+                              style: GoogleFonts.poppins(fontSize: 12, color: occ ? AsmitaPalette.textSecondary(context) : const Color(0xFF059669)),
                             ),
                           ],
                         ),
@@ -773,7 +977,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: AsmitaPalette.surface(context),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AsmitaPalette.border(context)),
                 ),
                 child: Row(
@@ -782,14 +986,14 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text((emp['full_name'] ?? emp['name'] ?? 'Employee').toString(), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AsmitaPalette.textPrimary(context))),
+                          Text((emp['full_name'] ?? emp['name'] ?? 'Employee').toString(), style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14, color: AsmitaPalette.textPrimary(context))),
                           Text(
                             '${emp['department'] ?? 'General'} • ${emp['designation'] ?? emp['role'] ?? 'Staff'}',
-                            style: TextStyle(fontSize: 12, color: AsmitaPalette.textSecondary(context)),
+                            style: GoogleFonts.poppins(fontSize: 12, color: AsmitaPalette.textSecondary(context)),
                           ),
                           Text(
                             '${emp['mobile_number'] ?? emp['phone'] ?? ''}${(emp['desk_code'] ?? '').toString().isNotEmpty ? ' • ${emp['desk_code']}' : ''}',
-                            style: TextStyle(fontSize: 12, color: AsmitaPalette.textSecondary(context)),
+                            style: GoogleFonts.poppins(fontSize: 12, color: AsmitaPalette.textSecondary(context)),
                           ),
                         ],
                       ),
@@ -797,11 +1001,16 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                     if (isPending)
                       ElevatedButton.icon(
                         onPressed: isSendingThis ? null : () => _handleSingleInvite(emp),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF10B981),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
                         icon: isSendingThis
                             ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                            : const Icon(Icons.send, size: 14),
-                        label: const Text('Invite', style: TextStyle(fontSize: 12)),
+                            : const Icon(Icons.send_rounded, size: 14),
+                        label: Text('Invite', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
                       )
                     else
                       _statusPill('ACTIVE'),
@@ -817,32 +1026,41 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
   Widget _buildVisitsAndNoticesTab() {
     return AppRefresh(
       onRefresh: _loadAll,
-      child: ListView(
-        padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () => AsmitaPreApproveWizard.showAsModalSheet(context, title: 'Pre-Approve Candidate'),
-                  style: ElevatedButton.styleFrom(backgroundColor: AsmitaPalette.deepNavy, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 12)),
-                  icon: const Icon(Icons.qr_code_2, size: 18),
-                  label: const Text('Pre-Approve Candidate'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AsmitaPalette.deepNavy,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.qr_code_2_rounded, size: 18),
+                  label: Text('Pre-Approve', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: _openPostNoticeSheet,
-                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
-                  icon: const Icon(Icons.campaign, size: 18),
-                  label: const Text('Post HR Notice'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.campaign_rounded, size: 18),
+                  label: Text('Post Notice', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Text('Upcoming / Recent Visitor Passes', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context))),
+          Text('Upcoming / Recent Visitor Passes', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context))),
           const SizedBox(height: 8),
           BlocBuilder<IndustrialVisitBloc, IndustrialVisitState>(
             builder: (context, state) {
@@ -858,7 +1076,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: AsmitaPalette.surface(context),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(14),
                             border: Border.all(color: AsmitaPalette.border(context)),
                           ),
                           child: Row(
@@ -867,8 +1085,8 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(v.visitorName, style: TextStyle(fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context))),
-                                    Text('${v.purpose ?? 'Visit'} • ${v.visitorMobile ?? ''}', style: TextStyle(fontSize: 12, color: AsmitaPalette.textSecondary(context))),
+                                    Text(v.visitorName, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: AsmitaPalette.textPrimary(context))),
+                                    Text('${v.purpose ?? 'Visit'} • ${v.visitorMobile ?? ''}', style: GoogleFonts.poppins(fontSize: 12, color: AsmitaPalette.textSecondary(context))),
                                   ],
                                 ),
                               ),
@@ -881,7 +1099,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             },
           ),
           const SizedBox(height: 16),
-          Text('HR Notices & Broadcasts', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context))),
+          Text('HR Notices & Broadcasts', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context))),
           const SizedBox(height: 8),
           if (_notices.isEmpty)
             _emptyCard('No notices published yet')
@@ -891,7 +1109,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: AsmitaPalette.surface(context),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: AsmitaPalette.border(context)),
                   ),
                   child: Column(
@@ -900,14 +1118,14 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(child: Text((n['title'] ?? '').toString(), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AsmitaPalette.textPrimary(context)))),
+                          Expanded(child: Text((n['title'] ?? '').toString(), style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14, color: AsmitaPalette.textPrimary(context)))),
                           _statusPill((n['priority'] ?? 'Normal').toString().toUpperCase()),
                         ],
                       ),
                       const SizedBox(height: 4),
-                      Text((n['description'] ?? '').toString(), style: TextStyle(fontSize: 13, color: AsmitaPalette.textSecondary(context))),
+                      Text((n['description'] ?? '').toString(), style: GoogleFonts.poppins(fontSize: 12.5, color: AsmitaPalette.textSecondary(context))),
                       const SizedBox(height: 6),
-                      Text(_formatDate(n['created_at']), style: TextStyle(fontSize: 11, color: AsmitaPalette.textTertiary(context))),
+                      Text(_formatDate(n['created_at']), style: GoogleFonts.poppins(fontSize: 11, color: AsmitaPalette.textTertiary(context))),
                     ],
                   ),
                 )),
@@ -921,7 +1139,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
         decoration: BoxDecoration(
           color: selected ? AsmitaPalette.deepNavy : AsmitaPalette.surface(context),
           borderRadius: BorderRadius.circular(20),
@@ -929,7 +1147,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
         ),
         child: Text(
           label,
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: selected ? Colors.white : AsmitaPalette.textPrimary(context)),
+          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: selected ? Colors.white : AsmitaPalette.textPrimary(context)),
         ),
       ),
     );
@@ -938,27 +1156,27 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
   Widget _statusPill(String status) {
     final s = status.toUpperCase();
     final Color c = (s == 'APPROVED' || s == 'ACTIVE' || s == 'CHECKED_IN')
-        ? Colors.green
+        ? const Color(0xFF10B981)
         : (s == 'REJECTED' || s == 'URGENT')
-            ? Colors.red
-            : Colors.amber.shade800;
+            ? AsmitaPalette.actionRed
+            : const Color(0xFFD97706);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
-      child: Text(s, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: c)),
+      child: Text(s, style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700, color: c)),
     );
   }
 
   Widget _emptyCard(String msg) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: AsmitaPalette.surface(context),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AsmitaPalette.border(context)),
       ),
-      child: Text(msg, style: TextStyle(fontSize: 13, color: AsmitaPalette.textSecondary(context))),
+      child: Text(msg, style: GoogleFonts.poppins(fontSize: 13, color: AsmitaPalette.textSecondary(context))),
     );
   }
 }
