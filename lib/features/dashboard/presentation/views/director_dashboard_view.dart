@@ -22,6 +22,7 @@ import '../../widgets/asmita_pre_approve_wizard.dart';
 import '../../widgets/bbps_bill_payments_sheet.dart';
 import '../../widgets/asmita_hotline_sheet.dart';
 import '../../../visitor_management/presentation/screens/employee_gate_attendance_scanner_screen.dart';
+import '../../../hr/presentation/screens/hr_hub_screen.dart';
 import '../../../visitor_management/bloc/visitor_bloc.dart';
 import '../../../visitor_management/bloc/visitor_event.dart';
 import '../../../visitor_management/bloc/industrial_visit_bloc.dart';
@@ -572,6 +573,47 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                         if (_activeDelegateName != null) ...[
                           _buildDelegationBanner(context),
                           const SizedBox(height: 12),
+                        ],
+
+                        if ((widget.departmentName ?? '').toLowerCase().contains('hr') ||
+                            (widget.departmentName ?? '').toLowerCase().contains('human resource') ||
+                            (widget.designation ?? '').toLowerCase().contains('hr')) ...[
+                          InkWell(
+                            onTap: () => HrHubScreen.open(context),
+                            borderRadius: BorderRadius.circular(14),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF27347B), Color(0xFF3B4CB8)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: const Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 19,
+                                    backgroundColor: Colors.white24,
+                                    child: Icon(Icons.badge_rounded, color: Colors.white, size: 20),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('HR Hub', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
+                                        Text('Attendance Logs, Invites, Seats & Notices', style: TextStyle(color: Colors.white70, fontSize: 11.5)),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
                         ],
 
                         // 2. Quick Actions Grid (Square boxes matching employee style)
