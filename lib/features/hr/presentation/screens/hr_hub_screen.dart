@@ -818,6 +818,35 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+          TextField(
+            controller: _searchController,
+            onChanged: (v) => setState(() {
+              _searchQuery = v.trim();
+              _attendanceVisibleCount = _pageSize;
+            }),
+            style: GoogleFonts.poppins(
+              fontSize: 13 * _uiScale(context),
+              color: AsmitaPalette.textPrimary(context),
+            ),
+            decoration: InputDecoration(
+              hintText: 'Search employee or department...',
+              hintStyle: GoogleFonts.poppins(
+                fontSize: 13 * _uiScale(context),
+                color: AsmitaPalette.textTertiary(context),
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                size: 20,
+                color: AsmitaPalette.textTertiary(context),
+              ),
+              filled: true,
+              fillColor: AsmitaPalette.surface(context),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AsmitaPalette.border(context))),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AsmitaPalette.border(context))),
+              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            ),
+          ),
+          const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
@@ -881,35 +910,6 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                   tooltip: 'Next',
                 ),
               ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _searchController,
-            onChanged: (v) => setState(() {
-              _searchQuery = v.trim();
-              _attendanceVisibleCount = _pageSize;
-            }),
-            style: GoogleFonts.poppins(
-              fontSize: 13 * _uiScale(context),
-              color: AsmitaPalette.textPrimary(context),
-            ),
-            decoration: InputDecoration(
-              hintText: 'Search employee or department...',
-              hintStyle: GoogleFonts.poppins(
-                fontSize: 13 * _uiScale(context),
-                color: AsmitaPalette.textTertiary(context),
-              ),
-              prefixIcon: Icon(
-                Icons.search_rounded,
-                size: 20,
-                color: AsmitaPalette.textTertiary(context),
-              ),
-              filled: true,
-              fillColor: AsmitaPalette.surface(context),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AsmitaPalette.border(context))),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AsmitaPalette.border(context))),
-              contentPadding: const EdgeInsets.symmetric(vertical: 10),
             ),
           ),
           const SizedBox(height: 12),
