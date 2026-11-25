@@ -28,6 +28,19 @@ class HrRepository {
     return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
   }
 
+  Future<Map<String, dynamic>> getEmployeeAttendanceCalendar(
+    int societyId, {
+    required int userId,
+    required String month,
+  }) async {
+    final res = await _dio.get('/app-api/hr/attendance/employee', queryParameters: {
+      'society_id': societyId,
+      'user_id': userId,
+      'month': month,
+    });
+    return Map<String, dynamic>.from(res.data['data'] ?? {});
+  }
+
   Future<List<Map<String, dynamic>>> getDirectoryEmployees(int societyId) async {
     final res = await _dio.get('/api/societies/$societyId/directories/residents');
     final raw = res.data;
