@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/app_refresh.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
+import '../../../../core/widgets/asmita_calendar_sheet.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_select_field.dart';
 import '../../../../core/widgets/asmita_toast.dart';
@@ -150,11 +151,13 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
   }
 
   Future<void> _pickDate() async {
-    final picked = await showDatePicker(
+    final picked = await showAsmitaCalendarSheet(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now(),
+      title: 'Select Attendance Date',
+      subtitle: 'Check who checked in, checked out, or was absent',
     );
     if (picked != null) {
       await _changeDate(picked);
