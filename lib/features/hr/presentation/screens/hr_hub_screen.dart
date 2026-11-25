@@ -945,17 +945,59 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
   }
 
   Widget _buildAttendanceSkeletonList() {
-    final dummy = {
-      'full_name': 'Employee Name Placeholder',
-      'department': 'Department',
-      'designation': 'Designation Role',
-      'desk_code': 'D-101-S1',
-      'current_status': 'NOT_MARKED',
-    };
+    final s = _uiScale(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final boneColor = isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
+    Widget bone(double w, double h, {double r = 6}) => Container(
+          width: w,
+          height: h,
+          decoration: BoxDecoration(
+            color: boneColor,
+            borderRadius: BorderRadius.circular(r),
+          ),
+        );
+
     return AsmitaSkeleton(
       isLoading: true,
       child: Column(
-        children: List.generate(5, (_) => _buildAttendanceCard(dummy)),
+        children: List.generate(
+          5,
+          (_) => Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: EdgeInsets.all(12 * s),
+            decoration: BoxDecoration(
+              color: AsmitaPalette.surface(context),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AsmitaPalette.border(context)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    bone(36 * s, 36 * s, r: 18 * s),
+                    SizedBox(width: 10 * s),
+                    Expanded(child: bone(150 * s, 14 * s)),
+                    SizedBox(width: 12 * s),
+                    bone(72 * s, 22 * s, r: 8),
+                  ],
+                ),
+                SizedBox(height: 10 * s),
+                Row(
+                  children: [
+                    bone(78 * s, 22 * s, r: 8),
+                    SizedBox(width: 6 * s),
+                    bone(86 * s, 22 * s, r: 8),
+                    SizedBox(width: 6 * s),
+                    bone(64 * s, 22 * s, r: 8),
+                  ],
+                ),
+                SizedBox(height: 10 * s),
+                bone(170 * s, 12 * s),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
