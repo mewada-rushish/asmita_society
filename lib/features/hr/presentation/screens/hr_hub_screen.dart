@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/app_refresh.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_calendar_sheet.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
@@ -547,16 +548,14 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildAttendanceTab(),
-                      _buildPeopleTab(),
-                      _buildVisitsAndNoticesTab(),
-                    ],
-                  ),
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildAttendanceTab(),
+                _buildPeopleTab(),
+                _buildVisitsAndNoticesTab(),
+              ],
+            ),
           ),
         ],
       ),
@@ -816,11 +815,8 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             ),
           ),
           const SizedBox(height: 12),
-          if (_isAttendanceLoading)
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(child: CircularProgressIndicator()),
-            )
+          if (_isLoading || _isAttendanceLoading)
+            _buildAttendanceSkeletonList()
           else if (filtered.isEmpty)
             _emptyCard('No attendance records match this filter')
           else
@@ -830,10 +826,29 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     );
   }
 
+  Widget _buildAttendanceSkeletonList() {
+    final dummy = {
+      'full_name': 'Employee Name Placeholder',
+      'department': 'Department',
+      'designation': 'Designation Role',
+      'desk_code': 'D-101-S1',
+      'current_status': 'NOT_MARKED',
+    };
+    return AsmitaSkeleton(
+      isLoading: true,
+      child: Column(
+        children: List.generate(5, (_) => _buildAttendanceCard(dummy)),
+      ),
+    );
+  }
+
   Widget _buildAttendanceCard(Map<String, dynamic> item) {
     final st = (item['current_status'] ?? 'NOT_MARKED').toString();
     final Color badgeColor = st == 'IN' ? const Color(0xFF10B981) : (st == 'OUT' ? const Color(0xFF64748B) : const Color(0xFFF59E0B));
     final String badgeText = st == 'IN' ? 'IN' : (st == 'OUT' ? 'OUT' : 'NOT MARKED');
+    final dept = (item['department'] ?? 'General').toString().trim();
+    final role = (item['designation'] ?? 'Staff').toString().trim();
+    final desk = (item['desk_code'] ?? '').toString().trim();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -843,53 +858,112 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AsmitaPalette.border(context)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 21,
-            backgroundColor: AsmitaPalette.subtleAccent(context),
-            child: Text(
-              (item['full_name'] ?? 'E').toString().isNotEmpty ? item['full_name'].toString()[0].toUpperCase() : 'E',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: AsmitaPalette.primary(context)),
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                radius: 21,
+                backgroundColor: AsmitaPalette.subtleAccent(context),
+                child: Text(
+                  (item['full_name'] ?? 'E').toString().isNotEmpty ? item['full_name'].toString()[0].toUpperCase() : 'E',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: AsmitaPalette.primary(context)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      (item['full_name'] ?? 'Employee').toString(),
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14, color: AsmitaPalette.textPrimary(context)),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      role,
+                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: AsmitaPalette.textSecondary(context)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(color: badgeColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
+                child: Text(badgeText, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: badgeColor)),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              _infoPill(Icons.business_outlined, dept),
+              if (desk.isNotEmpty) _infoPill(Icons.desk_rounded, desk, highlight: true),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: BoxDecoration(
+              color: st == 'NOT_MARKED'
+                  ? const Color(0xFFF59E0B).withValues(alpha: 0.08)
+                  : AsmitaPalette.subtleAccent(context).withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
               children: [
-                Text(
-                  (item['full_name'] ?? 'Employee').toString(),
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14, color: AsmitaPalette.textPrimary(context)),
+                Icon(
+                  st == 'NOT_MARKED' ? Icons.info_outline_rounded : Icons.access_time_rounded,
+                  size: 14,
+                  color: st == 'NOT_MARKED' ? const Color(0xFFD97706) : AsmitaPalette.primary(context),
                 ),
-                Text(
-                  '${item['department'] ?? 'General'} • ${item['designation'] ?? 'Staff'}${(item['desk_code'] ?? '').toString().isNotEmpty ? ' • ${item['desk_code']}' : ''}',
-                  style: GoogleFonts.poppins(fontSize: 11.5, color: AsmitaPalette.textSecondary(context)),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  st == 'NOT_MARKED'
-                      ? 'Did not check in on ${DateFormat('dd MMM').format(_selectedDate)}'
-                      : 'In: ${_formatTime(item['first_in_time'])}  •  Out: ${_formatTime(item['last_out_time'])}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                    color: st == 'NOT_MARKED' ? const Color(0xFFD97706) : AsmitaPalette.textPrimary(context),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    st == 'NOT_MARKED'
+                        ? 'Did not check in on ${DateFormat('dd MMM').format(_selectedDate)}'
+                        : 'In: ${_formatTime(item['first_in_time'])}  •  Out: ${_formatTime(item['last_out_time'])}${item['last_gate_name'] != null ? '  •  ${item['last_gate_name']}' : ''}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: st == 'NOT_MARKED' ? const Color(0xFFD97706) : AsmitaPalette.textPrimary(context),
+                    ),
                   ),
                 ),
-                if (item['last_gate_name'] != null && st != 'NOT_MARKED')
-                  Text(
-                    'Gate: ${item['last_gate_name']}',
-                    style: GoogleFonts.poppins(fontSize: 11, color: AsmitaPalette.textTertiary(context)),
-                  ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-            decoration: BoxDecoration(color: badgeColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
-            child: Text(badgeText, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: badgeColor)),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoPill(IconData icon, String text, {bool highlight = false}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = highlight
+        ? AsmitaPalette.subtleAccent(context)
+        : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9));
+    final fg = highlight ? AsmitaPalette.primary(context) : AsmitaPalette.textSecondary(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: fg),
+          const SizedBox(width: 5),
+          Text(
+            text,
+            style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: fg),
           ),
         ],
       ),
@@ -990,7 +1064,9 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
               ),
             ),
           ],
-          if (_peopleMode == 'SEATS') ...[
+          if (_isLoading)
+            _buildAttendanceSkeletonList()
+          else if (_peopleMode == 'SEATS') ...[
             if (filteredDesks.isEmpty)
               _emptyCard('No desks or cabins found')
             else
@@ -1031,6 +1107,11 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
               final uid = emp['user_id'] ?? emp['id'];
               final isPending = emp['approval_status'] == 'PENDING' || emp['status'] == 'Invite Pending';
               final isSendingThis = _resendingUserId != null && _resendingUserId.toString() == uid.toString();
+              final dept = (emp['department'] ?? 'General').toString().trim();
+              final role = (emp['designation'] ?? emp['role'] ?? 'Staff').toString().trim();
+              final desk = (emp['desk_code'] ?? emp['cabin_code'] ?? '').toString().trim();
+              final phone = (emp['mobile_number'] ?? emp['phone'] ?? '').toString().trim();
+
               return Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.all(14),
@@ -1039,40 +1120,49 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AsmitaPalette.border(context)),
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text((emp['full_name'] ?? emp['name'] ?? 'Employee').toString(), style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14, color: AsmitaPalette.textPrimary(context))),
-                          Text(
-                            '${emp['department'] ?? 'General'} • ${emp['designation'] ?? emp['role'] ?? 'Staff'}',
-                            style: GoogleFonts.poppins(fontSize: 12, color: AsmitaPalette.textSecondary(context)),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text((emp['full_name'] ?? emp['name'] ?? 'Employee').toString(), style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14, color: AsmitaPalette.textPrimary(context))),
+                              const SizedBox(height: 1),
+                              Text(role, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: AsmitaPalette.textSecondary(context))),
+                            ],
                           ),
-                          Text(
-                            '${emp['mobile_number'] ?? emp['phone'] ?? ''}${(emp['desk_code'] ?? '').toString().isNotEmpty ? ' • ${emp['desk_code']}' : ''}',
-                            style: GoogleFonts.poppins(fontSize: 12, color: AsmitaPalette.textSecondary(context)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (isPending)
-                      ElevatedButton.icon(
-                        onPressed: isSendingThis ? null : () => _handleSingleInvite(emp),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF10B981),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        icon: isSendingThis
-                            ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                            : const Icon(Icons.send_rounded, size: 14),
-                        label: Text('Invite', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
-                      )
-                    else
-                      _statusPill('ACTIVE'),
+                        if (isPending)
+                          ElevatedButton.icon(
+                            onPressed: isSendingThis ? null : () => _handleSingleInvite(emp),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF10B981),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            icon: isSendingThis
+                                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : const Icon(Icons.send_rounded, size: 14),
+                            label: Text('Invite', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                          )
+                        else
+                          _statusPill('ACTIVE'),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        _infoPill(Icons.business_outlined, dept),
+                        if (desk.isNotEmpty) _infoPill(Icons.desk_rounded, desk, highlight: true),
+                        if (phone.isNotEmpty) _infoPill(Icons.phone_outlined, phone),
+                      ],
+                    ),
                   ],
                 ),
               );
