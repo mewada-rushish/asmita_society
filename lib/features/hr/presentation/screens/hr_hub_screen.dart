@@ -862,10 +862,10 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               CircleAvatar(
-                radius: 21,
+                radius: 20,
                 backgroundColor: AsmitaPalette.subtleAccent(context),
                 child: Text(
                   (item['full_name'] ?? 'E').toString().isNotEmpty ? item['full_name'].toString()[0].toUpperCase() : 'E',
@@ -874,19 +874,9 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      (item['full_name'] ?? 'Employee').toString(),
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14, color: AsmitaPalette.textPrimary(context)),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      role,
-                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: AsmitaPalette.textSecondary(context)),
-                    ),
-                  ],
+                child: Text(
+                  (item['full_name'] ?? 'Employee').toString(),
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14, color: AsmitaPalette.textPrimary(context)),
                 ),
               ),
               const SizedBox(width: 8),
@@ -902,6 +892,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             spacing: 8,
             runSpacing: 6,
             children: [
+              _infoPill(Icons.badge_outlined, role),
               _infoPill(Icons.business_outlined, dept),
               if (desk.isNotEmpty) _infoPill(Icons.desk_rounded, desk, highlight: true),
             ],
@@ -1126,13 +1117,9 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                     Row(
                       children: [
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text((emp['full_name'] ?? emp['name'] ?? 'Employee').toString(), style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14, color: AsmitaPalette.textPrimary(context))),
-                              const SizedBox(height: 1),
-                              Text(role, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: AsmitaPalette.textSecondary(context))),
-                            ],
+                          child: Text(
+                            (emp['full_name'] ?? emp['name'] ?? 'Employee').toString(),
+                            style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14, color: AsmitaPalette.textPrimary(context)),
                           ),
                         ),
                         if (isPending)
@@ -1158,6 +1145,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                       spacing: 8,
                       runSpacing: 6,
                       children: [
+                        _infoPill(Icons.badge_outlined, role),
                         _infoPill(Icons.business_outlined, dept),
                         if (desk.isNotEmpty) _infoPill(Icons.desk_rounded, desk, highlight: true),
                         if (phone.isNotEmpty) _infoPill(Icons.phone_outlined, phone),
