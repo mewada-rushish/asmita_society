@@ -577,7 +577,9 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
 
                         if ((widget.departmentName ?? '').toLowerCase().contains('hr') ||
                             (widget.departmentName ?? '').toLowerCase().contains('human resource') ||
-                            (widget.designation ?? '').toLowerCase().contains('hr')) ...[
+                            (widget.designation ?? '').toLowerCase().contains('hr') ||
+                            (widget.deskNumber ?? '').toLowerCase().startsWith('hr-') ||
+                            RegExp(r'\bhr\b').hasMatch((widget.directorName ?? '').toLowerCase())) ...[
                           InkWell(
                             onTap: () => HrHubScreen.open(context),
                             borderRadius: BorderRadius.circular(14),
