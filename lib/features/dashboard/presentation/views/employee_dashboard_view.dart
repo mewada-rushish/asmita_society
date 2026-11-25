@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
@@ -591,9 +592,9 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
                     ),
                   ],
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    CircleAvatar(
+                    const CircleAvatar(
                       radius: 19,
                       backgroundColor: Colors.white24,
                       child: Icon(Icons.badge_rounded, color: Colors.white, size: 20),
@@ -605,11 +606,11 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
                         children: [
                           Text(
                             'HR Hub',
-                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700),
+                            style: GoogleFonts.poppins(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700),
                           ),
                           Text(
                             'Attendance Logs, Invites, Seats & Notices',
-                            style: TextStyle(color: Colors.white70, fontSize: 11.5),
+                            style: GoogleFonts.poppins(color: Colors.white70, fontSize: 11.5),
                           ),
                         ],
                       ),
