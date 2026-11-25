@@ -1116,6 +1116,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _EmployeeAttendanceCalendarSheet(
         repo: _repo,
@@ -1815,7 +1816,12 @@ class _EmployeeAttendanceCalendarSheetState
           color: bg,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          10,
+          16,
+          20 + MediaQuery.viewPaddingOf(context).bottom,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

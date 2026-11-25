@@ -20,7 +20,8 @@ Future<DateTimeRange?> showAsmitaCalendarRangeSheet({
     subtitle: subtitle,
     child: _AsmitaCalendarRangeBody(
       initialRange: initialRange,
-      firstDate: firstDate ?? DateTime.now().subtract(const Duration(days: 365)),
+      firstDate:
+          firstDate ?? DateTime.now().subtract(const Duration(days: 365)),
       lastDate: lastDate ?? DateTime.now(),
     ),
   );
@@ -38,7 +39,8 @@ class _AsmitaCalendarRangeBody extends StatefulWidget {
   });
 
   @override
-  State<_AsmitaCalendarRangeBody> createState() => _AsmitaCalendarRangeBodyState();
+  State<_AsmitaCalendarRangeBody> createState() =>
+      _AsmitaCalendarRangeBodyState();
 }
 
 class _AsmitaCalendarRangeBodyState extends State<_AsmitaCalendarRangeBody> {
@@ -58,8 +60,10 @@ class _AsmitaCalendarRangeBodyState extends State<_AsmitaCalendarRangeBody> {
   DateTime get _firstOnly => _dateOnly(widget.firstDate);
   DateTime get _lastOnly => _dateOnly(widget.lastDate);
 
-  bool _isSameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
-  bool _isDisabled(DateTime day) => day.isBefore(_firstOnly) || day.isAfter(_lastOnly);
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+  bool _isDisabled(DateTime day) =>
+      day.isBefore(_firstOnly) || day.isAfter(_lastOnly);
 
   bool get _canGoPrevMonth {
     final prev = DateTime(_displayedMonth.year, _displayedMonth.month - 1, 1);
@@ -118,7 +122,11 @@ class _AsmitaCalendarRangeBodyState extends State<_AsmitaCalendarRangeBody> {
     final yesterdayOnly = todayOnly.subtract(const Duration(days: 1));
     final weekStartOnly = todayOnly.subtract(const Duration(days: 6));
 
-    final daysInMonth = DateTime(_displayedMonth.year, _displayedMonth.month + 1, 0).day;
+    final daysInMonth = DateTime(
+      _displayedMonth.year,
+      _displayedMonth.month + 1,
+      0,
+    ).day;
     final firstWeekdayOffset = _displayedMonth.weekday - 1; // Mo = 0 .. Su = 6
     // Always render 6 weeks (42 cells) so sheet height never changes between months
     const int totalCells = 42;
@@ -128,6 +136,7 @@ class _AsmitaCalendarRangeBodyState extends State<_AsmitaCalendarRangeBody> {
     return SafeArea(
       top: false,
       child: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(context).bottom),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -147,7 +156,9 @@ class _AsmitaCalendarRangeBodyState extends State<_AsmitaCalendarRangeBody> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E3A8A) : AsmitaPalette.deepNavy,
+                color: isDark
+                    ? const Color(0xFF1E3A8A)
+                    : AsmitaPalette.deepNavy,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
@@ -155,7 +166,13 @@ class _AsmitaCalendarRangeBodyState extends State<_AsmitaCalendarRangeBody> {
                 children: [
                   IconButton(
                     onPressed: _canGoPrevMonth
-                        ? () => setState(() => _displayedMonth = DateTime(_displayedMonth.year, _displayedMonth.month - 1, 1))
+                        ? () => setState(
+                            () => _displayedMonth = DateTime(
+                              _displayedMonth.year,
+                              _displayedMonth.month - 1,
+                              1,
+                            ),
+                          )
                         : null,
                     icon: Icon(
                       Icons.chevron_left_rounded,
@@ -172,7 +189,13 @@ class _AsmitaCalendarRangeBodyState extends State<_AsmitaCalendarRangeBody> {
                   ),
                   IconButton(
                     onPressed: _canGoNextMonth
-                        ? () => setState(() => _displayedMonth = DateTime(_displayedMonth.year, _displayedMonth.month + 1, 1))
+                        ? () => setState(
+                            () => _displayedMonth = DateTime(
+                              _displayedMonth.year,
+                              _displayedMonth.month + 1,
+                              1,
+                            ),
+                          )
                         : null,
                     icon: Icon(
                       Icons.chevron_right_rounded,
@@ -221,12 +244,19 @@ class _AsmitaCalendarRangeBodyState extends State<_AsmitaCalendarRangeBody> {
                 if (dayNum < 1 || dayNum > daysInMonth) {
                   return const SizedBox.shrink();
                 }
-                final day = DateTime(_displayedMonth.year, _displayedMonth.month, dayNum);
+                final day = DateTime(
+                  _displayedMonth.year,
+                  _displayedMonth.month,
+                  dayNum,
+                );
                 final disabled = _isDisabled(day);
                 final isStart = _isSameDay(day, _startDate);
                 final isEnd = _isSameDay(day, effectiveEnd);
                 final isEndpoint = isStart || isEnd;
-                final inRange = !isEndpoint && day.isAfter(_startDate) && day.isBefore(effectiveEnd);
+                final inRange =
+                    !isEndpoint &&
+                    day.isAfter(_startDate) &&
+                    day.isBefore(effectiveEnd);
                 final isToday = _isSameDay(day, todayOnly);
 
                 return InkWell(
@@ -235,13 +265,18 @@ class _AsmitaCalendarRangeBodyState extends State<_AsmitaCalendarRangeBody> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: isEndpoint
-                          ? (isDark ? AsmitaPalette.deepNavyDark : AsmitaPalette.deepNavy)
+                          ? (isDark
+                                ? AsmitaPalette.deepNavyDark
+                                : AsmitaPalette.deepNavy)
                           : inRange
-                              ? AsmitaPalette.subtleAccent(context)
-                              : Colors.transparent,
+                          ? AsmitaPalette.subtleAccent(context)
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(10),
                       border: isToday && !isEndpoint
-                          ? Border.all(color: AsmitaPalette.primary(context), width: 1.3)
+                          ? Border.all(
+                              color: AsmitaPalette.primary(context),
+                              width: 1.3,
+                            )
                           : null,
                     ),
                     alignment: Alignment.center,
@@ -249,14 +284,18 @@ class _AsmitaCalendarRangeBodyState extends State<_AsmitaCalendarRangeBody> {
                       '$dayNum',
                       style: GoogleFonts.poppins(
                         fontSize: 12.5,
-                        fontWeight: isEndpoint || isToday || inRange ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: isEndpoint || isToday || inRange
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                         color: isEndpoint
                             ? Colors.white
                             : inRange
-                                ? AsmitaPalette.primary(context)
-                                : disabled
-                                    ? AsmitaPalette.textTertiary(context).withValues(alpha: 0.4)
-                                    : AsmitaPalette.textPrimary(context),
+                            ? AsmitaPalette.primary(context)
+                            : disabled
+                            ? AsmitaPalette.textTertiary(
+                                context,
+                              ).withValues(alpha: 0.4)
+                            : AsmitaPalette.textPrimary(context),
                       ),
                     ),
                   ),
@@ -269,7 +308,9 @@ class _AsmitaCalendarRangeBodyState extends State<_AsmitaCalendarRangeBody> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: isDark ? AsmitaPalette.surfaceDark : AsmitaPalette.systemBG,
+                color: isDark
+                    ? AsmitaPalette.surfaceDark
+                    : AsmitaPalette.systemBG,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: AsmitaPalette.border(context)),
               ),
@@ -280,12 +321,22 @@ class _AsmitaCalendarRangeBodyState extends State<_AsmitaCalendarRangeBody> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _endDate == null ? 'Tap end date (or Apply single day)' : 'Selected Range',
-                          style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w500, color: AsmitaPalette.textSecondary(context)),
+                          _endDate == null
+                              ? 'Tap end date (or Apply single day)'
+                              : 'Selected Range',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w500,
+                            color: AsmitaPalette.textSecondary(context),
+                          ),
                         ),
                         Text(
                           _rangeSummary,
-                          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context)),
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AsmitaPalette.textPrimary(context),
+                          ),
                         ),
                       ],
                     ),
@@ -296,10 +347,21 @@ class _AsmitaCalendarRangeBodyState extends State<_AsmitaCalendarRangeBody> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AsmitaPalette.deepNavy,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                    child: Text('Apply', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    child: Text(
+                      'Apply',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -312,7 +374,10 @@ class _AsmitaCalendarRangeBodyState extends State<_AsmitaCalendarRangeBody> {
   }
 
   Widget _quickChip(String label, DateTime start, DateTime end) {
-    final active = _isSameDay(start, _startDate) && _endDate != null && _isSameDay(end, _endDate!);
+    final active =
+        _isSameDay(start, _startDate) &&
+        _endDate != null &&
+        _isSameDay(end, _endDate!);
     final disabled = _isDisabled(start) || _isDisabled(end);
     return Expanded(
       child: InkWell(
@@ -321,9 +386,15 @@ class _AsmitaCalendarRangeBodyState extends State<_AsmitaCalendarRangeBody> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: active ? AsmitaPalette.deepNavy : AsmitaPalette.surface(context),
+            color: active
+                ? AsmitaPalette.deepNavy
+                : AsmitaPalette.surface(context),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: active ? AsmitaPalette.deepNavy : AsmitaPalette.border(context)),
+            border: Border.all(
+              color: active
+                  ? AsmitaPalette.deepNavy
+                  : AsmitaPalette.border(context),
+            ),
           ),
           alignment: Alignment.center,
           child: Text(
