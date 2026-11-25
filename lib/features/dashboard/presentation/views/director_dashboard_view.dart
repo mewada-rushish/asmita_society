@@ -604,7 +604,7 @@ class _DirectorDashboardViewState extends State<DirectorDashboardView> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text('HR Hub', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
-                                        Text('Attendance, Invites, Leaves, Seats & Notices', style: TextStyle(color: Colors.white70, fontSize: 11.5)),
+                                        Text('Attendance Logs, Invites, Seats & Notices', style: TextStyle(color: Colors.white70, fontSize: 11.5)),
                                       ],
                                     ),
                                   ),
