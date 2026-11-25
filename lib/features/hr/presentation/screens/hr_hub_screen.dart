@@ -1707,7 +1707,27 @@ class _EmployeeAttendanceCalendarSheetState
         _isLoading = false;
       });
     } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+      if (!mounted) return;
+      final now = DateTime.now();
+      final todayOnly = DateTime(now.year, now.month, now.day);
+      final daysInMonth =
+          DateTime(_displayedMonth.year, _displayedMonth.month + 1, 0).day;
+      int effectiveDays = 0;
+      if (_displayedMonth.year < todayOnly.year ||
+          (_displayedMonth.year == todayOnly.year &&
+              _displayedMonth.month < todayOnly.month)) {
+        effectiveDays = daysInMonth;
+      } else if (_displayedMonth.year == todayOnly.year &&
+          _displayedMonth.month == todayOnly.month) {
+        effectiveDays = todayOnly.day;
+      }
+      setState(() {
+        _presentCount = 0;
+        _absentCount = effectiveDays;
+        _days = {};
+        _selectedDay = null;
+        _isLoading = false;
+      });
     }
   }
 
