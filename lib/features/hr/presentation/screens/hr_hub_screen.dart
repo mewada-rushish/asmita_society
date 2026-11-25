@@ -55,6 +55,10 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
   List<Map<String, dynamic>> _desks = [];
   List<Map<String, dynamic>> _notices = [];
 
+  static const int _pageSize = 20;
+  int _attendanceVisibleCount = _pageSize;
+  int _peopleVisibleCount = _pageSize;
+
   String _searchQuery = '';
   String _attendanceFilter = 'ALL'; // ALL, IN, OUT, NOT_MARKED
   String _peopleMode = 'PENDING'; // PENDING, ALL, SEATS
@@ -147,6 +151,8 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
         _employees = results[2] as List<Map<String, dynamic>>;
         _desks = rawDesks.map((e) => Map<String, dynamic>.from(e as Map)).toList();
         _notices = results[4] as List<Map<String, dynamic>>;
+        _attendanceVisibleCount = _pageSize;
+        _peopleVisibleCount = _pageSize;
         _isLoading = false;
       });
     } catch (_) {
@@ -170,6 +176,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
       if (!mounted) return;
       setState(() {
         _attendance = rows;
+        _attendanceVisibleCount = _pageSize;
         _isAttendanceLoading = false;
       });
     } catch (_) {
@@ -781,20 +788,36 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
       return true;
     }).toList();
 
+    final visibleCount = _attendanceVisibleCount.clamp(0, filtered.length);
+    final hasMore = visibleCount < filtered.length;
+
     return Builder(
-      builder: (context) => CustomScrollView(
-        key: const PageStorageKey<String>('hr_attendance_tab'),
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverOverlapInjector(
-            handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+      builder: (context) => NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (hasMore &&
+              notification.metrics.axis == Axis.vertical &&
+              notification.metrics.pixels >= notification.metrics.maxScrollExtent - 240) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && _attendanceVisibleCount < filtered.length) {
+                setState(() => _attendanceVisibleCount += _pageSize);
+              }
+            });
+          }
+          return false;
+        },
+        child: CustomScrollView(
+          key: const PageStorageKey<String>('hr_attendance_tab'),
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverOverlapInjector(
+              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
@@ -863,7 +886,10 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
           const SizedBox(height: 10),
           TextField(
             controller: _searchController,
-            onChanged: (v) => setState(() => _searchQuery = v.trim()),
+            onChanged: (v) => setState(() {
+              _searchQuery = v.trim();
+              _attendanceVisibleCount = _pageSize;
+            }),
             style: GoogleFonts.poppins(
               fontSize: 13 * _uiScale(context),
               color: AsmitaPalette.textPrimary(context),
@@ -890,16 +916,32 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
           if (_isLoading || _isAttendanceLoading)
             _buildAttendanceSkeletonList()
           else if (filtered.isEmpty)
-            _emptyCard('No attendance records match this filter')
-          else
-            ...filtered.map((item) => _buildAttendanceCard(item)),
-              ],
+            _emptyCard('No attendance records match this filter'),
+                  ],
+                ),
+              ),
             ),
-          ),
+            if (!_isLoading && !_isAttendanceLoading && filtered.isNotEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                sliver: SliverList.builder(
+                  itemCount: visibleCount + (hasMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index < visibleCount) {
+                      return _buildAttendanceCard(filtered[index]);
+                    }
+                    return _buildLoadMoreFooter(
+                      shown: visibleCount,
+                      total: filtered.length,
+                      onTap: () => setState(() => _attendanceVisibleCount += _pageSize),
+                    );
+                  },
+                ),
+              ),
+          ],
         ),
-      ],
-    ),
-  );
+      ),
+    );
   }
 
   Widget _buildAttendanceSkeletonList() {
@@ -1067,23 +1109,43 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
           (d['department'] ?? '').toString().toLowerCase().contains(q);
     }).toList();
 
+    final activeTotal = _peopleMode == 'SEATS' ? filteredDesks.length : filteredEmployees.length;
+    final visibleCount = _peopleVisibleCount.clamp(0, activeTotal);
+    final hasMore = visibleCount < activeTotal;
+
     return Builder(
-      builder: (context) => CustomScrollView(
-        key: const PageStorageKey<String>('hr_people_tab'),
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverOverlapInjector(
-            handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          TextField(
-            controller: _searchController,
-            onChanged: (v) => setState(() => _searchQuery = v.trim()),
+      builder: (context) => NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (hasMore &&
+              notification.metrics.axis == Axis.vertical &&
+              notification.metrics.pixels >= notification.metrics.maxScrollExtent - 240) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && _peopleVisibleCount < activeTotal) {
+                setState(() => _peopleVisibleCount += _pageSize);
+              }
+            });
+          }
+          return false;
+        },
+        child: CustomScrollView(
+          key: const PageStorageKey<String>('hr_people_tab'),
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverOverlapInjector(
+              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
+                      controller: _searchController,
+                      onChanged: (v) => setState(() {
+                        _searchQuery = v.trim();
+                        _peopleVisibleCount = _pageSize;
+                      }),
             style: GoogleFonts.poppins(
               fontSize: 13 * _uiScale(context),
               color: AsmitaPalette.textPrimary(context),
@@ -1114,9 +1176,18 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _filterChip('Pending (${pendingList.length})', _peopleMode == 'PENDING', () => setState(() => _peopleMode = 'PENDING')),
-                      _filterChip('Directory (${_employees.length})', _peopleMode == 'ALL', () => setState(() => _peopleMode = 'ALL')),
-                      _filterChip('Seats (${_desks.length})', _peopleMode == 'SEATS', () => setState(() => _peopleMode = 'SEATS')),
+                      _filterChip('Pending (${pendingList.length})', _peopleMode == 'PENDING', () => setState(() {
+                        _peopleMode = 'PENDING';
+                        _peopleVisibleCount = _pageSize;
+                      })),
+                      _filterChip('Directory (${_employees.length})', _peopleMode == 'ALL', () => setState(() {
+                        _peopleMode = 'ALL';
+                        _peopleVisibleCount = _pageSize;
+                      })),
+                      _filterChip('Seats (${_desks.length})', _peopleMode == 'SEATS', () => setState(() {
+                        _peopleMode = 'SEATS';
+                        _peopleVisibleCount = _pageSize;
+                      })),
                     ],
                   ),
                 ),
@@ -1165,125 +1236,184 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
           ],
           if (_isLoading)
             _buildAttendanceSkeletonList()
-          else if (_peopleMode == 'SEATS') ...[
-            if (filteredDesks.isEmpty)
-              _emptyCard('No desks or cabins found')
-            else
-              ...filteredDesks.map((d) {
-                final occ = d['is_occupied'] == true;
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: AsmitaPalette.surface(context),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AsmitaPalette.border(context)),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(occ ? Icons.person_rounded : Icons.event_seat_rounded, color: occ ? const Color(0xFF64748B) : const Color(0xFF10B981), size: 20),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('${d['flat_number']} (Floor ${d['floor']})', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13.5, color: AsmitaPalette.textPrimary(context))),
-                            Text(
-                              occ ? 'Occupied by ${d['occupant_name'] ?? 'Colleague'}' : 'Available • ${d['department'] ?? 'Open'}',
-                              style: GoogleFonts.poppins(fontSize: 12, color: occ ? AsmitaPalette.textSecondary(context) : const Color(0xFF059669)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-          ] else if (filteredEmployees.isEmpty)
-            _emptyCard('No employees found')
-          else
-            ...filteredEmployees.map((emp) {
-              final s = _uiScale(context);
-              final uid = emp['user_id'] ?? emp['id'];
-              final isPending = emp['approval_status'] == 'PENDING' || emp['status'] == 'Invite Pending';
-              final isSendingThis = _resendingUserId != null && _resendingUserId.toString() == uid.toString();
-              final dept = (emp['department'] ?? 'General').toString().trim();
-              final role = (emp['designation'] ?? emp['role'] ?? 'Staff').toString().trim();
-              final desk = (emp['desk_code'] ?? emp['cabin_code'] ?? '').toString().trim();
-              final phone = (emp['mobile_number'] ?? emp['phone'] ?? '').toString().trim();
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: EdgeInsets.all(12 * s),
-                decoration: BoxDecoration(
-                  color: AsmitaPalette.surface(context),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AsmitaPalette.border(context)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            (emp['full_name'] ?? emp['name'] ?? 'Employee').toString(),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13 * s, color: AsmitaPalette.textPrimary(context)),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        if (isPending)
-                          ElevatedButton.icon(
-                            onPressed: isSendingThis ? null : () => _handleSingleInvite(emp),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF10B981),
-                              foregroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(horizontal: 9 * s, vertical: 6 * s),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            icon: isSendingThis
-                                ? const SizedBox(width: 13, height: 13, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                : Icon(Icons.send_rounded, size: 13 * s),
-                            label: Text('Invite', style: GoogleFonts.poppins(fontSize: 11 * s, fontWeight: FontWeight.w600)),
-                          )
-                        else
-                          _statusPill('ACTIVE'),
-                      ],
-                    ),
-                    SizedBox(height: 8 * s),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _infoPill(Icons.badge_outlined, role, scale: s),
-                          SizedBox(width: 6 * s),
-                          _infoPill(Icons.business_outlined, dept, scale: s),
-                          if (desk.isNotEmpty) ...[
-                            SizedBox(width: 6 * s),
-                            _infoPill(Icons.desk_rounded, desk, highlight: true, scale: s),
-                          ],
-                          if (phone.isNotEmpty) ...[
-                            SizedBox(width: 6 * s),
-                            _infoPill(Icons.phone_outlined, phone, scale: s),
-                          ],
-                        ],
-                      ),
-                    ),
+          else if (_peopleMode == 'SEATS' && filteredDesks.isEmpty)
+            _emptyCard('No desks or cabins found')
+          else if (_peopleMode != 'SEATS' && filteredEmployees.isEmpty)
+            _emptyCard('No employees found'),
                   ],
                 ),
-              );
-            }),
+              ),
+            ),
+            if (!_isLoading && activeTotal > 0)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                sliver: SliverList.builder(
+                  itemCount: visibleCount + (hasMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index < visibleCount) {
+                      return _peopleMode == 'SEATS'
+                          ? _buildDeskCard(filteredDesks[index])
+                          : _buildEmployeeCard(filteredEmployees[index]);
+                    }
+                    return _buildLoadMoreFooter(
+                      shown: visibleCount,
+                      total: activeTotal,
+                      onTap: () => setState(() => _peopleVisibleCount += _pageSize),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDeskCard(Map<String, dynamic> d) {
+    final occ = d['is_occupied'] == true;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AsmitaPalette.surface(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AsmitaPalette.border(context)),
+      ),
+      child: Row(
+        children: [
+          Icon(occ ? Icons.person_rounded : Icons.event_seat_rounded, color: occ ? const Color(0xFF64748B) : const Color(0xFF10B981), size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('${d['flat_number']} (Floor ${d['floor']})', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13.5, color: AsmitaPalette.textPrimary(context))),
+                Text(
+                  occ ? 'Occupied by ${d['occupant_name'] ?? 'Colleague'}' : 'Available • ${d['department'] ?? 'Open'}',
+                  style: GoogleFonts.poppins(fontSize: 12, color: occ ? AsmitaPalette.textSecondary(context) : const Color(0xFF059669)),
+                ),
               ],
             ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmployeeCard(Map<String, dynamic> emp) {
+    final s = _uiScale(context);
+    final uid = emp['user_id'] ?? emp['id'];
+    final isPending = emp['approval_status'] == 'PENDING' || emp['status'] == 'Invite Pending';
+    final isSendingThis = _resendingUserId != null && _resendingUserId.toString() == uid.toString();
+    final dept = (emp['department'] ?? 'General').toString().trim();
+    final role = (emp['designation'] ?? emp['role'] ?? 'Staff').toString().trim();
+    final desk = (emp['desk_code'] ?? emp['cabin_code'] ?? '').toString().trim();
+    final phone = (emp['mobile_number'] ?? emp['phone'] ?? '').toString().trim();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.all(12 * s),
+      decoration: BoxDecoration(
+        color: AsmitaPalette.surface(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AsmitaPalette.border(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  (emp['full_name'] ?? emp['name'] ?? 'Employee').toString(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13 * s, color: AsmitaPalette.textPrimary(context)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (isPending)
+                ElevatedButton.icon(
+                  onPressed: isSendingThis ? null : () => _handleSingleInvite(emp),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 9 * s, vertical: 6 * s),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  icon: isSendingThis
+                      ? const SizedBox(width: 13, height: 13, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : Icon(Icons.send_rounded, size: 13 * s),
+                  label: Text('Invite', style: GoogleFonts.poppins(fontSize: 11 * s, fontWeight: FontWeight.w600)),
+                )
+              else
+                _statusPill('ACTIVE'),
+            ],
+          ),
+          SizedBox(height: 8 * s),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _infoPill(Icons.badge_outlined, role, scale: s),
+                SizedBox(width: 6 * s),
+                _infoPill(Icons.business_outlined, dept, scale: s),
+                if (desk.isNotEmpty) ...[
+                  SizedBox(width: 6 * s),
+                  _infoPill(Icons.desk_rounded, desk, highlight: true, scale: s),
+                ],
+                if (phone.isNotEmpty) ...[
+                  SizedBox(width: 6 * s),
+                  _infoPill(Icons.phone_outlined, phone, scale: s),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadMoreFooter({
+    required int shown,
+    required int total,
+    required VoidCallback onTap,
+  }) {
+    final s = _uiScale(context);
+    final remaining = total - shown;
+    final nextBatch = remaining < _pageSize ? remaining : _pageSize;
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 8),
+      child: Column(
+        children: [
+          Text(
+            'Showing $shown of $total',
+            style: GoogleFonts.poppins(
+              fontSize: 11.5 * s,
+              color: AsmitaPalette.textTertiary(context),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: onTap,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AsmitaPalette.primary(context),
+              side: BorderSide(color: AsmitaPalette.border(context)),
+              padding: EdgeInsets.symmetric(horizontal: 16 * s, vertical: 8 * s),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            ),
+            icon: Icon(Icons.expand_more_rounded, size: 18 * s),
+            label: Text(
+              'Load $nextBatch more',
+              style: GoogleFonts.poppins(fontSize: 12 * s, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildVisitsAndNoticesTab() {
