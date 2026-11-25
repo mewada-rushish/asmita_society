@@ -774,7 +774,16 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
       if (_searchQuery.isEmpty) return true;
       final q = _searchQuery.toLowerCase();
       return (e['full_name'] ?? e['name'] ?? '').toString().toLowerCase().contains(q) ||
-          (e['department'] ?? '').toString().toLowerCase().contains(q);
+          (e['department'] ?? '').toString().toLowerCase().contains(q) ||
+          (e['mobile_number'] ?? e['phone'] ?? '').toString().toLowerCase().contains(q);
+    }).toList();
+
+    final filteredDesks = _desks.where((d) {
+      if (_searchQuery.isEmpty) return true;
+      final q = _searchQuery.toLowerCase();
+      return (d['flat_number'] ?? '').toString().toLowerCase().contains(q) ||
+          (d['occupant_name'] ?? '').toString().toLowerCase().contains(q) ||
+          (d['department'] ?? '').toString().toLowerCase().contains(q);
     }).toList();
 
     return AppRefresh(
@@ -782,6 +791,19 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
       child: ListView(
         padding: const EdgeInsets.all(14),
         children: [
+          TextField(
+            controller: _searchController,
+            onChanged: (v) => setState(() => _searchQuery = v.trim()),
+            decoration: InputDecoration(
+              hintText: _peopleMode == 'SEATS' ? 'Search desk, cabin or occupant...' : 'Search name, phone or department...',
+              prefixIcon: const Icon(Icons.search, size: 20),
+              filled: true,
+              fillColor: AsmitaPalette.surface(context),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AsmitaPalette.border(context))),
+              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            ),
+          ),
+          const SizedBox(height: 10),
           Row(
             children: [
               _filterChip('Pending (${pendingList.length})', _peopleMode == 'PENDING', () => setState(() => _peopleMode = 'PENDING')),
@@ -826,8 +848,11 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
               ),
             ),
           ],
-          if (_peopleMode == 'SEATS')
-            ..._desks.map((d) {
+          if (_peopleMode == 'SEATS') ...[
+            if (filteredDesks.isEmpty)
+              _emptyCard('No desks or cabins found')
+            else
+              ...filteredDesks.map((d) {
               final occ = d['is_occupied'] == true;
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
@@ -856,8 +881,8 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                   ],
                 ),
               );
-            })
-          else if (filteredEmployees.isEmpty)
+            }),
+          ] else if (filteredEmployees.isEmpty)
             _emptyCard('No employees found')
           else
             ...filteredEmployees.map((emp) {
