@@ -12,10 +12,17 @@ class HrRepository {
     return Map<String, dynamic>.from(res.data['data'] ?? {});
   }
 
-  Future<List<Map<String, dynamic>>> getAttendance(int societyId, {String? date}) async {
+  Future<List<Map<String, dynamic>>> getAttendance(
+    int societyId, {
+    String? date,
+    String? startDate,
+    String? endDate,
+  }) async {
     final res = await _dio.get('/app-api/hr/attendance', queryParameters: {
       'society_id': societyId,
       'date': ?date,
+      'start_date': ?startDate,
+      'end_date': ?endDate,
     });
     final list = res.data['data'] as List? ?? [];
     return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
