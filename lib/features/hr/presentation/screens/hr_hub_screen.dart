@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/constants/design_system.dart';
 import '../../../../core/widgets/app_refresh.dart';
+import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_primary_header.dart';
 import '../../../../core/widgets/asmita_select_field.dart';
 import '../../../../core/widgets/asmita_toast.dart';
@@ -248,51 +249,76 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     final desigCtrl = TextEditingController(text: 'Executive');
     bool saving = false;
 
-    showModalBottomSheet(
+    showAsmitaBottomSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: AsmitaPalette.surface(context),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) => Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          ),
+      title: 'Add New Employee',
+      subtitle: 'Create a staff record and assign department & role',
+      child: StatefulBuilder(
+        builder: (ctx, setModalState) => SafeArea(
+          top: false,
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Add New Employee',
-                  style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context)),
+                _fieldLabel('Full Name *'),
+                TextField(
+                  controller: nameCtrl,
+                  decoration: _inputDecoration('e.g. Rahul Sharma', icon: Icons.person_outline_rounded),
                 ),
-                const SizedBox(height: 14),
-                TextField(controller: nameCtrl, decoration: _inputDecoration('Full Name *')),
-                const SizedBox(height: 10),
-                TextField(controller: phoneCtrl, keyboardType: TextInputType.phone, decoration: _inputDecoration('Mobile Number *')),
-                const SizedBox(height: 10),
-                TextField(controller: emailCtrl, keyboardType: TextInputType.emailAddress, decoration: _inputDecoration('Email')),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
+                _fieldLabel('Mobile Number *'),
+                TextField(
+                  controller: phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: _inputDecoration('10-digit mobile number', icon: Icons.phone_outlined),
+                ),
+                const SizedBox(height: 12),
+                _fieldLabel('Email Address'),
+                TextField(
+                  controller: emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: _inputDecoration('name@company.com', icon: Icons.email_outlined),
+                ),
+                const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: TextField(controller: deptCtrl, decoration: _inputDecoration('Department'))),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _fieldLabel('Department'),
+                          TextField(
+                            controller: deptCtrl,
+                            decoration: _inputDecoration('e.g. Sales', icon: Icons.business_outlined),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(width: 10),
-                    Expanded(child: TextField(controller: desigCtrl, decoration: _inputDecoration('Designation'))),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _fieldLabel('Designation'),
+                          TextField(
+                            controller: desigCtrl,
+                            decoration: _inputDecoration('e.g. Executive', icon: Icons.badge_outlined),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
                 SizedBox(
                   width: double.infinity,
-                  height: 46,
-                  child: ElevatedButton(
+                  height: 48,
+                  child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AsmitaPalette.deepNavy,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                     onPressed: saving
                         ? null
@@ -320,7 +346,10 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                               if (mounted) AsmitaToast.show(context, message: 'Failed to add employee', type: AsmitaToastType.error);
                             }
                           },
-                    child: Text(saving ? 'Saving...' : 'Create Employee', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                    icon: saving
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                    label: Text(saving ? 'Saving...' : 'Create Employee', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14)),
                   ),
                 ),
               ],
@@ -337,93 +366,119 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     String priority = 'Normal';
     bool saving = false;
 
-    showModalBottomSheet(
+    showAsmitaBottomSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: AsmitaPalette.surface(context),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) => Padding(
-          padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(ctx).viewInsets.bottom + 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Post HR Notice / Broadcast',
-                style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context)),
-              ),
-              const SizedBox(height: 12),
-              TextField(controller: titleCtrl, decoration: _inputDecoration('Title *')),
-              const SizedBox(height: 10),
-              TextField(controller: descCtrl, maxLines: 3, decoration: _inputDecoration('Message *')),
-              const SizedBox(height: 12),
-              AsmitaSelectField<String>(
-                label: 'Priority',
-                hint: 'Select Priority',
-                value: priority,
-                prefixIcon: Icons.flag_outlined,
-                sheetTitle: 'Select Notice Priority',
-                items: const [
-                  AsmitaSelectItem(value: 'Normal', label: 'Normal', icon: Icons.info_outline_rounded),
-                  AsmitaSelectItem(value: 'High', label: 'High', icon: Icons.priority_high_rounded, iconColor: Colors.orange),
-                  AsmitaSelectItem(value: 'Urgent', label: 'Urgent', icon: Icons.warning_amber_rounded, iconColor: Colors.red),
-                ],
-                onChanged: (v) => setModalState(() => priority = v ?? 'Normal'),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 46,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AsmitaPalette.deepNavy,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: saving
-                      ? null
-                      : () async {
-                          if (titleCtrl.text.trim().isEmpty || descCtrl.text.trim().isEmpty) {
-                            AsmitaToast.show(context, message: 'Title and message are required', type: AsmitaToastType.error);
-                            return;
-                          }
-                          setModalState(() => saving = true);
-                          try {
-                            await _repo.createNotice({
-                              'society_id': _resolveSocietyId(),
-                              'title': titleCtrl.text.trim(),
-                              'description': descCtrl.text.trim(),
-                              'priority': priority,
-                            });
-                            if (ctx.mounted) Navigator.pop(ctx);
-                            if (mounted) {
-                              AsmitaToast.show(context, message: 'HR Notice published', type: AsmitaToastType.success);
-                              _loadAll();
-                            }
-                          } catch (_) {
-                            setModalState(() => saving = false);
-                            if (mounted) AsmitaToast.show(context, message: 'Failed to post notice', type: AsmitaToastType.error);
-                          }
-                        },
-                  child: Text(saving ? 'Publishing...' : 'Publish Notice', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+      title: 'Post HR Notice',
+      subtitle: 'Broadcast an announcement to all employees',
+      child: StatefulBuilder(
+        builder: (ctx, setModalState) => SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _fieldLabel('Notice Title *'),
+                TextField(
+                  controller: titleCtrl,
+                  decoration: _inputDecoration('e.g. Holiday Schedule Update', icon: Icons.title_rounded),
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                _fieldLabel('Message *'),
+                TextField(
+                  controller: descCtrl,
+                  maxLines: 3,
+                  decoration: _inputDecoration('Write details for your team...', icon: Icons.notes_rounded),
+                ),
+                const SizedBox(height: 12),
+                AsmitaSelectField<String>(
+                  label: 'Priority',
+                  hint: 'Select Priority',
+                  value: priority,
+                  prefixIcon: Icons.flag_outlined,
+                  sheetTitle: 'Select Notice Priority',
+                  items: const [
+                    AsmitaSelectItem(value: 'Normal', label: 'Normal', icon: Icons.info_outline_rounded),
+                    AsmitaSelectItem(value: 'High', label: 'High', icon: Icons.priority_high_rounded, iconColor: Colors.orange),
+                    AsmitaSelectItem(value: 'Urgent', label: 'Urgent', icon: Icons.warning_amber_rounded, iconColor: Colors.red),
+                  ],
+                  onChanged: (v) => setModalState(() => priority = v ?? 'Normal'),
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AsmitaPalette.deepNavy,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    onPressed: saving
+                        ? null
+                        : () async {
+                            if (titleCtrl.text.trim().isEmpty || descCtrl.text.trim().isEmpty) {
+                              AsmitaToast.show(context, message: 'Title and message are required', type: AsmitaToastType.error);
+                              return;
+                            }
+                            setModalState(() => saving = true);
+                            try {
+                              await _repo.createNotice({
+                                'society_id': _resolveSocietyId(),
+                                'title': titleCtrl.text.trim(),
+                                'description': descCtrl.text.trim(),
+                                'priority': priority,
+                              });
+                              if (ctx.mounted) Navigator.pop(ctx);
+                              if (mounted) {
+                                AsmitaToast.show(context, message: 'HR Notice published', type: AsmitaToastType.success);
+                                _loadAll();
+                              }
+                            } catch (_) {
+                              setModalState(() => saving = false);
+                              if (mounted) AsmitaToast.show(context, message: 'Failed to post notice', type: AsmitaToastType.error);
+                            }
+                          },
+                    icon: saving
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.campaign_rounded, size: 18),
+                    label: Text(saving ? 'Publishing...' : 'Publish Notice', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14)),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  InputDecoration _inputDecoration(String label) {
+  Widget _fieldLabel(String text) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(
+        text,
+        style: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: isDark ? AsmitaPalette.textDarkModeMuted : AsmitaPalette.textDark,
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint, {IconData? icon}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return InputDecoration(
-      labelText: label,
+      hintText: hint,
+      hintStyle: GoogleFonts.poppins(fontSize: 13, color: AsmitaPalette.textTertiary(context)),
+      prefixIcon: icon != null ? Icon(icon, size: 19, color: AsmitaPalette.primary(context)) : null,
       filled: true,
       fillColor: isDark ? AsmitaPalette.surfaceDark : AsmitaPalette.systemBG,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AsmitaPalette.border(context))),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AsmitaPalette.border(context))),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AsmitaPalette.border(context), width: 1.2)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AsmitaPalette.border(context), width: 1.2)),
       focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AsmitaPalette.primary(context), width: 1.5)),
     );
   }
@@ -476,12 +531,13 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                 ),
                 labelColor: Colors.white,
                 unselectedLabelColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                labelStyle: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
-                unselectedLabelStyle: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
+                labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+                labelStyle: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600),
+                unselectedLabelStyle: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w500),
                 tabs: const [
-                  Tab(text: 'Attendance'),
-                  Tab(text: 'People'),
-                  Tab(text: 'Visits & Notices'),
+                  Tab(child: Text('Attendance', maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  Tab(child: Text('People', maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  Tab(child: Text('Visits & Notices', maxLines: 1, overflow: TextOverflow.ellipsis)),
                 ],
               ),
             ),
