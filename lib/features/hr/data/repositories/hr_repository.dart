@@ -34,7 +34,10 @@ class HrRepository {
   }
 
   Future<Map<String, dynamic>> addEmployee(int societyId, Map<String, dynamic> payload) async {
-    final res = await _dio.post('/api/societies/$societyId/directories/residents', data: payload);
+    final res = await _dio.post('/app-api/hr/employees', data: {
+      ...payload,
+      'society_id': societyId,
+    });
     return Map<String, dynamic>.from(res.data as Map? ?? {});
   }
 
