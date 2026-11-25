@@ -46,7 +46,10 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
   bool _isBulkInviting = false;
   int? _resendingUserId;
 
-  DateTime _selectedDate = DateTime.now();
+  DateTimeRange _selectedRange = DateTimeRange(
+    start: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
+    end: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
+  );
   Map<String, dynamic> _summary = {};
   List<Map<String, dynamic>> _attendance = [];
   List<Map<String, dynamic>> _employees = [];
@@ -88,13 +91,36 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     return 'HR Team';
   }
 
-  String get _selectedDateParam => DateFormat('yyyy-MM-dd').format(_selectedDate);
+  String get _startDateParam => DateFormat('yyyy-MM-dd').format(_selectedRange.start);
+  String get _endDateParam => DateFormat('yyyy-MM-dd').format(_selectedRange.end);
+
+  bool get _isSingleDay =>
+      _selectedRange.start.year == _selectedRange.end.year &&
+      _selectedRange.start.month == _selectedRange.end.month &&
+      _selectedRange.start.day == _selectedRange.end.day;
 
   bool get _isSelectedToday {
+    if (!_isSingleDay) return false;
     final now = DateTime.now();
-    return _selectedDate.year == now.year &&
-        _selectedDate.month == now.month &&
-        _selectedDate.day == now.day;
+    return _selectedRange.end.year == now.year &&
+        _selectedRange.end.month == now.month &&
+        _selectedRange.end.day == now.day;
+  }
+
+  bool get _canGoNextRange {
+    final now = DateTime.now();
+    final todayOnly = DateTime(now.year, now.month, now.day);
+    return _selectedRange.end.isBefore(todayOnly);
+  }
+
+  String get _rangeDisplayLabel {
+    if (_isSelectedToday) {
+      return 'Today, ${DateFormat('dd MMM yyyy').format(_selectedRange.start)}';
+    }
+    if (_isSingleDay) {
+      return DateFormat('EEE, dd MMM yyyy').format(_selectedRange.start);
+    }
+    return '${DateFormat('dd MMM').format(_selectedRange.start)} – ${DateFormat('dd MMM yyyy').format(_selectedRange.end)}';
   }
 
   Future<void> _loadAll() async {
@@ -103,7 +129,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     try {
       final results = await Future.wait([
         _repo.getSummary(sId).catchError((_) => <String, dynamic>{}),
-        _repo.getAttendance(sId, date: _selectedDateParam).catchError((_) => <Map<String, dynamic>>[]),
+        _repo.getAttendance(sId, startDate: _startDateParam, endDate: _endDateParam).catchError((_) => <Map<String, dynamic>>[]),
         _repo.getDirectoryEmployees(sId).catchError((_) => <Map<String, dynamic>>[]),
         _repo.getEmployeeFormData(sId).catchError((_) => <String, dynamic>{}),
         _repo.getNotices(sId).catchError((_) => <Map<String, dynamic>>[]),
@@ -129,18 +155,19 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     }
   }
 
-  Future<void> _changeDate(DateTime newDate) async {
+  Future<void> _changeRange(DateTimeRange newRange) async {
     final today = DateTime.now();
     final todayOnly = DateTime(today.year, today.month, today.day);
-    final targetOnly = DateTime(newDate.year, newDate.month, newDate.day);
-    if (targetOnly.isAfter(todayOnly)) return;
+    final startOnly = DateTime(newRange.start.year, newRange.start.month, newRange.start.day);
+    final endOnly = DateTime(newRange.end.year, newRange.end.month, newRange.end.day);
+    if (endOnly.isAfter(todayOnly)) return;
 
     setState(() {
-      _selectedDate = targetOnly;
+      _selectedRange = DateTimeRange(start: startOnly, end: endOnly);
       _isAttendanceLoading = true;
     });
     try {
-      final rows = await _repo.getAttendance(_resolveSocietyId(), date: _selectedDateParam);
+      final rows = await _repo.getAttendance(_resolveSocietyId(), startDate: _startDateParam, endDate: _endDateParam);
       if (!mounted) return;
       setState(() {
         _attendance = rows;
@@ -152,16 +179,16 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
   }
 
   Future<void> _pickDate() async {
-    final picked = await showAsmitaCalendarSheet(
+    final picked = await showAsmitaCalendarRangeSheet(
       context: context,
-      initialDate: _selectedDate,
+      initialRange: _selectedRange,
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now(),
-      title: 'Select Attendance Date',
+      title: 'Select Attendance Range',
       subtitle: 'Check who checked in, checked out, or was absent',
     );
     if (picked != null) {
-      await _changeDate(picked);
+      await _changeRange(picked);
     }
   }
 
@@ -754,9 +781,15 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             child: Row(
               children: [
                 IconButton(
-                  onPressed: () => _changeDate(_selectedDate.subtract(const Duration(days: 1))),
+                  onPressed: () {
+                    final span = _selectedRange.duration.inDays + 1;
+                    _changeRange(DateTimeRange(
+                      start: _selectedRange.start.subtract(Duration(days: span)),
+                      end: _selectedRange.end.subtract(Duration(days: span)),
+                    ));
+                  },
                   icon: const Icon(Icons.chevron_left_rounded),
-                  tooltip: 'Previous Day',
+                  tooltip: 'Previous',
                 ),
                 Expanded(
                   child: InkWell(
@@ -769,11 +802,13 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                         children: [
                           Icon(Icons.calendar_today_rounded, size: 15, color: AsmitaPalette.primary(context)),
                           const SizedBox(width: 8),
-                          Text(
-                            _isSelectedToday
-                                ? 'Today, ${DateFormat('dd MMM yyyy').format(_selectedDate)}'
-                                : DateFormat('EEE, dd MMM yyyy').format(_selectedDate),
-                            style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: AsmitaPalette.textPrimary(context)),
+                          Flexible(
+                            child: Text(
+                              _rangeDisplayLabel,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: AsmitaPalette.textPrimary(context)),
+                            ),
                           ),
                         ],
                       ),
@@ -781,9 +816,22 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                   ),
                 ),
                 IconButton(
-                  onPressed: _isSelectedToday ? null : () => _changeDate(_selectedDate.add(const Duration(days: 1))),
+                  onPressed: !_canGoNextRange
+                      ? null
+                      : () {
+                          final span = _selectedRange.duration.inDays + 1;
+                          final now = DateTime.now();
+                          final todayOnly = DateTime(now.year, now.month, now.day);
+                          var nextEnd = _selectedRange.end.add(Duration(days: span));
+                          var nextStart = _selectedRange.start.add(Duration(days: span));
+                          if (nextEnd.isAfter(todayOnly)) {
+                            nextEnd = todayOnly;
+                            nextStart = todayOnly.subtract(Duration(days: span - 1));
+                          }
+                          _changeRange(DateTimeRange(start: nextStart, end: nextEnd));
+                        },
                   icon: const Icon(Icons.chevron_right_rounded),
-                  tooltip: 'Next Day',
+                  tooltip: 'Next',
                 ),
               ],
             ),
@@ -918,8 +966,12 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                 Expanded(
                   child: Text(
                     st == 'NOT_MARKED'
-                        ? 'Did not check in on ${DateFormat('dd MMM').format(_selectedDate)}'
-                        : 'In: ${_formatTime(item['first_in_time'])}  •  Out: ${_formatTime(item['last_out_time'])}${item['last_gate_name'] != null ? '  •  ${item['last_gate_name']}' : ''}',
+                        ? (_isSingleDay
+                            ? 'Did not check in on ${DateFormat('dd MMM').format(_selectedRange.start)}'
+                            : 'Did not check in (${DateFormat('dd MMM').format(_selectedRange.start)} – ${DateFormat('dd MMM').format(_selectedRange.end)})')
+                        : (_isSingleDay
+                            ? 'In: ${_formatTime(item['first_in_time'])}  •  Out: ${_formatTime(item['last_out_time'])}${item['last_gate_name'] != null ? '  •  ${item['last_gate_name']}' : ''}'
+                            : 'Present ${item['days_present'] ?? 1}/${item['total_days'] ?? 1} days  •  First In: ${_formatTime(item['first_in_time'])}  •  Last Out: ${_formatTime(item['last_out_time'])}'),
                     style: GoogleFonts.poppins(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
