@@ -539,7 +539,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
               color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
               backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
               notificationPredicate: (notification) =>
-                  notification.metrics.axis == Axis.vertical && notification.depth <= 1,
+                  notification.metrics.axis == Axis.vertical,
               onRefresh: _loadAll,
               child: NestedScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
