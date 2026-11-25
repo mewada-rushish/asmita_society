@@ -886,18 +886,6 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
               contentPadding: const EdgeInsets.symmetric(vertical: 10),
             ),
           ),
-          const SizedBox(height: 10),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _filterChip('All (${_attendance.length})', _attendanceFilter == 'ALL', () => setState(() => _attendanceFilter = 'ALL')),
-                _filterChip('Checked In', _attendanceFilter == 'IN', () => setState(() => _attendanceFilter = 'IN')),
-                _filterChip('Checked Out', _attendanceFilter == 'OUT', () => setState(() => _attendanceFilter = 'OUT')),
-                _filterChip('Not Marked', _attendanceFilter == 'NOT_MARKED', () => setState(() => _attendanceFilter = 'NOT_MARKED')),
-              ],
-            ),
-          ),
           const SizedBox(height: 12),
           if (_isLoading || _isAttendanceLoading)
             _buildAttendanceSkeletonList()
