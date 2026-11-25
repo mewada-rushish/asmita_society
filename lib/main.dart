@@ -124,7 +124,15 @@ Future<void> main() async {
       await openEncryptedBox('app_cache');
 
       await di.init();
-      await di.sl<FirebaseMessagingService>().initialize();
+      try {
+        await di.sl<FirebaseMessagingService>().initialize().timeout(
+          const Duration(seconds: 5),
+        );
+      } catch (e) {
+        if (!kReleaseMode) {
+          debugPrint('FirebaseMessagingService init skipped/timed out: $e');
+        }
+      }
       DeepLinkHandler.init(rootNavigatorKey);
 
       bool isDeviceSafe = true;
@@ -143,6 +151,9 @@ Future<void> main() async {
       );
     },
     (error, stack) {
+      if (!kReleaseMode) {
+        debugPrint('Uncaught startup/async error: $error\n$stack');
+      }
       // Catch unhandled async errors outside the Flutter framework
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     },
