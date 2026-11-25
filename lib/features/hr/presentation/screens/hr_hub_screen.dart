@@ -864,9 +864,21 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
           TextField(
             controller: _searchController,
             onChanged: (v) => setState(() => _searchQuery = v.trim()),
+            style: GoogleFonts.poppins(
+              fontSize: 13 * _uiScale(context),
+              color: AsmitaPalette.textPrimary(context),
+            ),
             decoration: InputDecoration(
               hintText: 'Search employee or department...',
-              prefixIcon: const Icon(Icons.search_rounded, size: 20),
+              hintStyle: GoogleFonts.poppins(
+                fontSize: 13 * _uiScale(context),
+                color: AsmitaPalette.textTertiary(context),
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                size: 20,
+                color: AsmitaPalette.textTertiary(context),
+              ),
               filled: true,
               fillColor: AsmitaPalette.surface(context),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AsmitaPalette.border(context))),
@@ -1084,9 +1096,21 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
           TextField(
             controller: _searchController,
             onChanged: (v) => setState(() => _searchQuery = v.trim()),
+            style: GoogleFonts.poppins(
+              fontSize: 13 * _uiScale(context),
+              color: AsmitaPalette.textPrimary(context),
+            ),
             decoration: InputDecoration(
               hintText: _peopleMode == 'SEATS' ? 'Search desk, cabin or occupant...' : 'Search name, phone or department...',
-              prefixIcon: const Icon(Icons.search_rounded, size: 20),
+              hintStyle: GoogleFonts.poppins(
+                fontSize: 13 * _uiScale(context),
+                color: AsmitaPalette.textTertiary(context),
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                size: 20,
+                color: AsmitaPalette.textTertiary(context),
+              ),
               filled: true,
               fillColor: AsmitaPalette.surface(context),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AsmitaPalette.border(context))),
