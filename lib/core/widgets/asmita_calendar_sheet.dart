@@ -90,9 +90,10 @@ class _AsmitaCalendarBodyState extends State<_AsmitaCalendarBody> {
 
     return SafeArea(
       top: false,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
           // Quick Jump Chips
           Row(
             children: [
@@ -171,6 +172,7 @@ class _AsmitaCalendarBodyState extends State<_AsmitaCalendarBody> {
               crossAxisCount: 7,
               mainAxisSpacing: 6,
               crossAxisSpacing: 6,
+              childAspectRatio: 1.12,
             ),
             itemBuilder: (_, index) {
               final dayNum = index - firstWeekdayOffset + 1;
@@ -214,6 +216,7 @@ class _AsmitaCalendarBodyState extends State<_AsmitaCalendarBody> {
           ),
           const SizedBox(height: 8),
         ],
+      ),
       ),
     );
   }
