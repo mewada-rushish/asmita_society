@@ -528,60 +528,79 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             subtitleOverride: 'HR Hub',
             userInitials: _currentUserName().isNotEmpty ? _currentUserName()[0].toUpperCase() : 'H',
           ),
-          const SizedBox(height: 12),
-          _buildMetricsGrid(context),
-          const SizedBox(height: 12),
-          // Segmented Pill TabBar matching EmployeeRegistryScreen
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              height: 44,
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                  width: 1,
-                ),
+          Expanded(
+            child: NestedScrollView(
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
               ),
-              child: TabBar(
-                controller: _tabController,
-                dividerColor: Colors.transparent,
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicator: BoxDecoration(
-                  color: isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy,
-                  borderRadius: BorderRadius.circular(9),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                AppRefresh.sliver(onRefresh: _loadAll),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 12, bottom: 8),
+                    child: _buildMetricsGrid(context),
+                  ),
                 ),
-                labelColor: Colors.white,
-                unselectedLabelColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-                labelStyle: GoogleFonts.poppins(fontSize: 11 * _uiScale(context), fontWeight: FontWeight.w600),
-                unselectedLabelStyle: GoogleFonts.poppins(fontSize: 11 * _uiScale(context), fontWeight: FontWeight.w500),
-                tabs: const [
-                  Tab(child: FittedBox(fit: BoxFit.scaleDown, child: Text('Attendance', maxLines: 1))),
-                  Tab(child: FittedBox(fit: BoxFit.scaleDown, child: Text('People', maxLines: 1))),
-                  Tab(child: FittedBox(fit: BoxFit.scaleDown, child: Text('Visits & Notices', maxLines: 1))),
+                SliverOverlapAbsorber(
+                  handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                  sliver: SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _StickyTabBarDelegate(
+                      height: 56,
+                      backgroundColor: bg,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                        child: Container(
+                          height: 44,
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                              width: 1,
+                            ),
+                          ),
+                          child: TabBar(
+                            controller: _tabController,
+                            dividerColor: Colors.transparent,
+                            indicatorSize: TabBarIndicatorSize.tab,
+                            indicator: BoxDecoration(
+                              color: isDark ? const Color(0xFF3B82F6) : AsmitaPalette.deepNavy,
+                              borderRadius: BorderRadius.circular(9),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.08),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            labelColor: Colors.white,
+                            unselectedLabelColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+                            labelStyle: GoogleFonts.poppins(fontSize: 11 * _uiScale(context), fontWeight: FontWeight.w600),
+                            unselectedLabelStyle: GoogleFonts.poppins(fontSize: 11 * _uiScale(context), fontWeight: FontWeight.w500),
+                            tabs: const [
+                              Tab(child: FittedBox(fit: BoxFit.scaleDown, child: Text('Attendance', maxLines: 1))),
+                              Tab(child: FittedBox(fit: BoxFit.scaleDown, child: Text('People', maxLines: 1))),
+                              Tab(child: FittedBox(fit: BoxFit.scaleDown, child: Text('Visits & Notices', maxLines: 1))),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+              body: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildAttendanceTab(),
+                  _buildPeopleTab(),
+                  _buildVisitsAndNoticesTab(),
                 ],
               ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildAttendanceTab(),
-                _buildPeopleTab(),
-                _buildVisitsAndNoticesTab(),
-              ],
             ),
           ),
         ],
@@ -759,10 +778,17 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
       return true;
     }).toList();
 
-    return AppRefresh(
-      onRefresh: _loadAll,
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
-      child: Column(
+    return Builder(
+      builder: (context) => CustomScrollView(
+        key: const PageStorageKey<String>('hr_attendance_tab'),
+        slivers: [
+          SliverOverlapInjector(
+            handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+            sliver: SliverToBoxAdapter(
+              child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
@@ -863,9 +889,13 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             _emptyCard('No attendance records match this filter')
           else
             ...filtered.map((item) => _buildAttendanceCard(item)),
-        ],
-      ),
-    );
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
   }
 
   Widget _buildAttendanceSkeletonList() {
@@ -1040,10 +1070,17 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
           (d['department'] ?? '').toString().toLowerCase().contains(q);
     }).toList();
 
-    return AppRefresh(
-      onRefresh: _loadAll,
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
-      child: Column(
+    return Builder(
+      builder: (context) => CustomScrollView(
+        key: const PageStorageKey<String>('hr_people_tab'),
+        slivers: [
+          SliverOverlapInjector(
+            handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+            sliver: SliverToBoxAdapter(
+              child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           TextField(
@@ -1230,16 +1267,27 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                 ),
               );
             }),
-        ],
-      ),
-    );
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
   }
 
   Widget _buildVisitsAndNoticesTab() {
-    return AppRefresh(
-      onRefresh: _loadAll,
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
-      child: Column(
+    return Builder(
+      builder: (context) => CustomScrollView(
+        key: const PageStorageKey<String>('hr_visits_notices_tab'),
+        slivers: [
+          SliverOverlapInjector(
+            handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+            sliver: SliverToBoxAdapter(
+              child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
@@ -1341,9 +1389,13 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                     ],
                   ),
                 )),
-        ],
-      ),
-    );
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
   }
 
   Widget _filterChip(String label, bool selected, VoidCallback onTap) {
@@ -1391,5 +1443,39 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
       ),
       child: Text(msg, style: GoogleFonts.poppins(fontSize: 13, color: AsmitaPalette.textSecondary(context))),
     );
+  }
+}
+
+class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Color backgroundColor;
+  final Widget child;
+
+  const _StickyTabBarDelegate({
+    required this.height,
+    required this.backgroundColor,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: backgroundColor,
+      alignment: Alignment.center,
+      child: child,
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _StickyTabBarDelegate oldDelegate) {
+    return oldDelegate.height != height ||
+        oldDelegate.backgroundColor != backgroundColor ||
+        oldDelegate.child != child;
   }
 }
