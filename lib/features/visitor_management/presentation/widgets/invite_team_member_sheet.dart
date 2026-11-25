@@ -866,6 +866,8 @@ class _InviteTeamMemberSheetState extends State<InviteTeamMemberSheet> {
               value: id,
               child: Text(
                 name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   color: isDark ? AsmitaPalette.textDarkModeMain : AsmitaPalette.textDark,

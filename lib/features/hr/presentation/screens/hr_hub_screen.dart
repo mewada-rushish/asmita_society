@@ -347,11 +347,12 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
                 initialValue: priority,
+                isExpanded: true,
                 decoration: const InputDecoration(labelText: 'Priority', border: OutlineInputBorder()),
                 items: const [
-                  DropdownMenuItem(value: 'Normal', child: Text('Normal')),
-                  DropdownMenuItem(value: 'High', child: Text('High')),
-                  DropdownMenuItem(value: 'Urgent', child: Text('Urgent')),
+                  DropdownMenuItem(value: 'Normal', child: Text('Normal', maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  DropdownMenuItem(value: 'High', child: Text('High', maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  DropdownMenuItem(value: 'Urgent', child: Text('Urgent', maxLines: 1, overflow: TextOverflow.ellipsis)),
                 ],
                 onChanged: (v) => setModalState(() => priority = v ?? 'Normal'),
               ),
