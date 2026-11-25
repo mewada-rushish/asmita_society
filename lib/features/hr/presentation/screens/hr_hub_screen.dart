@@ -590,6 +590,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
   }
 
   Widget _buildMetricsGrid(BuildContext context) {
+    final s = _uiScale(context);
     final onSite = _attendance.where((e) => e['current_status'] == 'IN').length;
     final checkedOut = _attendance.where((e) => e['current_status'] == 'OUT').length;
     final notMarked = _attendance.where((e) => e['current_status'] == 'NOT_MARKED').length;
@@ -598,83 +599,71 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
         as int;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
+      padding: EdgeInsets.symmetric(horizontal: 16 * s),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricTile(
-                  context,
-                  title: 'Checked In',
-                  count: onSite,
-                  subtitle: onSite > 0 ? 'On-Site Today' : 'None Inside',
-                  icon: Icons.login_rounded,
-                  accentColor: const Color(0xFF10B981),
-                  isSelected: _tabController.index == 0 && _attendanceFilter == 'IN',
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    _tabController.animateTo(0);
-                    setState(() => _attendanceFilter = _attendanceFilter == 'IN' ? 'ALL' : 'IN');
-                  },
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildMetricTile(
-                  context,
-                  title: 'Checked Out',
-                  count: checkedOut,
-                  subtitle: 'Left Campus',
-                  icon: Icons.logout_rounded,
-                  accentColor: const Color(0xFF64748B),
-                  isSelected: _tabController.index == 0 && _attendanceFilter == 'OUT',
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    _tabController.animateTo(0);
-                    setState(() => _attendanceFilter = _attendanceFilter == 'OUT' ? 'ALL' : 'OUT');
-                  },
-                ),
-              ),
-            ],
+          Expanded(
+            child: _buildMetricTile(
+              context,
+              title: 'Checked In',
+              count: onSite,
+              icon: Icons.login_rounded,
+              accentColor: const Color(0xFF10B981),
+              isSelected: _tabController.index == 0 && _attendanceFilter == 'IN',
+              onTap: () {
+                HapticFeedback.selectionClick();
+                _tabController.animateTo(0);
+                setState(() => _attendanceFilter = _attendanceFilter == 'IN' ? 'ALL' : 'IN');
+              },
+            ),
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricTile(
-                  context,
-                  title: 'Not Marked',
-                  count: notMarked,
-                  subtitle: 'No Check-In Yet',
-                  icon: Icons.person_off_outlined,
-                  accentColor: const Color(0xFFF59E0B),
-                  isSelected: _tabController.index == 0 && _attendanceFilter == 'NOT_MARKED',
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    _tabController.animateTo(0);
-                    setState(() => _attendanceFilter = _attendanceFilter == 'NOT_MARKED' ? 'ALL' : 'NOT_MARKED');
-                  },
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildMetricTile(
-                  context,
-                  title: 'Pending Invites',
-                  count: pendingInvites,
-                  subtitle: pendingInvites > 0 ? 'Tap to Invite' : 'All Activated',
-                  icon: Icons.mark_email_unread_outlined,
-                  accentColor: const Color(0xFF3B82F6),
-                  isSelected: false,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    _tabController.animateTo(1);
-                    setState(() => _peopleMode = 'PENDING');
-                  },
-                ),
-              ),
-            ],
+          SizedBox(width: 8 * s),
+          Expanded(
+            child: _buildMetricTile(
+              context,
+              title: 'Out',
+              count: checkedOut,
+              icon: Icons.logout_rounded,
+              accentColor: const Color(0xFF64748B),
+              isSelected: _tabController.index == 0 && _attendanceFilter == 'OUT',
+              onTap: () {
+                HapticFeedback.selectionClick();
+                _tabController.animateTo(0);
+                setState(() => _attendanceFilter = _attendanceFilter == 'OUT' ? 'ALL' : 'OUT');
+              },
+            ),
+          ),
+          SizedBox(width: 8 * s),
+          Expanded(
+            child: _buildMetricTile(
+              context,
+              title: 'Not Marked',
+              count: notMarked,
+              icon: Icons.person_off_outlined,
+              accentColor: const Color(0xFFF59E0B),
+              isSelected: _tabController.index == 0 && _attendanceFilter == 'NOT_MARKED',
+              onTap: () {
+                HapticFeedback.selectionClick();
+                _tabController.animateTo(0);
+                setState(() => _attendanceFilter = _attendanceFilter == 'NOT_MARKED' ? 'ALL' : 'NOT_MARKED');
+              },
+            ),
+          ),
+          SizedBox(width: 8 * s),
+          Expanded(
+            child: _buildMetricTile(
+              context,
+              title: 'Pending',
+              count: pendingInvites,
+              icon: Icons.mark_email_unread_outlined,
+              accentColor: const Color(0xFF3B82F6),
+              isSelected: false,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                _tabController.animateTo(1);
+                setState(() => _peopleMode = 'PENDING');
+              },
+            ),
           ),
         ],
       ),
@@ -690,7 +679,6 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     BuildContext context, {
     required String title,
     required int count,
-    required String subtitle,
     required IconData icon,
     required Color accentColor,
     required bool isSelected,
@@ -700,15 +688,15 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     final s = _uiScale(context);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(horizontal: 12 * s, vertical: 10 * s),
+        padding: EdgeInsets.symmetric(horizontal: 6 * s, vertical: 10 * s),
         decoration: BoxDecoration(
           color: isSelected
               ? accentColor.withValues(alpha: isDark ? 0.16 : 0.08)
               : (isDark ? const Color(0xFF1E293B) : Colors.white),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
                 ? accentColor
@@ -716,7 +704,8 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             width: isSelected ? 1.6 : 1.1,
           ),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: EdgeInsets.all(7 * s),
@@ -726,34 +715,30 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
               ),
               child: Icon(icon, size: 17 * s, color: accentColor),
             ),
-            SizedBox(width: 9 * s),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$count',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16 * s,
-                      fontWeight: FontWeight.w700,
-                      height: 1.1,
-                      color: AsmitaPalette.textPrimary(context),
-                    ),
-                  ),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      title,
-                      maxLines: 1,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11 * s,
-                        fontWeight: FontWeight.w600,
-                        color: AsmitaPalette.textSecondary(context),
-                      ),
-                    ),
-                  ),
-                ],
+            SizedBox(height: 6 * s),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                '$count',
+                style: GoogleFonts.poppins(
+                  fontSize: 16 * s,
+                  fontWeight: FontWeight.w700,
+                  height: 1.1,
+                  color: AsmitaPalette.textPrimary(context),
+                ),
+              ),
+            ),
+            SizedBox(height: 2 * s),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                title,
+                maxLines: 1,
+                style: GoogleFonts.poppins(
+                  fontSize: 10 * s,
+                  fontWeight: FontWeight.w600,
+                  color: AsmitaPalette.textSecondary(context),
+                ),
               ),
             ),
           ],
