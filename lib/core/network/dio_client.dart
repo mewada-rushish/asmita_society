@@ -93,6 +93,9 @@ class AsmitaDioClient {
               default:
                 if (e.response?.statusCode == 500) {
                   friendlyMessage = 'Server error occurred. Please try again.';
+                } else if (e.response?.statusCode == 429) {
+                  friendlyMessage =
+                      'Too many requests. Please wait a moment and try again.';
                 } else if (e.response?.statusCode == 404) {
                   friendlyMessage = 'Requested resource was not found.';
                 } else if (e.response?.statusCode == 403) {
@@ -106,7 +109,8 @@ class AsmitaDioClient {
               e.response?.statusCode == 400 ||
               e.response?.statusCode == 401 ||
               e.response?.statusCode == 403 ||
-              e.response?.statusCode == 404;
+              e.response?.statusCode == 404 ||
+              e.response?.statusCode == 429;
 
           if (e.type != DioExceptionType.connectionTimeout &&
               e.type != DioExceptionType.receiveTimeout &&
