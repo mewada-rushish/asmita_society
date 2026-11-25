@@ -224,11 +224,15 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
   bool get _isHrUser {
     final dept = widget.departmentName.toLowerCase();
     final desig = widget.designation.toLowerCase();
+    final desk = widget.deskNumber.toLowerCase();
+    final name = widget.employeeName.toLowerCase();
     return dept == 'hr' ||
         dept.contains('human resource') ||
         RegExp(r'\bhr\b').hasMatch(dept) ||
         RegExp(r'\bhr\b').hasMatch(desig) ||
-        desig.contains('human resource');
+        desig.contains('human resource') ||
+        desk.startsWith('hr-') ||
+        RegExp(r'\bhr\b').hasMatch(name);
   }
 
   @override
