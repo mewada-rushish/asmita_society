@@ -1070,42 +1070,102 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             ),
           ),
           SizedBox(height: 8 * s),
-          Padding(
-            padding: EdgeInsets.only(top: 2 * s),
-            child: Row(
-              children: [
-                Icon(
-                  st == 'NOT_MARKED' ? Icons.info_outline_rounded : Icons.access_time_rounded,
-                  size: 13 * s,
-                  color: st == 'NOT_MARKED' ? const Color(0xFFD97706) : AsmitaPalette.primary(context),
-                ),
-                SizedBox(width: 6 * s),
-                Expanded(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      st == 'NOT_MARKED'
-                          ? (_isSingleDay
-                              ? 'Did not check in on ${DateFormat('dd MMM').format(_selectedRange.start)}'
-                              : 'Did not check in (${DateFormat('dd MMM').format(_selectedRange.start)} – ${DateFormat('dd MMM').format(_selectedRange.end)})')
-                          : (_isSingleDay
-                              ? 'In: ${_formatTime(item['first_in_time'])}  •  Out: ${_formatTime(item['last_out_time'])}${item['last_gate_name'] != null ? '  •  ${item['last_gate_name']}' : ''}'
-                              : 'Present ${item['days_present'] ?? 1}/${item['total_days'] ?? 1} days  •  First In: ${_formatTime(item['first_in_time'])}  •  Last Out: ${_formatTime(item['last_out_time'])}'),
-                      maxLines: 1,
-                      style: GoogleFonts.poppins(
-                        fontSize: 10.5 * s,
-                        fontWeight: FontWeight.w600,
-                        color: st == 'NOT_MARKED' ? const Color(0xFFD97706) : AsmitaPalette.textPrimary(context),
+          if (!_isSingleDay)
+            Builder(
+              builder: (context) {
+                final totalDays =
+                    (item['total_days'] as num?)?.toInt() ??
+                    (_selectedRange.duration.inDays + 1);
+                final daysPresent =
+                    (item['days_present'] as num?)?.toInt() ??
+                    (st == 'NOT_MARKED' ? 0 : 1);
+                final daysAbsent = (totalDays - daysPresent).clamp(0, totalDays);
+                return Padding(
+                  padding: EdgeInsets.only(top: 2 * s),
+                  child: Row(
+                    children: [
+                      _rangeCountBadge(
+                        icon: Icons.check_circle_outline_rounded,
+                        label: 'Present: $daysPresent',
+                        color: const Color(0xFF10B981),
+                        scale: s,
+                      ),
+                      SizedBox(width: 8 * s),
+                      _rangeCountBadge(
+                        icon: Icons.cancel_outlined,
+                        label: 'Absent: $daysAbsent',
+                        color: const Color(0xFFD97706),
+                        scale: s,
+                      ),
+                    ],
+                  ),
+                );
+              },
+            )
+          else
+            Padding(
+              padding: EdgeInsets.only(top: 2 * s),
+              child: Row(
+                children: [
+                  Icon(
+                    st == 'NOT_MARKED' ? Icons.info_outline_rounded : Icons.access_time_rounded,
+                    size: 13 * s,
+                    color: st == 'NOT_MARKED' ? const Color(0xFFD97706) : AsmitaPalette.primary(context),
+                  ),
+                  SizedBox(width: 6 * s),
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        st == 'NOT_MARKED'
+                            ? 'Did not check in on ${DateFormat('dd MMM').format(_selectedRange.start)}'
+                            : 'In: ${_formatTime(item['first_in_time'])}  •  Out: ${_formatTime(item['last_out_time'])}${item['last_gate_name'] != null ? '  •  ${item['last_gate_name']}' : ''}',
+                        maxLines: 1,
+                        style: GoogleFonts.poppins(
+                          fontSize: 10.5 * s,
+                          fontWeight: FontWeight.w600,
+                          color: st == 'NOT_MARKED' ? const Color(0xFFD97706) : AsmitaPalette.textPrimary(context),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
+            ),
+        ],
+      ),
+      ),
+    );
+  }
+
+  Widget _rangeCountBadge({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required double scale,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 4 * scale),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12 * scale, color: color),
+          SizedBox(width: 4 * scale),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 10.5 * scale,
+              fontWeight: FontWeight.w600,
+              color: color,
             ),
           ),
         ],
-      ),
       ),
     );
   }
