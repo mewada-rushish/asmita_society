@@ -36,27 +36,25 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
   final TextEditingController _searchController = TextEditingController();
 
   bool _isLoading = true;
+  bool _isAttendanceLoading = false;
   bool _isBulkInviting = false;
   int? _resendingUserId;
 
+  DateTime _selectedDate = DateTime.now();
   Map<String, dynamic> _summary = {};
   List<Map<String, dynamic>> _attendance = [];
   List<Map<String, dynamic>> _employees = [];
   List<Map<String, dynamic>> _desks = [];
-  List<Map<String, dynamic>> _leaves = [];
-  List<Map<String, dynamic>> _regularizations = [];
   List<Map<String, dynamic>> _notices = [];
 
   String _searchQuery = '';
   String _attendanceFilter = 'ALL'; // ALL, IN, OUT, NOT_MARKED
   String _peopleMode = 'PENDING'; // PENDING, ALL, SEATS
-  String _leaveStatusFilter = 'PENDING'; // PENDING, APPROVED, REJECTED, ALL
-  bool _showRegularizations = false;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _loadAll();
   }
 
@@ -84,17 +82,24 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     return 'HR Team';
   }
 
+  String get _selectedDateParam => DateFormat('yyyy-MM-dd').format(_selectedDate);
+
+  bool get _isSelectedToday {
+    final now = DateTime.now();
+    return _selectedDate.year == now.year &&
+        _selectedDate.month == now.month &&
+        _selectedDate.day == now.day;
+  }
+
   Future<void> _loadAll() async {
     final sId = _resolveSocietyId();
     if (mounted) setState(() => _isLoading = true);
     try {
       final results = await Future.wait([
         _repo.getSummary(sId).catchError((_) => <String, dynamic>{}),
-        _repo.getAttendance(sId).catchError((_) => <Map<String, dynamic>>[]),
+        _repo.getAttendance(sId, date: _selectedDateParam).catchError((_) => <Map<String, dynamic>>[]),
         _repo.getDirectoryEmployees(sId).catchError((_) => <Map<String, dynamic>>[]),
         _repo.getEmployeeFormData(sId).catchError((_) => <String, dynamic>{}),
-        _repo.getLeaves(sId, status: 'ALL').catchError((_) => <Map<String, dynamic>>[]),
-        _repo.getRegularizations(sId, status: 'ALL').catchError((_) => <Map<String, dynamic>>[]),
         _repo.getNotices(sId).catchError((_) => <Map<String, dynamic>>[]),
       ]);
 
@@ -110,13 +115,45 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
         _attendance = results[1] as List<Map<String, dynamic>>;
         _employees = results[2] as List<Map<String, dynamic>>;
         _desks = rawDesks.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-        _leaves = results[4] as List<Map<String, dynamic>>;
-        _regularizations = results[5] as List<Map<String, dynamic>>;
-        _notices = results[6] as List<Map<String, dynamic>>;
+        _notices = results[4] as List<Map<String, dynamic>>;
         _isLoading = false;
       });
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _changeDate(DateTime newDate) async {
+    final today = DateTime.now();
+    final todayOnly = DateTime(today.year, today.month, today.day);
+    final targetOnly = DateTime(newDate.year, newDate.month, newDate.day);
+    if (targetOnly.isAfter(todayOnly)) return;
+
+    setState(() {
+      _selectedDate = targetOnly;
+      _isAttendanceLoading = true;
+    });
+    try {
+      final rows = await _repo.getAttendance(_resolveSocietyId(), date: _selectedDateParam);
+      if (!mounted) return;
+      setState(() {
+        _attendance = rows;
+        _isAttendanceLoading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isAttendanceLoading = false);
+    }
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      await _changeDate(picked);
     }
   }
 
@@ -200,40 +237,6 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     }
   }
 
-  Future<void> _handleDecideLeave(int id, String status) async {
-    try {
-      await _repo.decideLeave(id, status);
-      if (!mounted) return;
-      AsmitaToast.show(
-        context,
-        message: 'Leave ${status.toLowerCase()}',
-        type: status == 'APPROVED' ? AsmitaToastType.success : AsmitaToastType.info,
-      );
-      _loadAll();
-    } catch (e) {
-      if (mounted) {
-        AsmitaToast.show(context, message: 'Failed to update leave', type: AsmitaToastType.error);
-      }
-    }
-  }
-
-  Future<void> _handleDecideRegularization(int id, String status) async {
-    try {
-      await _repo.decideRegularization(id, status);
-      if (!mounted) return;
-      AsmitaToast.show(
-        context,
-        message: 'Regularization ${status.toLowerCase()}',
-        type: status == 'APPROVED' ? AsmitaToastType.success : AsmitaToastType.info,
-      );
-      _loadAll();
-    } catch (e) {
-      if (mounted) {
-        AsmitaToast.show(context, message: 'Failed to update request', type: AsmitaToastType.error);
-      }
-    }
-  }
-
   void _openAddEmployeeSheet() {
     final nameCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
@@ -312,123 +315,6 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _openApplyLeaveSheet() {
-    String leaveType = 'CASUAL';
-    DateTime startDate = DateTime.now();
-    DateTime endDate = DateTime.now();
-    final reasonCtrl = TextEditingController();
-    bool saving = false;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AsmitaPalette.surface(context),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) => Padding(
-          padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(ctx).viewInsets.bottom + 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Apply Leave / WFH', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context))),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: leaveType,
-                decoration: const InputDecoration(labelText: 'Request Type', border: OutlineInputBorder()),
-                items: const [
-                  DropdownMenuItem(value: 'CASUAL', child: Text('Casual Leave')),
-                  DropdownMenuItem(value: 'SICK', child: Text('Sick Leave')),
-                  DropdownMenuItem(value: 'EARNED', child: Text('Earned Leave')),
-                  DropdownMenuItem(value: 'WFH', child: Text('Work From Home (WFH)')),
-                ],
-                onChanged: (v) => setModalState(() => leaveType = v ?? 'CASUAL'),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.calendar_today, size: 16),
-                      label: Text('From: ${DateFormat('dd MMM').format(startDate)}'),
-                      onPressed: () async {
-                        final picked = await showDatePicker(
-                          context: ctx,
-                          initialDate: startDate,
-                          firstDate: DateTime.now().subtract(const Duration(days: 7)),
-                          lastDate: DateTime.now().add(const Duration(days: 180)),
-                        );
-                        if (picked != null) {
-                          setModalState(() {
-                            startDate = picked;
-                            if (endDate.isBefore(startDate)) endDate = startDate;
-                          });
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.calendar_today, size: 16),
-                      label: Text('To: ${DateFormat('dd MMM').format(endDate)}'),
-                      onPressed: () async {
-                        final picked = await showDatePicker(
-                          context: ctx,
-                          initialDate: endDate,
-                          firstDate: startDate,
-                          lastDate: DateTime.now().add(const Duration(days: 180)),
-                        );
-                        if (picked != null) setModalState(() => endDate = picked);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              TextField(controller: reasonCtrl, maxLines: 2, decoration: const InputDecoration(labelText: 'Reason *', border: OutlineInputBorder())),
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                height: 46,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: AsmitaPalette.deepNavy, foregroundColor: Colors.white),
-                  onPressed: saving
-                      ? null
-                      : () async {
-                          if (reasonCtrl.text.trim().isEmpty) {
-                            AsmitaToast.show(context, message: 'Please enter a reason', type: AsmitaToastType.error);
-                            return;
-                          }
-                          setModalState(() => saving = true);
-                          try {
-                            await _repo.createLeave({
-                              'society_id': _resolveSocietyId(),
-                              'leave_type': leaveType,
-                              'start_date': DateFormat('yyyy-MM-dd').format(startDate),
-                              'end_date': DateFormat('yyyy-MM-dd').format(endDate),
-                              'reason': reasonCtrl.text.trim(),
-                            });
-                            if (ctx.mounted) Navigator.pop(ctx);
-                            if (mounted) {
-                              AsmitaToast.show(context, message: 'Leave request submitted', type: AsmitaToastType.success);
-                              _loadAll();
-                            }
-                          } catch (_) {
-                            setModalState(() => saving = false);
-                            if (mounted) AsmitaToast.show(context, message: 'Failed to submit leave', type: AsmitaToastType.error);
-                          }
-                        },
-                  child: Text(saving ? 'Submitting...' : 'Submit Request'),
-                ),
-              ),
-            ],
           ),
         ),
       ),
@@ -528,14 +414,12 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             color: AsmitaPalette.surface(context),
             child: TabBar(
               controller: _tabController,
-              isScrollable: true,
               labelColor: AsmitaPalette.primary(context),
               unselectedLabelColor: AsmitaPalette.textSecondary(context),
               indicatorColor: AsmitaPalette.primary(context),
               tabs: const [
                 Tab(text: 'Attendance'),
                 Tab(text: 'People & Invites'),
-                Tab(text: 'Leaves & WFH'),
                 Tab(text: 'Visits & Notices'),
               ],
             ),
@@ -548,7 +432,6 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                     children: [
                       _buildAttendanceTab(),
                       _buildPeopleTab(),
-                      _buildLeavesTab(),
                       _buildVisitsAndNoticesTab(),
                     ],
                   ),
@@ -559,6 +442,12 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
   }
 
   Widget _buildKpiStrip() {
+    final onSite = _attendance.where((e) => e['current_status'] == 'IN').length;
+    final checkedOut = _attendance.where((e) => e['current_status'] == 'OUT').length;
+    final notMarked = _attendance.where((e) => e['current_status'] == 'NOT_MARKED').length;
+    final pendingInvites = _summary['pending_invites_count'] ??
+        _employees.where((e) => e['approval_status'] == 'PENDING' || e['status'] == 'Invite Pending').length;
+
     return Container(
       color: AsmitaPalette.surface(context),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -566,12 +455,10 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            _kpiChip('On-Site', _summary['on_site_count'] ?? 0, Colors.green),
-            _kpiChip('Checked Out', _summary['checked_out_count'] ?? 0, Colors.blueGrey),
-            _kpiChip('Not Marked', _summary['not_marked_count'] ?? 0, Colors.orange),
-            _kpiChip('Pending Invites', _summary['pending_invites_count'] ?? 0, Colors.amber.shade800),
-            _kpiChip('Leave Req', _summary['pending_leaves_count'] ?? 0, Colors.indigo),
-            _kpiChip('Reg Req', _summary['pending_regularizations_count'] ?? 0, Colors.deepPurple),
+            _kpiChip('Checked In', onSite, Colors.green),
+            _kpiChip('Checked Out', checkedOut, Colors.blueGrey),
+            _kpiChip('Not Marked', notMarked, Colors.orange),
+            _kpiChip('Pending Invites', pendingInvites, Colors.amber.shade800),
           ],
         ),
       ),
@@ -609,13 +496,56 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
       return true;
     }).toList();
 
-    final pendingRegs = _regularizations.where((r) => r['status'] == 'PENDING').toList();
-
     return AppRefresh(
       onRefresh: _loadAll,
       child: ListView(
         padding: const EdgeInsets.all(14),
         children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: AsmitaPalette.surface(context),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AsmitaPalette.border(context)),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () => _changeDate(_selectedDate.subtract(const Duration(days: 1))),
+                  icon: const Icon(Icons.chevron_left_rounded),
+                  tooltip: 'Previous Day',
+                ),
+                Expanded(
+                  child: InkWell(
+                    onTap: _pickDate,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.calendar_today_rounded, size: 16, color: AsmitaPalette.primary(context)),
+                          const SizedBox(width: 8),
+                          Text(
+                            _isSelectedToday
+                                ? 'Today, ${DateFormat('dd MMM yyyy').format(_selectedDate)}'
+                                : DateFormat('EEE, dd MMM yyyy').format(_selectedDate),
+                            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: _isSelectedToday ? null : () => _changeDate(_selectedDate.add(const Duration(days: 1))),
+                  icon: const Icon(Icons.chevron_right_rounded),
+                  tooltip: 'Next Day',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
           TextField(
             controller: _searchController,
             onChanged: (v) => setState(() => _searchQuery = v.trim()),
@@ -633,29 +563,20 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _filterChip('All', _attendanceFilter == 'ALL', () => setState(() => _attendanceFilter = 'ALL')),
-                _filterChip('In (On-Site)', _attendanceFilter == 'IN', () => setState(() => _attendanceFilter = 'IN')),
-                _filterChip('Out', _attendanceFilter == 'OUT', () => setState(() => _attendanceFilter = 'OUT')),
+                _filterChip('All (${_attendance.length})', _attendanceFilter == 'ALL', () => setState(() => _attendanceFilter = 'ALL')),
+                _filterChip('Checked In', _attendanceFilter == 'IN', () => setState(() => _attendanceFilter = 'IN')),
+                _filterChip('Checked Out', _attendanceFilter == 'OUT', () => setState(() => _attendanceFilter = 'OUT')),
                 _filterChip('Not Marked', _attendanceFilter == 'NOT_MARKED', () => setState(() => _attendanceFilter = 'NOT_MARKED')),
-                _filterChip(
-                  'Regularizations (${pendingRegs.length})',
-                  _showRegularizations,
-                  () => setState(() => _showRegularizations = !_showRegularizations),
-                ),
               ],
             ),
           ),
           const SizedBox(height: 12),
-          if (_showRegularizations) ...[
-            Text('Attendance Regularizations', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context))),
-            const SizedBox(height: 8),
-            if (_regularizations.isEmpty)
-              _emptyCard('No regularization requests yet')
-            else
-              ..._regularizations.map((r) => _buildRegularizationCard(r)),
-            const Divider(height: 24),
-          ],
-          if (filtered.isEmpty)
+          if (_isAttendanceLoading)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (filtered.isEmpty)
             _emptyCard('No attendance records match this filter')
           else
             ...filtered.map((item) => _buildAttendanceCard(item)),
@@ -667,7 +588,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
   Widget _buildAttendanceCard(Map<String, dynamic> item) {
     final st = (item['current_status'] ?? 'NOT_MARKED').toString();
     final Color badgeColor = st == 'IN' ? Colors.green : (st == 'OUT' ? Colors.blueGrey : Colors.orange);
-    final String badgeText = st == 'IN' ? 'ON-SITE' : (st == 'OUT' ? 'CHECKED OUT' : 'NOT MARKED');
+    final String badgeText = st == 'IN' ? 'IN' : (st == 'OUT' ? 'OUT' : 'NOT MARKED');
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -698,9 +619,20 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'In: ${_formatTime(item['first_in_time'])}   Out: ${_formatTime(item['last_out_time'])}',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AsmitaPalette.textPrimary(context)),
+                  st == 'NOT_MARKED'
+                      ? 'Did not check in on ${DateFormat('dd MMM').format(_selectedDate)}'
+                      : 'In: ${_formatTime(item['first_in_time'])}   •   Out: ${_formatTime(item['last_out_time'])}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: st == 'NOT_MARKED' ? Colors.orange.shade800 : AsmitaPalette.textPrimary(context),
+                  ),
                 ),
+                if (item['last_gate_name'] != null && st != 'NOT_MARKED')
+                  Text(
+                    'Gate: ${item['last_gate_name']}',
+                    style: TextStyle(fontSize: 11, color: AsmitaPalette.textTertiary(context)),
+                  ),
               ],
             ),
           ),
@@ -709,60 +641,6 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             decoration: BoxDecoration(color: badgeColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
             child: Text(badgeText, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: badgeColor)),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRegularizationCard(Map<String, dynamic> r) {
-    final st = (r['status'] ?? 'PENDING').toString();
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AsmitaPalette.surface(context),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AsmitaPalette.border(context)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text((r['employee_name'] ?? 'Employee').toString(), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AsmitaPalette.textPrimary(context))),
-              _statusPill(st),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Date: ${_formatDate(r['attendance_date'])} | In: ${r['requested_in_time'] ?? '--'} Out: ${r['requested_out_time'] ?? '--'}',
-            style: TextStyle(fontSize: 12, color: AsmitaPalette.textSecondary(context)),
-          ),
-          const SizedBox(height: 4),
-          Text((r['reason'] ?? '').toString(), style: TextStyle(fontSize: 13, color: AsmitaPalette.textPrimary(context))),
-          if (st == 'PENDING') ...[
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _handleDecideRegularization(r['id'] as int, 'REJECTED'),
-                    style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
-                    child: const Text('Reject'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => _handleDecideRegularization(r['id'] as int, 'APPROVED'),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                    child: const Text('Approve'),
-                  ),
-                ),
-              ],
-            ),
-          ],
         ],
       ),
     );
@@ -853,35 +731,35 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
               _emptyCard('No desks or cabins found')
             else
               ...filteredDesks.map((d) {
-              final occ = d['is_occupied'] == true;
-              return Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: AsmitaPalette.surface(context),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AsmitaPalette.border(context)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(occ ? Icons.person : Icons.event_seat, color: occ ? Colors.blueGrey : Colors.green, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('${d['flat_number']} (Floor ${d['floor']})', style: TextStyle(fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context))),
-                          Text(
-                            occ ? 'Occupied by ${d['occupant_name'] ?? 'Colleague'}' : 'Available • ${d['department'] ?? 'Open'}',
-                            style: TextStyle(fontSize: 12, color: occ ? AsmitaPalette.textSecondary(context) : Colors.green.shade700),
-                          ),
-                        ],
+                final occ = d['is_occupied'] == true;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AsmitaPalette.surface(context),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AsmitaPalette.border(context)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(occ ? Icons.person : Icons.event_seat, color: occ ? Colors.blueGrey : Colors.green, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('${d['flat_number']} (Floor ${d['floor']})', style: TextStyle(fontWeight: FontWeight.w700, color: AsmitaPalette.textPrimary(context))),
+                            Text(
+                              occ ? 'Occupied by ${d['occupant_name'] ?? 'Colleague'}' : 'Available • ${d['department'] ?? 'Open'}',
+                              style: TextStyle(fontSize: 12, color: occ ? AsmitaPalette.textSecondary(context) : Colors.green.shade700),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            }),
+                    ],
+                  ),
+                );
+              }),
           ] else if (filteredEmployees.isEmpty)
             _emptyCard('No employees found')
           else
@@ -926,100 +804,6 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                       )
                     else
                       _statusPill('ACTIVE'),
-                  ],
-                ),
-              );
-            }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLeavesTab() {
-    final filtered = _leaves.where((l) => _leaveStatusFilter == 'ALL' || l['status'] == _leaveStatusFilter).toList();
-
-    return AppRefresh(
-      onRefresh: _loadAll,
-      child: ListView(
-        padding: const EdgeInsets.all(14),
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _filterChip('Pending', _leaveStatusFilter == 'PENDING', () => setState(() => _leaveStatusFilter = 'PENDING')),
-                      _filterChip('Approved', _leaveStatusFilter == 'APPROVED', () => setState(() => _leaveStatusFilter = 'APPROVED')),
-                      _filterChip('Rejected', _leaveStatusFilter == 'REJECTED', () => setState(() => _leaveStatusFilter = 'REJECTED')),
-                      _filterChip('All', _leaveStatusFilter == 'ALL', () => setState(() => _leaveStatusFilter = 'ALL')),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: _openApplyLeaveSheet,
-                style: ElevatedButton.styleFrom(backgroundColor: AsmitaPalette.deepNavy, foregroundColor: Colors.white),
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Apply'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (filtered.isEmpty)
-            _emptyCard('No leave or WFH requests')
-          else
-            ...filtered.map((l) {
-              final st = (l['status'] ?? 'PENDING').toString();
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AsmitaPalette.surface(context),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AsmitaPalette.border(context)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text((l['employee_name'] ?? 'Employee').toString(), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AsmitaPalette.textPrimary(context))),
-                        _statusPill(st),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${l['leave_type']} • ${_formatDate(l['start_date'])} → ${_formatDate(l['end_date'])}',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AsmitaPalette.primary(context)),
-                    ),
-                    const SizedBox(height: 4),
-                    Text((l['reason'] ?? '').toString(), style: TextStyle(fontSize: 13, color: AsmitaPalette.textPrimary(context))),
-                    if (st == 'PENDING') ...[
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => _handleDecideLeave(l['id'] as int, 'REJECTED'),
-                              style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
-                              child: const Text('Reject'),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () => _handleDecideLeave(l['id'] as int, 'APPROVED'),
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                              child: const Text('Approve'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
                   ],
                 ),
               );

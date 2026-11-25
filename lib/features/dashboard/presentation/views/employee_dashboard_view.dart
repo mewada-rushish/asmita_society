@@ -604,7 +604,7 @@ class _EmployeeDashboardViewState extends State<EmployeeDashboardView> {
                             style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700),
                           ),
                           Text(
-                            'Attendance, Invites, Leaves, Seats & Notices',
+                            'Attendance Logs, Invites, Seats & Notices',
                             style: TextStyle(color: Colors.white70, fontSize: 11.5),
                           ),
                         ],
