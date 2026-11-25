@@ -1897,9 +1897,25 @@ class _EmployeeAttendanceCalendarSheetState
             ),
             const SizedBox(height: 6),
             if (_isLoading)
-              const SizedBox(
+              SizedBox(
                 height: 252,
-                child: Center(child: CircularProgressIndicator()),
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 7,
+                    mainAxisExtent: 42,
+                  ),
+                  itemCount: 42,
+                  itemBuilder: (context, index) => AsmitaSkeleton(
+                    child: Container(
+                      margin: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
               )
             else
               SizedBox(
@@ -2024,14 +2040,25 @@ class _EmployeeAttendanceCalendarSheetState
               color: color,
             ),
           ),
-          Text(
-            '$count',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
+          _isLoading
+              ? AsmitaSkeleton(
+                  child: Container(
+                    width: 28,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                )
+              : Text(
+                  '$count',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
         ],
       ),
     );
