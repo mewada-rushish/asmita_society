@@ -563,12 +563,12 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                 labelColor: Colors.white,
                 unselectedLabelColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                 labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-                labelStyle: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600),
-                unselectedLabelStyle: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w500),
+                labelStyle: GoogleFonts.poppins(fontSize: 11 * _uiScale(context), fontWeight: FontWeight.w600),
+                unselectedLabelStyle: GoogleFonts.poppins(fontSize: 11 * _uiScale(context), fontWeight: FontWeight.w500),
                 tabs: const [
-                  Tab(child: Text('Attendance', maxLines: 1, overflow: TextOverflow.ellipsis)),
-                  Tab(child: Text('People', maxLines: 1, overflow: TextOverflow.ellipsis)),
-                  Tab(child: Text('Visits & Notices', maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  Tab(child: FittedBox(fit: BoxFit.scaleDown, child: Text('Attendance', maxLines: 1))),
+                  Tab(child: FittedBox(fit: BoxFit.scaleDown, child: Text('People', maxLines: 1))),
+                  Tab(child: FittedBox(fit: BoxFit.scaleDown, child: Text('Visits & Notices', maxLines: 1))),
                 ],
               ),
             ),
@@ -681,6 +681,11 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     );
   }
 
+  double _uiScale(BuildContext context) {
+    final w = MediaQuery.sizeOf(context).width;
+    return (w / 390.0).clamp(0.80, 1.0);
+  }
+
   Widget _buildMetricTile(
     BuildContext context, {
     required String title,
@@ -692,12 +697,13 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     required VoidCallback onTap,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = _uiScale(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        padding: EdgeInsets.symmetric(horizontal: 12 * s, vertical: 10 * s),
         decoration: BoxDecoration(
           color: isSelected
               ? accentColor.withValues(alpha: isDark ? 0.16 : 0.08)
@@ -713,14 +719,14 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(7 * s),
               decoration: BoxDecoration(
                 color: accentColor.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, size: 18, color: accentColor),
+              child: Icon(icon, size: 17 * s, color: accentColor),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 9 * s),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -728,20 +734,23 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                   Text(
                     '$count',
                     style: GoogleFonts.poppins(
-                      fontSize: 18,
+                      fontSize: 16 * s,
                       fontWeight: FontWeight.w700,
                       height: 1.1,
                       color: AsmitaPalette.textPrimary(context),
                     ),
                   ),
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: AsmitaPalette.textSecondary(context),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11 * s,
+                        fontWeight: FontWeight.w600,
+                        color: AsmitaPalette.textSecondary(context),
+                      ),
                     ),
                   ),
                 ],
@@ -891,6 +900,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
   }
 
   Widget _buildAttendanceCard(Map<String, dynamic> item) {
+    final s = _uiScale(context);
     final st = (item['current_status'] ?? 'NOT_MARKED').toString();
     final Color badgeColor = st == 'IN' ? const Color(0xFF10B981) : (st == 'OUT' ? const Color(0xFF64748B) : const Color(0xFFF59E0B));
     final String badgeText = st == 'IN' ? 'IN' : (st == 'OUT' ? 'OUT' : 'NOT MARKED');
@@ -900,7 +910,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(12 * s),
       decoration: BoxDecoration(
         color: AsmitaPalette.surface(context),
         borderRadius: BorderRadius.circular(16),
@@ -913,42 +923,51 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               CircleAvatar(
-                radius: 20,
+                radius: 18 * s,
                 backgroundColor: AsmitaPalette.subtleAccent(context),
                 child: Text(
                   (item['full_name'] ?? 'E').toString().isNotEmpty ? item['full_name'].toString()[0].toUpperCase() : 'E',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: AsmitaPalette.primary(context)),
+                  style: GoogleFonts.poppins(fontSize: 13 * s, fontWeight: FontWeight.w700, color: AsmitaPalette.primary(context)),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 10 * s),
               Expanded(
                 child: Text(
                   (item['full_name'] ?? 'Employee').toString(),
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14, color: AsmitaPalette.textPrimary(context)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13 * s, color: AsmitaPalette.textPrimary(context)),
                 ),
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 8 * s, vertical: 3.5 * s),
                 decoration: BoxDecoration(color: badgeColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
-                child: Text(badgeText, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: badgeColor)),
+                child: Text(badgeText, style: GoogleFonts.poppins(fontSize: 9.5 * s, fontWeight: FontWeight.w700, color: badgeColor)),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              _infoPill(Icons.badge_outlined, role),
-              _infoPill(Icons.business_outlined, dept),
-              if (desk.isNotEmpty) _infoPill(Icons.desk_rounded, desk, highlight: true),
-            ],
+          SizedBox(height: 8 * s),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _infoPill(Icons.badge_outlined, role, scale: s),
+                SizedBox(width: 6 * s),
+                _infoPill(Icons.business_outlined, dept, scale: s),
+                if (desk.isNotEmpty) ...[
+                  SizedBox(width: 6 * s),
+                  _infoPill(Icons.desk_rounded, desk, highlight: true, scale: s),
+                ],
+              ],
+            ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 8 * s),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            padding: EdgeInsets.symmetric(horizontal: 9 * s, vertical: 6 * s),
             decoration: BoxDecoration(
               color: st == 'NOT_MARKED'
                   ? const Color(0xFFF59E0B).withValues(alpha: 0.08)
@@ -959,23 +978,28 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
               children: [
                 Icon(
                   st == 'NOT_MARKED' ? Icons.info_outline_rounded : Icons.access_time_rounded,
-                  size: 14,
+                  size: 13 * s,
                   color: st == 'NOT_MARKED' ? const Color(0xFFD97706) : AsmitaPalette.primary(context),
                 ),
-                const SizedBox(width: 6),
+                SizedBox(width: 6 * s),
                 Expanded(
-                  child: Text(
-                    st == 'NOT_MARKED'
-                        ? (_isSingleDay
-                            ? 'Did not check in on ${DateFormat('dd MMM').format(_selectedRange.start)}'
-                            : 'Did not check in (${DateFormat('dd MMM').format(_selectedRange.start)} – ${DateFormat('dd MMM').format(_selectedRange.end)})')
-                        : (_isSingleDay
-                            ? 'In: ${_formatTime(item['first_in_time'])}  •  Out: ${_formatTime(item['last_out_time'])}${item['last_gate_name'] != null ? '  •  ${item['last_gate_name']}' : ''}'
-                            : 'Present ${item['days_present'] ?? 1}/${item['total_days'] ?? 1} days  •  First In: ${_formatTime(item['first_in_time'])}  •  Last Out: ${_formatTime(item['last_out_time'])}'),
-                    style: GoogleFonts.poppins(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: st == 'NOT_MARKED' ? const Color(0xFFD97706) : AsmitaPalette.textPrimary(context),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      st == 'NOT_MARKED'
+                          ? (_isSingleDay
+                              ? 'Did not check in on ${DateFormat('dd MMM').format(_selectedRange.start)}'
+                              : 'Did not check in (${DateFormat('dd MMM').format(_selectedRange.start)} – ${DateFormat('dd MMM').format(_selectedRange.end)})')
+                          : (_isSingleDay
+                              ? 'In: ${_formatTime(item['first_in_time'])}  •  Out: ${_formatTime(item['last_out_time'])}${item['last_gate_name'] != null ? '  •  ${item['last_gate_name']}' : ''}'
+                              : 'Present ${item['days_present'] ?? 1}/${item['total_days'] ?? 1} days  •  First In: ${_formatTime(item['first_in_time'])}  •  Last Out: ${_formatTime(item['last_out_time'])}'),
+                      maxLines: 1,
+                      style: GoogleFonts.poppins(
+                        fontSize: 10.5 * s,
+                        fontWeight: FontWeight.w600,
+                        color: st == 'NOT_MARKED' ? const Color(0xFFD97706) : AsmitaPalette.textPrimary(context),
+                      ),
                     ),
                   ),
                 ),
@@ -987,14 +1011,14 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     );
   }
 
-  Widget _infoPill(IconData icon, String text, {bool highlight = false}) {
+  Widget _infoPill(IconData icon, String text, {bool highlight = false, double scale = 1.0}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = highlight
         ? AsmitaPalette.subtleAccent(context)
         : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9));
     final fg = highlight ? AsmitaPalette.primary(context) : AsmitaPalette.textSecondary(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 7.5 * scale, vertical: 3.5 * scale),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(8),
@@ -1002,11 +1026,11 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: fg),
-          const SizedBox(width: 5),
+          Icon(icon, size: 11.5 * scale, color: fg),
+          SizedBox(width: 4 * scale),
           Text(
             text,
-            style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: fg),
+            style: GoogleFonts.poppins(fontSize: 10.5 * scale, fontWeight: FontWeight.w600, color: fg),
           ),
         ],
       ),
@@ -1147,6 +1171,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             _emptyCard('No employees found')
           else
             ...filteredEmployees.map((emp) {
+              final s = _uiScale(context);
               final uid = emp['user_id'] ?? emp['id'];
               final isPending = emp['approval_status'] == 'PENDING' || emp['status'] == 'Invite Pending';
               final isSendingThis = _resendingUserId != null && _resendingUserId.toString() == uid.toString();
@@ -1157,7 +1182,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(14),
+                padding: EdgeInsets.all(12 * s),
                 decoration: BoxDecoration(
                   color: AsmitaPalette.surface(context),
                   borderRadius: BorderRadius.circular(16),
@@ -1171,37 +1196,50 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                         Expanded(
                           child: Text(
                             (emp['full_name'] ?? emp['name'] ?? 'Employee').toString(),
-                            style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14, color: AsmitaPalette.textPrimary(context)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13 * s, color: AsmitaPalette.textPrimary(context)),
                           ),
                         ),
+                        const SizedBox(width: 8),
                         if (isPending)
                           ElevatedButton.icon(
                             onPressed: isSendingThis ? null : () => _handleSingleInvite(emp),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF10B981),
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              padding: EdgeInsets.symmetric(horizontal: 9 * s, vertical: 6 * s),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
                             icon: isSendingThis
-                                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                : const Icon(Icons.send_rounded, size: 14),
-                            label: Text('Invite', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                                ? const SizedBox(width: 13, height: 13, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : Icon(Icons.send_rounded, size: 13 * s),
+                            label: Text('Invite', style: GoogleFonts.poppins(fontSize: 11 * s, fontWeight: FontWeight.w600)),
                           )
                         else
                           _statusPill('ACTIVE'),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: [
-                        _infoPill(Icons.badge_outlined, role),
-                        _infoPill(Icons.business_outlined, dept),
-                        if (desk.isNotEmpty) _infoPill(Icons.desk_rounded, desk, highlight: true),
-                        if (phone.isNotEmpty) _infoPill(Icons.phone_outlined, phone),
-                      ],
+                    SizedBox(height: 8 * s),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _infoPill(Icons.badge_outlined, role, scale: s),
+                          SizedBox(width: 6 * s),
+                          _infoPill(Icons.business_outlined, dept, scale: s),
+                          if (desk.isNotEmpty) ...[
+                            SizedBox(width: 6 * s),
+                            _infoPill(Icons.desk_rounded, desk, highlight: true, scale: s),
+                          ],
+                          if (phone.isNotEmpty) ...[
+                            SizedBox(width: 6 * s),
+                            _infoPill(Icons.phone_outlined, phone, scale: s),
+                          ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -1324,11 +1362,12 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
   }
 
   Widget _filterChip(String label, bool selected, VoidCallback onTap) {
+    final s = _uiScale(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+        margin: EdgeInsets.only(right: 8 * s),
+        padding: EdgeInsets.symmetric(horizontal: 11 * s, vertical: 6 * s),
         decoration: BoxDecoration(
           color: selected ? AsmitaPalette.deepNavy : AsmitaPalette.surface(context),
           borderRadius: BorderRadius.circular(20),
@@ -1336,7 +1375,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
         ),
         child: Text(
           label,
-          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: selected ? Colors.white : AsmitaPalette.textPrimary(context)),
+          style: GoogleFonts.poppins(fontSize: 11 * s, fontWeight: FontWeight.w600, color: selected ? Colors.white : AsmitaPalette.textPrimary(context)),
         ),
       ),
     );
