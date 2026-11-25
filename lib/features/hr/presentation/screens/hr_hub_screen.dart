@@ -969,15 +969,17 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     final role = (item['designation'] ?? 'Staff').toString().trim();
     final desk = (item['desk_code'] ?? '').toString().trim();
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: EdgeInsets.all(12 * s),
-      decoration: BoxDecoration(
-        color: AsmitaPalette.surface(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AsmitaPalette.border(context)),
-      ),
-      child: Column(
+    return GestureDetector(
+      onTap: () => _openEmployeeAttendanceSheet(item),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: EdgeInsets.all(12 * s),
+        decoration: BoxDecoration(
+          color: AsmitaPalette.surface(context),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AsmitaPalette.border(context)),
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -1061,6 +1063,30 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             ),
           ),
         ],
+      ),
+      ),
+    );
+  }
+
+  void _openEmployeeAttendanceSheet(Map<String, dynamic> item) {
+    final userId = int.tryParse((item['user_id'] ?? item['id'] ?? '').toString());
+    if (userId == null) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _EmployeeAttendanceCalendarSheet(
+        repo: _repo,
+        societyId: _resolveSocietyId(),
+        userId: userId,
+        employeeName: (item['full_name'] ?? 'Employee').toString(),
+        subtitle: [
+          if ((item['designation'] ?? item['role'] ?? '').toString().trim().isNotEmpty)
+            (item['designation'] ?? item['role']).toString().trim(),
+          if ((item['department'] ?? '').toString().trim().isNotEmpty)
+            item['department'].toString().trim(),
+        ].join(' • '),
+        initialMonth: DateTime(_selectedRange.end.year, _selectedRange.end.month),
       ),
     );
   }
@@ -1310,15 +1336,17 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     final desk = (emp['desk_code'] ?? emp['cabin_code'] ?? '').toString().trim();
     final phone = (emp['mobile_number'] ?? emp['phone'] ?? '').toString().trim();
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: EdgeInsets.all(12 * s),
-      decoration: BoxDecoration(
-        color: AsmitaPalette.surface(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AsmitaPalette.border(context)),
-      ),
-      child: Column(
+    return GestureDetector(
+      onTap: () => _openEmployeeAttendanceSheet(emp),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: EdgeInsets.all(12 * s),
+        decoration: BoxDecoration(
+          color: AsmitaPalette.surface(context),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AsmitaPalette.border(context)),
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -1372,6 +1400,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -1618,5 +1647,393 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
     return oldDelegate.height != height ||
         oldDelegate.backgroundColor != backgroundColor ||
         oldDelegate.child != child;
+  }
+}
+
+class _EmployeeAttendanceCalendarSheet extends StatefulWidget {
+  final HrRepository repo;
+  final int societyId;
+  final int userId;
+  final String employeeName;
+  final String subtitle;
+  final DateTime initialMonth;
+
+  const _EmployeeAttendanceCalendarSheet({
+    required this.repo,
+    required this.societyId,
+    required this.userId,
+    required this.employeeName,
+    required this.subtitle,
+    required this.initialMonth,
+  });
+
+  @override
+  State<_EmployeeAttendanceCalendarSheet> createState() =>
+      _EmployeeAttendanceCalendarSheetState();
+}
+
+class _EmployeeAttendanceCalendarSheetState
+    extends State<_EmployeeAttendanceCalendarSheet> {
+  late DateTime _displayedMonth;
+  DateTime? _selectedDay;
+  bool _isLoading = true;
+  int _presentCount = 0;
+  int _absentCount = 0;
+  Map<String, dynamic> _days = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _displayedMonth = DateTime(widget.initialMonth.year, widget.initialMonth.month);
+    _loadMonth();
+  }
+
+  Future<void> _loadMonth() async {
+    if (mounted) setState(() => _isLoading = true);
+    final monthKey =
+        '${_displayedMonth.year}-${_displayedMonth.month.toString().padLeft(2, '0')}';
+    try {
+      final data = await widget.repo.getEmployeeAttendanceCalendar(
+        widget.societyId,
+        userId: widget.userId,
+        month: monthKey,
+      );
+      if (!mounted) return;
+      setState(() {
+        _presentCount = (data['present_count'] ?? 0) as int;
+        _absentCount = (data['absent_count'] ?? 0) as int;
+        _days = Map<String, dynamic>.from(data['days'] as Map? ?? {});
+        _selectedDay = null;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  bool get _canGoNextMonth {
+    final now = DateTime.now();
+    return _displayedMonth.year < now.year ||
+        (_displayedMonth.year == now.year && _displayedMonth.month < now.month);
+  }
+
+  String _formatTime(dynamic raw) {
+    if (raw == null) return '--';
+    try {
+      final dt = DateTime.parse(raw.toString()).toLocal();
+      return DateFormat('hh:mm a').format(dt);
+    } catch (_) {
+      return '--';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF0F172A) : Colors.white;
+    final now = DateTime.now();
+    final todayOnly = DateTime(now.year, now.month, now.day);
+    final firstDayOfMonth = DateTime(_displayedMonth.year, _displayedMonth.month, 1);
+    final daysInMonth = DateTime(_displayedMonth.year, _displayedMonth.month + 1, 0).day;
+    final leadingBlanks = firstDayOfMonth.weekday - 1; // Mon = 1 -> 0 blanks
+
+    String? selectedKey;
+    Map<String, dynamic>? selectedRecord;
+    if (_selectedDay != null) {
+      selectedKey =
+          '${_selectedDay!.year}-${_selectedDay!.month.toString().padLeft(2, '0')}-${_selectedDay!.day.toString().padLeft(2, '0')}';
+      final raw = _days[selectedKey];
+      if (raw is Map) selectedRecord = Map<String, dynamic>.from(raw);
+    }
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: AsmitaPalette.border(context),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.employeeName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AsmitaPalette.textPrimary(context),
+                        ),
+                      ),
+                      if (widget.subtitle.isNotEmpty)
+                        Text(
+                          widget.subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: AsmitaPalette.textSecondary(context),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _countBox(
+                    context,
+                    label: 'Present',
+                    count: _presentCount,
+                    color: const Color(0xFF10B981),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _countBox(
+                    context,
+                    label: 'Absent',
+                    count: _absentCount,
+                    color: const Color(0xFFD97706),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AsmitaPalette.subtleAccent(context),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _displayedMonth = DateTime(
+                          _displayedMonth.year,
+                          _displayedMonth.month - 1,
+                        );
+                      });
+                      _loadMonth();
+                    },
+                    icon: const Icon(Icons.chevron_left_rounded),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        DateFormat('MMMM yyyy').format(_displayedMonth),
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AsmitaPalette.textPrimary(context),
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _canGoNextMonth
+                        ? () {
+                            setState(() {
+                              _displayedMonth = DateTime(
+                                _displayedMonth.year,
+                                _displayedMonth.month + 1,
+                              );
+                            });
+                            _loadMonth();
+                          }
+                        : null,
+                    icon: const Icon(Icons.chevron_right_rounded),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: const ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
+                  .map(
+                    (d) => Expanded(
+                      child: Center(
+                        child: Text(
+                          d,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF94A3B8),
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 6),
+            if (_isLoading)
+              const SizedBox(
+                height: 252,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else
+              SizedBox(
+                height: 252,
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 7,
+                    mainAxisExtent: 42,
+                  ),
+                  itemCount: 42,
+                  itemBuilder: (context, index) {
+                    final dayNum = index - leadingBlanks + 1;
+                    if (dayNum < 1 || dayNum > daysInMonth) {
+                      return const SizedBox.shrink();
+                    }
+                    final date = DateTime(
+                      _displayedMonth.year,
+                      _displayedMonth.month,
+                      dayNum,
+                    );
+                    final key =
+                        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+                    final isFuture = date.isAfter(todayOnly);
+                    final isPresent = _days.containsKey(key);
+                    final isSelected = _selectedDay != null &&
+                        _selectedDay!.year == date.year &&
+                        _selectedDay!.month == date.month &&
+                        _selectedDay!.day == date.day;
+
+                    Color? cellBg;
+                    Color textColor = AsmitaPalette.textPrimary(context);
+                    if (isFuture) {
+                      textColor = AsmitaPalette.textTertiary(context);
+                    } else if (isPresent) {
+                      cellBg = const Color(0xFF10B981).withValues(alpha: 0.16);
+                      textColor = const Color(0xFF059669);
+                    } else {
+                      cellBg = const Color(0xFFF59E0B).withValues(alpha: 0.14);
+                      textColor = const Color(0xFFD97706);
+                    }
+
+                    return GestureDetector(
+                      onTap: isFuture
+                          ? null
+                          : () => setState(() => _selectedDay = date),
+                      child: Container(
+                        margin: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: cellBg,
+                          borderRadius: BorderRadius.circular(10),
+                          border: isSelected
+                              ? Border.all(
+                                  color: AsmitaPalette.primary(context),
+                                  width: 1.5,
+                                )
+                              : null,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '$dayNum',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12.5,
+                            fontWeight:
+                                isPresent ? FontWeight.w700 : FontWeight.w500,
+                            color: textColor,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            if (_selectedDay != null) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AsmitaPalette.subtleAccent(context),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  selectedRecord != null
+                      ? '${DateFormat('dd MMM yyyy').format(_selectedDay!)}  •  In: ${_formatTime(selectedRecord['first_in_time'])}  •  Out: ${_formatTime(selectedRecord['last_out_time'])}'
+                      : '${DateFormat('dd MMM yyyy').format(_selectedDay!)}  •  Absent / Not Marked',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AsmitaPalette.textPrimary(context),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _countBox(
+    BuildContext context, {
+    required String label,
+    required int count,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+          Text(
+            '$count',
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
