@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/design_system.dart';
-import '../../../../core/widgets/app_refresh.dart';
 import '../../../../core/widgets/app_skeleton.dart';
 import '../../../../core/widgets/asmita_bottom_sheet.dart';
 import '../../../../core/widgets/asmita_calendar_sheet.dart';
@@ -529,13 +528,16 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
             userInitials: _currentUserName().isNotEmpty ? _currentUserName()[0].toUpperCase() : 'H',
           ),
           Expanded(
-            child: NestedScrollView(
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                AppRefresh.sliver(onRefresh: _loadAll),
-                SliverToBoxAdapter(
+            child: RefreshIndicator(
+              color: isDark ? const Color(0xFF60A5FA) : AsmitaPalette.deepNavy,
+              backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+              notificationPredicate: (notification) =>
+                  notification.metrics.axis == Axis.vertical && notification.depth <= 1,
+              onRefresh: _loadAll,
+              child: NestedScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                  SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 12, bottom: 8),
                     child: _buildMetricsGrid(context),
@@ -601,6 +603,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
                   _buildVisitsAndNoticesTab(),
                 ],
               ),
+            ),
             ),
           ),
         ],
@@ -781,6 +784,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     return Builder(
       builder: (context) => CustomScrollView(
         key: const PageStorageKey<String>('hr_attendance_tab'),
+        physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverOverlapInjector(
             handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
@@ -1066,6 +1070,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     return Builder(
       builder: (context) => CustomScrollView(
         key: const PageStorageKey<String>('hr_people_tab'),
+        physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverOverlapInjector(
             handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
@@ -1273,6 +1278,7 @@ class _HrHubScreenState extends State<HrHubScreen> with SingleTickerProviderStat
     return Builder(
       builder: (context) => CustomScrollView(
         key: const PageStorageKey<String>('hr_visits_notices_tab'),
+        physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverOverlapInjector(
             handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
