@@ -19,11 +19,16 @@ class _AsmitaAnimatedIndexedStackState extends State<AsmitaAnimatedIndexedStack>
   late int _currentIndex;
   late int _previousIndex;
 
+  int _clampIndex(int index, int length) {
+    if (length <= 0) return 0;
+    return index.clamp(0, length - 1);
+  }
+
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.index;
-    _previousIndex = widget.index;
+    _currentIndex = _clampIndex(widget.index, widget.children.length);
+    _previousIndex = _currentIndex;
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -34,10 +39,15 @@ class _AsmitaAnimatedIndexedStackState extends State<AsmitaAnimatedIndexedStack>
   @override
   void didUpdateWidget(AsmitaAnimatedIndexedStack oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.index != _currentIndex) {
-      _previousIndex = _currentIndex;
-      _currentIndex = widget.index;
+    final safeIndex = _clampIndex(widget.index, widget.children.length);
+    final safePrevious = _clampIndex(_currentIndex, widget.children.length);
+    if (safeIndex != safePrevious) {
+      _previousIndex = safePrevious;
+      _currentIndex = safeIndex;
       _controller.forward(from: 0.0);
+    } else {
+      _currentIndex = safeIndex;
+      _previousIndex = _clampIndex(_previousIndex, widget.children.length);
     }
   }
 
