@@ -57,6 +57,8 @@
 		<string>This app requires microphone access to record audio messages.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>This app requires location access to verify physical presence at the entrance for gate attendance and visitor check-in.</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>This app requires location access to verify physical presence at the entrance for gate attendance and visitor check-in.</string>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>UILaunchStoryboardName</key>
