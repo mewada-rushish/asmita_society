@@ -11,10 +11,12 @@ class AsmitaAnimatedIndexedStack extends StatefulWidget {
   });
 
   @override
-  State<AsmitaAnimatedIndexedStack> createState() => _AsmitaAnimatedIndexedStackState();
+  State<AsmitaAnimatedIndexedStack> createState() =>
+      _AsmitaAnimatedIndexedStackState();
 }
 
-class _AsmitaAnimatedIndexedStackState extends State<AsmitaAnimatedIndexedStack> with SingleTickerProviderStateMixin {
+class _AsmitaAnimatedIndexedStackState extends State<AsmitaAnimatedIndexedStack>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late int _currentIndex;
   late int _previousIndex;
@@ -71,16 +73,33 @@ class _AsmitaAnimatedIndexedStackState extends State<AsmitaAnimatedIndexedStack>
 
         if (isCurrent && isAnimating) {
           // Entering
-          position = Tween<Offset>(begin: const Offset(1.0, 0.0), end: Offset.zero)
-              .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+          position =
+              Tween<Offset>(
+                begin: const Offset(1.0, 0.0),
+                end: Offset.zero,
+              ).animate(
+                CurvedAnimation(
+                  parent: _controller,
+                  curve: Curves.easeOutCubic,
+                ),
+              );
           opacity = const AlwaysStoppedAnimation(1.0);
           offstage = false;
         } else if (isPrevious && isAnimating) {
           // Exiting
-          position = Tween<Offset>(begin: Offset.zero, end: const Offset(-0.3, 0.0))
-              .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-          opacity = Tween<double>(begin: 1.0, end: 0.0)
-              .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+          position =
+              Tween<Offset>(
+                begin: Offset.zero,
+                end: const Offset(-0.3, 0.0),
+              ).animate(
+                CurvedAnimation(
+                  parent: _controller,
+                  curve: Curves.easeOutCubic,
+                ),
+              );
+          opacity = Tween<double>(begin: 1.0, end: 0.0).animate(
+            CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+          );
           offstage = false;
         } else if (isCurrent) {
           // Active and Settled
@@ -107,14 +126,12 @@ class _AsmitaAnimatedIndexedStackState extends State<AsmitaAnimatedIndexedStack>
               offstage: currentOffstage,
               child: SlideTransition(
                 position: position,
-                child: FadeTransition(
-                  opacity: opacity,
-                  child: child,
-                ),
+                child: FadeTransition(opacity: opacity, child: child),
               ),
             );
           },
-          child: widget.children[index], // The actual screen is passed as a child, keeping its state intact
+          child: widget
+              .children[index], // The actual screen is passed as a child, keeping its state intact
         );
       }),
     );
