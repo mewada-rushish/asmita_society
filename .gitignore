@@ -55,6 +55,7 @@ android/app/google-services.json.*
 firebase.json
 GoogleService-Info.plist
 google-services.json
+google-services.json
 *.code-workspace
 problems-report.html
 
